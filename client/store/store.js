@@ -3,6 +3,7 @@ import debounce from 'lodash/debounce.js';
 
 import { Library } from '../dataTypes.js';
 import { fetchJson, readCookie, arrayMove } from '../utils/utils.js';
+import { themePreference, setThemePreference } from '../utils/theme.js';
 import { diffLibrary } from '../utils/library-diff.js';
 import { writeOfflineCache, readOfflineCache, clearOfflineCache, isNetworkError } from '../utils/offline-cache.js';
 
@@ -64,6 +65,14 @@ const store = createStore({
         },
         setAccount(state, account) {
             state.account = account;
+            // The account's saved theme wins over this browser's, so a
+            // choice made on one device shows up on all of them.
+            if (account && account.themePref && account.themePref !== themePreference()) {
+                setThemePreference(account.themePref);
+            }
+        },
+        setThemePref(state, pref) {
+            if (state.account) state.account = { ...state.account, themePref: pref };
         },
         togglePinList(state, list) {
             const target = state.library.getListById(list.id);
@@ -96,6 +105,11 @@ const store = createStore({
             target.published = published;
             // A shakedown request only makes sense on a public list.
             if (!published) delete target.shakedown;
+        },
+        setListTripType(state, { list, tripType }) {
+            const target = state.library.getListById(list.id);
+            if (tripType) target.tripType = tripType;
+            else delete target.tripType;
         },
         setListShakedown(state, { list, shakedown }) {
             const target = state.library.getListById(list.id);
@@ -514,6 +528,7 @@ const store = createStore({
                     'loadLibraryData',
                     'clearLibraryData',
                     'setAccount',
+                    'setThemePref',
                     'setOffline',
                 ];
                 if (!state.library || ignore.indexOf(mutation.type) > -1) {

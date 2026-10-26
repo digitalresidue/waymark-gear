@@ -42,6 +42,11 @@ export async function up(knex) {
             catalog_id uuid references catalog_items (id) on delete set null,
             catalog_sync boolean not null default false,
             retired boolean not null default false,
+            -- Phase 4 (also added by 20261028000000 for databases that ran
+            -- this migration before these columns existed).
+            closet_category text not null default '',
+            photos jsonb not null default '[]',
+            video_url text not null default '',
             updated_at timestamptz not null default now(),
             primary key (user_id, id)
         );
@@ -59,6 +64,7 @@ export async function up(knex) {
             published boolean not null default false,
             -- Asking for a shakedown (suggestions in the comments).
             shakedown boolean not null default false,
+            trip_type text not null default '',
             -- Trip planner: { days, foodPerDayMg, waterLiters }, or null.
             trip jsonb,
             updated_at timestamptz not null default now(),

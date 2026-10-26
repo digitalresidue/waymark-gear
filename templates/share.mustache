@@ -52,7 +52,11 @@
                 <div class="lpShareHeader">
                     <div class="wgShareTitle">
                         <h1 class="lpListName">{{listName}}</h1>
-                        <p class="wgShareByline">by <a href="/@{{username}}" class="wgShareProfileLink" data-testid="share-profile-link"><strong>@{{username}}</strong></a> · {{baseWeight}} base weight · {{itemCount}} items{{#weightClass}} · <span class="wgBadge">{{weightClass}}</span>{{/weightClass}}</p>
+                        <p class="wgShareByline">by <a href="/@{{username}}" class="wgShareProfileLink" data-testid="share-profile-link"><strong>@{{username}}</strong></a> · {{baseWeight}} base weight · {{itemCount}} items{{#weightClass}} · <span class="wgBadge">{{weightClass}}</span>{{/weightClass}}{{#tripTypeLabel}} · <span class="wgBadge" data-testid="share-trip-type">{{tripTypeLabel}}</span>{{/tripTypeLabel}}</p>
+                        <div class="wgShareSocial">
+                            {{#published}}<span id="wgVotes" class="wgVotes" data-external-id="{{externalId}}" aria-label="Votes"></span>{{/published}}
+                            <span class="wgFollow" data-follow-user="{{username}}"></span>
+                        </div>
                         {{#shakedown}}<p class="wgShakedownBanner" data-testid="shakedown-banner"><strong>Shakedown requested.</strong> @{{username}} would like suggestions: what to cut, swap or rethink. <a href="#wgComments">Leave one below</a>.</p>{{/shakedown}}
                     </div>
                     <div class="lpShareMenu">
@@ -85,6 +89,7 @@
                 {{/renderedDescription}}
 
                 <ul class="lpCategories">{{{renderedCategories}}}</ul>
+                <p class="wgReportLink"><a href="/report?kind=list&amp;url=%2Fr%2F{{externalId}}" data-testid="report-list">Report a problem with this list</a></p>
                 {{#published}}
                 <section id="wgComments" class="wgComments" data-external-id="{{externalId}}" aria-labelledby="wgCommentsTitle">
                     <h2 id="wgCommentsTitle">{{#shakedown}}Shakedown{{/shakedown}}{{^shakedown}}Comments{{/shakedown}}</h2>

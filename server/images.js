@@ -207,6 +207,35 @@ async function storeProfileImage(srcPath, buf, { width, height }, userId, kind) 
 }
 
 /**
+ * A photo of a piece of gear: fits within 512×512 (no crop), shown in a
+ * lightbox. Returns { imageUrl }.
+ */
+async function storeGearPhoto(srcPath, buf, { width, height }, userId) {
+    const { urlPath, dir } = userImageLocation(userId);
+    const id = crypto.createHash('sha256').update(buf).digest('hex').slice(0, 16);
+    const name = `${id}_photo.webp`;
+    const dest = path.join(dir, name);
+    if (!fs.existsSync(dest)) {
+        fs.mkdirSync(dir, { recursive: true });
+        const scale = Math.min(1, 512 / Math.max(width, height));
+        const cwebp = config.has('cwebpPath') ? config.get('cwebpPath') : 'cwebp';
+        const tmpPath = `${dest}.tmp-${process.pid}-${crypto.randomBytes(4).toString('hex')}`;
+        try {
+            await execFileAsync(cwebp, [
+                '-q', CWEBP_QUALITY, '-metadata', 'none',
+                ...(scale < 1 ? ['-resize', String(Math.round(width * scale)), String(Math.round(height * scale))] : []),
+                srcPath, '-o', tmpPath,
+            ]);
+            fs.renameSync(tmpPath, dest);
+        } catch (err) {
+            fs.rmSync(tmpPath, { force: true });
+            throw err;
+        }
+    }
+    return { imageUrl: `${urlPath}/${name}` };
+}
+
+/**
  * Give a user their own copy of an image already converted elsewhere, and
  * return the URL that serves it. Used by the imgur mirror, which converts once
  * per imgur id and then hands the result to each user holding that id.
@@ -250,5 +279,5 @@ function thumbnailUrl(imageUrl) {
 }
 
 export {
-    sniffImage, storeImage, storeImageFiles, storeProfileImage, adoptImage, thumbnailUrl, deleteUserImages, userImageLocation,
+    sniffImage, storeImage, storeImageFiles, storeProfileImage, storeGearPhoto, adoptImage, thumbnailUrl, deleteUserImages, userImageLocation,
 };

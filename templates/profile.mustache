@@ -56,6 +56,12 @@
                         <span>@{{username}}</span>
                         {{#trailName}}<span class="wgProfileTrail" data-testid="profile-trail">Trail name “{{trailName}}”</span>{{/trailName}}
                     </p>
+                    {{#tags.length}}
+                    <ul class="wgProfileTags" aria-label="Tags" data-testid="profile-tags">
+                        {{#tags}}<li>{{.}}</li>{{/tags}}
+                    </ul>
+                    {{/tags.length}}
+                    <div class="wgFollow wgProfileFollow" data-follow-user="{{username}}"></div>
                     {{#hasLinks}}
                     <ul class="wgProfileLinks" aria-label="Elsewhere">
                         {{#links}}
@@ -111,6 +117,7 @@
                         </div>
                         <p class="wgGearName">{{#url}}<a href="{{url}}" rel="nofollow noopener ugc" target="_blank">{{name}}</a>{{/url}}{{^url}}{{name}}{{/url}}</p>
                         <p class="wgGearMeta"><span class="wgMono">{{weight}}</span>{{#category}} · {{category}}{{/category}}</p>
+                        {{#photoCount}}<p class="wgGearMedia"><a href="#" class="wgMediaLink" data-photos="{{photosJson}}" data-title="{{name}}">Photos ({{photoCount}})</a>{{#videoUrl}} <a href="{{videoUrl}}" class="wgMediaLink" data-video="{{videoUrl}}" data-title="{{name}}">▶ Review</a>{{/videoUrl}}</p>{{/photoCount}}{{^photoCount}}{{#videoUrl}}<p class="wgGearMedia"><a href="{{videoUrl}}" class="wgMediaLink" data-video="{{videoUrl}}" data-title="{{name}}">▶ Review</a></p>{{/videoUrl}}{{/photoCount}}
                     </li>
                     {{/gear}}
                 </ul>
@@ -120,6 +127,7 @@
                 {{/gearCount}}
             {{/gearView}}
         </main>
+        {{{scripts}}}
         <footer class="wgProfileFoot">
             <a href="/welcome">Waymark Gear</a> · Build it. Share it. Go.
         </footer>

@@ -65,6 +65,10 @@ Item.prototype.save = function () {
     }
     // Retired gear is hidden from the closet but stays in lists that use it.
     if (this.retired) out.retired = true;
+    // Closet organization and media (Phase 4).
+    if (this.closetCategory) out.closetCategory = this.closetCategory;
+    if (this.photos && this.photos.length) out.photos = [...this.photos];
+    if (this.videoUrl) out.videoUrl = this.videoUrl;
     return out;
 };
 
@@ -388,6 +392,7 @@ List.prototype.save = function () {
     if (this.published) out.published = true;
     // The owner is asking for a shakedown: suggestions in the comments.
     if (this.shakedown) out.shakedown = true;
+    if (this.tripType) out.tripType = this.tripType;
     return out;
 };
 

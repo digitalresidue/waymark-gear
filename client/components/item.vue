@@ -13,6 +13,18 @@
         <span class="lpActionsCell">
             <i class="lpSprite lpCamera" title="Upload a photo or use a photo from the web" @click="updateItemImage" />
             <i class="lpSprite lpLink" :class="{lpActive: item.url}" title="Add a link for this item" @click="updateItemLink" />
+            <button
+                type="button"
+                class="wgItemDetails"
+                :class="{ wgHasMedia: hasMedia }"
+                :title="hasMedia ? 'Photos and review video, closet category' : 'Gear details: photos, review video, closet category'"
+                :aria-label="`Gear details for ${item.name || 'this item'}`"
+                data-testid="item-details"
+                @click="openGearDetails(item)"
+            >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="11" r="2" /><path d="m21 16-5-5-8 8" /></svg>
+                <span v-if="mediaCount" class="wgItemMediaCount">{{ mediaCount }}</span>
+            </button>
             <i v-if="optionalFields['worn']" class="lpSprite lpWorn" :class="{lpActive: categoryItem.worn}" title="Mark this item as worn" @click="toggleWorn" />
             <i v-if="optionalFields['consumable']" class="lpSprite lpConsumable" :class="{lpActive: categoryItem.consumable}" title="Mark this item as a consumable" @click="toggleConsumable" />
             <i :class="'lpSprite lpStar lpStar' + categoryItem.star" title="Star this item" @click="cycleStar" />
@@ -217,6 +229,41 @@ export default {
                 visibility: visible;
             }
         }
+
+        // Gear details: photos, review video, closet category. Hidden until
+        // the row is hovered, like the icons; always shown when it has media.
+        .wgItemDetails {
+            align-items: center;
+            background: none;
+            border: 0;
+            border-radius: 0;
+            color: var(--lp-text-secondary);
+            cursor: pointer;
+            display: inline-flex;
+            flex: 0 0 auto;
+            gap: 1px;
+            height: 16px;
+            line-height: 1;
+            opacity: 0.5;
+            padding: 0;
+            visibility: hidden;
+
+            &:hover,
+            &:focus-visible {
+                opacity: 1;
+            }
+
+            &.wgHasMedia {
+                color: var(--lp-primary);
+                opacity: 1;
+                visibility: visible;
+            }
+        }
+
+        .wgItemMediaCount {
+            font-size: 10.5px;
+            font-weight: 800;
+        }
     }
 
     // One hover target covering the row and both gutters — the drag handle, qty
@@ -246,7 +293,8 @@ export default {
         .lpRemove,
         .lpHandle,
         .lpArrows,
-        .lpActionsCell i {
+        .lpActionsCell i,
+        .lpActionsCell .wgItemDetails {
             visibility: visible;
         }
     }
