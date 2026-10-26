@@ -136,6 +136,10 @@ test.describe('Phase 4', () => {
         const card = visitor.getByTestId('shakedown-card').filter({ hasText: name });
         await expect(card).toBeVisible();
         await expect(card).toContainText('No suggestions yet');
+        // Asked within the last 8 hours: a "New" banner in the corner.
+        await expect(card.getByTestId('shakedown-new')).toHaveText('New');
+        const api = await (await visitor.request.get(url(`/api/explore/kits?shakedown=1&q=${encodeURIComponent(name)}`))).json();
+        expect(Date.now() - new Date(api.kits[0].shakedownAt).getTime()).toBeLessThan(10 * 60 * 1000);
         await card.click();
         await expect(visitor).toHaveURL(/#wgComments$/);
         await asker.context.close();

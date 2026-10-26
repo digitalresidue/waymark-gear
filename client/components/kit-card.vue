@@ -1,5 +1,6 @@
 <template>
-    <a :href="`/r/${kit.externalId}`" class="wgKitCard" data-testid="kit-card">
+    <a :href="`/r/${kit.externalId}`" class="wgKitCard" :class="{ wgKitCardNew: newShakedown }" data-testid="kit-card">
+        <span v-if="newShakedown" class="wgNewRibbon wgNewRibbonLeft" title="Shakedown asked for in the last 8 hours" data-testid="shakedown-new">New</span>
         <div class="wgKitCardTop">
             <div class="wgKitCardTitle">
                 <h3>{{ kit.name }}</h3>
@@ -21,7 +22,7 @@
 
 <script>
 import { formatWeightMg } from '../utils/format.js';
-import { TRIP_TYPE_LABELS } from '../utils/gear-meta.js';
+import { TRIP_TYPE_LABELS, isNewShakedown } from '../utils/gear-meta.js';
 
 export default {
     name: 'KitCard',
@@ -29,6 +30,9 @@ export default {
         kit: { type: Object, required: true },
     },
     computed: {
+        newShakedown() {
+            return isNewShakedown(this.kit);
+        },
         tripLabel() {
             return TRIP_TYPE_LABELS[this.kit.tripType] || '';
         },
@@ -58,6 +62,8 @@ export default {
 
 .wgKitCard {
     background: var(--lp-surface);
+    overflow: hidden;
+    position: relative;
     border: 1px solid var(--lp-border);
     border-radius: $radius-lg;
     color: var(--lp-text);
@@ -85,6 +91,10 @@ export default {
     p {
         margin: 4px 0 0;
     }
+}
+
+.wgKitCardNew {
+    padding-top: 40px;
 }
 
 .wgKitCardTop {

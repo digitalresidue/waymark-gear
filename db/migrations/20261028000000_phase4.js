@@ -10,6 +10,8 @@ export async function up(knex) {
 
         alter table public_kits add column if not exists trip_type text not null default '';
         create index if not exists public_kits_trip_idx on public_kits (trip_type);
+        -- When the current shakedown request was made ("New" on the board).
+        alter table public_kits add column if not exists shakedown_at timestamptz;
 
         alter table users add column if not exists profile_tags jsonb not null default '{}';
         alter table users add column if not exists notify_prefs jsonb not null default '{}';
@@ -67,6 +69,7 @@ export async function down(knex) {
         alter table users drop column if exists theme_pref;
         alter table users drop column if exists notify_prefs;
         alter table users drop column if exists profile_tags;
+        alter table public_kits drop column if exists shakedown_at;
         alter table public_kits drop column if exists trip_type;
         alter table pack_lists drop column if exists trip_type;
         alter table gear_items drop column if exists video_url;

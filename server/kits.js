@@ -102,8 +102,15 @@ export async function syncPublishedKits(user, serializedLibrary, db = knex) {
                 trip_type: k.tripType,
                 updated_at: trx.fn.now(),
             };
-            await trx('public_kits').insert(row).onConflict('external_id')
-                .merge(Object.keys(row).filter((key) => key !== 'external_id'));
+            // When the shakedown was asked for: kept while it stays on, so
+            // re-saving the list doesn't make an old request look new.
+            const merge = Object.fromEntries(Object.keys(row).filter((key) => key !== 'external_id').map((key) => [key, row[key]]));
+            merge.shakedown_at = trx.raw(
+                'case when ? then coalesce(public_kits.shakedown_at, now()) else null end',
+                [Boolean(k.shakedown)],
+            );
+            await trx('public_kits').insert({ ...row, shakedown_at: k.shakedown ? trx.fn.now() : null })
+                .onConflict('external_id').merge(merge);
         }
     });
     // Lists published for the first time: tell followers (fire and forget).
@@ -131,6 +138,7 @@ export function kitToApi(row) {
         featuredRank: row.featured_rank,
         shakedown: Boolean(row.shakedown),
         tripType: row.trip_type || '',
+        shakedownAt: row.shakedown_at || null,
         score: row.score === undefined ? undefined : Number(row.score),
         commentCount: row.comment_count === undefined ? undefined : Number(row.comment_count),
         updatedAt: row.updated_at,

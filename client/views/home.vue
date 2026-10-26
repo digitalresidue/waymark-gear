@@ -147,6 +147,7 @@
                 </div>
                 <div v-if="shakedowns.length" class="wgKitGrid">
                     <a v-for="kit in shakedowns" :key="kit.externalId" :href="`/r/${kit.externalId}#wgComments`" class="wgShakeCard" data-testid="shakedown-card">
+                        <span v-if="isNew(kit)" class="wgNewRibbon" :title="`Asked ${ago(kit.shakedownAt)}`" data-testid="shakedown-new">New</span>
                         <span class="wgShakeTag">{{ kit.commentCount ? `${kit.commentCount} ${kit.commentCount === 1 ? 'suggestion' : 'suggestions'}` : 'No suggestions yet' }}</span>
                         <strong class="wgShakeName">{{ kit.name }}</strong>
                         <span class="wgMuted">by @{{ kit.username }}{{ tripLabel(kit) ? ` · ${tripLabel(kit)}` : '' }}</span>
@@ -255,7 +256,7 @@
 </template>
 
 <script>
-import { TRIP_TYPE_LABELS } from '../utils/gear-meta.js';
+import { TRIP_TYPE_LABELS, isNewShakedown, hoursAgo } from '../utils/gear-meta.js';
 import siteHeader from '../components/site-header.vue';
 import siteFooter from '../components/site-footer.vue';
 import globalAlerts from '../components/global-alerts.vue';
@@ -339,6 +340,12 @@ export default {
     methods: {
         formatWeight(mg, unit) {
             return formatWeightMg(mg, unit || 'oz');
+        },
+        isNew(kit) {
+            return isNewShakedown(kit);
+        },
+        ago(when) {
+            return hoursAgo(when);
         },
         tripLabel(kit) {
             return TRIP_TYPE_LABELS[kit.tripType] || '';
@@ -714,6 +721,8 @@ export default {
 
 .wgShakeCard {
     background: var(--lp-surface);
+    overflow: hidden;
+    position: relative;
     border: 1px solid var(--lp-border);
     border-left: 4px solid #C4571F;
     border-radius: 16px;

@@ -36,3 +36,13 @@ describe('cleanTags', () => {
         assert.equal(out.custom[1], 'script');
     });
 });
+
+describe('isNewShakedown', async () => {
+    const { isNewShakedown } = await import('../../client/utils/gear-meta.js');
+    test('new for 8 hours after the request, and only while it stands', () => {
+        const now = Date.parse('2026-10-26T20:00:00Z');
+        assert.equal(isNewShakedown({ shakedown: true, shakedownAt: '2026-10-26T13:00:00Z' }, now), true);
+        assert.equal(isNewShakedown({ shakedown: true, shakedownAt: '2026-10-26T11:00:00Z' }, now), false);
+        assert.equal(isNewShakedown({ shakedown: false, shakedownAt: '2026-10-26T19:00:00Z' }, now), false);
+    });
+});
