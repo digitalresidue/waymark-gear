@@ -73,8 +73,71 @@ function initFollow() {
     });
 }
 
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// The review form on /g/:id pages, for people allowed to write reviews, and
+// hide/restore buttons for moderators.
+function initReviews() {
+    const box = document.getElementById('wgReviewForm');
+    if (!box) return;
+    const id = box.dataset.catalogId;
+    call(`/api/catalog/${encodeURIComponent(id)}/reviews`).then((data) => {
+        if (data.reviews.some((r) => r.canModerate)) addModeration(data.reviews);
+        if (!data.canReview) return;
+        const mine = data.reviews.find((r) => r.mine) || {};
+        box.innerHTML = `
+            <details class="wgCard wgReviewFormCard" ${mine.id ? '' : 'open'}>
+                <summary data-testid="review-toggle">${mine.id ? 'Edit your review' : 'Write a review'}</summary>
+                <form data-testid="review-form">
+                    <fieldset class="wgReviewStars">
+                        <legend>Rating</legend>
+                        ${[1, 2, 3, 4, 5].map((n) => `<label><input type="radio" name="rating" value="${n}" ${mine.rating === n ? 'checked' : ''} data-testid="review-rating-${n}" required> ${n}★</label>`).join('')}
+                    </fieldset>
+                    <label class="wgField"><span>Headline</span><input class="wgInput" name="title" maxlength="140" value="${esc(mine.title)}" data-testid="review-title"></label>
+                    <label class="wgField"><span>Used for</span><input class="wgInput" name="usedFor" maxlength="200" placeholder="e.g. 900 miles on the CDT" value="${esc(mine.usedFor)}" data-testid="review-used-for"></label>
+                    <label class="wgField"><span>Review</span><textarea class="wgInput" name="body" rows="6" maxlength="8000" required data-testid="review-body">${esc(mine.body)}</textarea></label>
+                    <label class="wgField"><span>Liked</span><input class="wgInput" name="pros" maxlength="1000" value="${esc(mine.pros)}" data-testid="review-pros"></label>
+                    <label class="wgField"><span>Didn't like</span><input class="wgInput" name="cons" maxlength="1000" value="${esc(mine.cons)}" data-testid="review-cons"></label>
+                    <p class="wgReviewError" role="alert"></p>
+                    <button type="submit" class="wgBtn wgBtnPrimary" data-testid="review-submit">${mine.id ? 'Update review' : 'Post review'}</button>
+                </form>
+            </details>`;
+        const form = box.querySelector('form');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const f = new FormData(form);
+            const body = Object.fromEntries(['title', 'usedFor', 'body', 'pros', 'cons'].map((k) => [k, f.get(k) || '']));
+            body.rating = Number(f.get('rating'));
+            try {
+                await call(`/api/catalog/${encodeURIComponent(id)}/reviews`, { method: 'POST', body: JSON.stringify(body) });
+                window.location.reload();
+            } catch (err) {
+                form.querySelector('.wgReviewError').textContent = err.message;
+            }
+        });
+    }).catch(() => {});
+}
+
+function addModeration(reviews) {
+    for (const r of reviews) {
+        const li = document.querySelector(`[data-review-id="${r.id}"]`);
+        if (!li) continue;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'wgBtn wgBtnGhost wgBtnSmall';
+        btn.dataset.testid = 'review-moderate';
+        btn.textContent = r.hidden ? 'Restore' : 'Hide';
+        btn.addEventListener('click', async () => {
+            await call(`/api/reviews/${r.id}/moderate`, { method: 'POST', body: JSON.stringify({ action: r.hidden ? 'restore' : 'hide' }) }).catch(() => {});
+            window.location.reload();
+        });
+        li.querySelector('header').appendChild(btn);
+    }
+}
+
 export function initSocial() {
     initVotes();
     initFollow();
+    initReviews();
     bindLightboxLinks();
 }

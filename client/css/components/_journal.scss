@@ -1,0 +1,360 @@
+// Trip journals (templates/trip.mustache), gear pages and reviews
+// (templates/gear-item.mustache), and trip cards on @profiles.
+
+.wgJournal {
+    margin: 0 auto;
+    max-width: 760px;
+    padding: 24px 16px 48px;
+}
+
+.wgJournalCover img {
+    aspect-ratio: 2 / 1;
+    border-radius: $radius-lg;
+    display: block;
+    height: auto;
+    object-fit: cover;
+    width: 100%;
+}
+
+.wgJournalHead {
+    margin: 20px 0 8px;
+
+    h1 {
+        font-family: $font-display;
+        font-size: clamp(28px, 6vw, 40px);
+        font-stretch: 112%;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 4px 0 0;
+        overflow-wrap: anywhere;
+    }
+}
+
+.wgJournalKicker {
+    color: var(--lp-text-secondary);
+    font-size: 13px;
+    font-weight: 650;
+    letter-spacing: 0.06em;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.wgJournalVis {
+    color: var(--lp-primary);
+}
+
+.wgJournalStats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 28px;
+    margin: 14px 0 0;
+
+    dt {
+        color: var(--lp-text-secondary);
+        font-size: 12px;
+    }
+
+    dd {
+        font-size: 20px;
+        font-weight: 700;
+        margin: 0;
+    }
+}
+
+.wgJournalSummary {
+    margin: 16px 0;
+}
+
+.wgJournalList {
+    align-items: baseline;
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    margin: 16px 0;
+    padding: 10px 14px;
+
+    a {
+        font-weight: 700;
+    }
+}
+
+.wgJournalEntries {
+    list-style: none;
+    margin: 24px 0 0;
+    padding: 0;
+}
+
+.wgJournalEntry {
+    border-left: 3px solid var(--lp-border);
+    margin: 0 0 28px;
+    padding: 0 0 0 18px;
+    position: relative;
+
+    &::before {
+        background: var(--lp-primary);
+        border: 3px solid var(--lp-bg);
+        border-radius: 50%;
+        content: "";
+        height: 14px;
+        left: -10px;
+        position: absolute;
+        top: 2px;
+        width: 14px;
+    }
+
+    h2 {
+        font-size: 21px;
+        margin: 2px 0 6px;
+    }
+}
+
+.wgJournalDay {
+    color: var(--lp-text-secondary);
+    font-size: 13px;
+    font-weight: 650;
+    margin: 0;
+}
+
+.wgJournalPhotos {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    list-style: none;
+    margin: 10px 0 0;
+    padding: 0;
+
+    img {
+        aspect-ratio: 1;
+        border-radius: 8px;
+        display: block;
+        height: auto;
+        object-fit: cover;
+        width: 100%;
+    }
+}
+
+// Trip cards on the profile's Trips tab.
+.wgTripCards {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    list-style: none;
+    margin: 16px 0 0;
+    padding: 0;
+}
+
+.wgTripCard a {
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: 14px;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    text-decoration: none;
+
+    &:hover {
+        border-color: var(--lp-primary);
+    }
+
+    img {
+        aspect-ratio: 2 / 1;
+        display: block;
+        height: auto;
+        object-fit: cover;
+        width: 100%;
+    }
+}
+
+.wgTripCardBody {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 14px;
+
+    strong {
+        font-size: 17px;
+    }
+}
+
+// Gear page.
+.wgGearHero {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: 160px 1fr;
+
+    h1 {
+        font-family: $font-display;
+        font-size: clamp(24px, 5vw, 34px);
+        font-weight: 800;
+        margin: 2px 0;
+    }
+
+    @media (max-width: 560px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.wgGearHeroImg {
+    align-items: center;
+    aspect-ratio: 1;
+    background: var(--lp-surface-sunken);
+    border-radius: 14px;
+    display: flex;
+    font-size: 48px;
+    font-weight: 800;
+    justify-content: center;
+    max-width: 160px;
+    overflow: hidden;
+
+    img {
+        height: 100%;
+        object-fit: contain;
+        width: 100%;
+    }
+}
+
+.wgGearHeroWeight {
+    font-size: 18px;
+    margin: 4px 0;
+}
+
+.wgGearHeroLinks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.wgStars {
+    color: #C98A12;
+    letter-spacing: 1px;
+}
+
+.wgReviews {
+    margin-top: 28px;
+}
+
+.wgReviewList {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+}
+
+.wgReview {
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: 14px;
+    margin: 0 0 14px;
+    padding: 14px 16px;
+
+    header {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    h3 {
+        font-size: 18px;
+        margin: 6px 0 2px;
+    }
+}
+
+.wgReviewHidden {
+    opacity: 0.6;
+}
+
+.wgReviewBadge {
+    background: var(--lp-primary);
+    border-radius: 999px;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+}
+
+.wgReviewBadgeMember {
+    background: var(--lp-surface-sunken);
+    color: var(--lp-text-secondary);
+}
+
+.wgReviewBadgeHidden {
+    background: #8A2B12;
+}
+
+.wgReviewItem {
+    font-weight: 700;
+    margin: 6px 0 0;
+}
+
+.wgReviewBy {
+    color: var(--lp-text-secondary);
+    font-size: 13px;
+    margin: 0 0 6px;
+}
+
+.wgReviewPC {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    margin: 8px 0 0;
+
+    dt {
+        color: var(--lp-text-secondary);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    dd {
+        margin: 2px 0 0;
+    }
+}
+
+.wgReviewFormCard {
+    margin: 0 0 16px;
+    padding: 12px 16px;
+
+    summary {
+        cursor: pointer;
+        font-weight: 700;
+    }
+
+    form {
+        display: grid;
+        gap: 10px;
+        margin-top: 12px;
+    }
+
+    .wgField {
+        display: grid;
+        gap: 4px;
+    }
+}
+
+.wgReviewStars {
+    border: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+
+    legend {
+        font-weight: 650;
+        margin-bottom: 4px;
+    }
+}
+
+.wgReviewError:empty {
+    display: none;
+}
+
+.wgReviewError {
+    color: #B3261E;
+    margin: 0;
+}

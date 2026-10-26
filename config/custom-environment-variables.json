@@ -49,6 +49,14 @@
         "__name": "ADMINS",
         "__format": "json"
     },
+    "reviewers": {
+        "__name": "REVIEWERS",
+        "__format": "json"
+    },
+    "openReviews": {
+        "__name": "OPEN_REVIEWS",
+        "__format": "boolean"
+    },
     "google": {
         "clientId": "GOOGLE_CLIENT_ID",
         "clientSecret": "GOOGLE_CLIENT_SECRET"

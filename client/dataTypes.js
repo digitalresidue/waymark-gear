@@ -71,6 +71,10 @@ Item.prototype.save = function () {
     if (this.videoUrl) out.videoUrl = this.videoUrl;
     // How many you own (Phase 5): lists warn when they use more.
     if (Number.isInteger(this.qtyOwned)) out.qtyOwned = this.qtyOwned;
+    // Lifecycle (Phase 6).
+    if (this.purchasedOn) out.purchasedOn = this.purchasedOn;
+    if (this.condition) out.condition = this.condition;
+    if (Number.isFinite(this.lifeYears)) out.lifeYears = this.lifeYears;
     return out;
 };
 

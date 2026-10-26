@@ -33,6 +33,65 @@
                 </label>
             </div>
 
+            <details class="wgTripDetails" :open="hasDetails" data-testid="trip-details">
+                <summary>Trip details and calorie estimate</summary>
+                <div class="wgTripInputs">
+                    <label class="wgField">Distance
+                        <span class="wgTripUnitField">
+                            <input :value="show('distanceKm', km2u)" class="wgInput" type="number" min="0" step="0.1" inputmode="decimal" data-testid="trip-distance" @input="setDetail('distanceKm', $event.target.value, u2km)">
+                            <span class="wgMuted">{{ imperial ? 'mi' : 'km' }}</span>
+                        </span>
+                    </label>
+                    <label class="wgField">Elevation gain
+                        <span class="wgTripUnitField">
+                            <input :value="show('elevationM', m2u, 0)" class="wgInput" type="number" min="0" step="10" inputmode="numeric" data-testid="trip-elevation" @input="setDetail('elevationM', $event.target.value, u2m)">
+                            <span class="wgMuted">{{ imperial ? 'ft' : 'm' }}</span>
+                        </span>
+                    </label>
+                    <label class="wgField">Terrain
+                        <select :value="trip.terrain || ''" class="wgSelect" data-testid="trip-terrain" @change="setDetail('terrain', $event.target.value)">
+                            <option value="">—</option>
+                            <option v-for="(label, id) in terrains" :key="id" :value="id">{{ label }}</option>
+                        </select>
+                    </label>
+                    <label class="wgField">Low / high
+                        <span class="wgTripUnitField">
+                            <input :value="show('tempLowC', c2u, 0)" class="wgInput" type="number" step="1" inputmode="numeric" aria-label="Expected low" data-testid="trip-low" @input="setDetail('tempLowC', $event.target.value, u2c)">
+                            <input :value="show('tempHighC', c2u, 0)" class="wgInput" type="number" step="1" inputmode="numeric" aria-label="Expected high" data-testid="trip-high" @input="setDetail('tempHighC', $event.target.value, u2c)">
+                            <span class="wgMuted">°{{ imperial ? 'F' : 'C' }}</span>
+                        </span>
+                    </label>
+                    <label class="wgField">Your weight
+                        <span class="wgTripUnitField">
+                            <input :value="show('bodyKg', kg2u, 0)" class="wgInput" type="number" min="0" step="1" inputmode="numeric" data-testid="trip-body" @input="setDetail('bodyKg', $event.target.value, u2kg)">
+                            <span class="wgMuted">{{ imperial ? 'lb' : 'kg' }}</span>
+                        </span>
+                    </label>
+                    <label class="wgField">Food density
+                        <span class="wgTripUnitField">
+                            <input :value="trip.kcalPerOz || ''" class="wgInput" type="number" min="60" max="200" step="5" placeholder="125" inputmode="numeric" data-testid="trip-density" @input="setDetail('kcalPerOz', $event.target.value)">
+                            <span class="wgMuted">kcal/oz</span>
+                        </span>
+                    </label>
+                </div>
+                <div v-if="estimate" class="wgTripEstimate" data-testid="trip-estimate">
+                    <p>
+                        About <strong data-testid="trip-kcal">{{ estimate.kcalPerDay.toLocaleString() }} kcal</strong> a day:
+                        <strong class="wgMono">{{ fmt(estimate.foodPerDayMg) }}</strong> of food at {{ estimate.kcalPerOz }} kcal/oz,
+                        and roughly <strong>{{ estimate.waterLitersPerDay }} L</strong> of water to drink.
+                    </p>
+                    <button type="button" class="wgBtn wgBtnSmall wgBtnPrimary" :disabled="Math.abs(estimate.foodPerDayMg - trip.foodPerDayMg) < 1000" data-testid="trip-use-estimate" @click="set('foodPerDayMg', estimate.foodPerDayMg)">
+                        Use this for food per day
+                    </button>
+                    <p class="wgMuted wgTripFine">
+                        A planning estimate with a 10% margin: resting burn, walking with your pack, climbing and cold. Bodies differ; adjust from experience.
+                    </p>
+                </div>
+                <p v-else class="wgMuted wgTripFine">
+                    Add your weight (and the distance and climbing, if you know them) for a calorie and water estimate.
+                </p>
+            </details>
+
             <div class="wgTripStats">
                 <div>
                     <p class="wgTripLabel">
@@ -95,7 +154,7 @@
 </template>
 
 <script>
-import { tripDays, normalizeTrip } from '../utils/trip.js';
+import { tripDays, normalizeTrip, tripEstimates, TERRAINS } from '../utils/trip.js';
 import { formatWeightMg } from '../utils/format.js';
 import weightUtils from '../utils/weight.js';
 
@@ -107,7 +166,7 @@ export default {
         list: { type: Object, required: true },
     },
     data() {
-        return { open: false };
+        return { open: false, terrains: TERRAINS };
     },
     computed: {
         library() {
@@ -122,6 +181,15 @@ export default {
         // Pounds for oz/lb people, kilograms for g/kg people.
         unit() {
             return ['g', 'kg'].includes(this.library.totalUnit) ? 'kg' : 'lb';
+        },
+        imperial() {
+            return this.unit === 'lb';
+        },
+        hasDetails() {
+            return ['distanceKm', 'elevationM', 'bodyKg', 'tempLowC', 'tempHighC'].some((k) => this.trip[k] !== undefined);
+        },
+        estimate() {
+            return tripEstimates(this.trip, (this.list.totalBaseWeight || 0) + (this.list.totalConsumableWeight || 0));
         },
         foodPerDayDisplay() {
             return Math.round(weightUtils.MgToWeight(this.trip.foodPerDayMg, this.unit) * 100) / 100;
@@ -154,6 +222,33 @@ export default {
         set(key, value) {
             if (!Number.isFinite(value)) return;
             this.$store.commit('setListTrip', { list: this.list, trip: normalizeTrip({ ...this.trip, [key]: value }) });
+        },
+        // Unit conversions for the details (stored metric).
+        km2u(v) { return this.imperial ? v / 1.609344 : v; },
+        u2km(v) { return this.imperial ? v * 1.609344 : v; },
+        m2u(v) { return this.imperial ? v * 3.28084 : v; },
+        u2m(v) { return this.imperial ? v / 3.28084 : v; },
+        c2u(v) { return this.imperial ? v * 9 / 5 + 32 : v; },
+        u2c(v) { return this.imperial ? (v - 32) * 5 / 9 : v; },
+        kg2u(v) { return this.imperial ? v * 2.20462 : v; },
+        u2kg(v) { return this.imperial ? v / 2.20462 : v; },
+        // Whole numbers for fields entered as whole numbers, so a value
+        // converted to metric and back reads the same as what was typed.
+        show(key, toUnit, digits = 1) {
+            const v = this.trip[key];
+            const f = 10 ** digits;
+            return v === undefined ? '' : Math.round(toUnit(v) * f) / f;
+        },
+        setDetail(key, raw, toMetric) {
+            const next = { ...this.trip };
+            if (raw === '' || raw === null) delete next[key];
+            else if (key === 'terrain') next[key] = raw;
+            else {
+                const n = Number(raw);
+                if (!Number.isFinite(n)) return;
+                next[key] = toMetric ? toMetric(n) : n;
+            }
+            this.$store.commit('setListTrip', { list: this.list, trip: normalizeTrip(next) });
         },
         setFood(value) {
             const n = Number(value);
@@ -334,5 +429,40 @@ export default {
         margin-right: 6px;
         width: 10px;
     }
+}
+.wgTripDetails {
+    border: 1px solid var(--lp-border);
+    border-radius: 12px;
+    margin: 14px 0 0;
+    padding: 10px 12px;
+
+    summary {
+        cursor: pointer;
+        font-weight: 650;
+    }
+
+    .wgTripInputs {
+        margin-top: 12px;
+    }
+
+    .wgTripUnitField .wgInput {
+        min-width: 0;
+    }
+}
+
+.wgTripEstimate {
+    background: var(--lp-surface-sunken);
+    border-radius: 10px;
+    margin-top: 12px;
+    padding: 10px 12px;
+
+    p {
+        margin: 0 0 8px;
+    }
+}
+
+.wgTripFine {
+    font-size: 12.5px;
+    margin: 8px 0 0 !important;
 }
 </style>

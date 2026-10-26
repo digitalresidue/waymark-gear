@@ -42,6 +42,7 @@
                             {{ metaLine(entry.item) }}<template v-if="entry.item.closetCategory">
                                 · {{ entry.item.closetCategory }}
                             </template>
+                            <span v-if="needsReplacing(entry.item)" class="wgReplaceTag">Replace soon</span>
                         </div>
                         <button type="button" class="wgClosetDetails lpGearDetails" data-testid="closet-details" @click="detailsItem = entry.item">
                             Details{{ (entry.item.photos && entry.item.photos.length) || entry.item.videoUrl ? ' · media' : '' }}
@@ -108,6 +109,7 @@
 import globalAlerts from '../components/global-alerts.vue';
 import speedbump from '../components/speedbump.vue';
 import gearDetails from '../components/gear-details.vue';
+import { replaceSoon } from '../utils/gear-meta.js';
 
 import utilsMixin from '../mixins/utils-mixin.js';
 import { confirmClosetRemoval, isPlaceholder, restoreClosetItem } from '../utils/closet.js';
@@ -215,6 +217,9 @@ export default {
         }
     },
     methods: {
+        needsReplacing(item) {
+            return replaceSoon(item);
+        },
         goBack() {
             this.$router.push('/');
         },
