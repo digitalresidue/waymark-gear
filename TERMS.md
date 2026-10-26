@@ -44,7 +44,7 @@ except that we can't retrieve copies other people have already made.
 
 Don't use Waymark Gear to:
 
-- post spam
+- post spam, including in comments and profile links
 - upload images or text you don't have the rights to
 - post anything illegal, or anything that harasses or targets another person
 - impersonate someone else
@@ -57,6 +57,10 @@ This isn't a complete list.
 ## Moderation
 
 We can remove content and suspend or delete accounts that break these rules.
+Anyone can report a comment; moderators review reports and can hide
+comments. List owners can delete comments on their own lists. Shakedown
+suggestions are other hikers' opinions, not safety advice: check anything
+that matters before you rely on it in the backcountry.
 If you think we've made a mistake, email [CONTACT EMAIL] and we'll take
 another look. You can delete your own account at any time from **Account →
 Delete account**.

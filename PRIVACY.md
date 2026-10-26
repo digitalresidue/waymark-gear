@@ -31,10 +31,38 @@ When you create an account we store:
 - **Your email address** - for account recovery
 - **Your password** - hashed with bcrypt.
 - **The date you registered and last visited** - for debugging and diagnostics
+- **If you sign in with Google:** your Google account ID and the email address
+  Google confirms, so we can recognize you next time. We don't receive your
+  Google password or access anything else in your Google account.
 
 Everything you enter into Waymark Gear, including list names, item names, descriptions,
 weights, prices, quantities, links, and the images you upload, is stored in our
 database and associated with your account. We attempt to strip all EXIF metadata from uploaded images.
+
+### Your public profile (optional)
+
+Your profile at `/@username` shows only what you choose to add: a name, trail
+name, bio, profile picture, banner, and links to other sites, plus the lists
+you've published. You can hide your profile at any time from **Your profile**.
+
+### Comments and notifications
+
+Comments you post on published lists are public and show your username,
+name and profile picture. We store notifications (who commented or replied,
+on which list) so we can show them to you. If you report a comment, the
+moderators can see that you reported it and why; the author can't.
+
+### On your device
+
+The app keeps a copy of your gear list in your browser's local storage so it
+opens without a signal. It's removed when you sign out. Your light/dark mode
+choice is stored there too.
+
+### Importing from LighterPack
+
+When you paste a LighterPack link, our server fetches that list's public
+pages from lighterpack.com to read it. Nothing about you is sent to
+LighterPack.
 
 ### Server logs
 
@@ -80,12 +108,13 @@ No one else receives your data, except where required by law.
 
 ## Email we send you
 
-We send a couple kinds of email:
-- Emails you asked for - username remind, password reset
+We send a few kinds of email:
+- Emails you asked for - username reminder, password reset
+- Comment notifications - when someone comments on your list or replies to
+  you, at most one every 15 minutes. Turn them off on **Your profile**.
 - Service emails - if something needs your attention
-- Maybe one day we'll send a newsletter. We haven't yet.
 
-We do not send marketing email, so there is nothing to unsubscribe from.
+We do not send marketing email.
 
 ## Lists you share are public
 
@@ -93,14 +122,18 @@ When you share a list, Waymark Gear gives it a URL. Anyone who has
 that link can view the list, embed it, or export it as CSV — **no account and no
 password is required.** Shared list URLs are hard to guess but they are unlisted, not private.
 
+If you **publish** a list, it's also listed on Explore, on your profile, and in
+our sitemap for search engines, and anyone can comment on it.
+
 Images you upload are likewise served from public URLs and can be viewed by
 anyone who has the link.
 
 ## Support and moderation access
 
 Site moderators can search accounts by username or email address, reset a
-user's password, and sign a user out of all sessions. This exists to handle
-account-recovery requests and abuse reports. Moderators cannot read your password.
+user's password, and sign a user out of all sessions. They review reported
+comments and can hide them. This exists to handle account-recovery requests
+and abuse reports. Moderators cannot read your password.
 
 ## Deleting your account and accessing your data
 
@@ -110,8 +143,12 @@ for your password to confirm.
 Deleting your account **immediately and permanently removes**:
 
 - your user record, including your email address and password hash
-- all of your gear lists and their contents
+- your profile, notifications and comment reports
+- all of your gear lists and their contents, and the comments on them
 - your uploaded photos
+
+Comments you left on other people's lists are emptied and shown as
+"deleted", so the replies other people wrote to them still make sense.
 
 ## Your rights
 

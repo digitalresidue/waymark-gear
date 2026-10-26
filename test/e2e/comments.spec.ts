@@ -165,4 +165,38 @@ test.describe('Comments and shakedowns', () => {
 
         for (const ctx of [troll.context, reader.context, modContext]) await ctx.close();
     });
+
+    test("deleting an account keeps other people's replies to it", async ({ page, browser }) => {
+        const owner = generateTestUser('cmdel');
+        await registerUser(page, owner.username, owner.password, owner.email);
+        await expect(page.getByTestId('item-row').first()).toBeVisible();
+        const link = await publishList(page, { name: 'Leaving soon', item: 'Bivy' });
+
+        const context = await browser.newContext();
+        const leaver = await context.newPage();
+        const u = generateTestUser('cmlvr');
+        await registerUser(leaver, u.username, u.password, u.email);
+        await expect(leaver.getByTestId('item-row').first()).toBeVisible();
+        await leaver.goto(link);
+        await leaver.locator('#wgComments').scrollIntoViewIfNeeded();
+        await leaver.getByTestId('comment-body').fill('Is the bivy enough in the rain?');
+        await leaver.getByTestId('comment-submit').click();
+        await expect(leaver.getByTestId('comment')).toHaveCount(1);
+
+        await page.goto(link + '#wgComments');
+        await page.getByTestId('comment-reply').first().click();
+        await page.getByTestId('reply-body').fill('With a tarp, yes.');
+        await page.getByTestId('reply-submit').click();
+        await expect(page.getByTestId('comment')).toHaveCount(2);
+
+        const del = await leaver.request.post(url('/delete-account'), { data: { username: u.username, password: u.password } });
+        expect(del.status()).toBe(200);
+        await context.close();
+
+        await page.reload();
+        await page.locator('#wgComments').scrollIntoViewIfNeeded();
+        await expect(page.getByTestId('comment')).toHaveCount(2);
+        await expect(page.getByTestId('comment').first()).toContainText('This comment was deleted');
+        await expect(page.getByTestId('comment').nth(1)).toContainText('With a tarp, yes.');
+    });
 });

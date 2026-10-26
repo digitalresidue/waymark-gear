@@ -20,6 +20,10 @@ async function deleteUserAccount(user) {
     // list rows FK-reference the user, so they must go first (same transaction)
     await knex.transaction(async (trx) => {
         await trx('list').where({ user_id: user.user_id }).del();
+        // Their comments on other people's lists become "deleted"
+        // placeholders (author unset by the FK), so replies to them stay.
+        await trx('comments').where({ author_id: user.user_id })
+            .update({ deleted_at: trx.fn.now(), body: '', item_name: '' });
         await trx('users').where({ user_id: user.user_id }).del();
     });
 

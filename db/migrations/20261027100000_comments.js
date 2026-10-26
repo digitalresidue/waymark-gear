@@ -7,7 +7,9 @@ export async function up(knex) {
             -- The list's share id; comments show while that list is published.
             external_id text not null,
             list_owner_id uuid not null references users (user_id) on delete cascade,
-            author_id uuid not null references users (user_id) on delete cascade,
+            -- Null once the author's account is deleted: their comments become
+            -- "deleted" placeholders so other people's replies survive.
+            author_id uuid references users (user_id) on delete set null,
             parent_id bigint references comments (id) on delete cascade,
             depth smallint not null default 0,
             kind text not null default 'comment' check (kind in ('comment', 'suggestion')),

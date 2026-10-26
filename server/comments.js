@@ -75,7 +75,7 @@ export async function listComments(externalId, viewer) {
     const kit = await kitFor(externalId);
     if (!kit) throw new CommentError('Comments are only open on published lists.', 404);
     const rows = await knex('comments')
-        .join('users', 'users.user_id', 'comments.author_id')
+        .leftJoin('users', 'users.user_id', 'comments.author_id')
         .select('comments.*', 'users.username', 'users.display_name', 'users.avatar_url')
         .where({ external_id: kit.external_id })
         .orderBy('comments.created_at', 'asc')
@@ -258,7 +258,7 @@ export async function markNotificationsRead(user) {
 export async function openReports() {
     const rows = await knex('comment_reports')
         .join('comments', 'comments.id', 'comment_reports.comment_id')
-        .join('users as author', 'author.user_id', 'comments.author_id')
+        .leftJoin('users as author', 'author.user_id', 'comments.author_id')
         .join('users as reporter', 'reporter.user_id', 'comment_reports.reporter_id')
         .whereNull('comment_reports.resolved_at')
         .select(
@@ -275,7 +275,7 @@ export async function openReports() {
             byComment.set(id, {
                 id,
                 body: r.body,
-                author: r.author,
+                author: r.author || '(deleted account)',
                 url: `/r/${r.external_id}#comment-${id}`,
                 hidden: Boolean(r.hidden_at),
                 removed: Boolean(r.deleted_at),
