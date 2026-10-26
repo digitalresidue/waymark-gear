@@ -86,6 +86,7 @@
             <nav class="wgProfileTabs" aria-label="Profile">
                 <a href="/@{{username}}" {{#listsView}}aria-current="page"{{/listsView}} data-testid="profile-tab-lists">Lists</a>
                 <a href="/@{{username}}?view=gear" {{#gearView}}aria-current="page"{{/gearView}} data-testid="profile-tab-gear">Gear</a>
+                <a href="/@{{username}}?view=trips" {{#tripsView}}aria-current="page"{{/tripsView}} data-testid="profile-tab-trips">Trips</a>
             </nav>
 
             {{#listsView}}
@@ -105,6 +106,28 @@
                 <p class="wgProfileEmpty">@{{username}} hasn't published any lists yet.</p>
                 {{/kitCount}}
             {{/listsView}}
+
+            {{#tripsView}}
+                {{#hasTrips}}
+                <ul class="wgTripCards" data-testid="profile-trips">
+                    {{#trips}}
+                    <li class="wgTripCard">
+                        <a href="/t/{{id}}" data-testid="profile-trip">
+                            {{#coverUrl}}<img src="{{coverUrl}}" alt="" loading="lazy" width="512" height="512">{{/coverUrl}}
+                            <span class="wgTripCardBody">
+                                <strong>{{title}}</strong>
+                                <span class="wgMuted">{{#dateRange}}{{dateRange}} · {{/dateRange}}{{entryLabel}}{{#visibilityLabel}} · {{visibilityLabel}}{{/visibilityLabel}}</span>
+                                {{#excerpt}}<span>{{excerpt}}</span>{{/excerpt}}
+                            </span>
+                        </a>
+                    </li>
+                    {{/trips}}
+                </ul>
+                {{/hasTrips}}
+                {{^hasTrips}}
+                <p class="wgProfileEmpty">No trip journals to show yet.</p>
+                {{/hasTrips}}
+            {{/tripsView}}
 
             {{#gearView}}
                 {{#gearCount}}

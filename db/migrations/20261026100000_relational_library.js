@@ -50,6 +50,10 @@ export async function up(knex) {
             photos jsonb not null default '[]',
             video_url text not null default '',
             qty_owned integer,
+            -- Phase 6 (also added by 20261030000000).
+            purchased_on text not null default '',
+            condition text not null default '',
+            life_years real,
             updated_at timestamptz not null default now(),
             primary key (user_id, id)
         );

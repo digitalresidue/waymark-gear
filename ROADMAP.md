@@ -1,11 +1,18 @@
 # Waymark Gear roadmap
 
 Living document. Each phase gets a dated entry in the changelog when it ships;
-the plan below it is what comes next. Last updated **2026-10-26** (Phase 5 built).
+the plan below it is what comes next. Last updated **2026-10-26** (Phase 6 built).
 
 ---
 
 ## Changelog
+
+### Phase 6 — The trip hub · 2026-10-26 · branch `phase6`
+- **Trip journals** (`/trips`): a trip with dates, a summary, a linked pack list and a cover photo, plus day-by-day entries (dated automatically from the start date, or set by hand) with notes, distance and up to 8 photos each. Each trip is public, followers-only or private. Public page at `/t/:id` (photos open in the lightbox) and a Trips tab on profiles; followers-only trips show only to followers. Photos must be your own uploads.
+- **Gear reviews**: catalog items get a page at `/g/:id` with specs, average rating, how many public lists use it, and reviews (rating, headline, "used for", liked / didn't like). Staff write them: owners, moderators and anyone in the new `reviewers` setting; turn on `openReviews` to let every member review (marked "Member", listed after staff). Moderators can hide a review. Latest reviews at `/reviews`; closet items from the catalog link to their page.
+- **Trip details** in the trip planner: distance, elevation gain, terrain, expected low/high and your weight (in your units).
+- **Calorie and water estimates** from those details, with a 10% safety margin, and a "Use this for food per day" button that feeds the planner.
+- **Gear lifecycle**: when you bought it, condition and expected life in gear details; a "Replace soon" tag in the closet when it's past its life or marked as needing replacement.
 
 ### Phase 5 — Plan together · 2026-10-26 · branch `phase5`
 - **Real-time collaboration**: invite hiking partners or your group to a list (Team button). Members open it at `/plan/:owner/:list` in the regular editor and everyone's edits appear live; "Shared with you" in the list switcher; invite notifications. Server-sent events carry changes and presence ("here now" faces in the header). Members can only touch that one list: publishing, sharing, other lists and the rest of the owner's closet stay the owner's (enforced on the server).
@@ -83,12 +90,13 @@ the plan below it is what comes next. Last updated **2026-10-26** (Phase 5 built
 - **Quantity owned** warnings when a list uses more than you own (Packstack).
 - Follow-ups: add gear from your own closet while planning someone else's list; viewer-only members; live updates across several app instances (Postgres LISTEN/NOTIFY).
 
-## Phase 6 — The trip hub (proposed next run)
+## Phase 6 — The trip hub (built 2026-10-26, see changelog)
 - **Trip journal**: trip "folders" with day-by-day entries (dated automatically or set by hand), photos, linked pack list; public, followers-only or private.
 - **Gear reviews**: staff reviews first, then users; star rating, pros/cons, linked to catalog items and closet gear.
 - **Trip details**: distance, elevation gain, terrain, expected temperatures (Packstack), feeding the trip planner.
 - **Calorie and water estimates** with a safety margin, on top of today's trip planner.
 - **Gear lifecycle**: condition, age and a replace-soon hint.
+- Follow-ups: comments on trip journals; GPX upload for distance and elevation; reviews from the closet view; share images for trips.
 
 ## Phase 7 — Smarter gear
 - **Comparisons**: side-by-side catalog items (weight, price, specs).

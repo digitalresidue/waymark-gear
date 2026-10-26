@@ -19,6 +19,10 @@ import { publicProfile, publicGear } from './profiles.js';
 import { youTubeId, TRIP_TYPE_LABELS } from '../client/utils/gear-meta.js';
 import { listImage, listImageVersion, profileImage, profileImageVersion } from './og.js';
 import { cachedPage, storePage, sendCachedPage, NONCE_PLACEHOLDER } from './page-cache.js';
+import { optionalUser } from './auth.js';
+import { viewTrip, tripsOnProfile } from './trips.js';
+import { reviewsFor, latestReviews } from './reviews.js';
+import { getById as catalogItem, isUuid } from './catalog.js';
 
 const router = express.Router();
 
@@ -52,6 +56,8 @@ const vueRoutes = [ /* TODO - get this from same data source as Vue */
     { path: '/forgot-password' },
     { path: '/reset-password/:token' },
     { path: '/moderation' },
+    { path: '/trips' },
+    { path: '/trips/:id' },
 ];
 
 let index = fs.readFileSync(path.join(import.meta.dirname, '../_index.html'), 'utf8');
@@ -341,13 +347,16 @@ router.get('/@:username', async (req, res) => {
     const username = String(req.params.username || '');
     if (!/^[A-Za-z0-9_.-]{1,64}$/.test(username)) return res.status(404).send('No such profile.');
     const cacheKey = `p:${username.toLowerCase()}:${req.query.view === 'gear' ? 'gear' : 'lists'}`;
-    const hit = cachedPage(cacheKey);
+    // Trips depend on who's reading (followers-only trips), so that tab is never cached.
+    const tripsView = req.query.view === 'trips';
+    const hit = !tripsView && cachedPage(cacheKey);
     if (hit) return sendCachedPage(req, res, hit);
     try {
         const found = await publicProfile(username);
         if (!found) return res.status(404).send('No such profile.');
         const { profile, featured, others, kits } = found;
         const gearView = req.query.view === 'gear';
+        const trips = tripsView ? await tripsOnProfile(found.userId, await optionalUser(req)) : [];
         const gear = await publicGear(found.userId, kits.map((k) => k.externalId));
         const name = profile.displayName || `@${profile.username}`;
         const lightest = kits.length ? formatWeightMg(Math.min(...kits.map((k) => k.baseWeightMg)), 'lb') : '';
@@ -379,7 +388,16 @@ router.get('/@:username', async (req, res) => {
             others: others.map(kitCardModel),
             hasFeatured: featured.length > 0,
             hasOthers: others.length > 0,
-            listsView: !gearView,
+            listsView: !gearView && !tripsView,
+            tripsView,
+            trips: trips.map((t) => ({
+                ...t,
+                dateRange: tripDateRange(t.startDate, t.endDate),
+                entryLabel: `${t.entryCount} ${t.entryCount === 1 ? 'entry' : 'entries'}`,
+                visibilityLabel: VISIBILITY_LABELS[t.visibility] || '',
+                excerpt: plain(t.summary).slice(0, 160),
+            })),
+            hasTrips: trips.length > 0,
             gearView,
             scripts: shareScriptsHtml,
             tags: [...profile.tags.activities, ...profile.tags.seasons, ...profile.tags.custom],
@@ -396,9 +414,169 @@ router.get('/@:username', async (req, res) => {
             metaDescription: `${name} on Waymark Gear: ${kits.length} published ${kits.length === 1 ? 'list' : 'lists'}${lightest ? `, lightest base weight ${lightest}` : ''}.`,
         };
         const html = Mustache.render(profileTemplate, model, { kitCard: templates.t_kitCard || '' });
+        if (tripsView) return sendFresh(res, html);
         return sendCachedPage(req, res, storePage(cacheKey, html, found.userId));
     } catch (err) {
         logWithRequest(req, { message: 'error rendering profile', err });
+        res.status(500).send('An error occurred.');
+    }
+});
+
+// ---- trip journals (/t/:id) and gear pages (/g/:id, /reviews) ------------
+
+const tripTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/trip.mustache'), 'utf8');
+const gearTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/gear-item.mustache'), 'utf8');
+const VISIBILITY_LABELS = { followers: 'Followers only', private: 'Only you' };
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function shortDate(iso, withYear = true) {
+    if (!iso) return '';
+    const [y, m, d] = iso.split('-').map(Number);
+    return `${MONTHS[m - 1]} ${d}${withYear ? `, ${y}` : ''}`;
+}
+
+export function tripDateRange(start, end) {
+    if (!start) return '';
+    if (!end || end === start) return shortDate(start);
+    const sameYear = start.slice(0, 4) === end.slice(0, 4);
+    return `${shortDate(start, !sameYear)} – ${shortDate(end)}`;
+}
+
+const kmLabel = (km, imperial) => (imperial ? `${(km * 0.621371).toFixed(1)} mi` : `${km.toFixed(1)} km`);
+const plain = (md) => String(md || '').replace(/[#*_`>[\]()!]/g, '').replace(/\s+/g, ' ').trim();
+
+function shareHead() {
+    return { styles: shareStylesHtml, scripts: shareScriptsHtml, deployUrl: config.get('deployUrl') };
+}
+
+// Pages that depend on who's reading: rendered every time, never cached.
+function sendFresh(res, html) {
+    res.set('Cache-Control', 'private, no-store');
+    res.type('html').send(html.split(NONCE_PLACEHOLDER).join(res.locals.cspNonce || ''));
+}
+
+router.get('/t/:id', async (req, res) => {
+    try {
+        const viewer = await optionalUser(req);
+        const view = await viewTrip(req.params.id, viewer);
+        if (!view) return res.status(404).send('That trip could not be found.');
+        const { trip, author, list } = view;
+        const imperial = !list || !['g', 'kg'].includes(list.unit);
+        const totalKm = trip.entries.reduce((n, e) => n + (e.distanceKm || 0), 0);
+        const days = trip.startDate && trip.endDate ? Math.round((Date.parse(trip.endDate) - Date.parse(trip.startDate)) / 86400000) + 1 : 0;
+        const authorName = author.displayName || `@${author.username}`;
+        const deployUrl = config.get('deployUrl');
+        const model = {
+            ...shareHead(),
+            cspNonce: NONCE_PLACEHOLDER,
+            id: trip.id,
+            title: trip.title,
+            username: author.username,
+            authorName,
+            mine: Boolean(viewer && viewer.username === author.username),
+            isPublic: trip.visibility === 'public',
+            visibilityLabel: VISIBILITY_LABELS[trip.visibility] || '',
+            dateRange: tripDateRange(trip.startDate, trip.endDate),
+            days: days > 0 ? days : '',
+            entryCount: trip.entries.length,
+            distance: totalKm ? kmLabel(totalKm, imperial) : '',
+            coverUrl: trip.coverUrl,
+            ogImage: trip.coverUrl ? `${deployUrl}${trip.coverUrl}` : '',
+            summaryHtml: trip.summary ? marked(trip.summary) : '',
+            list: list ? {
+                name: list.name,
+                baseWeight: formatWeightMg(list.baseWeightMg, imperial ? 'lb' : 'kg'),
+                href: list.externalId && list.published ? `/r/${list.externalId}` : '',
+            } : null,
+            entries: trip.entries.map((e) => ({
+                id: e.id,
+                day: e.day && e.day > 0 ? e.day : '',
+                date: e.date ? shortDate(e.date) : '',
+                title: e.title,
+                distance: e.distanceKm ? kmLabel(e.distanceKm, imperial) : '',
+                bodyHtml: e.body ? marked(e.body) : '',
+                photos: e.photos.map((url, i) => ({
+                    url,
+                    alt: `${trip.title}${e.day ? `, day ${e.day}` : ''}: photo ${i + 1}`,
+                    set: JSON.stringify([...e.photos.slice(i), ...e.photos.slice(0, i)]),
+                })),
+            })),
+            metaDescription: `${trip.title}: a trip journal by ${authorName}${tripDateRange(trip.startDate, trip.endDate) ? `, ${tripDateRange(trip.startDate, trip.endDate)}` : ''}. ${plain(trip.summary).slice(0, 140)}`.trim(),
+        };
+        sendFresh(res, Mustache.render(tripTemplate, model));
+    } catch (err) {
+        logWithRequest(req, { message: 'error rendering trip', err });
+        res.status(500).send('An error occurred.');
+    }
+});
+
+const STARS = (n) => '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n);
+
+function reviewModel(r) {
+    const d = new Date(r.createdAt);
+    return {
+        ...r,
+        stars: STARS(r.rating),
+        when: `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`,
+        bodyHtml: marked(r.body),
+        hasProsCons: Boolean(r.pros || r.cons),
+        itemName: r.item ? [r.item.brand, r.item.name].filter(Boolean).join(' ') : '',
+    };
+}
+
+router.get('/g/:id', async (req, res) => {
+    const id = String(req.params.id);
+    if (!isUuid(id)) return res.status(404).send('No such gear.');
+    try {
+        const item = await catalogItem(id);
+        if (!item || item.status !== 'published') return res.status(404).send('No such gear.');
+        const viewer = await optionalUser(req);
+        const { reviews, summary } = await reviewsFor(id, viewer);
+        const uses = await knex('public_kits').whereRaw('? = any(catalog_ids)', [id]).count({ n: '*' }).first();
+        const kitCount = Number(uses.n);
+        const fullName = [item.brand, item.name].filter(Boolean).join(' ');
+        const model = {
+            ...shareHead(),
+            cspNonce: NONCE_PLACEHOLDER,
+            path: `/g/${id}`,
+            pageTitle: `${fullName}: weight and reviews`,
+            metaDescription: `${fullName}, ${weightUtils.MgToDisplayWeight(item.weightMg, item.unit)} ${item.unit}.${summary.average ? ` Rated ${summary.average}/5 in ${summary.count} ${summary.count === 1 ? 'review' : 'reviews'} on Waymark Gear.` : ''}`,
+            item: {
+                ...item,
+                initial: item.name.trim().charAt(0).toUpperCase(),
+                weight: `${weightUtils.MgToDisplayWeight(item.weightMg, item.unit)} ${item.unit}`,
+                price: item.price ? `${item.currency === 'USD' || !item.currency ? '$' : `${item.currency} `}${item.price}` : '',
+                url: /^https:\/\//.test(item.url) ? item.url : '',
+                average: summary.average,
+                stars: summary.average ? STARS(Math.round(summary.average)) : '',
+                countLabel: `${summary.count} ${summary.count === 1 ? 'review' : 'reviews'}`,
+                kitCount,
+                kitCountLabel: `${kitCount} public ${kitCount === 1 ? 'list' : 'lists'}`,
+                searchName: encodeURIComponent(item.name),
+                reviews: reviews.map(reviewModel),
+            },
+        };
+        sendFresh(res, Mustache.render(gearTemplate, model, { reviewCard: templates.t_reviewCard || '' }));
+    } catch (err) {
+        logWithRequest(req, { message: 'error rendering gear page', err });
+        res.status(500).send('An error occurred.');
+    }
+});
+
+router.get('/reviews', async (req, res) => {
+    try {
+        const reviews = await latestReviews({ limit: 30 });
+        const model = {
+            ...shareHead(),
+            cspNonce: NONCE_PLACEHOLDER,
+            path: '/reviews',
+            pageTitle: 'Gear reviews',
+            metaDescription: 'Long-term backpacking gear reviews from the Waymark Gear team.',
+            latest: { reviews: reviews.map(reviewModel), openReviews: config.has('openReviews') && config.get('openReviews') },
+        };
+        sendFresh(res, Mustache.render(gearTemplate, model, { reviewCard: templates.t_reviewCard || '' }));
+    } catch (err) {
+        logWithRequest(req, { message: 'error rendering reviews', err });
         res.status(500).send('An error occurred.');
     }
 });

@@ -66,6 +66,15 @@ and you can see theirs while you're both looking at it ("here now"). Gear
 they add belongs to your list. You can remove people at any time, and they
 can leave.
 
+### Trip journals and gear reviews
+
+Trip journals are private unless you choose otherwise: "Your followers" shows
+a trip to people who follow you, "Everyone" makes it a public page. Photos
+you add are stored with your other uploads. Gear reviews are public and show
+your username; you can edit or delete yours, and moderators can hide reviews
+that break the rules. Deleting your account deletes your trips; your reviews
+are deleted too.
+
 ### Importing from LighterPack
 
 When you paste a LighterPack link, our server fetches that list's public

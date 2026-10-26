@@ -27,3 +27,24 @@ describe('tripDays', () => {
         assert.equal(normalizeTrip({ days: 2.6 }).days, 3);
     });
 });
+
+describe('tripEstimates', async () => {
+    const { tripEstimates } = await import('../../client/utils/trip.js');
+    test('needs body weight; more distance, climbing and cold mean more food', () => {
+        assert.equal(tripEstimates({ days: 3 }, 0), null);
+        const base = tripEstimates({ days: 3, bodyKg: 75, distanceKm: 60, elevationM: 1500 }, 8 * LB);
+        const harder = tripEstimates({ days: 3, bodyKg: 75, distanceKm: 90, elevationM: 4500, tempLowC: -10 }, 8 * LB);
+        assert.ok(base.kcalPerDay > 2500 && base.kcalPerDay < 4500, String(base.kcalPerDay));
+        assert.ok(harder.kcalPerDay > base.kcalPerDay);
+        assert.ok(harder.waterLitersPerDay >= base.waterLitersPerDay);
+        assert.equal(base.foodPerDayMg, Math.round((base.kcalPerDay / 125) * 28349.5));
+    });
+
+    test('trip details are optional and bounded', () => {
+        const t = normalizeTrip({ days: 2, distanceKm: -5, terrain: 'lava', bodyKg: 500 });
+        assert.equal(t.distanceKm, 0);
+        assert.equal(t.terrain, undefined);
+        assert.equal(t.bodyKg, 250);
+        assert.equal(normalizeTrip({ days: 2 }).distanceKm, undefined);
+    });
+});

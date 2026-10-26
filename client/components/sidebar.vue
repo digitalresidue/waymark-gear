@@ -13,6 +13,9 @@
                 <router-link v-if="$store.state.loggedIn" to="/profile" data-testid="drawer-profile">
                     Your profile
                 </router-link>
+                <router-link v-if="$store.state.loggedIn" to="/trips" data-testid="drawer-trips">
+                    Trip journals
+                </router-link>
                 <router-link v-if="isAdmin" to="/owner/catalog">
                     Owner
                 </router-link>

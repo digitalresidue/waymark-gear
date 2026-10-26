@@ -19,7 +19,8 @@
 
 import knex from './db.js';
 import { Library } from '../client/dataTypes.js';
-import { TRIP_TYPES, youTubeId } from '../client/utils/gear-meta.js';
+import { normalizeTrip } from '../client/utils/trip.js';
+import { TRIP_TYPES, youTubeId, CONDITIONS } from '../client/utils/gear-meta.js';
 
 const UNITS = ['g', 'kg', 'oz', 'lb'];
 const LIMITS = { items: 20000, categories: 5000, lists: 1000, itemsPerCategory: 2000, categoriesPerList: 500 };
@@ -80,6 +81,10 @@ function itemRow(userId, item) {
         photos: JSON.stringify(ownPhotos(item.photos)),
         video_url: youTubeId(item.videoUrl) ? str(item.videoUrl, 300) : '',
         qty_owned: Number.isInteger(item.qtyOwned) && item.qtyOwned >= 0 && item.qtyOwned <= 10000 ? item.qtyOwned : null,
+        // Gear lifecycle: "YYYY-MM", condition, expected life in years.
+        purchased_on: /^\d{4}-(0[1-9]|1[0-2])$/.test(item.purchasedOn || '') ? item.purchasedOn : '',
+        condition: CONDITIONS.includes(item.condition) ? item.condition : '',
+        life_years: Number.isFinite(item.lifeYears) && item.lifeYears > 0 && item.lifeYears <= 50 ? item.lifeYears : null,
     };
 }
 
@@ -154,11 +159,7 @@ function listRow(userId, list, position) {
 // Trip planner settings, bounded to sensible ranges.
 function tripSettings(trip) {
     if (!trip || typeof trip !== 'object') return null;
-    return JSON.stringify({
-        days: Math.round(num(trip.days, { min: 1, max: 365 })) || 1,
-        foodPerDayMg: num(trip.foodPerDayMg, { max: 5e6 }),
-        waterLiters: Math.round(num(trip.waterLiters, { max: 30 }) * 100) / 100,
-    });
+    return JSON.stringify(normalizeTrip(trip));
 }
 
 function settingsRow(userId, s) {
@@ -243,7 +244,7 @@ export async function loadLibrary(userId, db = knex) {
         if (l.published) out.published = true;
         if (l.shakedown) out.shakedown = true;
         if (l.trip_type) out.tripType = l.trip_type;
-        if (l.trip) out.trip = { days: l.trip.days, foodPerDayMg: l.trip.foodPerDayMg, waterLiters: l.trip.waterLiters };
+        if (l.trip) out.trip = normalizeTrip(l.trip);
         return out;
     });
 
@@ -278,6 +279,9 @@ export async function loadLibrary(userId, db = knex) {
             if (Array.isArray(i.photos) && i.photos.length) out.photos = i.photos;
             if (i.video_url) out.videoUrl = i.video_url;
             if (i.qty_owned !== null && i.qty_owned !== undefined) out.qtyOwned = i.qty_owned;
+            if (i.purchased_on) out.purchasedOn = i.purchased_on;
+            if (i.condition) out.condition = i.condition;
+            if (i.life_years !== null && i.life_years !== undefined) out.lifeYears = Number(i.life_years);
             return out;
         }),
         categories: outCategories,

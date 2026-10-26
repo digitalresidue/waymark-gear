@@ -47,3 +47,27 @@ export function hoursAgo(when, now = Date.now()) {
     const h = Math.floor((now - new Date(when).getTime()) / 3600000);
     return h < 1 ? 'just now' : `${h}h ago`;
 }
+
+// Gear lifecycle.
+export const CONDITIONS = ['new', 'good', 'worn', 'replace'];
+export const CONDITION_LABELS = { new: 'Like new', good: 'Good', worn: 'Well used', replace: 'Needs replacing' };
+
+// "Replace soon" when you've said so, or it's past its expected life.
+export function replaceSoon(item, now = new Date()) {
+    if (!item) return false;
+    if (item.condition === 'replace') return true;
+    if (!item.purchasedOn || !item.lifeYears) return false;
+    const [y, m] = item.purchasedOn.split('-').map(Number);
+    const ageYears = (now.getFullYear() - y) + (now.getMonth() + 1 - m) / 12;
+    return ageYears >= item.lifeYears;
+}
+
+export function gearAge(item, now = new Date()) {
+    if (!item || !item.purchasedOn) return '';
+    const [y, m] = item.purchasedOn.split('-').map(Number);
+    const months = (now.getFullYear() - y) * 12 + (now.getMonth() + 1 - m);
+    if (months < 1) return 'new this month';
+    if (months < 12) return `${months} ${months === 1 ? 'month' : 'months'} old`;
+    const years = Math.floor(months / 12);
+    return `${years} ${years === 1 ? 'year' : 'years'} old`;
+}

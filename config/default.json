@@ -28,6 +28,8 @@
     "mailReplyTo": "",
     "moderators": [],
     "admins": [],
+    "reviewers": [],
+    "openReviews": false,
     "google": {
         "clientId": "",
         "clientSecret": ""

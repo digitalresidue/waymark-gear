@@ -16,6 +16,8 @@ import register from './views/register.vue';
 import forgotPassword from './views/forgot-password.vue';
 import resetPassword from './views/reset-password.vue';
 import moderation from './views/moderation.vue';
+import trips from './views/trips.vue';
+import tripEdit from './views/trip-edit.vue';
 
 export default [
     { path: '/', component: dashboard },
@@ -39,5 +41,7 @@ export default [
     { path: '/forgot-password', component: forgotPassword },
     { path: '/reset-password/:token', component: resetPassword },
     { path: '/moderation', component: moderation },
+    { path: '/trips', component: trips },
+    { path: '/trips/:id', component: tripEdit },
     { path: '/:pathMatch(.*)*', component: dashboard },
 ];
