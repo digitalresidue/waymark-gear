@@ -126,7 +126,9 @@ test.describe('Comments and shakedowns', () => {
         const troll = await newUser(browser, 'cmtrl');
         await troll.page.goto(link);
         await troll.page.locator('#wgComments').scrollIntoViewIfNeeded();
-        await troll.page.getByTestId('comment-body').fill('Buy cheap pills at example.biz');
+        // Unique per run: the moderation queue is shared by every test (and retry).
+        const spam = `Buy cheap pills at example.biz ${Date.now()}`;
+        await troll.page.getByTestId('comment-body').fill(spam);
         await troll.page.getByTestId('comment-submit').click();
         await expect(troll.page.getByTestId('comment')).toHaveCount(1);
         await troll.page.getByTestId('comment-body').fill('Oops, double post');
@@ -153,7 +155,7 @@ test.describe('Comments and shakedowns', () => {
         const reg = await mod.request.post(url('/register'), { data: { username: modName, email: `${modName}@example.com`, password: 'testtest' } });
         if (reg.status() !== 200) expect((await mod.request.post(url('/signin'), { data: { username: modName, password: 'testtest' } })).status()).toBe(200);
         await mod.goto(url('/moderation'));
-        const queued = mod.getByTestId('reported-comment').filter({ hasText: 'Buy cheap pills' });
+        const queued = mod.getByTestId('reported-comment').filter({ hasText: spam });
         await expect(queued).toContainText('Spam');
         await queued.getByTestId('report-hide').click();
         await expect(queued).toHaveCount(0);
