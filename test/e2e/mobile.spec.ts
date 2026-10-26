@@ -134,7 +134,7 @@ test.describe('Phone item rows', () => {
     // The opening tap reaches the document dismisser too, after the row has
     // re-rendered — so a plain containment test would see a detached target,
     // call it an outside tap, and close what it just opened.
-    await page.locator('#lpFooter').tap();
+    await page.locator('#lpFooter').tap({ position: { x: 4, y: 4 } }); // a corner, clear of the footer's links
     await expect(page.getByTestId('item-editor')).toHaveCount(0);
   });
 
@@ -181,7 +181,7 @@ test.describe('Phone item rows', () => {
 
     await editor.getByPlaceholder('Name', { exact: true }).fill('Duffel bag XL');
     await editor.getByTestId('item-weight').fill('36');
-    await page.locator('#lpFooter').tap();
+    await page.locator('#lpFooter').tap({ position: { x: 4, y: 4 } }); // a corner, clear of the footer's links
 
     await expect(page.getByTestId('item-editor')).toHaveCount(0);
     await expect(page.getByTestId('item-rest').first()).toContainText('Duffel bag XL');
