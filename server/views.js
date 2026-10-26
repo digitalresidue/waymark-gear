@@ -15,6 +15,7 @@ import { libraryForExternalId } from './library-store.js';
 import { WEIGHT_CLASSES, weightClassFor } from './kits.js';
 import { formatWeightMg } from '../client/utils/format.js';
 import { publicProfile, publicGear } from './profiles.js';
+import { listImage, listImageVersion, profileImage, profileImageVersion } from './og.js';
 
 const router = express.Router();
 
@@ -190,6 +191,70 @@ for (let i = 0; i < vueRoutes.length; i++) {
     });
 }
 
+// ---- link-preview images -----------------------------------------------------
+
+// What a list's preview card shows. `library` must have `list` totals computed.
+function listCard(library, list, username) {
+    const categories = list.categoryIds.map((cid) => library.getCategoryById(cid)).filter(Boolean)
+        .map((c) => ({ weightMg: c.subtotalWeight - c.subtotalWornWeight - c.subtotalConsumableWeight }));
+    return {
+        name: list.name,
+        username,
+        baseWeightMg: list.totalBaseWeight,
+        itemCount: list.categoryIds.reduce((n, cid) => n + ((library.getCategoryById(cid) || { categoryItems: [] }).categoryItems.length), 0),
+        weightClass: (WEIGHT_CLASSES.find((c) => c.id === weightClassFor(list.totalBaseWeight)) || {}).label || '',
+        shakedown: Boolean(list.published && list.shakedown),
+        categories,
+    };
+}
+
+function sendPng(req, res, { png, etag }) {
+    res.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+    res.set('ETag', `"${etag}"`);
+    if (req.get('If-None-Match') === `"${etag}"`) return res.status(304).end();
+    res.type('png').send(png);
+}
+
+router.get('/og/r/:file', async (req, res) => {
+    const m = String(req.params.file).match(/^([a-z0-9]{1,32})\.png$/i);
+    if (!m) return res.status(404).end();
+    try {
+        const found = await libraryForExternalId(m[1]);
+        if (!found) return res.status(404).end();
+        const library = new Library();
+        library.load(await applyCatalog(found.library));
+        const list = library.lists.find((l) => l.externalId === m[1]);
+        if (!list) return res.status(404).end();
+        list.calculateTotals();
+        sendPng(req, res, await listImage(listCard(library, list, found.username)));
+    } catch (err) {
+        logWithRequest(req, { message: 'error rendering list image', err });
+        res.status(500).end();
+    }
+});
+
+router.get('/og/@:file', async (req, res) => {
+    const m = String(req.params.file).match(/^([A-Za-z0-9_.-]{1,64})\.png$/);
+    if (!m) return res.status(404).end();
+    try {
+        const found = await publicProfile(m[1]);
+        if (!found) return res.status(404).end();
+        const { profile, kits } = found;
+        sendPng(req, res, await profileImage({
+            name: profile.displayName || `@${profile.username}`,
+            username: profile.username,
+            trailName: profile.trailName,
+            kitCount: kits.length,
+            lightest: kits.length ? formatWeightMg(Math.min(...kits.map((k) => k.baseWeightMg)), 'lb') : '',
+            initial: (profile.displayName || profile.username).trim().charAt(0).toUpperCase(),
+            avatarUrl: profile.avatarUrl,
+        }));
+    } catch (err) {
+        logWithRequest(req, { message: 'error rendering profile image', err });
+        res.status(500).end();
+    }
+});
+
 // ---- public @profiles --------------------------------------------------------
 
 const profileTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/profile.mustache'), 'utf8');
@@ -232,7 +297,9 @@ router.get('/@:username', async (req, res) => {
             trailName: profile.trailName,
             avatarUrl: profile.avatarUrl,
             bannerUrl: profile.bannerUrl,
-            ogImage: profile.avatarUrl ? `${deployUrl}${profile.avatarUrl}` : `${deployUrl}/images/og-image.png`,
+            ogImage: `${deployUrl}/og/@${profile.username}.png?v=${profileImageVersion({
+                name, trailName: profile.trailName, avatarUrl: profile.avatarUrl, kitCount: kits.length, lightest,
+            })}`,
             bioHtml: profile.bio ? marked(profile.bio) : '',
             links,
             hasLinks: links.length > 0,
@@ -327,6 +394,7 @@ async function renderListView(req, res) {
             username: user.username,
             published: Boolean(list.published),
             shakedown: Boolean(list.published && list.shakedown),
+            ogImage: `${config.get('deployUrl')}/og/r/${id}.png?v=${listImageVersion(listCard(library, list, user.username))}`,
             baseWeight: formatWeightMg(list.totalBaseWeight, 'lb'),
             weightClass: (WEIGHT_CLASSES.find((c) => c.id === weightClassFor(list.totalBaseWeight)) || {}).label,
             itemCount: list.categoryIds.reduce((n, cid) => n + ((library.getCategoryById(cid) || { categoryItems: [] }).categoryItems.length), 0),

@@ -194,6 +194,15 @@ async function storeProfileImage(srcPath, buf, { width, height }, userId, kind) 
             throw err;
         }
     }
+    // Link-preview cards (server/og.js) are drawn by a renderer that can't
+    // read webp, so avatars get a small PNG twin. Best effort.
+    if (kind === 'avatar') {
+        const pngPath = dest.replace(/\.webp$/, '.png');
+        if (!fs.existsSync(pngPath)) {
+            const dwebp = config.has('dwebpPath') ? config.get('dwebpPath') : 'dwebp';
+            await execFileAsync(dwebp, ['-quiet', '-resize', '256', '256', dest, '-o', pngPath]).catch(() => {});
+        }
+    }
     return { imageUrl: `${urlPath}/${name}` };
 }
 

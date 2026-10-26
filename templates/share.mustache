@@ -10,8 +10,12 @@
         <meta property="og:title" content="{{listName}} · {{baseWeight}} base weight">
         <meta property="og:description" content="{{metaDescription}}">
         <meta property="og:url" content="{{deployUrl}}/r/{{externalId}}">
-        <meta property="og:image" content="{{deployUrl}}/images/og-image.png">
+        <meta property="og:image" content="{{{ogImage}}}">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta property="og:image:alt" content="{{listName}}: {{baseWeight}} base weight, by @{{username}}">
         <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:image" content="{{{ogImage}}}">
         {{{styles}}}
         <link rel="icon" href="/favicon.png" />
         <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
