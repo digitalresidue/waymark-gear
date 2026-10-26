@@ -2,7 +2,9 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
-    plugins: [vue()],
+    // Express serves public/ itself (publicDir is off), so root-absolute
+    // urls in templates like /images/... must stay urls, not imports.
+    plugins: [vue({ template: { transformAssetUrls: { includeAbsolute: false } } })],
     define: {
         global: 'globalThis',
     },

@@ -3,7 +3,7 @@ import pluginVue from 'eslint-plugin-vue';
 import globals from 'globals';
 
 export default [
-    { ignores: ['node_modules/', 'public/', 'scripts/', 'test-results/', 'playwright-report/', 'client/design_handoff_mobile_landing/'] },
+    { ignores: ['node_modules/', 'public/', 'scripts/', 'test-results/', 'playwright-report/'] },
     js.configs.recommended,
     ...pluginVue.configs['flat/recommended'],
     {

@@ -6,9 +6,14 @@
             <p class="lpWarning">
                 <strong>This action is permanent and cannot be undone.</strong>
             </p>
-            <p>If you want to delete your account, please enter your current password and the text <strong>delete my account</strong>:</p>
+            <p v-if="hasPassword">
+                If you want to delete your account, please enter your current password and the text <strong>delete my account</strong>:
+            </p>
+            <p v-else>
+                If you want to delete your account, enter the text <strong>delete my account</strong>:
+            </p>
             <div class="lpFields">
-                <input v-model="currentPassword" type="password" placeholder="Current password" name="currentPassword" class="currentPassword">
+                <input v-if="hasPassword" v-model="currentPassword" type="password" placeholder="Current password" name="currentPassword" class="currentPassword">
 
                 <input v-model="confirmationText" type="text" name="confirmationText" placeholder="Confirmation text" autocapitalize="none" autocorrect="off" spellcheck="false">
             </div>
@@ -50,6 +55,10 @@ export default {
         };
     },
     computed: {
+        hasPassword() {
+            const account = this.$store.state.account;
+            return !account || account.hasPassword !== false;
+        },
         isConfirmationComplete() {
             // Trimmed: phone keyboards add a trailing space when you accept an
             // autocomplete suggestion, which is invisible in the field.
@@ -60,7 +69,7 @@ export default {
         deleteAccount() {
             this.errors = [];
 
-            if (!this.currentPassword) {
+            if (this.hasPassword && !this.currentPassword) {
                 this.errors.push({ field: 'currentPassword', message: 'Please enter your current password.' });
             }
 

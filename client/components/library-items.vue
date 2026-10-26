@@ -165,15 +165,21 @@ export default {
 
 .lpSidebarSearch {
     align-items: center;
-    background: var(--lp-sidebar-inset);
-    border: 1px solid var(--lp-sidebar-border);
-    border-radius: 6px;
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border-strong);
+    border-radius: 10px;
     color: var(--lp-sidebar-muted);
     display: flex;
     flex: 0 0 auto;
-    gap: 7px;
+    gap: 8px;
     margin: 8px 14px;
-    padding: 6px 10px;
+    min-height: 38px;
+    padding: 6px 12px;
+
+    &:focus-within {
+        border-color: var(--lp-link-blue);
+        box-shadow: var(--lp-focus-ring);
+    }
 
     svg {
         flex: 0 0 auto;

@@ -24,14 +24,14 @@ export default {
 .lpGlobalAlerts {
     background: var(--lp-alert-bg);
     border: 1px solid var(--lp-alert-border);
-    border-radius: 0 0 10px 10px;
-    border-top: none;
+    border-radius: 12px;
+    box-shadow: var(--lp-lift-shadow);
     left: 50%;
     margin: 0;
     padding: 0;
     position: fixed;
     text-align: center;
-    top: 0;
+    top: 76px;
     transform: translateX(-50%);
     width: 50%;
     z-index: $aboveDialog;

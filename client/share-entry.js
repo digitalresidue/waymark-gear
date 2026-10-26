@@ -1,3 +1,6 @@
+import '@fontsource-variable/archivo/wdth.css';
+import '@fontsource-variable/geist';
+import '@fontsource-variable/geist-mono';
 import './css/share.scss';
 import pies from './pies.js';
 import weightUtils from './utils/weight.js';

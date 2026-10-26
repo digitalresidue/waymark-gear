@@ -15,6 +15,8 @@ const store = createStore({
         saveType: null,
         lastSaveData: null,
         loggedIn: false,
+        // From /signin: email, hasPassword, googleLinked, isAdmin, isModerator.
+        account: null,
         globalAlerts: [],
     },
     getters: {
@@ -41,9 +43,52 @@ const store = createStore({
         signout(state) {
             state.library = false;
             state.loggedIn = false;
+            state.account = null;
         },
         setLoggedIn(state, loggedIn) {
             state.loggedIn = loggedIn;
+        },
+        setAccount(state, account) {
+            state.account = account;
+        },
+        togglePinList(state, list) {
+            const target = state.library.getListById(list.id);
+            target.pinned = !target.pinned;
+        },
+        // Reorder a subset of lists (one section of the switcher) without
+        // disturbing the others: the given ids take over the slots those
+        // lists already occupy, in the new order.
+        reorderListsById(state, ids) {
+            const lists = state.library.lists;
+            const moving = ids.map((id) => lists.find((l) => l.id === id)).filter(Boolean);
+            const slots = lists.map((l, i) => (ids.includes(l.id) ? i : -1)).filter((i) => i >= 0);
+            const next = lists.slice();
+            slots.forEach((slot, n) => { next[slot] = moving[n]; });
+            state.library.lists = next;
+        },
+        toggleCategoryCollapsed(state, category) {
+            const target = state.library.getCategoryById(category.id);
+            target.collapsed = !target.collapsed;
+        },
+        setCategoriesCollapsed(state, { list, collapsed }) {
+            const target = state.library.getListById(list.id);
+            target.categoryIds.forEach((id) => {
+                const category = state.library.getCategoryById(id);
+                if (category) category.collapsed = collapsed;
+            });
+        },
+        setListPublished(state, { list, published }) {
+            state.library.getListById(list.id).published = published;
+        },
+        importSharedList(state, shared) {
+            state.library.importSharedList(shared);
+        },
+        addCatalogItem(state, { categoryId, entry }) {
+            const category = state.library.getCategoryById(categoryId);
+            if (!category) return;
+            category.collapsed = false;
+            state.library.newItemFromCatalog({ category, entry });
+            state.library.getListById(state.library.defaultListId).calculateTotals();
         },
         loadLibraryData(state, libraryData) {
             const library = new Library();
@@ -312,11 +357,33 @@ const store = createStore({
                 credentials: 'same-origin',
                 redirectOnAuthFailure: false,
             })
-                .then((response) => {
-                    context.commit('setSyncToken', response.sync_token);
-                    context.commit('loadLibraryData', response.library);
+                .then(async (response) => {
+                    let library = response.library;
+                    let syncToken = response.sync_token;
+                    // First sign-in with Google from a browser that already has
+                    // an account-less library: move that library into the new
+                    // account, the way the register form does.
+                    const params = new URLSearchParams(window.location.search);
+                    if (params.get('welcome') === 'google' && localStorage.library) {
+                        try {
+                            const saved = await fetchJson('/saveLibrary/', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                credentials: 'same-origin',
+                                body: JSON.stringify({ sync_token: syncToken, username: response.username, data: localStorage.library }),
+                            });
+                            library = localStorage.library;
+                            syncToken = saved.sync_token;
+                            localStorage.removeItem('library');
+                        } catch {
+                            // Keep the local copy; the new account starts empty.
+                        }
+                    }
+                    context.commit('setSyncToken', syncToken);
+                    context.commit('loadLibraryData', library);
                     context.commit('setSaveType', 'remote');
                     context.commit('setLoggedIn', response.username);
+                    context.commit('setAccount', response.account || null);
                 })
                 .catch((error) => {
                     // A refused session is the ordinary state for anyone landing
@@ -345,6 +412,7 @@ const store = createStore({
                     'setLoggedIn',
                     'loadLibraryData',
                     'clearLibraryData',
+                    'setAccount',
                 ];
                 if (!state.library || ignore.indexOf(mutation.type) > -1) {
                     return;

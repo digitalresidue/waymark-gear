@@ -7,6 +7,8 @@
 import express from 'express';
 
 import * as catalog from './catalog.js';
+import knex from './db.js';
+import { Library } from '../client/dataTypes.js';
 import * as kits from './kits.js';
 import { authenticateAdmin } from './auth.js';
 import { googleEnabled } from './google.js';
@@ -91,6 +93,41 @@ router.get('/api/explore/kits', pub(async (req, res) => {
 router.get('/api/explore/common', pub(async (req, res) => {
     res.set('Cache-Control', 'public, max-age=300');
     res.json(await kits.commonGear({ category: String(req.query.category || '').slice(0, 80), limit: req.query.limit }));
+}));
+
+// A shared list as data, for "Copy to my lists". Anything with a share link
+// is already viewable by anyone holding it, so this exposes nothing more.
+router.get('/api/kits/:externalId', pub(async (req, res) => {
+    const id = String(req.params.externalId).trim().slice(0, 40);
+    const row = await knex('users').join('list', 'users.user_id', 'list.user_id')
+        .select('users.library', 'users.username').where({ 'list.external_id': id }).first();
+    if (!row) return res.status(404).json({ message: 'That list could not be found.' });
+    const library = new Library();
+    library.load(await catalog.applyCatalog(row.library));
+    const list = library.lists.find((l) => l.externalId === id);
+    if (!list) return res.status(404).json({ message: 'That list could not be found.' });
+    const categories = list.categoryIds.map((cid) => library.getCategoryById(cid)).filter(Boolean).map((c) => ({
+        name: c.name,
+        items: c.categoryItems.map((ci) => {
+            const item = library.getItemById(ci.itemId);
+            if (!item) return null;
+            return {
+                name: item.name,
+                description: item.description,
+                weight: item.weight,
+                authorUnit: item.authorUnit,
+                price: item.price,
+                url: item.url,
+                imageUrl: item.imageUrl,
+                catalogId: item.catalogId || '',
+                qty: ci.qty,
+                worn: ci.worn,
+                consumable: ci.consumable,
+            };
+        }).filter(Boolean),
+    }));
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json({ name: list.name, username: row.username, categories });
 }));
 
 // ---- owner: catalog ----------------------------------------------------------

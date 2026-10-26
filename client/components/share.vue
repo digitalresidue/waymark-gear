@@ -13,6 +13,21 @@
                         <textarea id="embedUrl" v-select-on-focus :value="embedCode" readonly />
                     </div>
                     <a id="csvUrl" :href="csvUrl" target="_blank" class="lpHref"><i class="lpSprite lpSpriteDownload" />Export to CSV</a>
+                    <div class="wgPublish">
+                        <toggle
+                            :model-value="!!list.published"
+                            :disabled="!externalId"
+                            data-testid="publish-toggle"
+                            @update:model-value="setPublished"
+                        >
+                            Publish to Explore
+                        </toggle>
+                        <p class="wgPublishNote">
+                            {{ list.published
+                                ? 'Listed on Explore and eligible for the homepage. Anyone can find it.'
+                                : 'Only people with the link can see it. Publish to show it on Explore.' }}
+                        </p>
+                    </div>
                 </div>
             </template>
         </PopoverHover>
@@ -21,12 +36,14 @@
 
 <script>
 import PopoverHover from './popover-hover.vue';
+import toggle from './toggle.vue';
 import { fetchJson } from '../utils/utils.js';
 
 export default {
     name: 'Share',
     components: {
         PopoverHover,
+        toggle,
     },
     computed: {
         library() {
@@ -63,6 +80,9 @@ export default {
         },
     },
     methods: {
+        setPublished(published) {
+            this.$store.commit('setListPublished', { list: this.list, published });
+        },
         focusShare(_evt) {
             const selectShareInput = () => {
                 this.$nextTick(() => {
@@ -92,6 +112,20 @@ export default {
 </script>
 
 <style lang="scss">
+.wgPublish {
+    border-top: 1px solid var(--lp-border);
+    margin-top: 12px;
+    padding-top: 12px;
+}
+
+.wgPublishNote {
+    color: var(--lp-text-secondary);
+    font-size: 12.5px;
+    line-height: 1.45;
+    margin: 6px 0 0;
+    max-width: 280px;
+}
+
 #share label {
     font-weight: bold;
 }

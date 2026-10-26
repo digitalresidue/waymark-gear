@@ -12,6 +12,8 @@ import { marked, isSafeHref } from '../client/utils/markdown.js';
 import { Library } from '../client/dataTypes.js';
 import { listToCsv } from './csv.js';
 import { applyCatalog } from './catalog.js';
+import { WEIGHT_CLASSES, weightClassFor } from './kits.js';
+import { formatWeightMg } from '../client/utils/format.js';
 
 const router = express.Router();
 
@@ -29,6 +31,9 @@ const vueRoutes = [ /* TODO - get this from same data source as Vue */
     { path: '/signin/reset-password' },
     { path: '/signin/forgot-username' },
     { path: '/welcome' },
+    { path: '/explore' },
+    { path: '/owner/catalog' },
+    { path: '/owner/kits' },
     { path: '/register' },
     { path: '/forgot-password' },
     { path: '/reset-password/:token' },
@@ -97,6 +102,8 @@ if (hasBuiltAssets) {
 
 index = index.replace('{{styles}}', appStylesHtml);
 index = index.replace('{{scripts}}', appScriptsHtml);
+// Social previews need an absolute image URL.
+index = index.replace('content="/images/og-image.png"', `content="${config.get('deployUrl')}/images/og-image.png"`);
 
 // Long-form document pages (/privacy, /terms) are rendered from markdown once
 // at startup and served as static HTML — no JS, no database, nothing
@@ -182,7 +189,7 @@ async function renderListView(req, res) {
     try {
         const users = await knex('users')
             .join('list', 'users.user_id', '=', 'list.user_id')
-            .select('users.library')
+            .select('users.library', 'users.username')
             .where({'list.external_id': id });
 
         if (!users.length) {
@@ -235,6 +242,13 @@ async function renderListView(req, res) {
             scripts: shareScriptsHtml,
             styles: shareStylesHtml,
             cspNonce: res.locals.cspNonce,
+            externalId: id,
+            username: user.username,
+            baseWeight: formatWeightMg(list.totalBaseWeight, 'lb'),
+            weightClass: (WEIGHT_CLASSES.find((c) => c.id === weightClassFor(list.totalBaseWeight)) || {}).label,
+            itemCount: list.categoryIds.reduce((n, cid) => n + ((library.getCategoryById(cid) || { categoryItems: [] }).categoryItems.length), 0),
+            deployUrl: config.get('deployUrl'),
+            metaDescription: `${list.name || 'A gear list'} by @${user.username}: ${formatWeightMg(list.totalBaseWeight, 'lb')} base weight. Built with Waymark Gear.`,
         };
 
         Object.assign(model, templates);

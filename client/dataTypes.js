@@ -432,6 +432,38 @@ Library.prototype.updateItem = function (item) {
     return oldItem;
 };
 
+// Add someone's shared list (the /api/kits/:id shape) to this library as a
+// new list of fresh items, so later edits on either side stay separate.
+Library.prototype.importSharedList = function (shared) {
+    const list = this.newList();
+    list.name = `${shared.name || 'Untitled list'}${shared.username ? ` (from @${shared.username})` : ''}`;
+    for (const sharedCategory of shared.categories || []) {
+        const category = this.newCategory({ list });
+        category.name = sharedCategory.name || '';
+        for (const s of sharedCategory.items || []) {
+            const item = this.newItem({ category, _isNew: false });
+            item.name = s.name || '';
+            item.description = s.description || '';
+            item.weight = Number(s.weight) || 0;
+            item.authorUnit = ['g', 'kg', 'oz', 'lb'].includes(s.authorUnit) ? s.authorUnit : this.itemUnit;
+            item.price = Number(s.price) || 0;
+            item.url = s.url || '';
+            item.imageUrl = s.imageUrl || '';
+            if (s.catalogId) {
+                item.catalogId = s.catalogId;
+                item.catalogSync = true;
+            }
+            const ci = category.getCategoryItemById(item.id);
+            ci.qty = Number(s.qty) || 1;
+            ci.worn = s.worn ? 1 : 0;
+            ci.consumable = Boolean(s.consumable);
+        }
+    }
+    list.calculateTotals();
+    this.defaultListId = list.id;
+    return list;
+};
+
 // Add a gear-catalog entry to a category as a new, catalog-linked item.
 // `entry` is the shape /api/catalog returns.
 Library.prototype.newItemFromCatalog = function ({ category, entry }) {

@@ -1,9 +1,19 @@
 <template>
     <div id="sidebar">
         <div class="lpSidebarSticky">
-            <h1 class="lpWordmark">
-                Waymark Gear
-            </h1>
+            <!-- The site header carries the logo and these links on the
+                 desktop; in the phone drawer they live here. -->
+            <div class="wgDrawerBrand">
+                <brandLogo />
+            </div>
+            <nav v-if="isMobile" class="wgDrawerNav" aria-label="Site">
+                <router-link to="/explore">
+                    Explore kits
+                </router-link>
+                <router-link v-if="isAdmin" to="/owner/catalog">
+                    Owner
+                </router-link>
+            </nav>
 
             <libraryLists />
             <div class="lpSidebarDivider" />
@@ -20,6 +30,7 @@
 <script>
 import libraryItems from './library-items.vue';
 import libraryLists from './library-lists.vue';
+import brandLogo from './brand-logo.vue';
 
 import { isMobile } from '../utils/viewport.js';
 
@@ -28,6 +39,7 @@ export default {
     components: {
         libraryItems,
         libraryLists,
+        brandLogo,
     },
     setup() {
         return { isMobile };
@@ -35,6 +47,9 @@ export default {
     computed: {
         library() {
             return this.$store.state.library;
+        },
+        isAdmin() {
+            return Boolean(this.$store.state.account && this.$store.state.account.isAdmin);
         },
     },
 };
@@ -45,9 +60,10 @@ export default {
 
 #sidebar {
     background: var(--lp-sidebar-bg);
+    border-right: 1px solid var(--lp-sidebar-border);
     clip-path: inset(-100vh -100vw);
     color: var(--lp-sidebar-text);
-    flex: 0 0 250px;
+    flex: 0 0 280px;
     min-width: 0;
     transition: flex-basis $transitionDurationSlow, clip-path 0s $transitionDurationSlow, background $transitionDurationSlow;
     z-index: $sidebar;
@@ -69,19 +85,44 @@ export default {
     position: sticky;
     top: 0;
     transition: opacity $transitionDurationSlow;
-    width: 250px;
+    width: 280px;
 
     #main:not(.lpHasSidebar) & {
         opacity: 0;
     }
 }
 
-#sidebar .lpWordmark {
-    flex: 0 0 auto;
-    font-size: 22px;
-    font-weight: 700;
-    margin: 0;
-    padding: 18px 18px 24px;
+// The logo only shows in the phone drawer; on the desktop the site header
+// has it.
+.wgDrawerBrand {
+    display: none;
+    padding: 18px 18px 10px;
+
+    .wgLogo {
+        height: 28px;
+    }
+}
+
+.wgDrawerNav {
+    display: flex;
+    flex-direction: column;
+    padding: 0 10px 8px;
+
+    a {
+        align-items: center;
+        border-radius: 9px;
+        color: var(--lp-sidebar-text);
+        display: flex;
+        font-size: 15px;
+        font-weight: 600;
+        min-height: 44px;
+        padding: 0 8px;
+        text-decoration: none;
+    }
+}
+
+#sidebar .lpSidebarSticky {
+    padding-top: 12px;
 }
 
 .lpSidebarDivider {
@@ -179,9 +220,8 @@ export default {
         width: 100%;
     }
 
-    #sidebar .lpWordmark {
-        font-size: 18px;
-        padding: 16px 18px 12px;
+    .wgDrawerBrand {
+        display: block;
     }
 
     // Touch targets: the section headers' "+ New" and the rows below it are

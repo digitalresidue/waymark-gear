@@ -1,0 +1,335 @@
+@use 'sass:list';
+@import "globals";
+
+// Waymark Gear building blocks, shared by the new screens (home, explore,
+// owner, auth) and the restyled editor. Prefixed wg* to tell them apart from
+// the inherited lp* styles.
+
+.lp {
+    // Horizontal only, so sections that are also .wgPage keep their own
+    // vertical padding.
+    .wgPage {
+        margin-left: auto;
+        margin-right: auto;
+        max-width: 1200px;
+        padding-inline: 24px;
+        width: 100%;
+
+        @media (max-width: $mobile) {
+            padding-inline: 16px;
+        }
+    }
+
+
+
+    .wgEyebrow {
+        color: var(--lp-accent);
+        font-family: $font-mono;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        margin: 0;
+        text-transform: uppercase;
+    }
+
+    .wgDisplay {
+        font-family: $font-display;
+        font-stretch: 118%;
+        font-weight: 850;
+        letter-spacing: -0.01em;
+        line-height: 1.04;
+        margin: 0;
+    }
+
+    .wgH2 {
+        font-family: $font-display;
+        font-size: 34px;
+        font-stretch: 115%;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        line-height: 1.1;
+        margin: 0;
+
+        @media (max-width: $mobile) {
+            font-size: 28px;
+        }
+    }
+
+    .wgLede {
+        color: var(--lp-text-secondary);
+        font-size: 17px;
+        line-height: 1.55;
+        margin: 10px 0 0;
+    }
+
+    .wgMuted {
+        color: var(--lp-text-secondary);
+    }
+
+    // Buttons. Real <button> or <a>; 44px tall for touch.
+    .wgBtn {
+        align-items: center;
+        background: var(--lp-surface);
+        border: 1px solid var(--lp-border-strong);
+        border-radius: 10px;
+        color: var(--lp-text);
+        cursor: pointer;
+        display: inline-flex;
+        font-family: $font-body;
+        font-size: 15px;
+        font-weight: 600;
+        gap: 8px;
+        justify-content: center;
+        line-height: 1;
+        min-height: 44px;
+        padding: 0 16px;
+        text-decoration: none;
+        transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+        white-space: nowrap;
+
+        &:hover {
+            border-color: var(--lp-border-hover);
+        }
+
+        &:disabled,
+        &[aria-disabled="true"] {
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+
+        svg {
+            flex: none;
+        }
+    }
+
+    .wgBtnPrimary {
+        background: var(--lp-primary);
+        border-color: var(--lp-primary);
+        color: var(--lp-primary-ink);
+
+        &:hover {
+            background: color-mix(in srgb, var(--lp-primary) 88%, #000);
+            border-color: color-mix(in srgb, var(--lp-primary) 88%, #000);
+        }
+    }
+
+    .wgBtnAccent {
+        background: var(--lp-accent);
+        border-color: var(--lp-accent);
+        color: #fff;
+
+        &:hover {
+            background: color-mix(in srgb, var(--lp-accent) 88%, #000);
+        }
+    }
+
+    .wgBtnGhost {
+        background: transparent;
+        border-color: transparent;
+        color: var(--lp-link-blue);
+
+        &:hover {
+            background: var(--lp-row-hover);
+            border-color: transparent;
+        }
+    }
+
+    .wgBtnSmall {
+        font-size: 14px;
+        min-height: 36px;
+        padding: 0 12px;
+    }
+
+    .wgBtnGoogle {
+        background: #fff;
+        border-color: #C9CEC8;
+        color: #1F1F1F;
+        gap: 12px;
+
+        &:hover {
+            background: #F7F8F8;
+        }
+    }
+
+    // Form fields
+    .wgField {
+        color: var(--lp-text-secondary);
+        display: flex;
+        flex-direction: column;
+        font-size: 13px;
+        font-weight: 600;
+        gap: 6px;
+    }
+
+    .wgInput,
+    .wgSelect,
+    .wgTextarea {
+        background: var(--lp-surface);
+        border: 1px solid var(--lp-border-strong);
+        border-radius: 10px;
+        color: var(--lp-text);
+        font-family: $font-body;
+        font-size: 15px;
+        min-height: 44px;
+        padding: 10px 12px;
+        width: 100%;
+
+        &:focus {
+            border-color: var(--lp-link-blue);
+            box-shadow: var(--lp-focus-ring);
+            outline: none;
+        }
+
+        &::placeholder {
+            color: var(--lp-text-secondary);
+            opacity: 0.85;
+        }
+    }
+
+    .wgSearch {
+        position: relative;
+        display: block;
+
+        > svg {
+            left: 12px;
+            pointer-events: none;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .wgInput {
+            padding-left: 36px;
+        }
+    }
+
+    .wgCard {
+        background: var(--lp-surface);
+        border: 1px solid var(--lp-border);
+        border-radius: $radius-lg;
+    }
+
+    .wgChip {
+        align-items: center;
+        background: var(--lp-surface);
+        border: 1px solid var(--lp-border-strong);
+        border-radius: 999px;
+        color: var(--lp-text);
+        cursor: pointer;
+        display: inline-flex;
+        font-family: $font-body;
+        font-size: 14px;
+        font-weight: 600;
+        min-height: 36px;
+        padding: 0 14px;
+
+        &[aria-pressed="true"],
+        &.wgChipOn {
+            background: var(--lp-primary);
+            border-color: var(--lp-primary);
+            color: var(--lp-primary-ink);
+        }
+    }
+
+    .wgBadge {
+        background: var(--lp-active-bg);
+        border-radius: 999px;
+        color: var(--lp-accent-green-deep);
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 4px 10px;
+        white-space: nowrap;
+    }
+
+    .wgBadgeWarn {
+        background: var(--lp-warning-bg);
+        color: var(--lp-warning-border);
+    }
+
+    // Segmented control (weight classes, tabs).
+    .wgSegmented {
+        background: var(--lp-surface-sunken);
+        border-radius: 12px;
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 4px;
+
+        button {
+            background: transparent;
+            border: 0;
+            border-radius: 9px;
+            color: var(--lp-text);
+            cursor: pointer;
+            font-family: $font-body;
+            font-size: 15px;
+            font-weight: 600;
+            min-height: 44px;
+            padding: 6px 16px;
+            text-align: left;
+
+            small {
+                color: var(--lp-text-secondary);
+                display: block;
+                font-family: $font-mono;
+                font-size: 12px;
+                font-weight: 500;
+            }
+
+            &[aria-selected="true"] {
+                background: var(--lp-surface);
+                box-shadow: 0 1px 3px rgba(20, 33, 27, 0.14);
+            }
+        }
+    }
+
+    // Stacked weight bar for a kit.
+    .wgWeightBar {
+        border-radius: 999px;
+        display: flex;
+        gap: 2px;
+        height: 8px;
+        overflow: hidden;
+
+        span {
+            display: block;
+            height: 100%;
+            min-width: 2px;
+        }
+    }
+
+    .wgVisuallyHidden {
+        clip: rect(0 0 0 0);
+        height: 1px;
+        overflow: hidden;
+        position: absolute;
+        white-space: nowrap;
+        width: 1px;
+    }
+
+    .wgLogo {
+        display: block;
+        height: 36px;
+        width: auto;
+
+        @media (max-width: $mobile) {
+            height: 30px;
+        }
+    }
+}
+
+// Default link color at zero specificity, so any component style wins.
+:where(.lp) a {
+    color: var(--lp-link-blue);
+    text-underline-offset: 2px;
+}
+
+// Category/data colors for weight bars, in order.
+$wg-data-colors: #1D3B30, #4F7A5A, #9DB8A0, #C4571F, #D9C7A7, #6B756F;
+@each $c in $wg-data-colors {
+    $i: list.index($wg-data-colors, $c);
+    .lp .wgData#{$i} {
+        background: $c;
+    }
+}

@@ -102,21 +102,21 @@ export default {
 
 .lpAvatar {
     align-items: center;
-    background: var(--lp-sidebar-bg);
+    background: var(--lp-primary);
     border-radius: 50%;
-    color: $grey-0;
+    color: var(--lp-primary-ink);
     cursor: pointer;
     display: flex;
     flex: 0 0 auto;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 700;
-    height: 24px;
+    height: 36px;
     justify-content: center;
     line-height: 1;
-    margin-top: -7px;
+    margin-top: -4px;
     text-transform: uppercase;
     user-select: none;
-    width: 24px;
+    width: 36px;
 }
 
 #accountPopover {

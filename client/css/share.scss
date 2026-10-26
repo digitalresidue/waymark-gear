@@ -1,4 +1,5 @@
 @import "_base";
+@import "_ui";
 @import "_utilities";
 @import "components/list";
 // item before category: the category header's typography is layered on top of
@@ -12,3 +13,72 @@
 @import "components/share-overrides";
 @import "_print";
 @import "_sprite";
+
+// Brand bar on shared lists.
+.wgShareBar {
+    align-items: center;
+    background: var(--lp-surface);
+    border-bottom: 1px solid var(--lp-border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: space-between;
+    padding: 12px 24px;
+}
+
+.wgShareBrand {
+    display: flex;
+
+    .wgLogoOnDark {
+        display: none;
+    }
+}
+
+@mixin wg-share-logo-dark {
+    .wgShareBrand {
+        .wgLogoOnLight {
+            display: none;
+        }
+
+        .wgLogoOnDark {
+            display: block;
+        }
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .lp:not([data-theme="light"]) {
+        @include wg-share-logo-dark;
+    }
+}
+
+.lp[data-theme="dark"] {
+    @include wg-share-logo-dark;
+}
+
+.wgShareActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.wgShareTitle {
+    min-width: 0;
+
+    .lpListName {
+        font-family: $font-display;
+        font-size: 32px;
+        font-stretch: 112%;
+        font-weight: 800;
+    }
+}
+
+.wgShareByline {
+    color: var(--lp-text-secondary);
+    font-size: 15px;
+    margin: 6px 0 0;
+
+    strong {
+        color: var(--lp-text);
+    }
+}

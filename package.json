@@ -8,6 +8,7 @@
     "build": "vite build",
     "start": "node --env-file-if-exists=.env app.js",
     "db:migrate": "node --env-file-if-exists=.env scripts/migrate.js",
+    "db:seed-sample": "node --env-file-if-exists=.env scripts/seed-sample-catalog.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "playwright test",
@@ -40,6 +41,9 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
+    "@fontsource-variable/archivo": "^5.3.0",
+    "@fontsource-variable/geist": "^5.3.0",
+    "@fontsource-variable/geist-mono": "^5.3.0",
     "@playwright/test": "1.63.0",
     "@vitejs/plugin-vue": "^6.0.6",
     "dragula": "^3.7.3",

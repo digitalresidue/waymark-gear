@@ -139,7 +139,7 @@ async function register(req, res) {
 
         try {
             await knex('users').insert(newUser);
-            const out = { username, library: JSON.stringify(newUser.library), sync_token: newSyncToken };
+            const out = { username, library: JSON.stringify(newUser.library), sync_token: newSyncToken, account: accountInfo(newUser) };
             const opts = sessionCookieOptions();
             res.cookie('lp', token, opts);
             res.cookie('lp_loggedin', '1', { ...opts, httpOnly: false });

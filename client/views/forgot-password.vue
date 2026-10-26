@@ -1,58 +1,58 @@
 <template>
-    <div id="forgotPasswordContainer">
-        <modal id="forgotPassword" class="lpAuthCard" :shown="true" :blackout="true">
-            <div class="columns">
-                <div class="lpHalf">
-                    <h3>
-                        Forgot Your Password?
-                    </h3>
+    <authLayout card-id="forgotPassword" title="Account recovery" :google="false" wide>
+        <div class="columns">
+            <div class="lpHalf">
+                <h3>
+                    Forgot Your Password?
+                </h3>
 
-                    <p>Enter your username and we'll email you a link to choose a new password.</p>
-                    <form class="forgotPassword" @submit.prevent="requestPasswordReset">
-                        <div class="lpFields">
-                            <input v-model="forgotPasswordUsername" type="text" placeholder="Username" name="username" class="username">
-                            <input type="submit" value="Submit" class="lpButton">
-                        </div>
+                <p>Enter your username and we'll email you a link to choose a new password.</p>
+                <form class="forgotPassword" @submit.prevent="requestPasswordReset">
+                    <div class="lpFields">
+                        <input v-model="forgotPasswordUsername" type="text" placeholder="Username" name="username" class="username">
+                        <input type="submit" value="Submit" class="lpButton">
+                    </div>
 
-                        <errors :errors="forgotPasswordErrors" />
-                    </form>
-                </div>
-                <div class="lpHalf">
-                    <h3>
-                        Forgot Your Username?
-                    </h3>
-
-                    <p>Please enter your email address.</p>
-                    <form class="forgotUsername" @submit.prevent="forgotUsername">
-                        <div class="lpFields">
-                            <input v-model="forgotUsernameEmail" type="text" placeholder="Email Address" name="email" class="email">
-                            <input type="submit" value="Submit" class="lpButton">
-                        </div>
-
-                        <errors :errors="forgotUsernameErrors" />
-                    </form>
-                </div>
-                <router-link to="/signin" class="lpHref">
-                    &larr; Return to sign in
-                </router-link>
+                    <errors :errors="forgotPasswordErrors" />
+                </form>
             </div>
-        </modal>
-        <siteFooter fixed />
-    </div>
+            <div class="lpHalf">
+                <h3>
+                    Forgot Your Username?
+                </h3>
+
+                <p>Please enter your email address.</p>
+                <form class="forgotUsername" @submit.prevent="forgotUsername">
+                    <div class="lpFields">
+                        <input v-model="forgotUsernameEmail" type="text" placeholder="Email Address" name="email" class="email">
+                        <input type="submit" value="Submit" class="lpButton">
+                    </div>
+
+                    <errors :errors="forgotUsernameErrors" />
+                </form>
+            </div>
+            <router-link to="/signin" class="lpHref">
+                &larr; Return to sign in
+            </router-link>
+        </div>
+        <template #after>
+            <router-link to="/signin">
+                Back to sign in
+            </router-link>
+        </template>
+    </authLayout>
 </template>
 
 <script>
-import siteFooter from '../components/site-footer.vue';
+import authLayout from '../components/auth-layout.vue';
 import errors from '../components/errors.vue';
-import modal from '../components/modal.vue';
 import { fetchJson } from '../utils/utils.js';
 
 export default {
     name: 'ForgotPassword',
     components: {
-        siteFooter,
+        authLayout,
         errors,
-        modal,
     },
     data() {
         return {

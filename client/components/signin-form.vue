@@ -79,6 +79,7 @@ export default {
                     this.$store.commit('loadLibraryData', response.library);
                     this.$store.commit('setSaveType', 'remote');
                     this.$store.commit('setLoggedIn', response.username);
+                    this.$store.commit('setAccount', response.account || null);
                     this.$router.push('/');
                     this.fetching = false;
                 })

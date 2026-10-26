@@ -8,6 +8,15 @@
 
         <list-description v-if="list.optionalFields['listDescription']" :list="list" />
 
+        <div v-if="categories.length > 1" class="wgCategoryTools">
+            <button type="button" class="wgBtn wgBtnGhost wgBtnSmall" data-testid="expand-all" :disabled="!anyCollapsed" @click="setCollapsed(false)">
+                Expand all
+            </button>
+            <button type="button" class="wgBtn wgBtnGhost wgBtnSmall" data-testid="collapse-all" :disabled="allCollapsed" @click="setCollapsed(true)">
+                Collapse all
+            </button>
+        </div>
+
         <ul class="lpCategories">
             <category v-for="category in categories" :key="category.id" :category="category" />
         </ul>
@@ -58,6 +67,12 @@ export default {
         categories() {
             return this.list.categoryIds.map(id => this.library.getCategoryById(id));
         },
+        anyCollapsed() {
+            return this.categories.some((c) => c && c.collapsed);
+        },
+        allCollapsed() {
+            return this.categories.every((c) => c && c.collapsed);
+        },
         isListNew() {
             return this.list.totalWeight === 0;
         },
@@ -105,6 +120,9 @@ export default {
         }
     },
     methods: {
+        setCollapsed(collapsed) {
+            this.$store.commit('setCategoriesCollapsed', { list: this.list, collapsed });
+        },
         newCategory() {
             this.$store.commit('newCategory', this.list);
         },
@@ -187,6 +205,13 @@ export default {
 </script>
 
 <style lang="scss">
+.wgCategoryTools {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+    margin: 4px 0 8px;
+}
+
 @import "../css/_globals";
 
 // The 56px side padding forms the gutters that row controls bleed into.

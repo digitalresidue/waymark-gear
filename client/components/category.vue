@@ -1,13 +1,24 @@
 <template>
-    <li :id="category.id" class="lpCategory" :class="{lpCategoryEmpty: isEmpty}" data-testid="category">
+    <li :id="category.id" class="lpCategory" :class="{lpCategoryEmpty: isEmpty, wgCollapsed: category.collapsed}" data-testid="category">
         <ul class="lpItems lpDataTable" :class="{lpHasPrice: optionalFields['price'], lpHasImages: optionalFields['images']}">
             <li class="lpHeader lpItemsHeader">
                 <span class="lpHandleCell">
                     <div class="lpHandle lpCategoryHandle" title="Reorder this category" />
                 </span>
                 <span class="lpCategoryHead">
+                    <button
+                        type="button"
+                        class="wgDrawerToggle"
+                        :aria-expanded="String(!category.collapsed)"
+                        :aria-label="`${category.collapsed ? 'Expand' : 'Collapse'} ${category.name || 'category'}`"
+                        data-testid="category-toggle"
+                        @click="toggleCollapsed"
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+                    </button>
                     <span v-if="swatchColor" class="lpCategorySwatch" :style="{background: swatchColor}" />
                     <input v-focus-on-create="!!category._isNew" type="text" :value="category.name" placeholder="Category Name" class="lpCategoryName lpSilent" @input="updateCategoryName">
+                    <span v-if="category.collapsed" class="wgItemCount" data-testid="category-count">{{ itemCountLabel }}</span>
                 </span>
                 <span v-if="optionalFields['price']" class="lpPriceCell lpNumber lpSubtotal">
                     {{ displayPrice(category.subtotalPrice, library.currencySymbol) }}
@@ -23,12 +34,18 @@
                 </span>
                 <span class="lpRemoveCell"><a class="lpRemove lpRemoveCategory" title="Remove this category" @click="removeCategory(category)"><i class="lpSprite lpSpriteRemove" /></a></span>
             </li>
-            <component :is="itemComponent" v-for="itemContainer in itemContainers" :key="itemContainer.item.id" :item-container="itemContainer" :category="category" />
-            <li class="lpFooter lpItemsFooter">
-                <span class="lpAddItemCell">
-                    <a class="lpAdd lpAddItem" @click="newItem"><i class="lpSprite lpSpriteAdd" />Add new item</a>
-                </span>
-            </li>
+            <template v-if="!category.collapsed">
+                <component :is="itemComponent" v-for="itemContainer in itemContainers" :key="itemContainer.item.id" :item-container="itemContainer" :category="category" />
+                <li class="lpFooter lpItemsFooter">
+                    <span class="lpAddItemCell">
+                        <a class="lpAdd lpAddItem" @click="newItem"><i class="lpSprite lpSpriteAdd" />Add new item</a>
+                        <button type="button" class="wgAddCatalog" data-testid="add-from-catalog" @click="openCatalogPicker(category)">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
+                            Add from catalog
+                        </button>
+                    </span>
+                </li>
+            </template>
         </ul>
     </li>
 </template>
@@ -47,7 +64,7 @@ export default {
         itemMobile,
     },
     mixins: [utilsMixin],
-    inject: ['initSpeedbump'],
+    inject: ['initSpeedbump', 'openCatalogPicker'],
     props: ['category'],
     setup() {
         return { isMobile };
@@ -71,6 +88,10 @@ export default {
         swatchColor() {
             return this.category.displayColor || '';
         },
+        itemCountLabel() {
+            const n = this.category.categoryItems.length;
+            return `${n} ${n === 1 ? 'item' : 'items'}`;
+        },
         isEmpty() {
             return this.category.categoryItems.length === 0;
         },
@@ -83,6 +104,9 @@ export default {
         }
     },
     methods: {
+        toggleCollapsed() {
+            this.$store.commit('toggleCategoryCollapsed', this.category);
+        },
         newItem() {
             this.$store.commit('newItem', { category: this.category, _isNew: true });
         },
@@ -105,10 +129,102 @@ export default {
 <style lang="scss">
 @import "../css/_globals";
 
+// Drawer toggle: categories fold to their header so a long list stays
+// scannable. The state is saved with the library.
+.wgDrawerToggle {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    color: var(--lp-text-secondary);
+    cursor: pointer;
+    display: inline-flex;
+    flex: 0 0 32px;
+    height: 32px;
+    justify-content: center;
+    margin-left: -6px;
+    padding: 0;
+
+    &:hover {
+        background: var(--lp-row-hover);
+        color: var(--lp-text);
+    }
+
+    svg {
+        transform: rotate(90deg);
+        transition: transform 0.15s;
+
+        .wgCollapsed & {
+            transform: rotate(0deg);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        svg {
+            transition: none;
+        }
+    }
+}
+
+.lp .lpItemsHeader .lpCategoryName {
+    font-size: 16px;
+    font-weight: 650;
+}
+
+.wgItemCount {
+    color: var(--lp-text-secondary);
+    flex: none;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.lpAddItemCell {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+}
+
+.wgAddCatalog {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    color: var(--lp-accent);
+    cursor: pointer;
+    display: inline-flex;
+    font-family: $font-body;
+    font-size: 14px;
+    font-weight: 600;
+    gap: 6px;
+    min-height: 36px;
+    padding: 0 8px;
+
+    &:hover {
+        background: var(--lp-row-hover);
+    }
+}
+
 .lpCategory {
-    border: 2px solid transparent;
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: 14px;
     list-style: none;
-    margin: 0 0 26px;
+    margin: 0 0 12px;
+    padding: 8px 14px 6px;
+    transition: border-color 0.15s;
+
+    &:hover {
+        border-color: var(--lp-border-strong);
+    }
+
+    &.wgCollapsed {
+        padding-bottom: 8px;
+
+        .lpItemsHeader {
+            border-bottom: 0;
+        }
+    }
 
     &.dropAccept {
         background: var(--lp-hover-bg);
@@ -144,7 +260,7 @@ export default {
     }
 
     .lpItem {
-        grid-template-columns: 180px minmax(0, 1fr) auto 82px 35px;
+        grid-template-columns: 230px minmax(0, 1fr) auto 82px 35px;
     }
 
     .lpItemsHeader {
@@ -157,7 +273,7 @@ export default {
 
     &.lpHasPrice {
         .lpItem {
-            grid-template-columns: 180px minmax(0, 1fr) auto 52px 82px 35px;
+            grid-template-columns: 230px minmax(0, 1fr) auto 52px 82px 35px;
         }
 
         .lpItemsHeader {
@@ -166,11 +282,11 @@ export default {
     }
 
     &.lpHasImages .lpItem {
-        grid-template-columns: 90px 180px minmax(0, 1fr) auto 82px 35px;
+        grid-template-columns: 90px 230px minmax(0, 1fr) auto 82px 35px;
     }
 
     &.lpHasImages.lpHasPrice .lpItem {
-        grid-template-columns: 90px 180px minmax(0, 1fr) auto 52px 82px 35px;
+        grid-template-columns: 90px 230px minmax(0, 1fr) auto 52px 82px 35px;
     }
 
     // Gutter controls live in the side margins so columns never shift.

@@ -2,9 +2,14 @@
     <section id="listContainer">
         <div class="lpSidebarSectionHeader listContainerHeader">
             <span class="lpSectionLabel">Lists · {{ library.lists.length }}</span>
+        </div>
+        <div class="wgListsTools">
             <PopoverHover id="addListFlyout" ref="addListFlyout">
                 <template #target>
-                    <span><a class="lpSidebarNew" data-testid="new-list" @click="newListFromTarget">+ New</a></span>
+                    <button type="button" class="wgNewList lpSidebarNew" data-testid="new-list" @click="newListFromTarget">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                        New list
+                    </button>
                 </template>
                 <template #content="{ hide }">
                     <div>
@@ -14,17 +19,61 @@
                     </div>
                 </template>
             </PopoverHover>
+            <label v-if="showSearch" class="wgSearch wgListSearch">
+                <span class="wgVisuallyHidden">Find a list</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
+                <input v-model="query" type="search" class="wgInput" placeholder="Find a list" data-testid="list-search">
+            </label>
         </div>
+
         <div class="lpSidebarListsRegion">
-            <ul id="lists" class="lpSidebarScroll">
-                <li v-for="list in library.lists" :key="list.id" class="lpLibraryList" :class="{lpActive: (library.defaultListId == list.id)}" @click="setDefaultList(list)">
-                    <div class="lpHandle" title="Reorder this list" />
-                    <span class="lpLibraryListSwitch lpListName">
-                        {{ listName(list) }}
-                    </span>
+            <template v-if="pinnedLists.length">
+                <p class="wgListGroup">
+                    Pinned
+                </p>
+                <ul id="pinnedLists" ref="pinned" class="lpSidebarScroll wgListGroupList">
+                    <li
+                        v-for="list in pinnedLists"
+                        :key="list.id"
+                        :data-list-id="list.id"
+                        class="lpLibraryList"
+                        :class="{lpActive: (library.defaultListId == list.id)}"
+                        @click="setDefaultList(list)"
+                    >
+                        <div v-if="!filtering" class="lpHandle" title="Reorder this list" />
+                        <span class="lpLibraryListSwitch lpListName">{{ listName(list) }}</span>
+                        <span class="wgListWeight wgMono">{{ baseWeight(list) }}</span>
+                        <button type="button" class="wgListPin wgPinned" :aria-label="`Unpin ${listName(list)}`" title="Unpin" @click.stop="togglePin(list)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 3l5 5-3 1-4 4 1 5-2 2-4-4-5 5-1-1 5-5-4-4 2-2 5 1 4-4z" /></svg>
+                        </button>
+                        <a class="lpRemove" title="Remove this list" @click.stop="removeList(list)"><i class="lpSprite lpSpriteRemove" /></a>
+                    </li>
+                </ul>
+                <p v-if="otherLists.length" class="wgListGroup">
+                    All lists
+                </p>
+            </template>
+            <ul id="lists" ref="lists" class="lpSidebarScroll">
+                <li
+                    v-for="list in otherLists"
+                    :key="list.id"
+                    :data-list-id="list.id"
+                    class="lpLibraryList"
+                    :class="{lpActive: (library.defaultListId == list.id)}"
+                    @click="setDefaultList(list)"
+                >
+                    <div v-if="!filtering" class="lpHandle" title="Reorder this list" />
+                    <span class="lpLibraryListSwitch lpListName">{{ listName(list) }}</span>
+                    <span class="wgListWeight wgMono">{{ baseWeight(list) }}</span>
+                    <button type="button" class="wgListPin" :aria-label="`Pin ${listName(list)}`" title="Pin to top" @click.stop="togglePin(list)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 3l5 5-3 1-4 4 1 5-2 2-4-4-5 5-1-1 5-5-4-4 2-2 5 1 4-4z" /></svg>
+                    </button>
                     <a class="lpRemove" title="Remove this list" @click.stop="removeList(list)"><i class="lpSprite lpSpriteRemove" /></a>
                 </li>
             </ul>
+            <p v-if="filtering && !pinnedLists.length && !otherLists.length" class="wgListNone">
+                No lists match “{{ query }}”.
+            </p>
         </div>
     </section>
 </template>
@@ -33,7 +82,7 @@
 import PopoverHover from './popover-hover.vue';
 
 import dragula from 'dragula';
-import { getElementIndex } from '../utils/utils.js';
+import { formatWeightMg } from '../utils/format.js';
 
 export default {
     name: 'LibraryList',
@@ -41,37 +90,85 @@ export default {
         PopoverHover,
     },
     inject: ['openCopyList', 'openImportCSV', 'initSpeedbump'],
-    props: ['list'],
+    data() {
+        return { query: '' };
+    },
     computed: {
         library() {
             return this.$store.state.library;
         },
+        // Search earns its space once there are enough lists to hunt through.
+        showSearch() {
+            return this.library.lists.length >= 5 || this.query;
+        },
+        filtering() {
+            return this.query.trim() !== '';
+        },
+        visible() {
+            const q = this.query.trim().toLowerCase();
+            return q ? this.library.lists.filter((l) => this.listName(l).toLowerCase().includes(q)) : this.library.lists;
+        },
+        pinnedLists() {
+            return this.visible.filter((l) => l.pinned);
+        },
+        otherLists() {
+            return this.visible.filter((l) => !l.pinned);
+        },
     },
     mounted() {
-        this.handleListReorder();
+        this.drake = dragula([], {
+            moves(_$el, _$source, $handle) {
+                return $handle.classList.contains('lpHandle');
+            },
+            // Within a section only; pinning is what moves a list between them.
+            accepts(_$el, $target, $source) {
+                return $target === $source;
+            },
+        });
+        this.drake.on('drop', ($el, $target) => {
+            // Read the new order straight from the DOM by list id, so the
+            // order is right however the section is filtered or split.
+            const ids = Array.from($target.children).map((li) => Number(li.dataset.listId));
+            this.drake.cancel(true);
+            this.$store.commit('reorderListsById', ids);
+        });
+        this.syncContainers();
+    },
+    updated() {
+        this.syncContainers();
+    },
+    beforeUnmount() {
+        if (this.drake) this.drake.destroy();
     },
     methods: {
+        syncContainers() {
+            if (!this.drake) return;
+            this.drake.containers = [this.$refs.pinned, this.$refs.lists].filter(Boolean);
+        },
         listName(list) {
             return list.name || 'New list';
+        },
+        baseWeight(list) {
+            return formatWeightMg(list.totalBaseWeight || 0, this.library.totalUnit === 'kg' || this.library.totalUnit === 'g' ? 'kg' : 'lb');
         },
         setDefaultList(list) {
             this.$store.commit('setDefaultList', list);
         },
-        // On a pointer device the flyout is already open on hover, so clicking
-        // the target itself is the shortcut that makes a list outright. With no
-        // hover, the tap is what opens the menu — creating a list here too
-        // would mean picking "Add new list" from it left you with two.
+        togglePin(list) {
+            this.$store.commit('togglePinList', list);
+        },
+        // On a pointer device the flyout opens on hover, so clicking the
+        // button itself makes a list outright. With no hover, the tap opens
+        // the menu instead.
         newListFromTarget() {
             if (window.matchMedia('(hover: hover)').matches) {
-                // Act and get out of the way, like the menu's own items. Left
-                // open, the flyout sits over the list names until the pointer
-                // leaves "+ New" - so the list you want to click next is
-                // under it.
+                // Act and get out of the way, like the menu's own items.
                 this.$refs.addListFlyout?.hide();
                 this.newList();
             }
         },
         newList() {
+            this.query = '';
             this.$store.commit('newList');
             // Frictionless naming: drop the cursor straight into the title.
             this.$nextTick(() => {
@@ -84,21 +181,6 @@ export default {
         },
         importCSV() {
             this.openImportCSV();
-        },
-        handleListReorder() {
-            const $lists = document.getElementById('lists');
-            const drake = dragula([$lists], {
-                moves(_$el, _$source, $handle, _$sibling) {
-                    return $handle.classList.contains('lpHandle');
-                },
-            });
-            drake.on('drag', ($el, _$target, _$source, _$sibling) => {
-                this.dragStartIndex = getElementIndex($el);
-            });
-            drake.on('drop', ($el, _$target, _$source, _$sibling) => {
-                this.$store.commit('reorderList', { before: this.dragStartIndex, after: getElementIndex($el) });
-                drake.cancel(true);
-            });
         },
         removeList(list) {
             const callback = function () {
@@ -120,25 +202,91 @@ export default {
     flex: 0 0 auto;
 }
 
-// Capped at ~7 rows with its own thin scrollbar.
+.wgListsTools {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 4px 14px 10px;
+
+    #addListFlyout,
+    #addListFlyout .lpTarget {
+        display: block;
+        width: 100%;
+    }
+}
+
+.wgNewList {
+    align-items: center;
+    background: var(--lp-active-bg);
+    border: 1px dashed var(--lp-sage, #9DB8A0);
+    border-radius: 10px;
+    color: var(--lp-accent-green-deep);
+    cursor: pointer;
+    display: flex;
+    font-family: $font-body;
+    font-size: 14px;
+    font-weight: 600;
+    gap: 8px;
+    justify-content: center;
+    min-height: 40px;
+    width: 100%;
+
+    &:hover {
+        border-style: solid;
+    }
+}
+
+.wgListSearch .wgInput {
+    font-size: 14px;
+    min-height: 38px;
+    padding-bottom: 6px;
+    padding-top: 6px;
+}
+
+.wgListGroup {
+    color: var(--lp-sidebar-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    margin: 6px 0 2px;
+    padding: 0 20px;
+    text-transform: uppercase;
+}
+
+.wgListNone {
+    color: var(--lp-sidebar-muted);
+    font-size: 13px;
+    padding: 6px 20px;
+}
+
+// Capped with its own thin scrollbar so the gear section keeps room.
 .lpSidebarListsRegion {
     position: relative;
 
-    #lists {
+    #lists,
+    #pinnedLists {
         margin: 0;
-        max-height: 280px;
+        max-height: 300px;
         padding: 0;
+    }
+
+    #pinnedLists {
+        max-height: 180px;
     }
 }
 
 // The whole row is the switch target — identical to the hover surface.
 .lpLibraryList {
     align-items: center;
+    border-radius: 9px;
     cursor: pointer;
     display: flex;
-    font-size: 13px;
+    font-size: 14px;
+    gap: 6px;
     list-style: none;
-    padding: 6px 8px 6px 20px;
+    margin: 1px 8px;
+    min-height: 36px;
+    padding: 6px 6px 6px 18px;
     position: relative;
 
     &:hover {
@@ -146,8 +294,9 @@ export default {
     }
 
     &.lpActive {
-        background: var(--lp-sidebar-inset);
-        color: var(--lp-active-yellow);
+        background: var(--lp-active-bg);
+        box-shadow: inset 3px 0 0 var(--lp-primary);
+        color: var(--lp-accent-green-deep);
         font-weight: 600;
 
         .lpRemove {
@@ -156,7 +305,7 @@ export default {
     }
 
     &.gu-mirror {
-        background: var(--lp-sidebar-inset);
+        background: var(--lp-surface);
         border: 1px solid var(--lp-sidebar-border);
         color: var(--lp-sidebar-text);
     }
@@ -173,13 +322,10 @@ export default {
 
     .lpListName {
         flex: 1 1 auto;
+        min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-
-        &:hover {
-            cursor: pointer;
-        }
     }
 
     .lpRemove {
@@ -188,18 +334,50 @@ export default {
     }
 }
 
-.listContainerHeader .lpPopover .lpTarget {
-    padding-bottom: 4px;
+.wgListWeight {
+    color: var(--lp-sidebar-muted);
+    flex: none;
+    font-size: 12px;
+    font-weight: 400;
 }
 
-// The + New flyout drops beneath its target at the top-right of the rail.
-// It right-anchors so a menu wider than the "+ New" link still stays within
-// the rail, and the top-right corner — nearest the target — is squared off.
+.wgListPin {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 6px;
+    color: var(--lp-sidebar-muted);
+    cursor: pointer;
+    display: inline-flex;
+    flex: none;
+    height: 24px;
+    justify-content: center;
+    padding: 0;
+    visibility: hidden;
+    width: 24px;
+
+    &:hover,
+    &:focus-visible {
+        background: var(--lp-sidebar-border);
+        color: var(--lp-sidebar-text);
+    }
+
+    &.wgPinned {
+        color: var(--lp-accent);
+        visibility: visible;
+    }
+
+    .lpLibraryList:hover &,
+    &:focus-visible {
+        visibility: visible;
+    }
+}
+
+// The flyout drops beneath the New list button, full width of the rail.
 #addListFlyout {
     .lpContent {
-        border-top-right-radius: 0;
-        left: auto;
-        right: 0;
+        left: 0;
+        right: auto;
         transform: none;
 
         a {
@@ -218,26 +396,22 @@ export default {
 }
 
 // ============================================================
-// Phone layout — list rows in the drawer (#11f)
+// Phone layout — list rows in the drawer
 // ============================================================
 @media only screen and (width <= $mobile) {
-    // The desktop cap (~7 rows) exists to leave the gear region room in a
-    // fixed-height rail. The drawer is full-height, so give the lists more of
-    // it and let the region scroll.
     .lpSidebarListsRegion #lists {
         max-height: 45vh;
     }
 
     .lpLibraryList {
-        font-size: 14px;
-        padding: 11px 12px 11px 20px;
+        font-size: 15px;
+        min-height: 44px;
+        padding: 10px 8px 10px 18px;
     }
 
-    // Every reveal-on-hover control is unreachable on a touch screen. The
-    // design's answer for deletion is the swipe gesture (#11e), which isn't
-    // built yet — until it is, the ✕ stays visible so lists can still be
-    // deleted from a phone. It's speedbumped, so a stray tap is recoverable.
-    .lpLibraryList .lpRemove {
+    // No hover on touch: keep remove and pin reachable.
+    .lpLibraryList .lpRemove,
+    .wgListPin {
         visibility: visible;
     }
 }

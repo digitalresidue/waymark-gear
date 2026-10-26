@@ -1,11 +1,22 @@
 <!DOCTYPE html>
-<html class="lp">
+<html class="lp" lang="en">
     <head>
-        <link rel="preload" href="/fonts/open-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
+        <meta charset="utf-8">
+        <title>{{listName}} by @{{username}} — Waymark Gear</title>
+        <meta name="description" content="{{metaDescription}}">
+        <link rel="canonical" href="{{deployUrl}}/r/{{externalId}}">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="Waymark Gear">
+        <meta property="og:title" content="{{listName}} · {{baseWeight}} base weight">
+        <meta property="og:description" content="{{metaDescription}}">
+        <meta property="og:url" content="{{deployUrl}}/r/{{externalId}}">
+        <meta property="og:image" content="{{deployUrl}}/images/og-image.png">
+        <meta name="twitter:card" content="summary_large_image">
         {{{styles}}}
-        <link rel="shortcut icon" href="/favicon.png" />
+        <link rel="icon" href="/favicon.png" />
+        <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
         <style>.lpModalOverlay, #lpImageDialog { display: none;}</style>
-        <meta name="viewport" content="width=device-width; initial-scale=1.0">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <!-- The bundle is a module at the end of the body, so it runs after
              first paint. A stored theme has to land on <html> before then, or
              a reader who picked dark against a light OS watches the page flip.
@@ -22,10 +33,23 @@
         </script>
     </head>
     <body>
+        <header class="wgShareBar">
+            <a href="/welcome" class="wgShareBrand" aria-label="Waymark Gear home">
+                <img class="wgLogo wgLogoOnLight" src="/images/waymark-logo.png" alt="Waymark Gear" width="843" height="127">
+                <img class="wgLogo wgLogoOnDark" src="/images/waymark-logo-light.png" alt="Waymark Gear" width="843" height="127">
+            </a>
+            <nav class="wgShareActions" aria-label="List actions">
+                <a href="/explore" class="wgBtn wgBtnGhost">Explore kits</a>
+                <a href="/?copy={{externalId}}" class="wgBtn wgBtnPrimary" data-testid="copy-list">Copy to my lists</a>
+            </nav>
+        </header>
         <div id="main" class="lpShare">
             <div class="lpList {{#optionalFields.images}}lpShowImages{{/optionalFields.images}} {{#optionalFields.worn}}lpShowWorn{{/optionalFields.worn}} {{#optionalFields.consumable}}lpShowConsumable{{/optionalFields.consumable}} {{#optionalFields.price}}lpShowPrices{{/optionalFields.price}}">
                 <div class="lpShareHeader">
-                    <h1 class="lpListName">{{listName}}</h1>
+                    <div class="wgShareTitle">
+                        <h1 class="lpListName">{{listName}}</h1>
+                        <p class="wgShareByline">by <strong>@{{username}}</strong> · {{baseWeight}} base weight · {{itemCount}} items{{#weightClass}} · <span class="wgBadge">{{weightClass}}</span>{{/weightClass}}</p>
+                    </div>
                     <div class="lpShareMenu">
                         <button type="button" class="lpShareMenuTarget" data-testid="share-settings" aria-label="Page settings" aria-expanded="false" aria-controls="lpShareMenuContent">
                             <i class="lpSprite lpSettings"></i>

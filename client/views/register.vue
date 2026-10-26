@@ -1,39 +1,26 @@
 <template>
-    <div id="registerContainer">
-        <modal id="register" class="lpAuthCard" :shown="true" :blackout="true">
-            <div class="lpModalHeader">
-                <h2>
-                    Register an account
-                </h2>
-                <router-link to="/signin" class="lpHref">
-                    Already registered?
-                </router-link>
-            </div>
+    <authLayout card-id="register" title="Create your account" subtitle="Free. Your lists sync across devices.">
+        <p v-if="isLocalSaving" class="lpWarning">
+            <strong>Note:</strong> Your existing data on your computer <strong>will</strong> be saved to your new account.
+        </p>
 
-            <p v-if="isLocalSaving" class="lpWarning">
-                <strong>Note:</strong> Your existing data on your computer <strong>will</strong> be saved to your new account.
-            </p>
-
-            <registerForm />
-        </modal>
-
-        <siteFooter fixed />
-        <globalAlerts />
-    </div>
+        <registerForm />
+        <template #after>
+            <span class="wgMuted">Already have an account?</span> <router-link to="/signin">
+                Sign in
+            </router-link>
+        </template>
+    </authLayout>
 </template>
 
 <script>
-import siteFooter from '../components/site-footer.vue';
-import globalAlerts from '../components/global-alerts.vue';
-import modal from '../components/modal.vue';
+import authLayout from '../components/auth-layout.vue';
 import registerForm from '../components/register-form.vue';
 
 export default {
     name: 'Register',
     components: {
-        siteFooter,
-        globalAlerts,
-        modal,
+        authLayout,
         registerForm,
     },
 

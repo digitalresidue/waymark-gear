@@ -1,53 +1,43 @@
 <template>
-    <div id="resetPasswordContainer">
-        <modal id="resetPassword" class="lpAuthCard" :shown="true" :blackout="true">
-            <div class="lpModalHeader">
-                <h2>
-                    Choose a new password
-                </h2>
-                <router-link to="/signin" class="lpHref">
-                    Return to sign in
-                </router-link>
+    <authLayout card-id="resetPassword" title="Choose a new password" :google="false">
+        <form class="resetPassword lpFields" data-testid="reset-password-form" @submit.prevent="submit">
+            <div class="lpFields">
+                <input v-model="password" v-focus-on-create type="password" placeholder="New password" name="password" class="password">
+                <input v-model="passwordConfirm" type="password" placeholder="Confirm new password" name="passwordConfirm" class="passwordConfirm">
             </div>
 
-            <form class="resetPassword lpFields" data-testid="reset-password-form" @submit.prevent="submit">
-                <div class="lpFields">
-                    <input v-model="password" v-focus-on-create type="password" placeholder="New password" name="password" class="password">
-                    <input v-model="passwordConfirm" type="password" placeholder="Confirm new password" name="passwordConfirm" class="passwordConfirm">
-                </div>
+            <errors :errors="errors" />
 
-                <errors :errors="errors" />
+            <div class="lpButtons">
+                <button class="lpButton">
+                    Save new password
+                    <spinner v-if="saving" />
+                </button>
 
-                <div class="lpButtons">
-                    <button class="lpButton">
-                        Save new password
-                        <spinner v-if="saving" />
-                    </button>
-
-                    <router-link to="/forgot-password" class="lpHref">
-                        Request a new link
-                    </router-link>
-                </div>
-            </form>
-        </modal>
-
-        <siteFooter fixed />
-    </div>
+                <router-link to="/forgot-password" class="lpHref">
+                    Request a new link
+                </router-link>
+            </div>
+        </form>
+        <template #after>
+            <router-link to="/signin">
+                Back to sign in
+            </router-link>
+        </template>
+    </authLayout>
 </template>
 
 <script>
-import siteFooter from '../components/site-footer.vue';
+import authLayout from '../components/auth-layout.vue';
 import errors from '../components/errors.vue';
-import modal from '../components/modal.vue';
 import spinner from '../components/spinner.vue';
 import { fetchJson } from '../utils/utils.js';
 
 export default {
     name: 'ResetPassword',
     components: {
-        siteFooter,
+        authLayout,
         errors,
-        modal,
         spinner,
     },
     data() {
@@ -104,6 +94,7 @@ export default {
                     this.$store.commit('loadLibraryData', response.library);
                     this.$store.commit('setSaveType', 'remote');
                     this.$store.commit('setLoggedIn', response.username);
+                    this.$store.commit('setAccount', response.account || null);
                     this.saving = false;
                     this.$router.push('/');
                 })

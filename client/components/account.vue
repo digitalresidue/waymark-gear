@@ -20,14 +20,36 @@
         </div>
         <hr>
 
+        <div v-if="googleEnabled" class="wgAccountGoogle" data-testid="account-google">
+            <p v-if="googleLinked">
+                <strong>Google:</strong> connected. You can sign in with Google.
+                <button v-if="hasPassword" type="button" class="wgBtn wgBtnSmall wgBtnGhost" data-testid="google-unlink" @click="unlinkGoogle">
+                    Disconnect
+                </button>
+            </p>
+            <template v-else>
+                <p><strong>Google:</strong> not connected.</p>
+                <googleButton link>
+                    Connect Google
+                </googleButton>
+            </template>
+            <p v-if="googleMessage" class="wgMuted">
+                {{ googleMessage }}
+            </p>
+        </div>
+        <hr v-if="googleEnabled">
+
         <form id="accountForm" @submit.prevent="updateAccount()">
             <div class="lpFields">
                 <input type="text" name="username" class="username" disabled :value="username">
-                <input v-model="currentPassword" type="password" placeholder="Current Password" name="currentPassword" class="currentPassword">
+                <input v-if="hasPassword" v-model="currentPassword" type="password" placeholder="Current Password" name="currentPassword" class="currentPassword">
+                <p v-else class="wgMuted wgAccountNote">
+                    You sign in with Google, so there's no current password to enter.
+                </p>
                 <hr>
                 <input v-model="newEmail" type="email" placeholder="New Email" name="newEmail" class="newEmail">
                 <hr>
-                <input v-model="newPassword" type="password" placeholder="New Password" name="newPassword" class="newPassword">
+                <input v-model="newPassword" type="password" :placeholder="hasPassword ? 'New Password' : 'Set a password (optional)'" name="newPassword" class="newPassword">
                 <input v-model="confirmNewPassword" type="password" placeholder="Confirm New Password" name="confirmNewPassword" class="confirmNewPassword">
             </div>
 
@@ -50,7 +72,9 @@ import errors from './errors.vue';
 import modal from './modal.vue';
 import spinner from './spinner.vue';
 import toggle from './toggle.vue';
+import googleButton from './google-button.vue';
 import { fetchJson } from '../utils/utils.js';
+import { api, siteConfig } from '../utils/format.js';
 
 export default {
     name: 'Account',
@@ -59,6 +83,7 @@ export default {
         modal,
         spinner,
         toggle,
+        googleButton,
     },
     inject: ['openDeleteAccount'],
     props: {
@@ -76,11 +101,23 @@ export default {
             newEmail: '',
             newPassword: '',
             confirmNewPassword: '',
+            googleEnabled: false,
+            googleMessage: '',
         };
     },
     computed: {
         username() {
             return this.$store.state.loggedIn;
+        },
+        account() {
+            return this.$store.state.account || {};
+        },
+        // Unknown (an older session) reads as having a password, the safe side.
+        hasPassword() {
+            return this.account.hasPassword !== false;
+        },
+        googleLinked() {
+            return Boolean(this.account.googleLinked);
         },
         sharedItemBubble() {
             const library = this.$store.state.library;
@@ -91,7 +128,19 @@ export default {
             return !!(library && library.preferences.wornQtyHint);
         },
     },
+    async mounted() {
+        this.googleEnabled = Boolean((await siteConfig()).googleEnabled);
+    },
     methods: {
+        async unlinkGoogle() {
+            try {
+                await api('/auth/google/unlink', { method: 'POST', body: '{}' });
+                this.$store.commit('setAccount', { ...this.account, googleLinked: false });
+                this.googleMessage = 'Google disconnected.';
+            } catch (err) {
+                this.googleMessage = err.message;
+            }
+        },
         toggleSharedItemBubble() {
             this.$store.commit('togglePreference', 'sharedItemBubble');
         },
@@ -101,7 +150,7 @@ export default {
         updateAccount() {
             this.errors = [];
 
-            if (!this.currentPassword) {
+            if (this.hasPassword && !this.currentPassword) {
                 this.errors.push({ field: 'currentPassword', message: 'Please enter your current password.' });
             }
 
@@ -134,6 +183,8 @@ export default {
             })
                 .then(() => {
                     this.saving = false;
+                    if (data.newPassword) this.$store.commit('setAccount', { ...this.account, hasPassword: true });
+                    if (data.newEmail) this.$store.commit('setAccount', { ...this.$store.state.account, email: data.newEmail });
                     this.$emit('hide');
                 })
                 .catch((err) => {

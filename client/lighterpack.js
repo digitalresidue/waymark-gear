@@ -1,3 +1,6 @@
+import '@fontsource-variable/archivo/wdth.css';
+import '@fontsource-variable/geist';
+import '@fontsource-variable/geist-mono';
 import './css/lighterpack.scss';
 import { initTheme } from './utils/theme.js';
 import { createApp } from 'vue';

@@ -1,40 +1,44 @@
 <template>
-    <div v-if="isLoaded" id="main" :class="{lpHasSidebar: library.showSidebar, lpDrawerOpen: drawerOpen}">
-        <div class="lpFrameFill lpFrameFillLeft" />
-        <sidebar />
-        <div class="lpDrawerScrim" data-testid="drawer-scrim" @click="closeDrawer" />
-        <div class="lpContentCol">
-            <div id="header">
-                <span class="headerItem">
-                    <a id="hamburger" class="lpTransition" data-testid="toggle-sidebar" @click="toggleSidebar"><i class="lpSprite lpHamburger" /></a>
-                </span>
-                <input id="lpListName" :value="list.name" type="text" class="lpListName lpSilent headerItem" placeholder="Name your list" autocomplete="off" name="lastpass-disable-search" @input="updateListName">
-                <share />
-                <listSettings />
-                <accountDropdown />
+    <div v-if="isLoaded" class="wgApp">
+        <siteHeader app active="lists" />
+        <div id="main" :class="{lpHasSidebar: library.showSidebar, lpDrawerOpen: drawerOpen}">
+            <div class="lpFrameFill lpFrameFillLeft" />
+            <sidebar />
+            <div class="lpDrawerScrim" data-testid="drawer-scrim" @click="closeDrawer" />
+            <div class="lpContentCol">
+                <div id="header">
+                    <span class="headerItem">
+                        <a id="hamburger" class="lpTransition" data-testid="toggle-sidebar" @click="toggleSidebar"><i class="lpSprite lpHamburger" /></a>
+                    </span>
+                    <input id="lpListName" :value="list.name" type="text" class="lpListName lpSilent headerItem" placeholder="Name your list" autocomplete="off" name="lastpass-disable-search" @input="updateListName">
+                    <share />
+                    <listSettings />
+                    <accountDropdown />
+                </div>
+
+                <list />
+
+                <siteFooter id="lpFooter" />
             </div>
+            <div class="lpFrameFill lpFrameFillRight" />
 
-            <list />
-
-            <siteFooter id="lpFooter" />
+            <globalAlerts />
+            <speedbump
+                :shown="showSpeedbump"
+                :speedbump-callback="speedbumpCallback"
+                :speedbump-options="speedbumpOptions"
+                @hide="showSpeedbump = false"
+            />
+            <copyList :shown="showCopyList" @hide="showCopyList = false" />
+            <importCSV ref="importCSVRef" />
+            <itemImage :shown="showItemImage" :item="itemImageItem" @hide="showItemImage = false" />
+            <itemViewImage :shown="showItemViewImage" :image-url="itemViewImageUrl" @hide="showItemViewImage = false" />
+            <itemLink :shown="showItemLink" :item="itemLinkItem" @hide="showItemLink = false" />
+            <help :shown="showHelp" @hide="showHelp = false" />
+            <account :shown="showAccount" @hide="showAccount = false" />
+            <accountDelete :shown="showDeleteAccount" @hide="showDeleteAccount = false" />
+            <catalogPicker :shown="showCatalogPicker" :initial-category-id="catalogPickerCategoryId" @hide="showCatalogPicker = false" />
         </div>
-        <div class="lpFrameFill lpFrameFillRight" />
-
-        <globalAlerts />
-        <speedbump
-            :shown="showSpeedbump"
-            :speedbump-callback="speedbumpCallback"
-            :speedbump-options="speedbumpOptions"
-            @hide="showSpeedbump = false"
-        />
-        <copyList :shown="showCopyList" @hide="showCopyList = false" />
-        <importCSV ref="importCSVRef" />
-        <itemImage :shown="showItemImage" :item="itemImageItem" @hide="showItemImage = false" />
-        <itemViewImage :shown="showItemViewImage" :image-url="itemViewImageUrl" @hide="showItemViewImage = false" />
-        <itemLink :shown="showItemLink" :item="itemLinkItem" @hide="showItemLink = false" />
-        <help :shown="showHelp" @hide="showHelp = false" />
-        <account :shown="showAccount" @hide="showAccount = false" />
-        <accountDelete :shown="showDeleteAccount" @hide="showDeleteAccount = false" />
     </div>
 </template>
 
@@ -56,8 +60,11 @@ import copyList from '../components/copy-list.vue';
 import speedbump from '../components/speedbump.vue';
 import accountDropdown from '../components/account-dropdown.vue';
 import siteFooter from '../components/site-footer.vue';
+import siteHeader from '../components/site-header.vue';
+import catalogPicker from '../components/catalog-picker.vue';
 
 import { isMobile } from '../utils/viewport.js';
+import { api } from '../utils/format.js';
 
 export default {
     name: 'Dashboard',
@@ -78,6 +85,8 @@ export default {
         globalAlerts,
         accountDropdown,
         siteFooter,
+        siteHeader,
+        catalogPicker,
     },
     provide() {
         return {
@@ -89,6 +98,10 @@ export default {
             openItemImage: (item) => { this.itemImageItem = item; this.showItemImage = true; },
             openItemViewImage: (imageUrl) => { this.itemViewImageUrl = imageUrl; this.showItemViewImage = true; },
             openItemLink: (item) => { this.itemLinkItem = item; this.showItemLink = true; },
+            openCatalogPicker: (category) => {
+                this.catalogPickerCategoryId = category ? category.id : null;
+                this.showCatalogPicker = true;
+            },
             initSpeedbump: (callback, options) => {
                 this.speedbumpCallback = callback;
                 this.speedbumpOptions = options;
@@ -116,6 +129,8 @@ export default {
             showSpeedbump: false,
             speedbumpCallback: null,
             speedbumpOptions: null,
+            showCatalogPicker: false,
+            catalogPickerCategoryId: null,
         };
     },
     computed: {
@@ -138,13 +153,36 @@ export default {
         },
     },
     beforeMount() {
+        const copyId = this.$route.query.copy;
+        // "Copy to my lists" from a shared page works without an account:
+        // a visitor with no library gets an account-less one to copy into.
+        if (!this.$store.state.library && copyId) {
+            this.$store.dispatch('startLocalLibrary');
+        }
         if (!this.$store.state.library) {
             this.$router.push('/welcome');
         } else {
             this.isLoaded = true;
+            if (copyId) this.copySharedList(String(copyId));
         }
     },
     methods: {
+        async copySharedList(externalId) {
+            this.$router.replace({ query: {} });
+            try {
+                const shared = await api(`/api/kits/${encodeURIComponent(externalId)}`);
+                this.$store.commit('importSharedList', shared);
+                const alert = { message: `Copied “${shared.name}” to your lists. Edit it freely; the original won't change.` };
+                const alerts = this.$store.state.globalAlerts;
+                alerts.push(alert);
+                setTimeout(() => {
+                    const i = alerts.indexOf(alert);
+                    if (i > -1) alerts.splice(i, 1);
+                }, 6000);
+            } catch (err) {
+                this.$store.state.globalAlerts.push({ message: err.message || 'That list could not be copied.' });
+            }
+        },
         // The rail's collapsed state is a saved account preference
         // (library.showSidebar, serialized with the library); the phone drawer
         // is throwaway view state. Keeping them separate means opening the
@@ -225,12 +263,17 @@ export default {
     }
 }
 
+// Below the site header, the editor fills the rest of the window.
+.wgApp #main {
+    min-height: calc(100vh - 65px);
+}
+
 #header {
     align-items: center;
     display: flex;
     flex: 0 0 auto;
     gap: 18px;
-    padding: 13px 32px;
+    padding: 22px 32px 14px;
 
     .lpTarget  .lpSprite {
         height: 14px;
@@ -257,8 +300,11 @@ export default {
 // the box's own padding so the title text keeps its place in the header.
 #lpListName {
     flex: 1 1 auto;
-    font-size: 22px;
-    font-weight: 700;
+    font-family: $font-display;
+    font-size: 28px;
+    font-stretch: 112%;
+    font-weight: 800;
+    letter-spacing: -0.01em;
     margin-left: -3px;
     min-width: 0;
     padding: 3px 7px;

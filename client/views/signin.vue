@@ -1,35 +1,23 @@
 <template>
-    <div id="signinContainer">
-        <modal id="signin" class="lpAuthCard" :shown="true" :blackout="true">
-            <div class="lpModalHeader">
-                <h2>
-                    Sign in
-                </h2>
-                <router-link to="/register" class="lpHref">
-                    Need to register?
-                </router-link>
-            </div>
-            <SigninForm :message="message" />
-        </modal>
-
-        <siteFooter fixed />
-        <globalAlerts />
-    </div>
+    <authLayout card-id="signin" title="Sign in" subtitle="Welcome back.">
+        <SigninForm :message="message" />
+        <template #after>
+            <span class="wgMuted">New here?</span> <router-link to="/register">
+                Create an account
+            </router-link>
+        </template>
+    </authLayout>
 </template>
 
 <script>
-import siteFooter from '../components/site-footer.vue';
-import globalAlerts from '../components/global-alerts.vue';
-import modal from '../components/modal.vue';
+import authLayout from '../components/auth-layout.vue';
 import SigninForm from '../components/signin-form.vue';
 import { contactEmail } from '../brand.js';
 
 export default {
     name: 'Signin',
     components: {
-        siteFooter,
-        globalAlerts,
-        modal,
+        authLayout,
         SigninForm,
     },
     computed: {

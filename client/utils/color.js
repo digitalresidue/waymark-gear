@@ -6,8 +6,21 @@ export default (function () {
             hsv.v += Math.round(((100 - hsv.v) / 10) * (index % 10));
             return hsvToRgb(hsv);
         }
-        // colors = [{r:57, g:142, b:221}, {r:251, g:51, b:74}, {r:248, g:202, b:0}, {r:174, g:226, b:57}, {r:184, g:51, b:222}, {r:255, g:142, b:50}, {r:220, g:242, b:51}, {r:86, g:174, b:226}, {r:226, g:86, b:174}, {r:226, g:137, b:86}, {r:86, g:226, b:207}];
-        const colors = [{ r: 27, g: 119, b: 211 }, { r: 206, g: 24, b: 54 }, { r: 242, g: 208, b: 0 }, { r: 122, g: 179, b: 23 }, { r: 130, g: 33, b: 198 }, { r: 232, g: 110, b: 28 }, { r: 220, g: 242, b: 51 }, { r: 86, g: 174, b: 226 }, { r: 226, g: 86, b: 174 }, { r: 226, g: 137, b: 86 }, { r: 86, g: 226, b: 207 }];
+        // Waymark data palette: earthy, distinct in lightness as well as hue
+        // so neighbouring categories stay apart for color-blind readers.
+        const colors = [
+            { r: 29, g: 59, b: 48 }, // forest
+            { r: 196, g: 87, b: 31 }, // ember
+            { r: 79, g: 122, b: 90 }, // moss
+            { r: 217, g: 178, b: 110 }, // sand
+            { r: 62, g: 106, b: 138 }, // lake
+            { r: 157, g: 184, b: 160 }, // sage
+            { r: 138, g: 75, b: 46 }, // clay
+            { r: 47, g: 127, b: 122 }, // teal
+            { r: 110, g: 74, b: 107 }, // heather
+            { r: 140, g: 140, b: 58 }, // olive
+            { r: 107, g: 117, b: 111 }, // stone
+        ];
         return colors[index % colors.length];
     }
 

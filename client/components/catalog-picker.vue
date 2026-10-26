@@ -1,0 +1,348 @@
+<template>
+    <transition name="wgSlide">
+        <aside v-if="shown" class="wgPicker" role="dialog" aria-modal="false" aria-labelledby="wgPickerTitle" data-testid="catalog-picker" @keydown.esc="close">
+            <div class="wgPickerHead">
+                <h2 id="wgPickerTitle">
+                    Add gear
+                </h2>
+                <button type="button" class="wgIconBtn" aria-label="Close" data-testid="catalog-picker-close" @click="close">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+                </button>
+            </div>
+
+            <label class="wgField">Adding to
+                <select v-model="targetId" class="wgSelect" data-testid="catalog-picker-target">
+                    <option v-for="c in listCategories" :key="c.id" :value="c.id">{{ c.name || 'Untitled category' }}</option>
+                </select>
+            </label>
+
+            <label class="wgSearch">
+                <span class="wgVisuallyHidden">Search the gear catalog</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
+                <input ref="search" v-model="query" type="search" class="wgInput" placeholder="Search tents, quilts, stoves…" data-testid="catalog-picker-search" @input="queue">
+            </label>
+
+            <div v-if="catalogCategories.length" class="wgChips wgPickerChips" role="group" aria-label="Catalog category">
+                <button type="button" class="wgChip" :aria-pressed="String(category === '')" @click="pickCategory('')">
+                    All
+                </button>
+                <button v-for="c in catalogCategories" :key="c.name" type="button" class="wgChip" :aria-pressed="String(category === c.name)" @click="pickCategory(c.name)">
+                    {{ c.name }}
+                </button>
+            </div>
+
+            <div class="wgPickerResults" aria-live="polite">
+                <ul v-if="results.length" class="wgPickerList">
+                    <li v-for="entry in results" :key="entry.id" data-testid="catalog-result">
+                        <div class="wgPickerItem">
+                            <p class="wgPickerName">
+                                {{ entry.name }}
+                            </p>
+                            <p class="wgMuted wgPickerSpec">
+                                {{ [entry.brand, entry.category].filter(Boolean).join(' · ') }}
+                            </p>
+                        </div>
+                        <span class="wgMono wgPickerWeight">{{ entry.weight }} {{ entry.unit }}</span>
+                        <button
+                            type="button"
+                            class="wgIconBtn wgPickerAdd"
+                            :class="{ wgAdded: added[entry.id] }"
+                            :aria-label="added[entry.id] ? `Added ${entry.name}` : `Add ${entry.name}`"
+                            data-testid="catalog-add-item"
+                            @click="add(entry)"
+                        >
+                            <svg v-if="added[entry.id]" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="m5 12 5 5 9-10" /></svg>
+                            <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                        </button>
+                    </li>
+                </ul>
+                <p v-else-if="loaded && (query || category)" class="wgMuted wgPickerEmpty">
+                    Nothing in the catalog matches “{{ query || category }}”.
+                </p>
+                <p v-else-if="loaded" class="wgMuted wgPickerEmpty">
+                    The gear catalog is empty for now. Create a custom item below.
+                </p>
+                <button v-if="results.length < total" type="button" class="wgBtn wgBtnSmall wgPickerMore" @click="load(false)">
+                    Show more
+                </button>
+            </div>
+
+            <div class="wgPickerFoot">
+                <p class="wgMuted">
+                    Can't find it?
+                </p>
+                <button type="button" class="wgBtn wgPickerCustom" data-testid="catalog-custom" @click="custom">
+                    Create a custom item
+                </button>
+            </div>
+        </aside>
+    </transition>
+</template>
+
+<script>
+import { api } from '../utils/format.js';
+
+const PAGE = 30;
+
+export default {
+    name: 'CatalogPicker',
+    props: {
+        shown: { type: Boolean, required: true },
+        // The category the picker was opened from; the target can be changed.
+        initialCategoryId: { type: [Number, String], default: null },
+    },
+    emits: ['hide'],
+    data() {
+        return {
+            targetId: null,
+            query: '',
+            category: '',
+            catalogCategories: [],
+            results: [],
+            total: 0,
+            loaded: false,
+            added: {},
+            timer: null,
+        };
+    },
+    computed: {
+        library() {
+            return this.$store.state.library;
+        },
+        list() {
+            return this.library.getListById(this.library.defaultListId);
+        },
+        listCategories() {
+            return this.list.categoryIds.map((id) => this.library.getCategoryById(id)).filter(Boolean);
+        },
+    },
+    watch: {
+        shown(open) {
+            if (open) this.open();
+        },
+        initialCategoryId(id) {
+            if (id) this.targetId = id;
+        },
+    },
+    methods: {
+        open() {
+            this.targetId = this.initialCategoryId || (this.listCategories[0] && this.listCategories[0].id) || null;
+            this.added = {};
+            this.$nextTick(() => this.$refs.search && this.$refs.search.focus());
+            if (!this.loaded) this.load(true);
+            if (!this.catalogCategories.length) {
+                api('/api/catalog/categories').then((r) => { this.catalogCategories = r.categories.slice(0, 14); }).catch(() => {});
+            }
+        },
+        close() {
+            this.$emit('hide');
+        },
+        queue() {
+            clearTimeout(this.timer);
+            this.timer = setTimeout(() => this.load(true), 200);
+        },
+        pickCategory(name) {
+            this.category = name;
+            this.load(true);
+        },
+        async load(reset) {
+            const params = new URLSearchParams({ limit: String(PAGE), offset: String(reset ? 0 : this.results.length) });
+            if (this.query.trim()) params.set('q', this.query.trim());
+            if (this.category) params.set('category', this.category);
+            try {
+                const r = await api(`/api/catalog?${params}`);
+                this.results = reset ? r.items : this.results.concat(r.items);
+                this.total = r.total;
+            } catch {
+                if (reset) this.results = [];
+            }
+            this.loaded = true;
+        },
+        ensureTarget() {
+            if (this.targetId && this.library.getCategoryById(this.targetId)) return this.targetId;
+            // A list with no categories yet: make one to put the gear in.
+            this.$store.commit('newCategory', this.list);
+            const last = this.list.categoryIds[this.list.categoryIds.length - 1];
+            this.targetId = last;
+            return last;
+        },
+        add(entry) {
+            const categoryId = this.ensureTarget();
+            this.$store.commit('addCatalogItem', { categoryId, entry });
+            this.added = { ...this.added, [entry.id]: true };
+            setTimeout(() => {
+                const { [entry.id]: _done, ...rest } = this.added;
+                this.added = rest;
+            }, 1600);
+        },
+        custom() {
+            const categoryId = this.ensureTarget();
+            const category = this.library.getCategoryById(categoryId);
+            category.collapsed = false;
+            this.$store.commit('newItem', { category, _isNew: true });
+            this.close();
+        },
+    },
+};
+</script>
+
+<style lang="scss">
+@import "../css/_globals";
+
+.wgPicker {
+    background: var(--lp-surface);
+    border-left: 1px solid var(--lp-border);
+    bottom: 0;
+    box-shadow: -12px 0 32px rgba(20, 33, 27, 0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 100%;
+    padding: 20px;
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 420px;
+    z-index: $belowDialog;
+}
+
+.wgPickerHead {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+
+    h2 {
+        font-size: 21px;
+        font-weight: 750;
+        margin: 0 !important;
+    }
+}
+
+.wgIconBtn {
+    align-items: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: var(--lp-text);
+    cursor: pointer;
+    display: inline-flex;
+    flex: none;
+    height: 44px;
+    justify-content: center;
+    width: 44px;
+
+    &:hover {
+        background: var(--lp-row-hover);
+    }
+}
+
+.wgPickerChips {
+    flex-wrap: nowrap !important;
+    margin: 0 -20px !important;
+    overflow-x: auto;
+    padding: 0 20px 4px;
+    scrollbar-width: thin;
+
+    .wgChip {
+        flex: none;
+    }
+}
+
+.wgPickerResults {
+    flex: 1 1 auto;
+    margin: 0 -20px;
+    overflow-y: auto;
+    padding: 0 20px;
+}
+
+.wgPickerList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    li {
+        align-items: center;
+        border-bottom: 1px solid var(--lp-border);
+        display: flex;
+        gap: 12px;
+        padding: 10px 0;
+    }
+
+    p {
+        margin: 0;
+    }
+}
+
+.wgPickerItem {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.wgPickerName {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.wgPickerSpec {
+    font-size: 13px;
+    margin-top: 2px !important;
+}
+
+.wgPickerWeight {
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.wgPickerAdd {
+    border-color: var(--lp-border-strong);
+    color: var(--lp-accent-green-deep);
+    height: 40px;
+    width: 40px;
+
+    &.wgAdded {
+        background: var(--lp-active-bg);
+        border-color: var(--lp-accent-green);
+    }
+}
+
+.wgPickerEmpty {
+    font-size: 14px;
+    padding: 12px 0;
+}
+
+.wgPickerMore {
+    margin: 12px 0;
+}
+
+.wgPickerFoot {
+    background: var(--lp-surface-sunken);
+    border-radius: 12px;
+    padding: 14px 16px;
+
+    p {
+        font-size: 14px;
+        margin: 0 0 8px;
+    }
+}
+
+.wgPickerCustom {
+    width: 100%;
+}
+
+.wgSlide-enter-active,
+.wgSlide-leave-active {
+    transition: transform 0.2s ease;
+}
+
+.wgSlide-enter-from,
+.wgSlide-leave-to {
+    transform: translateX(100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wgSlide-enter-active,
+    .wgSlide-leave-active {
+        transition: none;
+    }
+}
+</style>

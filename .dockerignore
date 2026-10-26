@@ -8,5 +8,4 @@ playwright-report
 blob-report
 .env
 config/local.json
-client/design_handoff_mobile_landing
 *.log
