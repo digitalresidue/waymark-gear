@@ -83,3 +83,29 @@
         color: var(--lp-text);
     }
 }
+
+// "Shakedown requested" under the byline of a shared list.
+.wgShakedownBanner {
+    background: #FCEFD9;
+    border: 1px solid #E9C98F;
+    border-radius: 10px;
+    color: #5A3B06;
+    font-size: 14px;
+    margin: 10px 0 0;
+    max-width: 640px;
+    padding: 8px 12px;
+
+    a {
+        color: inherit;
+        font-weight: 700;
+    }
+}
+
+// The comments section's frame, before its code loads.
+.wgComments {
+    border-top: 1px solid var(--lp-border);
+    clear: both;
+    margin: 32px 0 0;
+    max-width: 760px;
+    padding-top: 20px;
+}

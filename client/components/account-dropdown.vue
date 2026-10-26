@@ -1,5 +1,6 @@
 <template>
     <div class="lpAccount headerItem">
+        <notificationBell v-if="isSignedIn" />
         <PopoverHover v-if="isSignedIn" id="accountPopover" data-testid="account-menu">
             <template #target>
                 <span class="lpAvatar" :title="username">{{ initial }}</span>
@@ -45,12 +46,14 @@
 
 <script>
 import PopoverHover from './popover-hover.vue';
+import notificationBell from './notification-bell.vue';
 import toggle from './toggle.vue';
 import { toggleTheme } from '../utils/theme.js';
 
 export default {
     name: 'AccountDropdown',
     components: {
+        notificationBell,
         PopoverHover,
         toggle,
     },
@@ -101,6 +104,7 @@ export default {
 .lpAccount {
     align-items: center;
     display: flex;
+    gap: 4px;
 }
 
 .lpAvatar {

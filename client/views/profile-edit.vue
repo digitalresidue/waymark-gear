@@ -128,6 +128,10 @@
                         <input v-model="form.hidden" type="checkbox" data-testid="profile-hidden">
                         <span>Hide my profile. Your shared list links keep working.</span>
                     </label>
+                    <label class="wgProfileCheck">
+                        <input v-model="form.notifyEmail" type="checkbox" data-testid="profile-notify-email">
+                        <span>Email me when someone comments on my lists or replies to me (at most every 15 minutes).</span>
+                    </label>
                 </section>
 
                 <p v-if="error" class="wgImportError" role="alert" data-testid="profile-error">
@@ -213,6 +217,7 @@ export default {
                 links: { youtube: '', x: '', instagram: '', website: '', ...profile.links },
                 featured: [...profile.featured],
                 hidden: profile.hidden,
+                notifyEmail: profile.notifyEmail !== false,
             };
         },
         toggleFeatured(id, on) {

@@ -20,6 +20,7 @@
             </nav>
             <div v-if="!app" class="wgSiteHeaderActions">
                 <template v-if="signedIn">
+                    <notificationBell />
                     <span class="wgMuted wgSiteHeaderUser">{{ signedIn }}</span>
                     <router-link to="/" class="wgBtn wgBtnPrimary">
                         Open my lists
@@ -40,10 +41,11 @@
 
 <script>
 import brandLogo from './brand-logo.vue';
+import notificationBell from './notification-bell.vue';
 
 export default {
     name: 'SiteHeader',
-    components: { brandLogo },
+    components: { brandLogo, notificationBell },
     props: {
         // Inside the editor: full width, and the editor's own header
         // carries the account menu.

@@ -30,6 +30,9 @@
                         {{ c.label }}<small>{{ c.range }}</small>
                     </button>
                 </div>
+                <button type="button" class="wgChip" :aria-pressed="String(shakedownOnly)" data-testid="explore-shakedown" @click="toggleShakedown">
+                    Shakedown requests
+                </button>
                 <label class="wgSearch wgExploreSearch">
                     <span class="wgVisuallyHidden">Search kits</span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
@@ -77,6 +80,7 @@ export default {
             weightClasses: [],
             activeClass: '',
             query: '',
+            shakedownOnly: false,
             kits: [],
             total: 0,
             loaded: false,
@@ -105,11 +109,16 @@ export default {
         loadMore() {
             this.load(false);
         },
+        toggleShakedown() {
+            this.shakedownOnly = !this.shakedownOnly;
+            this.load(true);
+        },
         async load(reset) {
             this.loading = true;
             const params = new URLSearchParams({ limit: String(PAGE), offset: String(reset ? 0 : this.kits.length) });
             if (this.activeClass) params.set('class', this.activeClass);
             if (this.query.trim()) params.set('q', this.query.trim());
+            if (this.shakedownOnly) params.set('shakedown', '1');
             try {
                 const r = await api(`/api/explore/kits?${params}`);
                 this.kits = reset ? r.kits : this.kits.concat(r.kits);

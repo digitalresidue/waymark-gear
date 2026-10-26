@@ -10,7 +10,12 @@ import * as catalog from './catalog.js';
 import { libraryForExternalId } from './library-store.js';
 import { Library } from '../client/dataTypes.js';
 import * as kits from './kits.js';
-import { authenticateAdmin, authenticateUser } from './auth.js';
+import config from 'config';
+import rateLimit from 'express-rate-limit';
+import {
+    authenticateAdmin, authenticateUser, authenticateModerator, optionalUser,
+} from './auth.js';
+import * as comments from './comments.js';
 import { profileForEditing, updateProfile, ProfileError } from './profiles.js';
 import { googleEnabled } from './google.js';
 import { logWithRequest } from './log.js';
@@ -55,6 +60,7 @@ const signedIn = (handler) => (req, res) => authenticateUser(req, res, async (re
         await handler(req, res, user);
     } catch (err) {
         if (err instanceof ProfileError) return res.status(400).json({ message: err.message, field: err.field });
+        if (err instanceof comments.CommentError) return res.status(err.status).json({ message: err.message });
         logWithRequest(req, { message: 'api error', url: req.originalUrl, err });
         if (!res.headersSent) res.status(500).json({ message: 'An error occurred.' });
     }
@@ -67,6 +73,72 @@ router.get('/api/profile', signedIn(async (req, res, user) => {
 
 router.put('/api/profile', requireJson, signedIn(async (req, res, user) => {
     res.json(await updateProfile(user, req.body || {}));
+}));
+
+// ---- comments, shakedowns, notifications ----------------------------------
+
+const commentLimit = config.get('rateLimit').enabled
+    ? rateLimit({
+        windowMs: 10 * 60 * 1000,
+        limit: 20,
+        standardHeaders: 'draft-8',
+        legacyHeaders: false,
+        handler: (req, res, _next, options) => res.status(options.statusCode).json({ message: "You're commenting fast. Give it a few minutes." }),
+    })
+    : (_req, _res, next) => next();
+
+router.get('/api/kits/:id/comments', pub(async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+        res.json(await comments.listComments(String(req.params.id), await optionalUser(req)));
+    } catch (err) {
+        if (err instanceof comments.CommentError) return res.status(err.status).json({ message: err.message });
+        throw err;
+    }
+}));
+
+router.post('/api/kits/:id/comments', requireJson, commentLimit, signedIn(async (req, res, user) => {
+    res.status(201).json(await comments.addComment(user, String(req.params.id), req.body || {}));
+}));
+
+router.patch('/api/comments/:id', requireJson, signedIn(async (req, res, user) => {
+    res.json(await comments.editComment(user, req.params.id, req.body && req.body.body));
+}));
+
+router.delete('/api/comments/:id', signedIn(async (req, res, user) => {
+    res.json(await comments.deleteComment(user, req.params.id));
+}));
+
+router.post('/api/comments/:id/report', requireJson, commentLimit, signedIn(async (req, res, user) => {
+    res.json(await comments.reportComment(user, req.params.id, req.body && req.body.reason));
+}));
+
+router.get('/api/notifications', signedIn(async (req, res, user) => {
+    res.set('Cache-Control', 'no-store');
+    res.json(await comments.notificationsFor(user));
+}));
+
+router.post('/api/notifications/read', requireJson, signedIn(async (req, res, user) => {
+    res.json(await comments.markNotificationsRead(user));
+}));
+
+const moderator = (handler) => (req, res) => authenticateModerator(req, res, async (req, res, user) => {
+    try {
+        await handler(req, res, user);
+    } catch (err) {
+        if (err instanceof comments.CommentError) return res.status(err.status).json({ message: err.message });
+        logWithRequest(req, { message: 'moderation api error', url: req.originalUrl, err });
+        if (!res.headersSent) res.status(500).json({ message: 'An error occurred.' });
+    }
+});
+
+router.get('/api/moderation/comments', moderator(async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.json({ reports: await comments.openReports() });
+}));
+
+router.post('/api/moderation/comments/:id', requireJson, moderator(async (req, res, user) => {
+    res.json(await comments.moderateComment(user, req.params.id, String((req.body && req.body.action) || '')));
 }));
 
 // ---- public ----------------------------------------------------------------
@@ -123,6 +195,7 @@ router.get('/api/explore/kits', pub(async (req, res) => {
     res.json(await kits.listKits({
         weightClass,
         q: String(req.query.q || '').slice(0, 200),
+        shakedownOnly: req.query.shakedown === '1',
         limit: req.query.limit,
         offset: req.query.offset,
     }));

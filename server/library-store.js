@@ -131,6 +131,7 @@ function listRow(userId, list, position) {
         optional_fields: JSON.stringify(plainObject(list.optionalFields)),
         pinned: bool(list.pinned),
         published: bool(list.published),
+        shakedown: bool(list.shakedown),
         trip: tripSettings(list.trip),
     };
 }
@@ -210,6 +211,7 @@ export async function loadLibrary(userId, db = knex) {
         };
         if (l.pinned) out.pinned = true;
         if (l.published) out.published = true;
+        if (l.shakedown) out.shakedown = true;
         if (l.trip) out.trip = { days: l.trip.days, foodPerDayMg: l.trip.foodPerDayMg, waterLiters: l.trip.waterLiters };
         return out;
     });

@@ -43,6 +43,7 @@ function rowToProfile(user) {
         links: user.social_links || {},
         featured: Array.isArray(user.profile_featured) ? user.profile_featured : [],
         hidden: Boolean(user.profile_hidden),
+        notifyEmail: user.notify_email !== false,
     };
 }
 
@@ -70,6 +71,7 @@ export async function updateProfile(user, input = {}) {
         social_links: JSON.stringify(links),
         profile_featured: JSON.stringify(featured),
         profile_hidden: Boolean(input.hidden),
+        notify_email: input.notifyEmail !== false,
     };
     await knex('users').where({ user_id: user.user_id }).update(row);
     return profileForEditing(user);

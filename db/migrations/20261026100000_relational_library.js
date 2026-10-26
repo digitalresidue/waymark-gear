@@ -57,6 +57,8 @@ export async function up(knex) {
             optional_fields jsonb not null default '{}',
             pinned boolean not null default false,
             published boolean not null default false,
+            -- Asking for a shakedown (suggestions in the comments).
+            shakedown boolean not null default false,
             -- Trip planner: { days, foodPerDayMg, waterLiters }, or null.
             trip jsonb,
             updated_at timestamptz not null default now(),

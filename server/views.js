@@ -59,11 +59,23 @@ if (hasBuiltAssets) {
     // Production / test: serve pre-built Vite assets
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 
+    // An entry's stylesheets include those of the chunks it imports: CSS
+    // shared between entries (the web fonts, for one) lands in a shared chunk,
+    // and nothing loads it unless it's linked here.
+    const entryCss = (key, seen = new Set()) => {
+        const chunk = manifest[key];
+        if (!chunk || seen.has(key)) return [];
+        seen.add(key);
+        const own = chunk.css || [];
+        const imported = (chunk.imports || []).flatMap((k) => entryCss(k, seen));
+        return [...new Set([...imported, ...own])];
+    };
+
     // App entry
     const appEntry = manifest['client/lighterpack.js'];
     if (appEntry) {
         appScriptsHtml += `<script type="module" src='/dist/${appEntry.file}'></script>`;
-        (appEntry.css || []).forEach((cssFile) => {
+        entryCss('client/lighterpack.js').forEach((cssFile) => {
             appStylesHtml += `<link rel='stylesheet' href='/dist/${cssFile}' />`;
         });
     }
@@ -72,7 +84,7 @@ if (hasBuiltAssets) {
     const shareEntry = manifest['client/share-entry.js'];
     if (shareEntry) {
         shareScriptsHtml += `<script type="module" src='/dist/${shareEntry.file}'></script>`;
-        (shareEntry.css || []).forEach((cssFile) => {
+        entryCss('client/share-entry.js').forEach((cssFile) => {
             shareStylesHtml += `<link rel='stylesheet' href='/dist/${cssFile}' />`;
             shareStylesLinks.push(cssFile);
         });
@@ -313,6 +325,8 @@ async function renderListView(req, res) {
             cspNonce: res.locals.cspNonce,
             externalId: id,
             username: user.username,
+            published: Boolean(list.published),
+            shakedown: Boolean(list.published && list.shakedown),
             baseWeight: formatWeightMg(list.totalBaseWeight, 'lb'),
             weightClass: (WEIGHT_CLASSES.find((c) => c.id === weightClassFor(list.totalBaseWeight)) || {}).label,
             itemCount: list.categoryIds.reduce((n, cid) => n + ((library.getCategoryById(cid) || { categoryItems: [] }).categoryItems.length), 0),

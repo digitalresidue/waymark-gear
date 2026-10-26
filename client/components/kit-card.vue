@@ -4,7 +4,7 @@
             <div class="wgKitCardTitle">
                 <h3>{{ kit.name }}</h3>
                 <p class="wgMuted">
-                    by @{{ kit.username }}<span v-if="kit.featured"> · <span class="wgKitFeatured">Featured</span></span>
+                    by @{{ kit.username }}<span v-if="kit.featured"> · <span class="wgKitFeatured">Featured</span></span><span v-if="kit.shakedown"> · <span class="wgKitShakedown" data-testid="kit-shakedown">Shakedown requested</span></span>
                 </p>
             </div>
             <span class="wgKitCardWeight wgMono">{{ baseWeight }}</span>
@@ -96,6 +96,11 @@ export default {
     .wgMuted {
         font-size: 14px;
     }
+}
+
+.wgKitShakedown {
+    color: #9A4312;
+    font-weight: 600;
 }
 
 .wgKitFeatured {

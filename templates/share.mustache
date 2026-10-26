@@ -49,6 +49,7 @@
                     <div class="wgShareTitle">
                         <h1 class="lpListName">{{listName}}</h1>
                         <p class="wgShareByline">by <a href="/@{{username}}" class="wgShareProfileLink" data-testid="share-profile-link"><strong>@{{username}}</strong></a> · {{baseWeight}} base weight · {{itemCount}} items{{#weightClass}} · <span class="wgBadge">{{weightClass}}</span>{{/weightClass}}</p>
+                        {{#shakedown}}<p class="wgShakedownBanner" data-testid="shakedown-banner"><strong>Shakedown requested.</strong> @{{username}} would like suggestions: what to cut, swap or rethink. <a href="#wgComments">Leave one below</a>.</p>{{/shakedown}}
                     </div>
                     <div class="lpShareMenu">
                         <button type="button" class="lpShareMenuTarget" data-testid="share-settings" aria-label="Page settings" aria-expanded="false" aria-controls="lpShareMenuContent">
@@ -80,6 +81,12 @@
                 {{/renderedDescription}}
 
                 <ul class="lpCategories">{{{renderedCategories}}}</ul>
+                {{#published}}
+                <section id="wgComments" class="wgComments" data-external-id="{{externalId}}" aria-labelledby="wgCommentsTitle">
+                    <h2 id="wgCommentsTitle">{{#shakedown}}Shakedown{{/shakedown}}{{^shakedown}}Comments{{/shakedown}}</h2>
+                    <noscript><p>Turn on JavaScript to read and write comments.</p></noscript>
+                </section>
+                {{/published}}
             </div>
         </div>
         <div class="lpDialog" id="lpImageDialog"></div>

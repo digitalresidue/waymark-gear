@@ -386,6 +386,8 @@ List.prototype.save = function () {
     // Published lists appear on the public Explore page and homepage; the
     // server mirrors them into public_kits on every save.
     if (this.published) out.published = true;
+    // The owner is asking for a shakedown: suggestions in the comments.
+    if (this.shakedown) out.shakedown = true;
     return out;
 };
 

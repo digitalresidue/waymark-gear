@@ -231,8 +231,34 @@ function init() {
     }
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-} else {
+// Comments only exist on published lists, and only some readers scroll that
+// far: load that code when the section is close to the screen.
+function initComments() {
+    const section = document.getElementById('wgComments');
+    if (!section) return;
+    const load = () => import('./comments/mount.js').then((m) => m.default(section)).catch(() => {
+        section.insertAdjacentHTML('beforeend', '<p>Comments could not be loaded.</p>');
+    });
+    if (location.hash.startsWith('#comment-') || location.hash === '#wgComments' || !('IntersectionObserver' in window)) {
+        load();
+        return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+            observer.disconnect();
+            load();
+        }
+    }, { rootMargin: '600px' });
+    observer.observe(section);
+}
+
+function start() {
     init();
+    safely(initComments);
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+} else {
+    start();
 }

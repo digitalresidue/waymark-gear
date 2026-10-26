@@ -92,7 +92,15 @@ const store = createStore({
             });
         },
         setListPublished(state, { list, published }) {
-            state.library.getListById(list.id).published = published;
+            const target = state.library.getListById(list.id);
+            target.published = published;
+            // A shakedown request only makes sense on a public list.
+            if (!published) delete target.shakedown;
+        },
+        setListShakedown(state, { list, shakedown }) {
+            const target = state.library.getListById(list.id);
+            if (shakedown) target.shakedown = true;
+            else delete target.shakedown;
         },
         setListTrip(state, { list, trip }) {
             const target = state.library.getListById(list.id);

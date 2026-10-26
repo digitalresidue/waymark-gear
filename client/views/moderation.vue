@@ -1,6 +1,7 @@
 <template>
     <div id="lp-moderation">
         <h1>Admin panel</h1>
+        <reportedComments />
 
         <form @submit.prevent="searchUsers">
             <input v-model="searchQuery" type="text" placeholder="Search for a user...">
@@ -66,6 +67,7 @@
 </template>
 
 <script>
+import reportedComments from '../components/reported-comments.vue';
 import { h } from 'vue';
 import { fetchJson } from '../utils/utils.js';
 
@@ -108,6 +110,7 @@ const LpUserIdentity = {
 export default {
     name: 'Admin',
     components: {
+        reportedComments,
         LpUserIdentity,
     },
     data() {
