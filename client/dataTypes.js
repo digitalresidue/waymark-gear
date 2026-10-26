@@ -639,7 +639,7 @@ Library.prototype.load = function (serializedLibrary) {
     if (serializedLibrary.version !== '0.4') {
         // Forward guard: never load (and later save, mangled) data written
         // by a newer format than this code knows.
-        const err = new Error(`This library was saved by a newer version of LighterPack (${serializedLibrary.version}). Please refresh your browser.`);
+        const err = new Error(`This library was saved by a newer version of Waymark Gear (${serializedLibrary.version}). Please refresh your browser.`);
         err.code = 'VERSION_TOO_NEW';
         throw err;
     }

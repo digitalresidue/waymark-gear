@@ -1,14 +1,14 @@
 <template>
     <div class="lpSiteFooter" :class="{ lpSiteFooterFixed: fixed }">
         <div class="lpSiteFooterCredit">
-            Site by <a class="lpHref" href="https://www.galenmaly.com/" target="_blank" rel="noopener noreferrer">Galen Maly</a>
-            -
-            <a class="lpHref" href="https://ko-fi.com/lighterpack" target="_blank" rel="noopener noreferrer">Donate</a>
+            Based on <a class="lpHref" :href="upstream.url" target="_blank" rel="noopener noreferrer">{{ upstream.name }}</a> by {{ upstream.author }}
         </div>
         <div class="lpSiteFooterLinks">
-            <a class="lpHref" href="https://github.com/galenmaly/lighterpack" target="_blank" rel="noopener noreferrer">Copyleft</a> LighterPack {{ year }}
-            -
-            <a class="lpHref" href="mailto:info@lighterpack.com">Contact</a>
+            <a class="lpHref" :href="sourceUrl" target="_blank" rel="noopener noreferrer">Source</a> {{ siteName }} {{ year }}
+            <template v-if="contactEmail">
+                -
+                <a class="lpHref" :href="`mailto:${contactEmail}`">Contact</a>
+            </template>
             -
             <a class="lpHref" href="/privacy">Privacy</a>
             -
@@ -18,6 +18,8 @@
 </template>
 
 <script>
+import { siteName, contactEmail, sourceUrl, upstream } from '../brand.js';
+
 export default {
     name: 'SiteFooter',
     props: {
@@ -28,6 +30,9 @@ export default {
             type: Boolean,
             default: false,
         },
+    },
+    data() {
+        return { siteName, contactEmail, sourceUrl, upstream };
     },
     computed: {
         // Read once at render rather than baked into the markup -- the year

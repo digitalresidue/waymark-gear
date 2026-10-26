@@ -13,7 +13,7 @@ test.describe('Help Modal', () => {
     // Use prefix that doesn't match 'Help' to avoid selector conflicts
     const { username, password, email } = generateTestUser('hlp');
     await registerUser(page, username, password, email);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
   });
 
   test('should open help modal from account dropdown', async ({ page }) => {

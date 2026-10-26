@@ -2,7 +2,7 @@
     <div id="sidebar">
         <div class="lpSidebarSticky">
             <h1 class="lpWordmark">
-                LighterPack
+                Waymark Gear
             </h1>
 
             <libraryLists />

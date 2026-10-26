@@ -187,7 +187,7 @@ test.describe('Text Field Validation', () => {
   test.beforeEach(async ({ page }) => {
     const { username, password, email } = generateTestUser('tval');
     await registerUser(page, username, password, email);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
   });
 
   test('should handle empty item name', async ({ page }) => {
@@ -297,7 +297,7 @@ test.describe('Calculation Edge Cases', () => {
   test.beforeEach(async ({ page }) => {
     const { username, password, email } = generateTestUser('calc');
     await registerUser(page, username, password, email);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
   });
 
   test('should handle all items marked as worn', async ({ page }) => {

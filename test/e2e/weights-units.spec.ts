@@ -8,7 +8,7 @@ test.describe('Weight Units', () => {
     const { username, password, email } = generateTestUser('wt');
 
     await registerUser(page, username, password, email);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
 
     // Create a category with an item
     const category = await createCategory(page, 'Test Category');
@@ -84,7 +84,7 @@ test.describe('Weight Calculations', () => {
     const { username, password, email } = generateTestUser('calc');
 
     await registerUser(page, username, password, email);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
   });
 
   test('should calculate category subtotal', async ({ page }) => {
@@ -167,7 +167,7 @@ test.describe('Weight Input Behavior', () => {
     const { username, password, email } = generateTestUser('inp');
 
     await registerUser(page, username, password, email);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
 
     const category = await createCategory(page, 'Test');
     await addItem(category, 'Test Item');

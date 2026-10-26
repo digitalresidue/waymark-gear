@@ -7,7 +7,7 @@ test.describe('Account Settings', () => {
   test.beforeEach(async ({ page }) => {
     const { username, password, email } = generateTestUser('acct');
     await registerUser(page, username, password, email);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
   });
 
   test('should open account settings modal from dropdown', async ({ page }) => {
@@ -84,7 +84,7 @@ test.describe('Account Settings', () => {
     // Register a fresh user for this test
     await logoutUser(page);
     await registerUser(page, username, originalPassword, `${username}@test.com`);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
 
     // Change password
     await page.getByTestId('account-menu').hover();
@@ -102,7 +102,7 @@ test.describe('Account Settings', () => {
     // Logout and login with new password
     await logoutUser(page);
     await loginUser(page, username, newPassword);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
   });
 
   test('should reject incorrect current password', async ({ page }) => {
@@ -131,7 +131,7 @@ test.describe('Account Dropdown', () => {
   test.beforeEach(async ({ page }) => {
     const { username, password, email } = generateTestUser('dropdown');
     await registerUser(page, username, password, email);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
   });
 
   test('should display username in dropdown', async ({ page }) => {
@@ -162,7 +162,7 @@ test.describe('Shared item bubble preference', () => {
   test('unchecking the preference suppresses the bubble and persists', async ({ page }) => {
     const { username, password, email } = generateTestUser('acct-nag');
     await registerUser(page, username, password, email);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
 
     await openSidebar(page);
     const listNameInput = page.getByPlaceholder('Name your list', { exact: true });

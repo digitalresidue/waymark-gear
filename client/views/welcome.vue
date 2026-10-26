@@ -6,7 +6,7 @@
         <div v-if="isMobile" id="lpWelcomeMobile">
             <div class="lpMobileHero">
                 <div class="lpMobileWordmark">
-                    LighterPack
+                    Waymark Gear
                 </div>
                 <!-- Shortened from the desktop headline: the wordmark directly
                      above already supplies the subject. -->
@@ -74,7 +74,7 @@
                     <li><strong>3.</strong> <span>Share your lists with others</span></li>
                 </ol>
                 <div class="lpMobileShot">
-                    <img :src="'/images/screenshot.jpg'" alt="A screenshot of the LighterPack interface">
+                    <img :src="'/images/screenshot.jpg'" alt="A screenshot of the Waymark Gear interface">
                 </div>
             </div>
 
@@ -82,7 +82,7 @@
         </div>
 
         <div v-else id="lpWelcome" class="lpContainer">
-            <h1><strong>LighterPack</strong> helps you track the gear you bring on adventures.</h1>
+            <h1><strong>Waymark Gear</strong> helps you track the gear you bring on adventures.</h1>
             <div class="lpWelcomeContent">
                 <div class="lpWelcomeRegisterContainer">
                     <div class="lpWelcomeRegister">
@@ -103,7 +103,7 @@
                                 <h3><strong>3.</strong>Share your lists with others</h3>
                             </li>
                         </ul>
-                        <img id="lpWelcomeScreenshot" :src="'/images/screenshot.jpg'" alt="A screenshot of the LighterPack interface">
+                        <img id="lpWelcomeScreenshot" :src="'/images/screenshot.jpg'" alt="A screenshot of the Waymark Gear interface">
                     </div>
                 </div>
                 <div class="lpWelcomeSigninContainer">

@@ -22,6 +22,7 @@ import siteFooter from '../components/site-footer.vue';
 import globalAlerts from '../components/global-alerts.vue';
 import modal from '../components/modal.vue';
 import SigninForm from '../components/signin-form.vue';
+import { contactEmail } from '../brand.js';
 
 export default {
     name: 'Signin',
@@ -33,7 +34,9 @@ export default {
     },
     computed: {
         message() {
-            const deliveryNote = ' Note: emails to yahoo.com addresses are currently being blocked. Please reach out to info@lighterpack.com for assistance if you do not receive your email.';
+            const deliveryNote = contactEmail
+                ? ` If it doesn't arrive, check your spam folder or contact ${contactEmail}.`
+                : " If it doesn't arrive, check your spam folder.";
 
             if (this.$route.path.indexOf('/reset-password') > -1) {
                 return `A password reset link has been sent to the address associated with your account. The link expires in one hour.${deliveryNote}`;

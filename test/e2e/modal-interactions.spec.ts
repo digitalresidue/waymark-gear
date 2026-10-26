@@ -7,7 +7,7 @@ test.describe('Modal Escape Key Behavior', () => {
   test.beforeEach(async ({ page }) => {
     const { username, password, email } = generateTestUser('modal');
     await registerUser(page, username, password, email);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
   });
 
   test('should close account settings modal with escape key', async ({ page }) => {
@@ -27,7 +27,7 @@ test.describe('Modal Backdrop Click Behavior', () => {
   test.beforeEach(async ({ page }) => {
     const { username, password, email } = generateTestUser('backdrop');
     await registerUser(page, username, password, email);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
   });
 
   test('should close account settings modal on backdrop click', async ({ page }) => {
@@ -59,7 +59,7 @@ test.describe('Confirmation Dialog (Speedbump)', () => {
   test.beforeEach(async ({ page }) => {
     const { username, password, email } = generateTestUser('confirm');
     await registerUser(page, username, password, email);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
   });
 
   test('should show confirmation dialog when deleting category', async ({ page }) => {
@@ -106,7 +106,7 @@ test.describe('Keyboard Navigation', () => {
   test.beforeEach(async ({ page }) => {
     const { username, password, email } = generateTestUser('keyboard');
     await registerUser(page, username, password, email);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
   });
 
   test('should navigate between item fields with Tab', async ({ page }) => {

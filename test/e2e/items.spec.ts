@@ -11,7 +11,7 @@ test.describe('Item Management', () => {
     const { username, password, email } = generateTestUser('item');
 
     await registerUser(page, username, password, email);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
 
     // Create a NEW category for items (added at end of list)
     await createCategory(page, 'Test Category');
@@ -129,7 +129,7 @@ test.describe('Item Worn/Consumable Toggles', () => {
     const { username, password, email } = generateTestUser('worn');
 
     await registerUser(page, username, password, email);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
 
     // Worn and consumable should be enabled by default
     // Create a category
@@ -286,7 +286,7 @@ test.describe('Item Link and Image', () => {
     const { username, password, email } = generateTestUser('link');
 
     await registerUser(page, username, password, email);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
 
     // Create a category
     await createCategory(page, 'Gear');

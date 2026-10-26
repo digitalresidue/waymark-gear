@@ -9,7 +9,7 @@ test.describe('List Sharing', () => {
     const { username, password, email } = generateTestUser('share');
 
     await registerUser(page, username, password, email);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
 
     // Set a list name
     const listNameInput = page.getByPlaceholder('Name your list', { exact: true });
@@ -92,7 +92,7 @@ test.describe('CSV Export', () => {
     const { username, password, email } = generateTestUser('csv');
 
     await registerUser(page, username, password, email);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
 
     // Set up a list with items to export
     const listNameInput = page.getByPlaceholder('Name your list', { exact: true });
@@ -145,7 +145,7 @@ test.describe('CSV Import', () => {
     const { username, password, email } = generateTestUser('imp');
 
     await registerUser(page, username, password, email);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
   });
 
   test('should reject non-CSV uploads', async ({ page }) => {
@@ -307,7 +307,7 @@ test.describe('Share URL Persistence', () => {
     const { username, password, email } = generateTestUser('persist');
 
     await registerUser(page, username, password, email);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
 
     // Get initial share URL
     await page.getByText('Share', { exact: true }).hover();

@@ -91,7 +91,7 @@ test.describe('Unsaved changes tracking', () => {
     const { username, password, email } = generateTestUser('untouched');
 
     await registerUser(page, username, password, email);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
 
     // Replace the fresh account's library server-side, simulating an account
     // whose data was written by an earlier version of the app.

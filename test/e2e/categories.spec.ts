@@ -8,7 +8,7 @@ test.describe('Category Management', () => {
     const { username, password, email } = generateTestUser('cat');
 
     await registerUser(page, username, password, email);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
   });
 
   test('should delete a category', async ({ page }) => {

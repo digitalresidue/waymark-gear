@@ -14,13 +14,16 @@
         <hr>
         <strong>Items in multiple lists</strong>
         <p>If you copy your list or drag an item from the gear library into a second list, those items are now <strong>linked</strong>. This means that changes to an item in one place will update that list everywhere. If you want to copy your list without links, for now you can export to CSV and re-import the list.</p>
-        <hr>
-        <p><a class="lpHref" href="mailto:info@lighterpack.com">More help available via email.</a></p>
+        <template v-if="contactEmail">
+            <hr>
+            <p><a class="lpHref" :href="`mailto:${contactEmail}`">More help available via email.</a></p>
+        </template>
     </modal>
 </template>
 
 <script>
 import modal from './modal.vue';
+import { contactEmail } from '../brand.js';
 
 export default {
     name: 'Help',
@@ -34,6 +37,9 @@ export default {
         },
     },
     emits: ['hide'],
+    data() {
+        return { contactEmail };
+    },
 };
 </script>
 

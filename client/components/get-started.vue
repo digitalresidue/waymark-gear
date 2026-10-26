@@ -4,7 +4,7 @@
             <canvas ref="chart" class="lpDecorChart" height="260" width="260" />
         </div>
         <div class="lpGetStartedText">
-            <h2>Welcome to LighterPack!</h2>
+            <h2>Welcome to Waymark Gear!</h2>
             <p>Here's how to get started:</p>
             <ol>
                 <li>Click anything to edit it. Start by naming your list and its first category.</li>
