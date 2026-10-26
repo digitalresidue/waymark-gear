@@ -3,12 +3,12 @@ import pluginVue from 'eslint-plugin-vue';
 import globals from 'globals';
 
 export default [
-    { ignores: ['node_modules/', 'public/', 'scripts/', 'server/sha3.js'] },
+    { ignores: ['node_modules/', 'public/', 'scripts/', 'test-results/', 'playwright-report/', 'client/design_handoff_mobile_landing/'] },
     js.configs.recommended,
     ...pluginVue.configs['flat/recommended'],
     {
         languageOptions: {
-            ecmaVersion: 2022,
+            ecmaVersion: 'latest',
             globals: {
                 ...globals.browser,
                 ...globals.node,
