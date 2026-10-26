@@ -34,7 +34,7 @@
 <script>
 import { api } from '../utils/format.js';
 
-const VERBS = { comment: 'commented on', suggestion: 'suggested a change to', reply: 'replied to you on', published: 'published', follow: 'started following you' };
+const VERBS = { comment: 'commented on', suggestion: 'suggested a change to', reply: 'replied to you on', published: 'published', follow: 'started following you', invite: 'invited you to plan' };
 
 export default {
     name: 'NotificationBell',

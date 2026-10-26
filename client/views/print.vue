@@ -1,7 +1,7 @@
 <template>
     <div v-if="isLoaded" class="wgPrint" :class="[`wgPrintSize-${size}`]">
         <div class="wgPrintTools" data-testid="print-tools">
-            <router-link to="/" class="wgBtn wgBtnGhost wgBtnSmall">
+            <router-link :to="backTo" class="wgBtn wgBtnGhost wgBtnSmall">
                 ‹ Back
             </router-link>
             <label>
@@ -83,6 +83,11 @@ export default {
         };
     },
     computed: {
+        // Back to the list being edited: the shared plan, if that's where we came from.
+        backTo() {
+            const plan = this.$store.state.saveType === 'shared' && this.$store.state.plan;
+            return plan ? `/plan/${plan.owner}/${plan.listId}` : '/';
+        },
         library() {
             return this.$store.state.library;
         },

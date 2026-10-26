@@ -39,6 +39,11 @@
                     <span class="wgMuted wgProfileHint">{{ signedIn ? 'Resized to fit 512×512. In lists they open in a lightbox instead of crowding the row.' : 'Sign in to add photos.' }}</span>
                 </div>
 
+                <label class="wgField">How many do you own? <span class="wgMuted">(optional)</span>
+                    <input v-model.number="form.qtyOwned" class="wgInput wgQtyOwned" type="number" min="0" max="10000" step="1" inputmode="numeric" placeholder="—" data-testid="gear-qty-owned">
+                    <span class="wgMuted wgProfileHint">Lists warn you when they use more than this.</span>
+                </label>
+
                 <label class="wgField">Where to buy (link)
                     <input v-model.trim="form.url" class="wgInput" type="url" inputmode="url" placeholder="https://" data-testid="gear-buy-link">
                     <span v-if="item.catalogId && item.catalogSync" class="wgMuted wgProfileHint">From the Waymark catalog. Changing it makes this item your own copy.</span>
@@ -81,7 +86,7 @@ export default {
     },
     emits: ['hide'],
     data() {
-        return { form: { closetCategory: '', photos: [], url: '', videoUrl: '' }, uploading: false, error: '' };
+        return { form: { closetCategory: '', photos: [], url: '', videoUrl: '', qtyOwned: '' }, uploading: false, error: '' };
     },
     computed: {
         signedIn() {
@@ -108,6 +113,7 @@ export default {
                     photos: [...(item.photos || [])],
                     url: item.url || '',
                     videoUrl: item.videoUrl || '',
+                    qtyOwned: Number.isInteger(item.qtyOwned) ? item.qtyOwned : '',
                 };
                 this.error = '';
             },
@@ -143,7 +149,14 @@ export default {
             }
         },
         save() {
-            const changes = { id: this.item.id, closetCategory: this.form.closetCategory, photos: [...this.form.photos], videoUrl: this.form.videoUrl };
+            const owned = Number(this.form.qtyOwned);
+            const changes = {
+                id: this.item.id,
+                closetCategory: this.form.closetCategory,
+                photos: [...this.form.photos],
+                videoUrl: this.form.videoUrl,
+                qtyOwned: this.form.qtyOwned !== '' && Number.isInteger(owned) && owned >= 0 ? owned : null,
+            };
             if (this.form.url !== (this.item.url || '')) changes.url = this.form.url;
             this.$store.commit('updateItem', changes);
             this.close();
@@ -231,5 +244,8 @@ export default {
     color: var(--lp-text-secondary);
     font-size: 13px;
     margin-right: auto;
+}
+.wgQtyOwned {
+    max-width: 120px;
 }
 </style>

@@ -4,7 +4,8 @@
         <offlineBanner />
         <div id="main" :class="{lpHasSidebar: library.showSidebar, lpDrawerOpen: drawerOpen}">
             <div class="lpFrameFill lpFrameFillLeft" />
-            <sidebar />
+            <planSidebar v-if="planMode" />
+            <sidebar v-else />
             <div class="lpDrawerScrim" data-testid="drawer-scrim" @click="closeDrawer" />
             <div class="lpContentCol">
                 <div id="header">
@@ -20,8 +21,9 @@
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6" /><rect x="3" y="9" width="18" height="8" rx="2" /><path d="M7 14h10v7H7z" /></svg>
                         Print
                     </router-link>
-                    <share />
-                    <listSettings />
+                    <planPresence v-if="canPlan" @team="showTeam = true" />
+                    <share v-if="!planMode" />
+                    <listSettings v-if="!planMode" />
                     <accountDropdown />
                 </div>
 
@@ -41,6 +43,7 @@
             <copyList :shown="showCopyList" @hide="showCopyList = false" />
             <importLighterpack :shown="showImport" @hide="showImport = false" />
             <gearDetails :shown="showGearDetails" :item="gearDetailsItem" @hide="showGearDetails = false" />
+            <planTeam v-if="canPlan" :shown="showTeam" :owner="teamOwner" :list-id="teamListId" @hide="showTeam = false" @members="onMembers" />
             <importCSV ref="importCSVRef" />
             <itemImage :shown="showItemImage" :item="itemImageItem" @hide="showItemImage = false" />
             <itemViewImage :shown="showItemViewImage" :image-url="itemViewImageUrl" @hide="showItemViewImage = false" />
@@ -70,6 +73,9 @@ import importCSV from '../components/import-csv.vue';
 import copyList from '../components/copy-list.vue';
 import importLighterpack from '../components/import-lighterpack.vue';
 import gearDetails from '../components/gear-details.vue';
+import planTeam from '../components/plan-team.vue';
+import planPresence from '../components/plan-presence.vue';
+import planSidebar from '../components/plan-sidebar.vue';
 import speedbump from '../components/speedbump.vue';
 import accountDropdown from '../components/account-dropdown.vue';
 import siteFooter from '../components/site-footer.vue';
@@ -83,6 +89,9 @@ import offlineBanner from '../components/offline-banner.vue';
 export default {
     name: 'Dashboard',
     components: {
+        planTeam,
+        planPresence,
+        planSidebar,
         gearDetails,
         importLighterpack,
         offlineBanner,
@@ -141,6 +150,7 @@ export default {
             showCopyList: false,
             showImport: false,
             showGearDetails: false,
+            showTeam: false,
             gearDetailsItem: null,
             showItemImage: false,
             itemImageItem: null,
@@ -165,6 +175,19 @@ export default {
         isSignedIn() {
             return this.$store.state.loggedIn;
         },
+        planMode() {
+            return this.$store.state.saveType === 'shared' && Boolean(this.$store.state.plan);
+        },
+        // Planning together needs an account (saved on the server).
+        canPlan() {
+            return this.planMode || (this.$store.state.saveType === 'remote' && Boolean(this.isSignedIn));
+        },
+        teamOwner() {
+            return this.planMode ? this.$store.state.plan.owner : String(this.isSignedIn || '');
+        },
+        teamListId() {
+            return this.planMode ? this.$store.state.plan.listId : Number(this.library.defaultListId);
+        },
     },
     watch: {
         // Picking a list is the drawer's whole job, so it gets out of the way
@@ -172,6 +195,7 @@ export default {
         // library-lists keeps the drawer's business in the drawer's owner.
         'library.defaultListId': function closeOnListChange() {
             this.drawerOpen = false;
+            this.loadListMembers();
         },
     },
     beforeMount() {
@@ -195,7 +219,28 @@ export default {
             }
         }
     },
+    mounted() {
+        this.loadListMembers();
+    },
     methods: {
+        // Who plans the current (own) list with you, for "Who carries what".
+        async loadListMembers() {
+            if (this.planMode || this.$store.state.saveType !== 'remote' || !this.isSignedIn) {
+                this.$store.commit('setListMembers', []);
+                return;
+            }
+            const listId = this.library.defaultListId;
+            try {
+                const r = await api(`/api/plan/${encodeURIComponent(this.isSignedIn)}/${listId}/members`);
+                if (listId === this.library.defaultListId) this.$store.commit('setListMembers', r.members);
+            } catch {
+                this.$store.commit('setListMembers', []);
+            }
+        },
+        onMembers(members) {
+            if (this.planMode) this.$store.commit('setPlanMembers', members);
+            else this.$store.commit('setListMembers', members);
+        },
         async copySharedList(externalId) {
             this.$router.replace({ query: {} });
             try {

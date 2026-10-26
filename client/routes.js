@@ -21,6 +21,7 @@ export default [
     { path: '/', component: dashboard },
     { path: '/gear', component: gear },
     { path: '/pack', component: pack },
+    { path: '/plan/:owner/:listId', component: dashboard },
     { path: '/profile', component: profileEdit },
     { path: '/notifications', component: notifications },
     { path: '/leaderboard', component: leaderboard },

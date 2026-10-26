@@ -18,6 +18,10 @@ import {
 import * as comments from './comments.js';
 import * as follows from './follows.js';
 import * as tickets from './tickets.js';
+import * as plans from './shared-lists.js';
+import { openStream } from './live.js';
+import { LibraryError } from './library-store.js';
+import { forgetUserPages } from './page-cache.js';
 import { KINDS as NOTIFY_KINDS, preferences as notifyPreferences, cleanPreferences } from './notify.js';
 import { mailEnabled } from './mail.js';
 import knex from './db.js';
@@ -66,7 +70,8 @@ const signedIn = (handler) => (req, res) => authenticateUser(req, res, async (re
         await handler(req, res, user);
     } catch (err) {
         if (err instanceof ProfileError) return res.status(400).json({ message: err.message, field: err.field });
-        if (err instanceof comments.CommentError || err instanceof follows.FollowError || err instanceof tickets.TicketError) {
+        if (err instanceof LibraryError) return res.status(400).json({ message: err.message });
+        if (err instanceof comments.CommentError || err instanceof follows.FollowError || err instanceof tickets.TicketError || err instanceof plans.PlanError) {
             return res.status(err.status).json({ message: err.message });
         }
         logWithRequest(req, { message: 'api error', url: req.originalUrl, err });
@@ -254,6 +259,55 @@ router.post('/api/videos/:id/view', pub(async (req, res) => {
             .onConflict('video_id').merge({ views: knex.raw('video_views.views + 1') }).returning('*');
     }
     res.json({ views: row ? Number(row.views) : 0 });
+}));
+
+// ---- planning together (Phase 5) -------------------------------------------
+
+router.get('/api/live', signedIn(async (req, res, user) => {
+    openStream(req, res, user);
+}));
+
+router.get('/api/plans', signedIn(async (req, res, user) => {
+    res.set('Cache-Control', 'no-store');
+    res.json({ sharedWithMe: await plans.sharedWithMe(user) });
+}));
+
+router.get('/api/plan/:owner/:listId', signedIn(async (req, res, user) => {
+    const { owner, list, role } = await plans.planAccess(user, req.params.owner, req.params.listId);
+    const { sync_token: syncToken } = await knex('users').where({ user_id: owner.user_id }).first('sync_token');
+    res.set('Cache-Control', 'no-store');
+    res.json({
+        owner: owner.username,
+        listId: Number(list.id),
+        role,
+        syncToken: Number(syncToken),
+        members: await plans.members(owner.user_id, list.id),
+        library: await plans.loadPlan(owner.user_id, list.id),
+    });
+}));
+
+router.post('/api/plan/:owner/:listId/changes', requireJson, signedIn(async (req, res, user) => {
+    const { owner, list } = await plans.planAccess(user, req.params.owner, req.params.listId);
+    const result = await plans.applyPlanChanges(owner.user_id, list.id, req.body && req.body.changes);
+    forgetUserPages(owner.user_id);
+    plans.announceLibraryChange(owner.user_id, owner.username, user.username).catch(() => {});
+    res.json(result);
+}));
+
+router.get('/api/plan/:owner/:listId/members', signedIn(async (req, res, user) => {
+    const { owner, list } = await plans.planAccess(user, req.params.owner, req.params.listId);
+    res.set('Cache-Control', 'no-store');
+    res.json({ members: await plans.members(owner.user_id, list.id) });
+}));
+
+router.post('/api/plan/:owner/:listId/members', requireJson, signedIn(async (req, res, user) => {
+    const { list, role } = await plans.planAccess(user, req.params.owner, req.params.listId);
+    if (role !== 'owner') return res.status(403).json({ message: 'Only the list owner can invite people.' });
+    res.json({ members: await plans.invite(user, list.id, req.body && req.body.username) });
+}));
+
+router.delete('/api/plan/:owner/:listId/members/:username', signedIn(async (req, res, user) => {
+    res.json({ members: await plans.removeMember(user, req.params.owner, req.params.listId, req.params.username) });
 }));
 
 // ---- public ----------------------------------------------------------------

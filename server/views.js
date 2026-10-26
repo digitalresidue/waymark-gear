@@ -36,6 +36,7 @@ const vueRoutes = [ /* TODO - get this from same data source as Vue */
     { path: '/signin/reset-password' },
     { path: '/signin/forgot-username' },
     { path: '/pack' },
+    { path: '/plan/:owner/:listId' },
     { path: '/profile' },
     { path: '/notifications' },
     { path: '/leaderboard' },

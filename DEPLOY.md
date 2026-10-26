@@ -202,6 +202,19 @@ the previous build's assets for its last minute.
 If you ever run more than one app instance, each keeps its own page cache;
 another instance may show a page up to a minute old.
 
+## Live updates
+
+Planning a list together updates everyone's screen live over server-sent
+events (`/api/live`): one long-lived request per open tab, with a ping every
+25 seconds so proxies don't close it. Caddy streams these without extra
+settings, and Cloudflare passes them through (its 100-second idle timeout is
+covered by the ping). Leave `/api/` out of any cache rule.
+
+Live updates are in-memory in the app process. With a single app instance
+(the default compose stack) nothing else is needed. If you scale out to
+several instances, add a shared message bus between them (Postgres
+LISTEN/NOTIFY is the simplest) in `server/live.js`.
+
 ## Running somewhere else
 
 The app is a standard Docker image that needs `DATABASE_URL`, a persistent

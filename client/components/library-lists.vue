@@ -75,6 +75,19 @@
             <p v-if="filtering && !pinnedLists.length && !otherLists.length" class="wgListNone">
                 No lists match “{{ query }}”.
             </p>
+            <template v-if="sharedWithMe.length">
+                <p class="wgListGroup">
+                    Shared with you
+                </p>
+                <ul class="wgSharedLists" data-testid="shared-with-me">
+                    <li v-for="s in sharedWithMe" :key="`${s.owner}/${s.listId}`">
+                        <router-link :to="`/plan/${s.owner}/${s.listId}`" class="lpLibraryList wgSharedList" data-testid="shared-list">
+                            <span class="lpListName">{{ s.name }}</span>
+                            <span class="wgMuted wgSharedBy">@{{ s.owner }}</span>
+                        </router-link>
+                    </li>
+                </ul>
+            </template>
         </div>
     </section>
 </template>
@@ -83,7 +96,7 @@
 import PopoverHover from './popover-hover.vue';
 
 import dragula from 'dragula';
-import { formatWeightMg } from '../utils/format.js';
+import { formatWeightMg, api } from '../utils/format.js';
 
 export default {
     name: 'LibraryList',
@@ -92,7 +105,7 @@ export default {
     },
     inject: ['openCopyList', 'openImportCSV', 'openImportLighterPack', 'initSpeedbump'],
     data() {
-        return { query: '' };
+        return { query: '', sharedWithMe: [] };
     },
     computed: {
         library() {
@@ -117,6 +130,9 @@ export default {
         },
     },
     mounted() {
+        if (this.$store.state.saveType === 'remote') {
+            api('/api/plans').then((r) => { this.sharedWithMe = r.sharedWithMe; }).catch(() => {});
+        }
         this.drake = dragula([], {
             moves(_$el, _$source, $handle) {
                 return $handle.classList.contains('lpHandle');
@@ -415,5 +431,23 @@ export default {
     .wgListPin {
         visibility: visible;
     }
+}
+.wgSharedLists {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.wgSharedList {
+    align-items: center;
+    color: inherit;
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+    text-decoration: none;
+}
+
+.wgSharedBy {
+    font-size: 12px;
 }
 </style>

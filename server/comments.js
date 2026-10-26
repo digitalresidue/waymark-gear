@@ -191,7 +191,7 @@ export async function notificationsFor(user, limit = 30) {
             kind: r.kind,
             actor: r.actor_username,
             listName: r.list_name,
-            url: r.kind === 'follow' ? `/@${r.actor_username}` : `/r/${r.external_id}${r.comment_id ? `#comment-${r.comment_id}` : ''}`,
+            url: r.url || (r.kind === 'follow' ? `/@${r.actor_username}` : `/r/${r.external_id}${r.comment_id ? `#comment-${r.comment_id}` : ''}`),
             createdAt: r.created_at,
             read: Boolean(r.read_at),
         })),
