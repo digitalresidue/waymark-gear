@@ -87,6 +87,7 @@ test.describe('Phase 6', () => {
         await expect(page.getByTestId('replace-soon')).toBeVisible();
 
         await page.reload();
+        await expect(page.getByTestId('replace-soon')).toBeVisible();
         const item = await page.evaluate(() => (window as any).LighterPack.$store.state.library.items.find((i: any) => i.name === 'Old tent'));
         expect(item.purchasedOn).toBe(`${year}-03`);
         expect(item.condition).toBe('worn');
