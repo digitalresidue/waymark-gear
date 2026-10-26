@@ -1,0 +1,53 @@
+# Local or single-server deployment: the app plus Postgres.
+#
+#   docker compose up --build
+#   open http://localhost:3000
+#
+# Migrations run automatically when the app starts. For a real deployment,
+# change the passwords below, set DEPLOY_URL to your public URL and put a
+# TLS-terminating proxy in front (then set TRUST_PROXY=1).
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: waymark
+      POSTGRES_PASSWORD: waymark
+      POSTGRES_DB: waymark
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U waymark -d waymark"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      args:
+        VITE_CONTACT_EMAIL: ${VITE_CONTACT_EMAIL:-}
+        VITE_SOURCE_URL: ${VITE_SOURCE_URL:-}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://waymark:waymark@db:5432/waymark
+      DEPLOY_URL: ${DEPLOY_URL:-http://localhost:3000}
+      # Exposed directly on a port with no proxy in front.
+      TRUST_PROXY: 0
+      # Local compose runs over plain http; production turns on secure cookies.
+      NODE_ENV: ${NODE_ENV:-development}
+      MAILGUN_DOMAIN: ${MAILGUN_DOMAIN:-}
+      MAILGUN_API_KEY: ${MAILGUN_API_KEY:-}
+      MODERATORS: ${MODERATORS:-[]}
+    ports:
+      - "3000:3000"
+    volumes:
+      - userimages:/app/public/userimages
+
+volumes:
+  pgdata:
+  userimages:

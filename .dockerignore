@@ -1,0 +1,12 @@
+.git
+node_modules
+public/dist
+public/userimages
+logs
+test-results
+playwright-report
+blob-report
+.env
+config/local.json
+client/design_handoff_mobile_landing
+*.log
