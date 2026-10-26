@@ -15,7 +15,7 @@ permissions:
 jobs:
   checks:
     name: Lint, unit tests, build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -30,7 +30,7 @@ jobs:
 
   e2e:
     name: End-to-end (${{ matrix.browser }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: checks
     strategy:
       fail-fast: false
@@ -63,7 +63,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends webp
       - run: npx playwright install --with-deps ${{ matrix.browser }}
       - run: npx playwright test --project=${{ matrix.browser }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: failure()
         with:
           name: playwright-report-${{ matrix.browser }}
@@ -72,7 +72,7 @@ jobs:
 
   docker:
     name: Docker image builds
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: checks
     steps:
       - uses: actions/checkout@v5
