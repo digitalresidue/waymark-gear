@@ -46,13 +46,15 @@ test.describe('List Management', () => {
     const listItems = page.locator('#lists').getByRole('listitem');
     await expect(listItems).toHaveCount(2);
 
+    // New lists go to the top, so List Two starts first.
+    await expect(page.locator('#lists .lpListName')).toHaveText(['List Two', 'List One']);
+
     const firstList = listItems.nth(0);
     const secondList = listItems.nth(1);
 
     await dragListItem(page, secondList, firstList);
 
-    const listNames = await page.locator('#lists .lpListName').allTextContents();
-    expect(listNames[0].trim()).toBe('List Two');
+    await expect(page.locator('#lists .lpListName').first()).toHaveText('List One');
   });
 
   test('should copy a list from the sidebar menu', async ({ page }) => {

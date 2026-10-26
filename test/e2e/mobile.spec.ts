@@ -632,73 +632,44 @@ test.describe('Gear library screen', () => {
 });
 
 test.describe('Phone onboarding', () => {
-  // The landing page puts both forms in one tabbed card (design 8a), so the
-  // desktop panels are not reflowed at this width -- a separate block renders.
-  test('opens on Register, and the card holds everything needed to act', async ({ page }) => {
+  // The homepage leads with the two ways in (Google, or start without an
+  // account); the forms live on /register and /signin.
+  test('the homepage puts both ways in above the fold, with no sideways scroll', async ({ page }) => {
     await page.goto(testRoot);
+    await expect(page).toHaveURL(/\/welcome$/);
+    await expect(page.getByRole('heading', { name: 'Know every ounce before you go.' })).toBeVisible();
 
-    const card = page.locator('.lpMobileCard');
-    await expect(card).toBeVisible({ timeout: 20000 });
-
-    // Register leads and sits on the left; the sign-in fields are mounted but
-    // hidden behind the second tab.
-    const form = page.getByTestId('register-form');
-    await expect(form).toBeVisible();
-    await expect(page.getByTestId('signin-form')).toBeHidden();
-
-    const tabs = page.locator('.lpMobileTabs button');
-    await expect(tabs.first()).toHaveAttribute('id', 'lpMobileTabRegister');
-    await expect(tabs.first()).toHaveAttribute('aria-selected', 'true');
-
-    // Nothing required to act is below the fold at 390x844, four fields and all.
-    const strip = page.locator('.lpMobileAnon');
-    await expect(strip).toBeVisible();
-    const bottom = await strip.evaluate((el) => el.getBoundingClientRect().bottom);
+    const start = page.getByTestId('hero-start');
+    await expect(start).toBeVisible();
+    const bottom = await start.evaluate((el) => el.getBoundingClientRect().bottom);
     expect(bottom).toBeLessThan(PHONE.height);
 
-    // Validation renders inside the card.
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+  });
+
+  test('register shows its validation inside the card', async ({ page }) => {
+    await page.goto(`${testRoot}register`);
+    const form = page.getByTestId('register-form');
+    await expect(form).toBeVisible();
     await form.getByRole('button', { name: 'Register' }).tap();
     await expect(page.getByText('Please enter a username.')).toBeVisible();
   });
 
-  test('the Sign in tab swaps the form and drops the anonymous strip', async ({ page }) => {
-    await page.goto(testRoot);
-    await expect(page.locator('.lpMobileCard')).toBeVisible({ timeout: 20000 });
-
-    await page.locator('#lpMobileTabSignin').tap();
+  test('sign in and register link to each other', async ({ page }) => {
+    await page.goto(`${testRoot}signin`);
     await expect(page.getByTestId('signin-form')).toBeVisible();
-    await expect(page.getByTestId('register-form')).toBeHidden();
-
-    // Starting without an account is a way of registering, so it has no place
-    // under a form for people who already have one.
-    await expect(page.locator('.lpMobileAnon')).toBeHidden();
-
-    await page.locator('#lpMobileTabRegister').tap();
-    await expect(page.locator('.lpMobileAnon')).toBeVisible();
-  });
-
-  test('typing survives a round trip between the tabs', async ({ page }) => {
-    await page.goto(testRoot);
-    await expect(page.locator('.lpMobileCard')).toBeVisible({ timeout: 20000 });
-
-    const username = page.getByTestId('register-form').getByPlaceholder('Username', { exact: true });
-    await username.fill('roundtrip');
-
-    await page.locator('#lpMobileTabSignin').tap();
+    await page.getByRole('link', { name: 'Create an account' }).tap();
+    await expect(page.getByTestId('register-form')).toBeVisible();
+    await page.getByRole('main').getByRole('link', { name: 'Sign in' }).tap();
     await expect(page.getByTestId('signin-form')).toBeVisible();
-    await page.locator('#lpMobileTabRegister').tap();
-
-    await expect(username).toHaveValue('roundtrip');
   });
 
   test('starting without an account goes straight into a list', async ({ page }) => {
     await page.goto(testRoot);
-    await expect(page.locator('.lpMobileCard')).toBeVisible({ timeout: 20000 });
-
-    await page.locator('.lpMobileAnonLink').tap();
+    await page.getByTestId('hero-start').tap();
 
     // Into the app itself, saving locally -- no account, no interstitial.
-    await expect(page.locator('.lpMobileCard')).toBeHidden();
     await expect(page.getByTestId('category').first()).toBeVisible({ timeout: 20000 });
     expect(new URL(page.url()).pathname).toBe('/');
     expect(await page.evaluate(

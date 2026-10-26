@@ -81,7 +81,12 @@ export default defineConfig({
   /* Run your local dev server before starting the tests. LP_PORT moves it off
      the default so a worktree doesn't reuse the server of another checkout —
      which would silently test that checkout's code instead of this one's. */
-  webServer: {
+  webServer: [{
+    // Stands in for Google's sign-in endpoints (test/support/fake-oidc.mjs).
+    command: 'node test/support/fake-oidc.mjs',
+    url: 'http://127.0.0.1:3999/',
+    reuseExistingServer: !process.env.CI,
+  }, {
     command: 'npm run build && npm run start',
     url: `http://127.0.0.1:${process.env.LP_PORT || '3000'}`,
     reuseExistingServer: !process.env.CI,
@@ -97,7 +102,17 @@ export default defineConfig({
         // Hundreds of sign-ins from one IP in a few minutes is exactly what the
         // limiter exists to stop. It has its own test in test/unit.
         rateLimit: { enabled: false },
+        // One site-owner account per worker, like the moderators above.
+        admins: Array.from({ length: 32 }, (_, i) => `wge2eowner${i}`),
+        google: {
+          clientId: 'test-client',
+          clientSecret: 'test-secret',
+          issuer: 'http://127.0.0.1:3999',
+          authorizationEndpoint: 'http://127.0.0.1:3999/authorize',
+          tokenEndpoint: 'http://127.0.0.1:3999/token',
+          jwksUri: 'http://127.0.0.1:3999/jwks',
+        },
       }),
     },
-  },
+  }],
 });

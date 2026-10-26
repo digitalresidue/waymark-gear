@@ -136,7 +136,7 @@ test.describe('Unsaved changes tracking', () => {
   // dirty check that compares against localStorage.library sees a string
   // against undefined and warns before the user has touched anything.
   test('skipping registration has no unsaved changes', async ({ page }) => {
-    await page.goto(testRoot);
+    await page.goto(`${testRoot}register`);
     await page.getByText('Try it without an account').click();
     await expect(page.locator('#lpListName')).toBeVisible();
     await page.waitForTimeout(500); // let first-render side effects settle

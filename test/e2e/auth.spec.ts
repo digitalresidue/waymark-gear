@@ -188,7 +188,7 @@ test.describe('User Authentication Tests', () => {
   });
 
   test('should show validation errors when registering with missing fields', async ({ page }) => {
-    await page.goto(testRoot);
+    await page.goto(`${testRoot}register`);
 
     const registerForm = page.getByTestId('register-form');
     await registerForm.getByRole('button', { name: 'Register' }).click();
@@ -200,7 +200,7 @@ test.describe('User Authentication Tests', () => {
   });
 
   test('should show password mismatch error on registration', async ({ page }) => {
-    await page.goto(testRoot);
+    await page.goto(`${testRoot}register`);
 
     const registerForm = page.getByTestId('register-form');
     await registerForm.getByPlaceholder('Username', { exact: true }).fill('mismatchUser');
@@ -237,7 +237,7 @@ test.describe('User Authentication Tests', () => {
   });
 
   test('should show validation errors when signing in without credentials', async ({ page }) => {
-    await page.goto(testRoot);
+    await page.goto(`${testRoot}signin`);
 
     const signinForm = page.getByTestId('signin-form');
     await signinForm.getByRole('button', { name: 'Sign in' }).click();
@@ -247,7 +247,7 @@ test.describe('User Authentication Tests', () => {
   });
 
   test('should show an error for invalid sign in credentials', async ({ page }) => {
-    await page.goto(testRoot);
+    await page.goto(`${testRoot}signin`);
 
     const signinForm = page.getByTestId('signin-form');
     await signinForm.getByPlaceholder('Username', { exact: true }).fill('invalid-user');
@@ -258,7 +258,7 @@ test.describe('User Authentication Tests', () => {
   });
 
   test('should preserve local data when registering', async ({ page }) => {
-    await page.goto(testRoot);
+    await page.goto(`${testRoot}register`);
 
     await page.getByText('Try it without an account', { exact: true }).click();
     await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();

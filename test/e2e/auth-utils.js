@@ -10,21 +10,13 @@ export function generateTestUser(prefix = 'test') {
     const random = Math.random().toString(36).substring(2, 8);
     const fullUsername = `${prefix}${now}${random}`;
     const username = fullUsername.substring(0, 32); // Max 32 chars allowed
-    const email = `${prefix}+${now}${random}@lighterpack.com`;
+    const email = `${prefix}+${now}${random}@example.com`;
     const password = 'testtest';
     return { username, email, password };
 }
 
 export async function registerUser(page, username, password, email) {
-    await page.goto(testRoot);
-
-    // The phone landing card pairs the two forms as tabs and opens on register.
-    // Both panels are mounted, so either form resolves whichever tab is up - it
-    // is just hidden until its tab is picked, which reads as a stuck fill().
-    const registerTab = page.locator('#lpMobileTabRegister');
-    if (await registerTab.isVisible()) {
-        await registerTab.click();
-    }
+    await page.goto(`${testRoot}register`);
 
     const registerForm = page.getByTestId('register-form');
     await registerForm.getByPlaceholder('Username', { exact: true }).fill(username);
@@ -35,14 +27,7 @@ export async function registerUser(page, username, password, email) {
 }
 
 export async function loginUser(page, username, password) {
-    await page.goto(testRoot);
-
-    // Same as above, from the other side: on a phone the sign-in panel is the
-    // one behind a tab.
-    const signinTab = page.locator('#lpMobileTabSignin');
-    if (await signinTab.isVisible()) {
-        await signinTab.click();
-    }
+    await page.goto(`${testRoot}signin`);
 
     const signinForm = page.getByTestId('signin-form');
     await signinForm.getByPlaceholder('Username', { exact: true }).fill(username);
