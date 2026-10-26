@@ -28,6 +28,20 @@
                                 : 'Only people with the link can see it. Publish to show it on Explore.' }}
                         </p>
                     </div>
+                    <div v-if="list.published" class="wgPublish">
+                        <toggle
+                            :model-value="!!list.shakedown"
+                            data-testid="shakedown-toggle"
+                            @update:model-value="setShakedown"
+                        >
+                            Request a shakedown
+                        </toggle>
+                        <p class="wgPublishNote">
+                            {{ list.shakedown
+                                ? 'Asking for suggestions: your list is flagged on Explore and readers are invited to suggest swaps and cuts.'
+                                : 'Ask other hikers what to cut, swap or rethink. Suggestions arrive as comments.' }}
+                        </p>
+                    </div>
                 </div>
             </template>
         </PopoverHover>
@@ -80,6 +94,9 @@ export default {
         },
     },
     methods: {
+        setShakedown(shakedown) {
+            this.$store.commit('setListShakedown', { list: this.list, shakedown });
+        },
         setPublished(published) {
             this.$store.commit('setListPublished', { list: this.list, published });
         },
@@ -124,6 +141,8 @@ export default {
     line-height: 1.45;
     margin: 6px 0 0;
     max-width: 280px;
+    // The popover itself is nowrap (one-line menus); these notes are prose.
+    white-space: normal;
 }
 
 #share label {

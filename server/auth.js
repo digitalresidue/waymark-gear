@@ -177,6 +177,19 @@ function isAdmin(username) {
     return adminList.indexOf(username) > -1;
 }
 
+// The signed-in user behind this request's session cookie, or null. For
+// public pages that show a little more to a signed-in reader; never sends a
+// response or touches cookies.
+async function optionalUser(req) {
+    const token = req.cookies && req.cookies.lp;
+    if (!token) return null;
+    try {
+        return (await knex('users').where({ token: hashSessionToken(String(token)) }).first()) || null;
+    } catch {
+        return null;
+    }
+}
+
 function isModerator(username) {
     return moderatorList.indexOf(username) > -1 || isAdmin(username);
 }
@@ -190,4 +203,4 @@ const authenticateAdmin = async function (req, res, callback) {
     });
 };
 
-export { authenticateAdmin, isAdmin, authenticateModerator, authenticateUser, verifyPassword, generateSession, startSession, hashSessionToken, isModerator, sessionCookieOptions, issueResetToken, hashResetToken, resetPasswordUrl, RESET_TOKEN_TTL_MS };
+export { optionalUser, authenticateAdmin, isAdmin, authenticateModerator, authenticateUser, verifyPassword, generateSession, startSession, hashSessionToken, isModerator, sessionCookieOptions, issueResetToken, hashResetToken, resetPasswordUrl, RESET_TOKEN_TTL_MS };

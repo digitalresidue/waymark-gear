@@ -10,8 +10,12 @@
         <meta property="og:title" content="{{listName}} · {{baseWeight}} base weight">
         <meta property="og:description" content="{{metaDescription}}">
         <meta property="og:url" content="{{deployUrl}}/r/{{externalId}}">
-        <meta property="og:image" content="{{deployUrl}}/images/og-image.png">
+        <meta property="og:image" content="{{{ogImage}}}">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta property="og:image:alt" content="{{listName}}: {{baseWeight}} base weight, by @{{username}}">
         <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:image" content="{{{ogImage}}}">
         {{{styles}}}
         <link rel="icon" href="/favicon.png" />
         <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
@@ -48,7 +52,8 @@
                 <div class="lpShareHeader">
                     <div class="wgShareTitle">
                         <h1 class="lpListName">{{listName}}</h1>
-                        <p class="wgShareByline">by <strong>@{{username}}</strong> · {{baseWeight}} base weight · {{itemCount}} items{{#weightClass}} · <span class="wgBadge">{{weightClass}}</span>{{/weightClass}}</p>
+                        <p class="wgShareByline">by <a href="/@{{username}}" class="wgShareProfileLink" data-testid="share-profile-link"><strong>@{{username}}</strong></a> · {{baseWeight}} base weight · {{itemCount}} items{{#weightClass}} · <span class="wgBadge">{{weightClass}}</span>{{/weightClass}}</p>
+                        {{#shakedown}}<p class="wgShakedownBanner" data-testid="shakedown-banner"><strong>Shakedown requested.</strong> @{{username}} would like suggestions: what to cut, swap or rethink. <a href="#wgComments">Leave one below</a>.</p>{{/shakedown}}
                     </div>
                     <div class="lpShareMenu">
                         <button type="button" class="lpShareMenuTarget" data-testid="share-settings" aria-label="Page settings" aria-expanded="false" aria-controls="lpShareMenuContent">
@@ -80,6 +85,12 @@
                 {{/renderedDescription}}
 
                 <ul class="lpCategories">{{{renderedCategories}}}</ul>
+                {{#published}}
+                <section id="wgComments" class="wgComments" data-external-id="{{externalId}}" aria-labelledby="wgCommentsTitle">
+                    <h2 id="wgCommentsTitle">{{#shakedown}}Shakedown{{/shakedown}}{{^shakedown}}Comments{{/shakedown}}</h2>
+                    <noscript><p>Turn on JavaScript to read and write comments.</p></noscript>
+                </section>
+                {{/published}}
             </div>
         </div>
         <div class="lpDialog" id="lpImageDialog"></div>

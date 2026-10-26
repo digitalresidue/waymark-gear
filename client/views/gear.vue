@@ -8,15 +8,15 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7" /></svg>
             </a>
             <h1 class="lpGearTitle">
-                Gear
+                Closet
             </h1>
-            <span class="lpGearCount">{{ library.items.length }}</span>
+            <span class="lpGearCount">{{ activeCount }}</span>
         </div>
 
         <div class="lpGearSearchRow">
             <label class="lpGearSearch">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
-                <input v-model="searchText" type="text" placeholder="Search your gear" data-testid="gear-search">
+                <input v-model="searchText" type="text" placeholder="Search your closet" data-testid="gear-search">
             </label>
         </div>
 
@@ -43,7 +43,10 @@
                         </div>
                     </div>
 
-                    <span v-if="entry.inList" class="lpGearInList" data-testid="gear-in-list">✓ In list</span>
+                    <button v-if="entry.item.retired" type="button" class="lpGearRestore" data-testid="closet-restore" @click="restore(entry.item)">
+                        Restore
+                    </button>
+                    <span v-else-if="entry.inList" class="lpGearInList" data-testid="gear-in-list">✓ In list</span>
                     <a
                         v-else
                         class="lpGearAdd"
@@ -53,7 +56,7 @@
                         @click="togglePicker(entry.item.id)"
                     >+</a>
 
-                    <a class="lpGearRemove" data-testid="gear-remove" title="Delete this item permanently" @click="removeItem(entry.item)">
+                    <a v-if="!entry.item.retired" class="lpGearRemove" data-testid="gear-remove" title="Remove from your closet" @click="removeItem(entry.item)">
                         <i class="lpSprite lpSpriteRemove" />
                     </a>
                 </div>
@@ -100,6 +103,7 @@ import globalAlerts from '../components/global-alerts.vue';
 import speedbump from '../components/speedbump.vue';
 
 import utilsMixin from '../mixins/utils-mixin.js';
+import { confirmClosetRemoval, isPlaceholder, restoreClosetItem } from '../utils/closet.js';
 
 export default {
     name: 'Gear',
@@ -130,14 +134,24 @@ export default {
             return this.list.categoryIds.map(id => this.library.getCategoryById(id));
         },
         filterOptions() {
-            return [
-                { key: 'all', label: `All · ${this.library.items.length}` },
+            const options = [
+                { key: 'all', label: `All · ${this.activeCount}` },
                 { key: 'notInList', label: `Not in ${this.list.name || 'this list'}` },
-                // Items have no timestamp (see dataTypes.js), so "recently
-                // used" isn't available. Ids are handed out in creation order,
-                // which makes newest-first honest and free.
+                // The closet keeps gear in the order it was added, so newest
+                // first is that order reversed.
                 { key: 'newest', label: 'Newest' },
             ];
+            if (this.retiredCount) options.push({ key: 'retired', label: `Retired · ${this.retiredCount}` });
+            return options;
+        },
+        closetGear() {
+            return this.library.items.filter((item) => !isPlaceholder(item));
+        },
+        activeCount() {
+            return this.closetGear.filter((item) => !item.retired).length;
+        },
+        retiredCount() {
+            return this.closetGear.length - this.activeCount;
         },
         itemsInList() {
             return this.library.getItemsInCurrentList();
@@ -145,10 +159,12 @@ export default {
         filteredItems() {
             const search = this.searchText.trim().toLowerCase();
 
-            let entries = this.library.items.map(item => ({
-                item,
-                inList: this.itemsInList.indexOf(item.id) > -1,
-            }));
+            let entries = this.closetGear
+                .filter((item) => (this.filter === 'retired' ? item.retired : !item.retired))
+                .map(item => ({
+                    item,
+                    inList: this.itemsInList.indexOf(item.id) > -1,
+                }));
 
             if (search) {
                 entries = entries.filter(({ item }) => item.name.toLowerCase().indexOf(search) > -1
@@ -158,7 +174,7 @@ export default {
             if (this.filter === 'notInList') {
                 entries = entries.filter(entry => !entry.inList);
             } else if (this.filter === 'newest') {
-                entries = entries.slice().sort((a, b) => b.item.id - a.item.id);
+                entries = entries.slice().reverse();
             }
 
             return entries;
@@ -170,7 +186,10 @@ export default {
             if (this.filter === 'notInList') {
                 return 'Every piece of gear you own is already in this list.';
             }
-            return 'Your gear library is empty. Items you add to a list show up here.';
+            if (this.filter === 'retired') {
+                return 'No retired gear.';
+            }
+            return 'Your closet is empty. Gear you add to a list shows up here.';
         },
     },
     beforeMount() {
@@ -208,13 +227,17 @@ export default {
             this.pickerItemId = null;
         },
         removeItem(item) {
-            this.speedbumpCallback = () => {
-                this.$store.commit('removeItem', item);
-            };
-            this.speedbumpOptions = {
-                body: 'Are you sure you want to delete this item? This cannot be undone.',
-            };
-            this.showSpeedbump = true;
+            confirmClosetRemoval({
+                store: this.$store,
+                initSpeedbump: (callback, options) => {
+                    this.speedbumpCallback = callback;
+                    this.speedbumpOptions = options;
+                    this.showSpeedbump = true;
+                },
+            }, item);
+        },
+        restore(item) {
+            restoreClosetItem(this.$store, item);
         },
     },
 };
@@ -222,6 +245,20 @@ export default {
 
 <style lang="scss">
 @import "../css/_globals";
+
+.lpGearRestore {
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border-strong);
+    border-radius: 10px;
+    color: var(--lp-text);
+    cursor: pointer;
+    flex: none;
+    font-family: $font-body;
+    font-size: 14px;
+    font-weight: 600;
+    min-height: 40px;
+    padding: 0 14px;
+}
 
 // ============================================================
 // The gear library screen (#11g)

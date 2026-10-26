@@ -6,11 +6,15 @@
 
         <p>{{ messages.body }}</p>
 
-        <div class="buttons">
-            <button v-focus-on-create class="lpButton" @click="confirmSpeedbump()">
+        <div class="buttons wgSpeedbumpButtons">
+            <!-- Optional gentler choice, offered first (e.g. Retire before Delete). -->
+            <button v-if="messages.alternate" v-focus-on-create class="wgBtn wgBtnPrimary" data-testid="speedbump-alternate" @click="chooseAlternate()">
+                {{ messages.alternate.label }}
+            </button>
+            <button v-focus-on-create="!messages.alternate" class="lpButton" :class="{ wgDangerAction: messages.alternate }" data-testid="speedbump-confirm" @click="confirmSpeedbump()">
                 {{ messages.confirm }}
             </button>
-            &nbsp;<button class="lpButton" @click="$emit('hide')">
+            <button class="wgBtn" data-testid="speedbump-cancel" @click="$emit('hide')">
                 {{ messages.cancel }}
             </button>
         </div>
@@ -60,6 +64,10 @@ export default {
         },
     },
     methods: {
+        chooseAlternate() {
+            this.messages.alternate.callback();
+            this.$emit('hide');
+        },
         confirmSpeedbump() {
             if (this.speedbumpCallback && typeof this.speedbumpCallback === 'function') {
                 this.speedbumpCallback(true);
@@ -71,5 +79,17 @@ export default {
 </script>
 
 <style lang="scss">
+.wgSpeedbumpButtons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.lp .wgDangerAction {
+    background: transparent;
+    border: 1px solid var(--lp-danger);
+    color: var(--lp-danger);
+}
+
 
 </style>

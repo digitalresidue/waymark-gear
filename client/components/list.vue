@@ -8,6 +8,8 @@
 
         <list-description v-if="list.optionalFields['listDescription']" :list="list" />
 
+        <trip-planner v-if="!isListNew" :list="list" />
+
         <div v-if="categories.length > 1" class="wgCategoryTools">
             <button type="button" class="wgBtn wgBtnGhost wgBtnSmall" data-testid="expand-all" :disabled="!anyCollapsed" @click="setCollapsed(false)">
                 Expand all
@@ -29,6 +31,7 @@
 import category from './category.vue';
 import getStarted from './get-started.vue';
 import listDescription from './list-description.vue';
+import tripPlanner from './trip-planner.vue';
 import listSummary from './list-summary.vue';
 import listSummaryMobile from './list-summary-mobile.vue';
 
@@ -44,6 +47,7 @@ export default {
         listSummary,
         listSummaryMobile,
         listDescription,
+        tripPlanner,
         category,
     },
     setup() {

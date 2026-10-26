@@ -56,6 +56,7 @@ export function publishedKits(serializedLibrary) {
             itemCount,
             categories,
             catalogIds: [...catalogIds],
+            shakedown: Boolean(list.shakedown),
         });
     }
     return kits;
@@ -93,6 +94,7 @@ export async function syncPublishedKits(user, serializedLibrary, db = knex) {
                 weight_class: weightClassFor(k.baseWeightMg),
                 categories: JSON.stringify(k.categories),
                 catalog_ids: k.catalogIds,
+                shakedown: k.shakedown,
                 updated_at: trx.fn.now(),
             };
             await trx('public_kits').insert(row).onConflict('external_id')
@@ -102,7 +104,7 @@ export async function syncPublishedKits(user, serializedLibrary, db = knex) {
     return valid.length;
 }
 
-function kitToApi(row) {
+export function kitToApi(row) {
     return {
         externalId: row.external_id,
         username: row.username,
@@ -117,6 +119,7 @@ function kitToApi(row) {
         categories: row.categories,
         featured: row.featured,
         featuredRank: row.featured_rank,
+        shakedown: Boolean(row.shakedown),
         updatedAt: row.updated_at,
     };
 }
@@ -131,10 +134,17 @@ export async function featuredKits({ weightClass, limit = 6 }) {
     return rows.map(kitToApi);
 }
 
-export async function listKits({ weightClass, q = '', featuredOnly = false, limit = 24, offset = 0 } = {}) {
+// One person's published kits, newest first (their profile page).
+export async function kitsForUser(userId, db = knex) {
+    const rows = await db('public_kits').where({ user_id: userId }).orderBy('updated_at', 'desc').limit(100);
+    return rows.map(kitToApi);
+}
+
+export async function listKits({ weightClass, q = '', featuredOnly = false, shakedownOnly = false, limit = 24, offset = 0 } = {}) {
     const query = knex('public_kits');
     if (weightClass) query.where({ weight_class: weightClass });
     if (featuredOnly) query.where({ featured: true });
+    if (shakedownOnly) query.where({ shakedown: true });
     const term = String(q).trim();
     if (term) {
         const like = `%${term.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;

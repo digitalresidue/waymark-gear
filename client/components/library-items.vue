@@ -1,15 +1,18 @@
 <template>
     <section id="libraryContainer">
         <div class="lpSidebarSectionHeader">
-            <span class="lpSectionLabel">Gear · {{ library.items.length }}</span>
+            <span class="lpSectionLabel">Closet · {{ activeCount }}</span>
+            <button v-if="retiredCount" type="button" class="wgClosetToggle" :aria-pressed="String(showRetired)" data-testid="closet-show-retired" @click="showRetired = !showRetired">
+                {{ showRetired ? 'Hide retired' : `Retired (${retiredCount})` }}
+            </button>
         </div>
         <div class="lpSidebarSearch">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
-            <input id="librarySearch" v-model="searchText" type="text" placeholder="Search gear">
+            <input id="librarySearch" v-model="searchText" type="text" placeholder="Search your closet" aria-label="Search your closet">
         </div>
         <ul id="library" class="lpSidebarScroll">
-            <li v-for="item in filteredItems" :key="item.id" class="lpLibraryItem" :data-item-id="item.id">
-                <div v-if="!item.inCurrentList" class="lpHandle lpLibraryItemHandle" title="Drag this item into your list" />
+            <li v-for="item in filteredItems" :key="item.id" class="lpLibraryItem" :class="{ wgRetired: item.retired }" :data-item-id="item.id" data-testid="closet-item">
+                <div v-if="!item.inCurrentList && !item.retired" class="lpHandle lpLibraryItemHandle" title="Drag this item into your list" />
                 <span class="lpLibraryItemBody">
                     <span class="lpLibraryItemTopline">
                         <span class="lpName">{{ item.name }}</span>
@@ -19,8 +22,9 @@
                         </span>
                     </span>
                     <span class="lpLibraryItemBottomline">
-                        <span class="lpDescription">{{ item.description }}</span>
-                        <a class="lpRemove lpRemoveLibraryItem speedbump" title="Delete this item permanently" @click="removeItem(item)"><i class="lpSprite lpSpriteRemove" /></a>
+                        <span class="lpDescription"><span v-if="item.retired" class="wgRetiredTag">Retired</span>{{ item.description }}</span>
+                        <button v-if="item.retired" type="button" class="wgClosetRestore" data-testid="closet-restore" @click="restore(item)">Restore</button>
+                        <a v-else class="lpRemove lpRemoveLibraryItem speedbump" title="Remove from your closet" @click="removeItem(item)"><i class="lpSprite lpSpriteRemove" /></a>
                     </span>
                 </span>
             </li>
@@ -32,6 +36,7 @@
 import utilsMixin from '../mixins/utils-mixin.js';
 import dragula from 'dragula';
 import { getElementIndex } from '../utils/utils.js';
+import { confirmClosetRemoval, isPlaceholder, restoreClosetItem } from '../utils/closet.js';
 
 export default {
     name: 'LibraryItem',
@@ -41,6 +46,7 @@ export default {
     data() {
         return {
             searchText: '',
+            showRetired: false,
             itemDragId: false,
             drake: null,
         };
@@ -49,17 +55,30 @@ export default {
         library() {
             return this.$store.state.library;
         },
+        closetGear() {
+            return this.library.items.filter((item) => !isPlaceholder(item));
+        },
+        activeCount() {
+            return this.closetGear.filter((item) => !item.retired).length;
+        },
+        retiredCount() {
+            return this.closetGear.length - this.activeCount;
+        },
+        // Retired gear stays out of the way unless asked for.
+        closetItems() {
+            return this.showRetired ? this.closetGear : this.closetGear.filter((item) => !item.retired);
+        },
         filteredItems() {
             let i;
             let item;
             let filteredItems = [];
             if (!this.searchText) {
-                filteredItems = this.library.items.map(item => Object.assign({}, item));
+                filteredItems = this.closetItems.map(item => Object.assign({}, item));
             } else {
                 const lowerCaseSearchText = this.searchText.toLowerCase();
 
-                for (i = 0; i < this.library.items.length; i++) {
-                    item = this.library.items[i];
+                for (i = 0; i < this.closetItems.length; i++) {
+                    item = this.closetItems[i];
                     if (item.name.toLowerCase().indexOf(lowerCaseSearchText) > -1 || item.description.toLowerCase().indexOf(lowerCaseSearchText) > -1) {
                         filteredItems.push(Object.assign({}, item));
                     }
@@ -133,13 +152,10 @@ export default {
             this.drake = drake;
         },
         removeItem(item) {
-            const callback = function () {
-                this.$store.commit('removeItem', item);
-            };
-            const speedbumpOptions = {
-                body: 'Are you sure you want to delete this item? This cannot be undone.',
-            };
-            this.initSpeedbump(callback, speedbumpOptions);
+            confirmClosetRemoval({ store: this.$store, initSpeedbump: this.initSpeedbump }, this.library.getItemById(item.id));
+        },
+        restore(item) {
+            restoreClosetItem(this.$store, this.library.getItemById(item.id));
         },
     },
 };
@@ -147,6 +163,50 @@ export default {
 
 <style lang="scss">
 @import "../css/_globals";
+
+.wgClosetToggle {
+    background: transparent;
+    border: 0;
+    border-radius: 6px;
+    color: var(--lp-sidebar-link);
+    cursor: pointer;
+    font-family: $font-body;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 6px;
+
+    &:hover {
+        background: var(--lp-sidebar-inset);
+    }
+}
+
+.lpLibraryItem.wgRetired .lpName,
+.lpLibraryItem.wgRetired .lpWeight {
+    color: var(--lp-sidebar-muted);
+}
+
+.wgRetiredTag {
+    background: var(--lp-surface-sunken);
+    border-radius: 4px;
+    color: var(--lp-sidebar-muted);
+    font-size: 11px;
+    font-weight: 700;
+    margin-right: 6px;
+    padding: 1px 5px;
+}
+
+.wgClosetRestore {
+    background: transparent;
+    border: 1px solid var(--lp-border-strong);
+    border-radius: 6px;
+    color: var(--lp-text);
+    cursor: pointer;
+    flex: none;
+    font-family: $font-body;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px;
+}
 
 #libraryContainer {
     display: flex;

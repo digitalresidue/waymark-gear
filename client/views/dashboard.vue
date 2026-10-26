@@ -1,6 +1,7 @@
 <template>
     <div v-if="isLoaded" class="wgApp">
         <siteHeader app active="lists" />
+        <offlineBanner />
         <div id="main" :class="{lpHasSidebar: library.showSidebar, lpDrawerOpen: drawerOpen}">
             <div class="lpFrameFill lpFrameFillLeft" />
             <sidebar />
@@ -11,6 +12,10 @@
                         <a id="hamburger" class="lpTransition" data-testid="toggle-sidebar" @click="toggleSidebar"><i class="lpSprite lpHamburger" /></a>
                     </span>
                     <input id="lpListName" :value="list.name" type="text" class="lpListName lpSilent headerItem" placeholder="Name your list" autocomplete="off" name="lastpass-disable-search" @input="updateListName">
+                    <router-link to="/pack" class="headerItem wgPackLink" data-testid="open-pack">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8" /><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" /></svg>
+                        Pack
+                    </router-link>
                     <share />
                     <listSettings />
                     <accountDropdown />
@@ -30,6 +35,7 @@
                 @hide="showSpeedbump = false"
             />
             <copyList :shown="showCopyList" @hide="showCopyList = false" />
+            <importLighterpack :shown="showImport" @hide="showImport = false" />
             <importCSV ref="importCSVRef" />
             <itemImage :shown="showItemImage" :item="itemImageItem" @hide="showItemImage = false" />
             <itemViewImage :shown="showItemViewImage" :image-url="itemViewImageUrl" @hide="showItemViewImage = false" />
@@ -57,6 +63,7 @@ import itemViewImage from '../components/item-view-image.vue';
 import itemLink from '../components/item-link.vue';
 import importCSV from '../components/import-csv.vue';
 import copyList from '../components/copy-list.vue';
+import importLighterpack from '../components/import-lighterpack.vue';
 import speedbump from '../components/speedbump.vue';
 import accountDropdown from '../components/account-dropdown.vue';
 import siteFooter from '../components/site-footer.vue';
@@ -65,10 +72,13 @@ import catalogPicker from '../components/catalog-picker.vue';
 
 import { isMobile } from '../utils/viewport.js';
 import { api } from '../utils/format.js';
+import offlineBanner from '../components/offline-banner.vue';
 
 export default {
     name: 'Dashboard',
     components: {
+        importLighterpack,
+        offlineBanner,
         sidebar,
         share,
         listSettings,
@@ -95,6 +105,7 @@ export default {
             openDeleteAccount: () => { this.showDeleteAccount = true; },
             openCopyList: () => { this.showCopyList = true; },
             openImportCSV: () => { this.$refs.importCSVRef.triggerUpload(); },
+            openImportLighterPack: () => { this.showImport = true; },
             openItemImage: (item) => { this.itemImageItem = item; this.showItemImage = true; },
             openItemViewImage: (imageUrl) => { this.itemViewImageUrl = imageUrl; this.showItemViewImage = true; },
             openItemLink: (item) => { this.itemLinkItem = item; this.showItemLink = true; },
@@ -120,6 +131,7 @@ export default {
             showHelp: false,
             showDeleteAccount: false,
             showCopyList: false,
+            showImport: false,
             showItemImage: false,
             itemImageItem: null,
             showItemViewImage: false,
@@ -154,9 +166,12 @@ export default {
     },
     beforeMount() {
         const copyId = this.$route.query.copy;
+        // "Import from LighterPack" on the homepage: same, an account-less
+        // library to import into if there isn't one yet.
+        const importing = this.$route.query.import === 'lighterpack';
         // "Copy to my lists" from a shared page works without an account:
         // a visitor with no library gets an account-less one to copy into.
-        if (!this.$store.state.library && copyId) {
+        if (!this.$store.state.library && (copyId || importing)) {
             this.$store.dispatch('startLocalLibrary');
         }
         if (!this.$store.state.library) {
@@ -164,6 +179,10 @@ export default {
         } else {
             this.isLoaded = true;
             if (copyId) this.copySharedList(String(copyId));
+            if (importing) {
+                this.$router.replace({ query: {} });
+                this.showImport = true;
+            }
         }
     },
     methods: {
@@ -277,6 +296,21 @@ export default {
 
     .lpTarget  .lpSprite {
         height: 14px;
+    }
+}
+
+.wgPackLink {
+    align-items: center;
+    color: var(--lp-text);
+    display: inline-flex;
+    font-size: 13px;
+    font-weight: 600;
+    gap: 6px;
+    padding: 4px 0;
+    text-decoration: none;
+
+    &:hover {
+        color: var(--lp-link-blue);
     }
 }
 
@@ -456,6 +490,21 @@ export default {
 
         &:hover {
             color: var(--lp-sidebar-text);
+        }
+    }
+
+    // Pack keeps its icon and drops its label like the others, but stays a
+    // full 44px tap target.
+    .wgPackLink {
+        color: var(--lp-sidebar-text);
+        font-size: 0;
+        justify-content: center;
+        min-height: 44px;
+        min-width: 36px;
+
+        svg {
+            height: 19px;
+            width: 19px;
         }
     }
 

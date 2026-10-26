@@ -63,6 +63,9 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends webp
       - run: npx playwright install --with-deps ${{ matrix.browser }}
       - run: npx playwright test --project=${{ matrix.browser }}
+      - name: Why tests failed
+        if: failure()
+        run: node scripts/ci-failures.mjs test-results/results.json
       - uses: actions/upload-artifact@v5
         if: failure()
         with:

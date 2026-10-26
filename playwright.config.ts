@@ -22,7 +22,9 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'html',
+  reporter: process.env.CI
+    ? [['github'], ['html', { open: 'never' }], ['json', { outputFile: 'test-results/results.json' }]]
+    : 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -94,6 +96,9 @@ export default defineConfig({
       NODE_CONFIG: JSON.stringify({
         port: Number(process.env.LP_PORT || 3000),
         deployUrl: `http://localhost:${process.env.LP_PORT || '3000'}`,
+        // LighterPack link import reads /csv/:id and /r/:id, which this app
+        // serves in the same format, so the suite imports from itself.
+        lighterpackUrl: `http://localhost:${process.env.LP_PORT || '3000'}`,
         // Lets the suite exercise the moderator-only endpoints. Names have to be
         // fixed rather than generated, since the list is read at startup. One
         // per worker, because a user row holds a single session token - sharing

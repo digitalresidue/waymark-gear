@@ -17,6 +17,8 @@ sign-in, email, and nightly backups. Plan on an afternoon the first time.
 | **Off-site storage** | Backups | Backblaze B2, AWS S3, or DigitalOcean Spaces | Step 8. |
 | **Uptime monitor** | Tells you if the site goes down | UptimeRobot or Better Stack (free tiers) | Monitor `https://waymarkgear.com/healthz`. |
 
+The server needs outbound HTTPS to `lighterpack.com` for "Import from LighterPack" links (CSV uploads work without it). It only ever requests that site's public `/csv/:id` and `/r/:id` pages, never follows redirects, and is rate limited per IP (`rateLimit.importMaxPerWindow`, default 20 per 10 minutes). `LIGHTERPACK_URL` overrides the address if you ever need to.
+
 Check each provider's current pricing; a small VPS, storage and a domain are
 the only recurring costs at launch.
 
@@ -168,12 +170,37 @@ after CI passes keeps security patches current.
 - [ ] Backups running and a restore tested.
 - [ ] Uptime monitor on `/healthz`.
 
-## Optional: Cloudflare in front
+## Traffic spikes and Cloudflare
 
-Proxying through Cloudflare (orange cloud) adds caching and absorbs traffic
-spikes, e.g. when a kit gets shared on a forum. Set SSL mode to **Full
-(strict)**, set `TRUST_PROXY: 2` in the compose file, and keep the origin
-firewall as above. Public API responses already send short cache headers.
+When a kit gets posted to a big forum or subreddit, thousands of people open
+the same page within minutes. The app handles that on its own:
+
+- Shared lists (`/r/…`) and profiles (`/@…`) are rendered at most about once
+  a minute per page and served from memory in between. An owner's own pages
+  are refreshed the moment they save or edit their profile.
+- Link-preview images (`/og/…`) are drawn once and cached; built assets under
+  `/dist/` are content-hashed and cached by browsers for a day.
+- Every response sends ETags, so repeat visitors get a cheap `304`.
+
+To go further, proxy through Cloudflare (orange cloud). Set SSL mode to
+**Full (strict)**, set `TRUST_PROXY: 2` in the compose file, and keep the
+origin firewall as above. Cloudflare doesn't cache HTML by default, so add a
+**Cache Rule**:
+
+- **When:** URI Path starts with `/r/`, or starts with `/@`, or starts with
+  `/og/`, or starts with `/dist/`, or starts with `/api/explore/` (the
+  homepage and Explore read their kits from there)
+- **Then:** Eligible for cache; Edge TTL: *Use cache-control header if
+  present*; Browser TTL: *Respect origin*.
+
+Pages send `s-maxage=60`, so the edge serves them for a minute and the
+origin sees about one request per page per minute per data center. Don't add
+`/`, `/api/`, `/profile` or anything signed-in: those are personal. After a
+deploy you can **Purge Everything** so no edge keeps a page that points at
+the previous build's assets for its last minute.
+
+If you ever run more than one app instance, each keeps its own page cache;
+another instance may show a page up to a minute old.
 
 ## Running somewhere else
 

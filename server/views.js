@@ -5,15 +5,19 @@ import Mustache from 'mustache';
 import { Marked } from 'marked';
 import { thumbnailUrl } from './images.js';
 import config from 'config';
-import knex from './db.js';
 import { logWithRequest, logger } from './log.js';
 import weightUtils from '../client/utils/weight.js';
 import { marked, isSafeHref } from '../client/utils/markdown.js';
 import { Library } from '../client/dataTypes.js';
 import { listToCsv } from './csv.js';
 import { applyCatalog } from './catalog.js';
+import { libraryForExternalId } from './library-store.js';
 import { WEIGHT_CLASSES, weightClassFor } from './kits.js';
+import knex from './db.js';
 import { formatWeightMg } from '../client/utils/format.js';
+import { publicProfile, publicGear } from './profiles.js';
+import { listImage, listImageVersion, profileImage, profileImageVersion } from './og.js';
+import { cachedPage, storePage, sendCachedPage, NONCE_PLACEHOLDER } from './page-cache.js';
 
 const router = express.Router();
 
@@ -30,6 +34,9 @@ const vueRoutes = [ /* TODO - get this from same data source as Vue */
     { path: '/signin' },
     { path: '/signin/reset-password' },
     { path: '/signin/forgot-username' },
+    { path: '/pack' },
+    { path: '/profile' },
+    { path: '/gear' },
     { path: '/welcome' },
     { path: '/explore' },
     { path: '/owner/catalog' },
@@ -55,11 +62,23 @@ if (hasBuiltAssets) {
     // Production / test: serve pre-built Vite assets
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 
+    // An entry's stylesheets include those of the chunks it imports: CSS
+    // shared between entries (the web fonts, for one) lands in a shared chunk,
+    // and nothing loads it unless it's linked here.
+    const entryCss = (key, seen = new Set()) => {
+        const chunk = manifest[key];
+        if (!chunk || seen.has(key)) return [];
+        seen.add(key);
+        const own = chunk.css || [];
+        const imported = (chunk.imports || []).flatMap((k) => entryCss(k, seen));
+        return [...new Set([...imported, ...own])];
+    };
+
     // App entry
     const appEntry = manifest['client/lighterpack.js'];
     if (appEntry) {
         appScriptsHtml += `<script type="module" src='/dist/${appEntry.file}'></script>`;
-        (appEntry.css || []).forEach((cssFile) => {
+        entryCss('client/lighterpack.js').forEach((cssFile) => {
             appStylesHtml += `<link rel='stylesheet' href='/dist/${cssFile}' />`;
         });
     }
@@ -68,7 +87,7 @@ if (hasBuiltAssets) {
     const shareEntry = manifest['client/share-entry.js'];
     if (shareEntry) {
         shareScriptsHtml += `<script type="module" src='/dist/${shareEntry.file}'></script>`;
-        (shareEntry.css || []).forEach((cssFile) => {
+        entryCss('client/share-entry.js').forEach((cssFile) => {
             shareStylesHtml += `<link rel='stylesheet' href='/dist/${cssFile}' />`;
             shareStylesLinks.push(cssFile);
         });
@@ -174,6 +193,199 @@ for (let i = 0; i < vueRoutes.length; i++) {
     });
 }
 
+// ---- search engines -----------------------------------------------------------
+
+router.get('/robots.txt', (req, res) => {
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.type('text/plain').send([
+        'User-agent: *',
+        'Allow: /',
+        'Disallow: /api/',
+        'Disallow: /moderation',
+        'Disallow: /owner/',
+        'Disallow: /profile',
+        'Disallow: /pack',
+        'Disallow: /gear',
+        'Disallow: /csv/',
+        `Sitemap: ${config.get('deployUrl')}/sitemap.xml`,
+        '',
+    ].join('\n'));
+});
+
+// Published lists and the profiles of the people who published them.
+// Rebuilt at most every 30 minutes.
+let sitemap = { xml: '', built: 0 };
+const xmlEscape = (v) => String(v).replace(/[<>&'"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c]));
+
+router.get('/sitemap.xml', async (req, res) => {
+    try {
+        if (!sitemap.xml || Date.now() - sitemap.built > 30 * 60 * 1000) {
+            const base = config.get('deployUrl');
+            const kits = await knex('public_kits').select('external_id', 'updated_at').orderBy('updated_at', 'desc').limit(40000);
+            const people = await knex('public_kits').join('users', 'users.user_id', 'public_kits.user_id')
+                .where('users.profile_hidden', false)
+                .groupBy('users.username').select('users.username').max({ updated_at: 'public_kits.updated_at' }).limit(9000);
+            const url = (loc, lastmod) => `<url><loc>${xmlEscape(loc)}</loc>${lastmod ? `<lastmod>${new Date(lastmod).toISOString()}</lastmod>` : ''}</url>`;
+            sitemap = {
+                built: Date.now(),
+                xml: [
+                    '<?xml version="1.0" encoding="UTF-8"?>',
+                    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+                    url(`${base}/welcome`),
+                    url(`${base}/explore`),
+                    ...kits.map((k) => url(`${base}/r/${k.external_id}`, k.updated_at)),
+                    ...people.map((p) => url(`${base}/@${p.username}`, p.updated_at)),
+                    '</urlset>',
+                ].join('\n'),
+            };
+        }
+        res.set('Cache-Control', 'public, max-age=1800');
+        res.type('application/xml').send(sitemap.xml);
+    } catch (err) {
+        logWithRequest(req, { message: 'error building sitemap', err });
+        res.status(500).end();
+    }
+});
+
+// ---- link-preview images -----------------------------------------------------
+
+// What a list's preview card shows. `library` must have `list` totals computed.
+function listCard(library, list, username) {
+    const categories = list.categoryIds.map((cid) => library.getCategoryById(cid)).filter(Boolean)
+        .map((c) => ({ weightMg: c.subtotalWeight - c.subtotalWornWeight - c.subtotalConsumableWeight }));
+    return {
+        name: list.name,
+        username,
+        baseWeightMg: list.totalBaseWeight,
+        itemCount: list.categoryIds.reduce((n, cid) => n + ((library.getCategoryById(cid) || { categoryItems: [] }).categoryItems.length), 0),
+        weightClass: (WEIGHT_CLASSES.find((c) => c.id === weightClassFor(list.totalBaseWeight)) || {}).label || '',
+        shakedown: Boolean(list.published && list.shakedown),
+        categories,
+    };
+}
+
+function sendPng(req, res, { png, etag }) {
+    res.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+    res.set('ETag', `"${etag}"`);
+    if (req.get('If-None-Match') === `"${etag}"`) return res.status(304).end();
+    res.type('png').send(png);
+}
+
+router.get('/og/r/:file', async (req, res) => {
+    const m = String(req.params.file).match(/^([a-z0-9]{1,32})\.png$/i);
+    if (!m) return res.status(404).end();
+    try {
+        const found = await libraryForExternalId(m[1]);
+        if (!found) return res.status(404).end();
+        const library = new Library();
+        library.load(await applyCatalog(found.library));
+        const list = library.lists.find((l) => l.externalId === m[1]);
+        if (!list) return res.status(404).end();
+        list.calculateTotals();
+        sendPng(req, res, await listImage(listCard(library, list, found.username)));
+    } catch (err) {
+        logWithRequest(req, { message: 'error rendering list image', err });
+        res.status(500).end();
+    }
+});
+
+router.get('/og/@:file', async (req, res) => {
+    const m = String(req.params.file).match(/^([A-Za-z0-9_.-]{1,64})\.png$/);
+    if (!m) return res.status(404).end();
+    try {
+        const found = await publicProfile(m[1]);
+        if (!found) return res.status(404).end();
+        const { profile, kits } = found;
+        sendPng(req, res, await profileImage({
+            name: profile.displayName || `@${profile.username}`,
+            username: profile.username,
+            trailName: profile.trailName,
+            kitCount: kits.length,
+            lightest: kits.length ? formatWeightMg(Math.min(...kits.map((k) => k.baseWeightMg)), 'lb') : '',
+            initial: (profile.displayName || profile.username).trim().charAt(0).toUpperCase(),
+            avatarUrl: profile.avatarUrl,
+        }));
+    } catch (err) {
+        logWithRequest(req, { message: 'error rendering profile image', err });
+        res.status(500).end();
+    }
+});
+
+// ---- public @profiles --------------------------------------------------------
+
+const profileTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/profile.mustache'), 'utf8');
+const NETWORK_LABELS = { youtube: 'YouTube', x: 'X', instagram: 'Instagram', website: 'Website' };
+
+function kitCardModel(kit) {
+    return {
+        externalId: kit.externalId,
+        name: kit.name,
+        baseWeight: formatWeightMg(kit.baseWeightMg, 'lb'),
+        weightClass: (WEIGHT_CLASSES.find((c) => c.id === kit.weightClass) || {}).label || '',
+        itemCount: `${kit.itemCount} ${kit.itemCount === 1 ? 'item' : 'items'}`,
+        description: kit.description ? kit.description.replace(/[#*_`>[\]()]/g, '').slice(0, 140) : '',
+    };
+}
+
+router.get('/@:username', async (req, res) => {
+    const username = String(req.params.username || '');
+    if (!/^[A-Za-z0-9_.-]{1,64}$/.test(username)) return res.status(404).send('No such profile.');
+    const cacheKey = `p:${username.toLowerCase()}:${req.query.view === 'gear' ? 'gear' : 'lists'}`;
+    const hit = cachedPage(cacheKey);
+    if (hit) return sendCachedPage(req, res, hit);
+    try {
+        const found = await publicProfile(username);
+        if (!found) return res.status(404).send('No such profile.');
+        const { profile, featured, others, kits } = found;
+        const gearView = req.query.view === 'gear';
+        const gear = await publicGear(found.userId, kits.map((k) => k.externalId));
+        const name = profile.displayName || `@${profile.username}`;
+        const lightest = kits.length ? formatWeightMg(Math.min(...kits.map((k) => k.baseWeightMg)), 'lb') : '';
+        const links = Object.entries(profile.links)
+            .filter(([network, url]) => NETWORK_LABELS[network] && /^https:\/\//.test(url))
+            .map(([network, url]) => ({ network, url, label: NETWORK_LABELS[network] }));
+        const deployUrl = config.get('deployUrl');
+
+        const model = {
+            styles: shareStylesHtml,
+            cspNonce: NONCE_PLACEHOLDER,
+            deployUrl,
+            username: profile.username,
+            name,
+            initial: (profile.displayName || profile.username).trim().charAt(0).toUpperCase(),
+            trailName: profile.trailName,
+            avatarUrl: profile.avatarUrl,
+            bannerUrl: profile.bannerUrl,
+            ogImage: `${deployUrl}/og/@${profile.username}.png?v=${profileImageVersion({
+                name, trailName: profile.trailName, avatarUrl: profile.avatarUrl, kitCount: kits.length, lightest,
+            })}`,
+            bioHtml: profile.bio ? marked(profile.bio) : '',
+            links,
+            hasLinks: links.length > 0,
+            kitCount: kits.length,
+            gearCount: gear.length,
+            lightest,
+            featured: featured.map(kitCardModel),
+            others: others.map(kitCardModel),
+            hasFeatured: featured.length > 0,
+            hasOthers: others.length > 0,
+            listsView: !gearView,
+            gearView,
+            gear: gear.map((g) => ({
+                ...g,
+                initial: g.name.trim().charAt(0).toUpperCase(),
+                weight: `${weightUtils.MgToDisplayWeight(g.weightMg, g.unit)} ${g.unit}`,
+            })),
+            metaDescription: `${name} on Waymark Gear: ${kits.length} published ${kits.length === 1 ? 'list' : 'lists'}${lightest ? `, lightest base weight ${lightest}` : ''}.`,
+        };
+        const html = Mustache.render(profileTemplate, model, { kitCard: templates.t_kitCard || '' });
+        return sendCachedPage(req, res, storePage(cacheKey, html, found.userId));
+    } catch (err) {
+        logWithRequest(req, { message: 'error rendering profile', err });
+        res.status(500).send('An error occurred.');
+    }
+});
+
 router.get('/r/:id', (req, res) => {
     renderListView(req, res);
 });
@@ -186,18 +398,17 @@ async function renderListView(req, res) {
         return;
     }
 
-    try {
-        const users = await knex('users')
-            .join('list', 'users.user_id', '=', 'list.user_id')
-            .select('users.library', 'users.username')
-            .where({'list.external_id': id });
+    const cacheKey = `r:${id}`;
+    const hit = cachedPage(cacheKey);
+    if (hit) return sendCachedPage(req, res, hit);
 
-        if (!users.length) {
+    try {
+        const user = await libraryForExternalId(id);
+
+        if (!user) {
             res.status(400).send('Invalid list specified.');
             return;
         }
-
-        const user = users[0];
 
         const library = new Library();
         let list;
@@ -244,6 +455,9 @@ async function renderListView(req, res) {
             cspNonce: res.locals.cspNonce,
             externalId: id,
             username: user.username,
+            published: Boolean(list.published),
+            shakedown: Boolean(list.published && list.shakedown),
+            ogImage: `${config.get('deployUrl')}/og/r/${id}.png?v=${listImageVersion(listCard(library, list, user.username))}`,
             baseWeight: formatWeightMg(list.totalBaseWeight, 'lb'),
             weightClass: (WEIGHT_CLASSES.find((c) => c.id === weightClassFor(list.totalBaseWeight)) || {}).label,
             itemCount: list.categoryIds.reduce((n, cid) => n + ((library.getCategoryById(cid) || { categoryItems: [] }).categoryItems.length), 0),
@@ -252,7 +466,8 @@ async function renderListView(req, res) {
         };
 
         Object.assign(model, templates);
-        res.send(Mustache.render(shareTemplate, model));
+        model.cspNonce = NONCE_PLACEHOLDER;
+        return sendCachedPage(req, res, storePage(cacheKey, Mustache.render(shareTemplate, model), user.user_id));
     } catch (err) {
         logWithRequest(req, {message: 'error rendering list', err});
         return res.status(500).send('An error occurred.');
@@ -282,17 +497,12 @@ async function renderEmberView(req, res) {
     }
 
     try {
-        const users = await knex('users')
-            .join('list', 'users.user_id', '=', 'list.user_id')
-            .select('users.library')
-            .where({'list.external_id': id });
+        const user = await libraryForExternalId(id);
 
-        if (!users.length) {
+        if (!user) {
             res.status(400).send('Invalid list specified.');
             return;
         }
-
-        const user = users[0];
 
         const library = new Library();
         let list;
@@ -364,17 +574,12 @@ async function renderListCSV(req, res) {
     }
 
     try {
-        const users = await knex('users')
-            .join('list', 'users.user_id', '=', 'list.user_id')
-            .select('users.library')
-            .where({'list.external_id': id });
+        const user = await libraryForExternalId(id);
 
-        if (!users.length) {
+        if (!user) {
             res.status(400).send('Invalid list specified.');
             return;
         }
-
-        const user = users[0];
 
         const library = new Library();
         let list;
@@ -384,7 +589,7 @@ async function renderListCSV(req, res) {
             return res.status(500).send('Unknown error.');
         }
 
-        library.load(await applyCatalog(users[0].library));
+        library.load(await applyCatalog(user.library));
         for (var i in library.lists) {
             if (library.lists[i].externalId && library.lists[i].externalId == id) {
                 library.defaultListId = library.lists[i].id;

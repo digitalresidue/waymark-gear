@@ -15,6 +15,7 @@
                     <div>
                         <a class="lpAdd" data-testid="new-list-blank" @click="hide(); newList()"><i class="lpSprite lpSpriteAdd" />Add new list</a>
                         <a class="lpCopy" @click="hide(); copyList()"><i class="lpSprite lpSpriteCopy" />Copy a list</a>
+                        <a class="lpAdd" data-testid="new-list-import" @click="hide(); openImportLighterPack()"><i class="lpSprite lpSpriteUpload" />Import from LighterPack</a>
                         <a class="lpAdd" @click="hide(); importCSV()"><i class="lpSprite lpSpriteUpload" />Import CSV</a>
                     </div>
                 </template>
@@ -89,7 +90,7 @@ export default {
     components: {
         PopoverHover,
     },
-    inject: ['openCopyList', 'openImportCSV', 'initSpeedbump'],
+    inject: ['openCopyList', 'openImportCSV', 'openImportLighterPack', 'initSpeedbump'],
     data() {
         return { query: '' };
     },
