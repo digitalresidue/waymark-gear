@@ -17,6 +17,7 @@ import { Library } from '../client/dataTypes.js';
 
 import { mailIdentity, sendMail } from './mail.js';
 import { forgetUserPages } from './page-cache.js';
+import { announceLibraryChange } from './shared-lists.js';
 
 const router = express.Router();
 
@@ -256,6 +257,7 @@ async function saveLibrary(req, res, user) {
         logWithRequest(req, { message: 'published kit sync failed', username: user.username, err });
     }
     forgetUserPages(user.user_id);
+    announceLibraryChange(user.user_id, user.username, user.username).catch(() => {});
 
     return res.status(200).json({ message: 'success', sync_token: newSyncToken });
 }

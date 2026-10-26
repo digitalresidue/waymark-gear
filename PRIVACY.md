@@ -58,6 +58,14 @@ The app keeps a copy of your gear list in your browser's local storage so it
 opens without a signal. It's removed when you sign out. Your light/dark mode
 choice is stored there too.
 
+### Planning a list together
+
+If you invite people to plan one of your lists, they can see and edit that
+list and the gear in it (not your other lists or the rest of your closet),
+and you can see theirs while you're both looking at it ("here now"). Gear
+they add belongs to your list. You can remove people at any time, and they
+can leave.
+
 ### Importing from LighterPack
 
 When you paste a LighterPack link, our server fetches that list's public

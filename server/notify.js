@@ -28,6 +28,10 @@ export const KINDS = {
         label: 'New followers', app: true, email: false,
         subject: (n) => `@${n.actor} started following you`,
     },
+    invite: {
+        label: 'Invitations to plan a list together', app: true, email: true,
+        subject: (n) => `@${n.actor} invited you to plan “${n.listName}”`,
+    },
     published: {
         label: 'Hikers I follow publish a list', app: true, email: false,
         subject: (n) => `@${n.actor} published “${n.listName}”`,
@@ -78,6 +82,7 @@ export async function notify(trx, items) {
                 external_id: item.externalId || '',
                 list_name: String(item.listName || '').slice(0, 200),
                 actor_username: item.actor,
+                url: typeof item.url === 'string' && /^\/[^/]/.test(item.url) ? item.url.slice(0, 300) : '',
             });
         }
         if (prefs.email && user.email) jobs.push(item);

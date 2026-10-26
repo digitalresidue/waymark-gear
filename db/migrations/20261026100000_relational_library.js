@@ -22,6 +22,8 @@ export async function up(knex) {
             show_sidebar boolean not null default true,
             preferences jsonb not null default '{}',
             currency_symbol text not null default '$',
+            -- Gear kits (Phase 5; also added by 20261029000000).
+            kits jsonb not null default '[]',
             updated_at timestamptz not null default now()
         );
 
@@ -47,6 +49,7 @@ export async function up(knex) {
             closet_category text not null default '',
             photos jsonb not null default '[]',
             video_url text not null default '',
+            qty_owned integer,
             updated_at timestamptz not null default now(),
             primary key (user_id, id)
         );
@@ -96,6 +99,9 @@ export async function up(knex) {
             star integer not null default 0,
             -- Checked off in Pack mode.
             packed boolean not null default false,
+            -- Phase 5: who carries it on a group trip; not used on the trip.
+            carrier text not null default '',
+            unused boolean not null default false,
             primary key (user_id, category_id, item_id),
             foreign key (user_id, category_id) references pack_list_categories (user_id, id) on delete cascade,
             foreign key (user_id, item_id) references gear_items (user_id, id) on delete cascade

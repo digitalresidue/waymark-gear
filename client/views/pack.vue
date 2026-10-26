@@ -1,7 +1,7 @@
 <template>
     <div v-if="isLoaded" class="wgPack">
         <header class="wgPackBar">
-            <router-link to="/" class="wgIconBtn wgPackBack" aria-label="Back to editing">
+            <router-link :to="backTo" class="wgIconBtn wgPackBack" aria-label="Back to editing">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7" /></svg>
             </router-link>
             <label class="wgPackListPick">
@@ -14,7 +14,43 @@
         <offlineBanner />
 
         <main class="wgPackMain">
-            <section class="wgPackProgress" aria-live="polite">
+            <div class="wgPackModes" role="tablist" aria-label="Mode">
+                <button type="button" role="tab" class="wgChip" :aria-selected="String(mode === 'pack')" :aria-pressed="String(mode === 'pack')" data-testid="mode-pack" @click="mode = 'pack'">
+                    Packing
+                </button>
+                <button type="button" role="tab" class="wgChip" :aria-selected="String(mode === 'review')" :aria-pressed="String(mode === 'review')" data-testid="mode-review" @click="mode = 'review'">
+                    After the trip
+                </button>
+                <button v-if="hasCarriers" type="button" class="wgChip wgPackMine" :aria-pressed="String(mineOnly)" data-testid="pack-mine" @click="mineOnly = !mineOnly">
+                    Only what I carry
+                </button>
+            </div>
+
+            <section v-if="mode === 'review'" class="wgPackProgress" aria-live="polite" data-testid="review-summary">
+                <p class="wgPackCount">
+                    <template v-if="unusedCount">
+                        <strong>{{ unusedCount }}</strong> {{ unusedCount === 1 ? 'thing' : 'things' }} you didn't use
+                    </template>
+                    <template v-else>
+                        Used everything?
+                    </template>
+                </p>
+                <p class="wgMuted">
+                    <template v-if="unusedCount">
+                        <span class="wgMono" data-testid="unused-weight">{{ fmt(unusedWeight) }}</span> carried for nothing. Worth leaving home next time?
+                    </template>
+                    <template v-else>
+                        Uncheck anything that came along but never left your pack.
+                    </template>
+                </p>
+                <div class="wgPackTools">
+                    <button type="button" class="wgBtn wgBtnGhost wgBtnSmall" :disabled="!unusedCount" @click="clearUnused">
+                        Clear
+                    </button>
+                </div>
+            </section>
+
+            <section v-else class="wgPackProgress" aria-live="polite">
                 <p class="wgPackCount" data-testid="pack-progress">
                     <strong>{{ packedCount }}</strong> of {{ totalCount }} packed
                 </p>
@@ -51,7 +87,7 @@
                              row, or swipe it right, to check it off. -->
                         <label
                             class="wgPackRow"
-                            :class="{ wgPacked: row.packed }"
+                            :class="{ wgPacked: mode === 'pack' ? row.packed : row.unused }"
                             :style="row.item.id === swipeId ? { transform: `translateX(${swipeX}px)` } : null"
                             data-testid="pack-row"
                             @pointerdown="swipeStart($event, row)"
@@ -60,6 +96,15 @@
                             @pointercancel="swipeCancel"
                         >
                             <input
+                                v-if="mode === 'review'"
+                                type="checkbox"
+                                class="wgPackCheck"
+                                :checked="!row.unused"
+                                :aria-label="`Used: ${row.item.name || 'unnamed item'}`"
+                                @change="setUnused(group.category, row, !$event.target.checked)"
+                            >
+                            <input
+                                v-else
                                 type="checkbox"
                                 class="wgPackCheck"
                                 :checked="row.packed"
@@ -71,6 +116,8 @@
                                 {{ row.item.name || 'Unnamed item' }}
                                 <span v-if="row.categoryItem.worn" class="wgPackTag">Worn</span>
                                 <span v-if="row.categoryItem.consumable" class="wgPackTag">Consumable</span>
+                                <span v-if="row.carrier && !mineOnly" class="wgPackTag">@{{ row.carrier }}</span>
+                                <span v-if="mode === 'review' && row.unused" class="wgPackTag wgUnusedTag">Didn't use</span>
                             </span>
                             <span v-if="row.categoryItem.qty !== 1" class="wgPackQty wgMono">×{{ row.categoryItem.qty }}</span>
                             <span class="wgPackWeight wgMono">{{ itemWeight(row) }}</span>
@@ -105,6 +152,10 @@ export default {
         return {
             isLoaded: false,
             hidePacked: false,
+            // 'pack' (check off as you pack) or 'review' (after the trip:
+            // mark what you didn't use).
+            mode: 'pack',
+            mineOnly: false,
             swipeId: null,
             swipeStartX: 0,
             swipeX: 0,
@@ -112,6 +163,11 @@ export default {
         };
     },
     computed: {
+        // Back to the list being edited: the shared plan, if that's where we came from.
+        backTo() {
+            const plan = this.$store.state.saveType === 'shared' && this.$store.state.plan;
+            return plan ? `/plan/${plan.owner}/${plan.listId}` : '/';
+        },
         library() {
             return this.$store.state.library;
         },
@@ -127,8 +183,15 @@ export default {
                 .filter(Boolean)
                 .map((category) => {
                     const rows = category.categoryItems
-                        .map((categoryItem) => ({ categoryItem, item: this.library.getItemById(categoryItem.itemId), packed: Boolean(categoryItem.packed) }))
-                        .filter((row) => row.item && !isPlaceholder(row.item));
+                        .map((categoryItem) => ({
+                            categoryItem,
+                            item: this.library.getItemById(categoryItem.itemId),
+                            packed: Boolean(categoryItem.packed),
+                            unused: Boolean(categoryItem.unused),
+                            carrier: categoryItem.carrier || '',
+                        }))
+                        .filter((row) => row.item && !isPlaceholder(row.item))
+                        .filter((row) => !this.mineOnly || row.carrier.toLowerCase() === this.me);
                     return {
                         category,
                         rows,
@@ -137,6 +200,24 @@ export default {
                     };
                 })
                 .filter((g) => g.rows.length);
+        },
+        me() {
+            return String(this.$store.state.loggedIn || '').toLowerCase();
+        },
+        hasCarriers() {
+            return this.list.categoryIds.some((id) => {
+                const c = this.library.getCategoryById(id);
+                return c && c.categoryItems.some((ci) => ci.carrier);
+            });
+        },
+        unusedRows() {
+            return this.allRows.filter((r) => r.unused);
+        },
+        unusedCount() {
+            return this.unusedRows.length;
+        },
+        unusedWeight() {
+            return this.unusedRows.reduce((sum, r) => sum + r.item.weight * r.categoryItem.qty, 0);
         },
         allRows() {
             return this.groups.flatMap((g) => g.rows);
@@ -176,6 +257,14 @@ export default {
         toggle(category, row, packed) {
             this.$store.commit('setItemPacked', { category, itemId: row.item.id, packed });
         },
+        setUnused(category, row, unused) {
+            this.$store.commit('setItemUnused', { category, itemId: row.item.id, unused });
+        },
+        clearUnused() {
+            for (const g of this.groups) {
+                for (const r of g.rows) if (r.unused) this.setUnused(g.category, r, false);
+            }
+        },
         reset() {
             this.$store.commit('resetPacked', this.list);
             this.hidePacked = false;
@@ -183,7 +272,7 @@ export default {
         // Swipe right on a row to check it off (or swipe a packed row to
         // uncheck). A short tap still works through the label/checkbox.
         swipeStart(evt, row) {
-            if (evt.pointerType === 'mouse') return;
+            if (evt.pointerType === 'mouse' || this.mode !== 'pack') return;
             this.swipeId = row.item.id;
             this.swipeStartX = evt.clientX;
             this.swipeX = 0;
@@ -252,6 +341,22 @@ export default {
     margin: 0 auto;
     max-width: 640px;
     padding: 16px 12px 80px;
+}
+
+.wgPackModes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.wgPackMine {
+    margin-left: auto;
+}
+
+.wgUnusedTag {
+    background: #FCEFD9;
+    color: #5A3B06;
 }
 
 .wgPackProgress {

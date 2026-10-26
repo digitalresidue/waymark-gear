@@ -96,6 +96,7 @@ const VERBS = {
     suggestion: (n) => `suggested a change to ${n.listName || 'your list'}`,
     reply: (n) => `replied to you on ${n.listName || 'a list'}`,
     follow: () => 'started following you',
+    invite: (n) => `invited you to plan ${n.listName || 'a list'} together`,
     published: (n) => `published ${n.listName || 'a new list'}`,
 };
 

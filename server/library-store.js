@@ -79,6 +79,7 @@ function itemRow(userId, item) {
         closet_category: str(item.closetCategory, 60),
         photos: JSON.stringify(ownPhotos(item.photos)),
         video_url: youTubeId(item.videoUrl) ? str(item.videoUrl, 300) : '',
+        qty_owned: Number.isInteger(item.qtyOwned) && item.qtyOwned >= 0 && item.qtyOwned <= 10000 ? item.qtyOwned : null,
     };
 }
 
@@ -126,6 +127,8 @@ function categoryItemRows(userId, category, knownItemIds) {
             consumable: bool(ci.consumable),
             star: Math.round(num(ci.star, { max: 3 })),
             packed: bool(ci.packed),
+            carrier: typeof ci.carrier === 'string' && /^[A-Za-z0-9_.-]{1,64}$/.test(ci.carrier) ? ci.carrier : '',
+            unused: bool(ci.unused),
         });
     });
     return rows;
@@ -168,7 +171,20 @@ function settingsRow(userId, s) {
         show_sidebar: s.showSidebar === undefined ? true : bool(s.showSidebar),
         preferences: JSON.stringify(plainObject(s.preferences)),
         currency_symbol: str(s.currencySymbol, 8) || '$',
+        kits: JSON.stringify(cleanKits(s.kits)),
     };
+}
+
+// Gear kits: named bundles of closet items added to a list in one go.
+function cleanKits(kits) {
+    if (!Array.isArray(kits)) return [];
+    return kits.slice(0, 100).filter((k) => k && isId(k.id)).map((k) => ({
+        id: k.id,
+        name: str(k.name, 80),
+        items: (Array.isArray(k.items) ? k.items : []).slice(0, 200)
+            .filter((i) => i && isId(i.itemId))
+            .map((i) => ({ itemId: i.itemId, qty: Math.max(0, Math.min(num(i.qty, { max: 1e4 }) || 1, 1e4)) })),
+    }));
 }
 
 // ---- reading ----------------------------------------------------------------
@@ -196,6 +212,8 @@ export async function loadLibrary(userId, db = knex) {
             star: ci.star,
             itemId: ci.item_id,
             ...(ci.packed ? { packed: true } : {}),
+            ...(ci.carrier ? { carrier: ci.carrier } : {}),
+            ...(ci.unused ? { unused: true } : {}),
         });
     }
     const categoriesByList = new Map();
@@ -238,6 +256,7 @@ export async function loadLibrary(userId, db = knex) {
         showSidebar: settings.show_sidebar,
         preferences: settings.preferences || {},
         currencySymbol: settings.currency_symbol,
+        ...(Array.isArray(settings.kits) && settings.kits.length ? { kits: settings.kits } : {}),
         items: items.map((i) => {
             const out = {
                 id: i.id,
@@ -258,6 +277,7 @@ export async function loadLibrary(userId, db = knex) {
             if (i.closet_category) out.closetCategory = i.closet_category;
             if (Array.isArray(i.photos) && i.photos.length) out.photos = i.photos;
             if (i.video_url) out.videoUrl = i.video_url;
+            if (i.qty_owned !== null && i.qty_owned !== undefined) out.qtyOwned = i.qty_owned;
             return out;
         }),
         categories: outCategories,
@@ -422,6 +442,7 @@ export async function applyChanges(userId, changes, db = knex) {
                 showSidebar: current.show_sidebar,
                 preferences: current.preferences,
                 currencySymbol: current.currency_symbol,
+                kits: current.kits,
                 ...changes.settings,
             };
             // Sequence only moves forward, whichever tab saves.

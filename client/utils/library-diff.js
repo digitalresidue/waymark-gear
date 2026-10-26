@@ -13,7 +13,7 @@
 // field of an item and the whole item is sent, which is small and keeps the
 // server's merge simple (last writer wins per entity).
 
-const SETTINGS_KEYS = ['totalUnit', 'itemUnit', 'defaultListId', 'sequence', 'showSidebar', 'preferences', 'currencySymbol'];
+const SETTINGS_KEYS = ['totalUnit', 'itemUnit', 'defaultListId', 'sequence', 'showSidebar', 'preferences', 'currencySymbol', 'kits'];
 
 function diffGroup(before = [], after = []) {
     const old = new Map(before.map((e) => [e.id, JSON.stringify(e)]));
