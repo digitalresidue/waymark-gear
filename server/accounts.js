@@ -1,5 +1,6 @@
 import knex from './db.js';
 import { deleteUserImages } from './images.js';
+import { forgetUserPages } from './page-cache.js';
 
 
 /**
@@ -24,6 +25,7 @@ async function deleteUserAccount(user) {
 
     // After the commit, so a rolled-back delete never destroys photos.
     try {
+        forgetUserPages(user.user_id);
         return { removedImages: deleteUserImages(user.user_id) };
     } catch (err) {
         return { removedImages: 0, imageError: err };

@@ -16,6 +16,7 @@ import { deleteUserAccount } from './accounts.js';
 import { Library } from '../client/dataTypes.js';
 
 import { mailIdentity, sendMail } from './mail.js';
+import { forgetUserPages } from './page-cache.js';
 
 const router = express.Router();
 
@@ -253,6 +254,7 @@ async function saveLibrary(req, res, user) {
     } catch (err) {
         logWithRequest(req, { message: 'published kit sync failed', username: user.username, err });
     }
+    forgetUserPages(user.user_id);
 
     return res.status(200).json({ message: 'success', sync_token: newSyncToken });
 }

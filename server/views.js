@@ -13,9 +13,11 @@ import { listToCsv } from './csv.js';
 import { applyCatalog } from './catalog.js';
 import { libraryForExternalId } from './library-store.js';
 import { WEIGHT_CLASSES, weightClassFor } from './kits.js';
+import knex from './db.js';
 import { formatWeightMg } from '../client/utils/format.js';
 import { publicProfile, publicGear } from './profiles.js';
 import { listImage, listImageVersion, profileImage, profileImageVersion } from './og.js';
+import { cachedPage, storePage, sendCachedPage, NONCE_PLACEHOLDER } from './page-cache.js';
 
 const router = express.Router();
 
@@ -191,6 +193,60 @@ for (let i = 0; i < vueRoutes.length; i++) {
     });
 }
 
+// ---- search engines -----------------------------------------------------------
+
+router.get('/robots.txt', (req, res) => {
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.type('text/plain').send([
+        'User-agent: *',
+        'Allow: /',
+        'Disallow: /api/',
+        'Disallow: /moderation',
+        'Disallow: /owner/',
+        'Disallow: /profile',
+        'Disallow: /pack',
+        'Disallow: /gear',
+        'Disallow: /csv/',
+        `Sitemap: ${config.get('deployUrl')}/sitemap.xml`,
+        '',
+    ].join('\n'));
+});
+
+// Published lists and the profiles of the people who published them.
+// Rebuilt at most every 30 minutes.
+let sitemap = { xml: '', built: 0 };
+const xmlEscape = (v) => String(v).replace(/[<>&'"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c]));
+
+router.get('/sitemap.xml', async (req, res) => {
+    try {
+        if (!sitemap.xml || Date.now() - sitemap.built > 30 * 60 * 1000) {
+            const base = config.get('deployUrl');
+            const kits = await knex('public_kits').select('external_id', 'updated_at').orderBy('updated_at', 'desc').limit(40000);
+            const people = await knex('public_kits').join('users', 'users.user_id', 'public_kits.user_id')
+                .where('users.profile_hidden', false)
+                .groupBy('users.username').select('users.username').max({ updated_at: 'public_kits.updated_at' }).limit(9000);
+            const url = (loc, lastmod) => `<url><loc>${xmlEscape(loc)}</loc>${lastmod ? `<lastmod>${new Date(lastmod).toISOString()}</lastmod>` : ''}</url>`;
+            sitemap = {
+                built: Date.now(),
+                xml: [
+                    '<?xml version="1.0" encoding="UTF-8"?>',
+                    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+                    url(`${base}/welcome`),
+                    url(`${base}/explore`),
+                    ...kits.map((k) => url(`${base}/r/${k.external_id}`, k.updated_at)),
+                    ...people.map((p) => url(`${base}/@${p.username}`, p.updated_at)),
+                    '</urlset>',
+                ].join('\n'),
+            };
+        }
+        res.set('Cache-Control', 'public, max-age=1800');
+        res.type('application/xml').send(sitemap.xml);
+    } catch (err) {
+        logWithRequest(req, { message: 'error building sitemap', err });
+        res.status(500).end();
+    }
+});
+
 // ---- link-preview images -----------------------------------------------------
 
 // What a list's preview card shows. `library` must have `list` totals computed.
@@ -274,6 +330,9 @@ function kitCardModel(kit) {
 router.get('/@:username', async (req, res) => {
     const username = String(req.params.username || '');
     if (!/^[A-Za-z0-9_.-]{1,64}$/.test(username)) return res.status(404).send('No such profile.');
+    const cacheKey = `p:${username.toLowerCase()}:${req.query.view === 'gear' ? 'gear' : 'lists'}`;
+    const hit = cachedPage(cacheKey);
+    if (hit) return sendCachedPage(req, res, hit);
     try {
         const found = await publicProfile(username);
         if (!found) return res.status(404).send('No such profile.');
@@ -289,7 +348,7 @@ router.get('/@:username', async (req, res) => {
 
         const model = {
             styles: shareStylesHtml,
-            cspNonce: res.locals.cspNonce,
+            cspNonce: NONCE_PLACEHOLDER,
             deployUrl,
             username: profile.username,
             name,
@@ -319,8 +378,8 @@ router.get('/@:username', async (req, res) => {
             })),
             metaDescription: `${name} on Waymark Gear: ${kits.length} published ${kits.length === 1 ? 'list' : 'lists'}${lightest ? `, lightest base weight ${lightest}` : ''}.`,
         };
-        res.set('Cache-Control', 'public, max-age=60');
-        res.send(Mustache.render(profileTemplate, model, { kitCard: templates.t_kitCard || '' }));
+        const html = Mustache.render(profileTemplate, model, { kitCard: templates.t_kitCard || '' });
+        return sendCachedPage(req, res, storePage(cacheKey, html, found.userId));
     } catch (err) {
         logWithRequest(req, { message: 'error rendering profile', err });
         res.status(500).send('An error occurred.');
@@ -338,6 +397,10 @@ async function renderListView(req, res) {
         res.status(400).send('No list specified!');
         return;
     }
+
+    const cacheKey = `r:${id}`;
+    const hit = cachedPage(cacheKey);
+    if (hit) return sendCachedPage(req, res, hit);
 
     try {
         const user = await libraryForExternalId(id);
@@ -403,7 +466,8 @@ async function renderListView(req, res) {
         };
 
         Object.assign(model, templates);
-        res.send(Mustache.render(shareTemplate, model));
+        model.cspNonce = NONCE_PLACEHOLDER;
+        return sendCachedPage(req, res, storePage(cacheKey, Mustache.render(shareTemplate, model), user.user_id));
     } catch (err) {
         logWithRequest(req, {message: 'error rendering list', err});
         return res.status(500).send('An error occurred.');

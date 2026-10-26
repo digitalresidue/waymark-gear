@@ -8,6 +8,7 @@ import { PROFILE_LIMITS, ProfileError, normalizeLink, NETWORKS } from './profile
 import { Library } from '../client/dataTypes.js';
 import { loadLibrary } from './library-store.js';
 import { thumbnailUrl } from './images.js';
+import { forgetUserPages } from './page-cache.js';
 
 export { PROFILE_LIMITS, ProfileError };
 
@@ -74,6 +75,7 @@ export async function updateProfile(user, input = {}) {
         notify_email: input.notifyEmail !== false,
     };
     await knex('users').where({ user_id: user.user_id }).update(row);
+    forgetUserPages(user.user_id);
     return profileForEditing(user);
 }
 
