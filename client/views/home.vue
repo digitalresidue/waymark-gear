@@ -133,6 +133,43 @@
                 </div>
             </section>
 
+            <!-- Shakedown board: lists asking the community for suggestions -->
+            <section id="shakedowns" class="wgPage wgShakedownBoard" data-testid="shakedown-board">
+                <div class="wgSectionHead">
+                    <div>
+                        <h2 class="wgH2">
+                            Shakedown board
+                        </h2>
+                        <p class="wgLede">
+                            Hikers asking what to cut, swap or rethink. The ones with the fewest suggestions come first. Help someone go lighter.
+                        </p>
+                    </div>
+                </div>
+                <div v-if="shakedowns.length" class="wgKitGrid">
+                    <a v-for="kit in shakedowns" :key="kit.externalId" :href="`/r/${kit.externalId}#wgComments`" class="wgShakeCard" data-testid="shakedown-card">
+                        <span class="wgShakeTag">{{ kit.commentCount ? `${kit.commentCount} ${kit.commentCount === 1 ? 'suggestion' : 'suggestions'}` : 'No suggestions yet' }}</span>
+                        <strong class="wgShakeName">{{ kit.name }}</strong>
+                        <span class="wgMuted">by @{{ kit.username }}{{ tripLabel(kit) ? ` · ${tripLabel(kit)}` : '' }}</span>
+                        <span class="wgShakeWeight wgMono">{{ formatWeight(kit.baseWeightMg, 'lb') }} <small class="wgMuted">base</small></span>
+                        <span class="wgShakeCta">Suggest a change →</span>
+                    </a>
+                </div>
+                <div v-else-if="shakedownsLoaded" class="wgEmpty">
+                    <p><strong>No shakedown requests right now.</strong></p>
+                    <p class="wgMuted">
+                        Want feedback on your own kit? Publish a list and turn on “Request a shakedown” in its Share menu.
+                    </p>
+                </div>
+                <p class="wgSectionMore">
+                    <router-link to="/explore?shakedown=1">
+                        All shakedown requests →
+                    </router-link>
+                    <router-link to="/leaderboard">
+                        Leaderboards →
+                    </router-link>
+                </p>
+            </section>
+
             <!-- Most common gear -->
             <section id="common" class="wgPage wgCommon">
                 <div class="wgCommonIntro">
@@ -218,6 +255,7 @@
 </template>
 
 <script>
+import { TRIP_TYPE_LABELS } from '../utils/gear-meta.js';
 import siteHeader from '../components/site-header.vue';
 import siteFooter from '../components/site-footer.vue';
 import globalAlerts from '../components/global-alerts.vue';
@@ -258,6 +296,8 @@ export default {
             activeCategory: '',
             common: [],
             commonKitCount: 0,
+            shakedowns: [],
+            shakedownsLoaded: false,
             commonLoaded: false,
         };
     },
@@ -289,12 +329,19 @@ export default {
         });
         this.loadKits();
         this.loadHero();
+        api('/api/explore/kits?shakedown=1&sort=needsHelp&limit=6')
+            .then((r) => { this.shakedowns = r.kits; })
+            .catch(() => {})
+            .finally(() => { this.shakedownsLoaded = true; });
         this.loadCommon();
         api('/api/catalog/categories').then((r) => { this.categories = r.categories.slice(0, 8); }).catch(() => {});
     },
     methods: {
         formatWeight(mg, unit) {
             return formatWeightMg(mg, unit || 'oz');
+        },
+        tripLabel(kit) {
+            return TRIP_TYPE_LABELS[kit.tripType] || '';
         },
         heroStat(key) {
             return formatWeightMg(this.heroSource[key] || 0, 'lb');
@@ -654,5 +701,59 @@ export default {
     color: #F0A27A;
     font-size: 14px;
     margin: 0;
+}
+.wgShakedownBoard {
+    padding-top: 56px;
+
+    .wgSectionMore {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+    }
+}
+
+.wgShakeCard {
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-left: 4px solid #C4571F;
+    border-radius: 16px;
+    color: var(--lp-text);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 16px 18px;
+    text-decoration: none;
+    transition: border-color 0.15s, transform 0.15s;
+
+    &:hover {
+        border-color: #C4571F;
+        transform: translateY(-1px);
+    }
+}
+
+.wgShakeTag {
+    align-self: flex-start;
+    background: #FCEFD9;
+    border-radius: 999px;
+    color: #5A3B06;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+}
+
+.wgShakeName {
+    font-size: 17px;
+}
+
+.wgShakeWeight {
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.wgShakeCta {
+    color: #9A4312;
+    font-size: 14px;
+    font-weight: 700;
+    margin-top: 4px;
 }
 </style>

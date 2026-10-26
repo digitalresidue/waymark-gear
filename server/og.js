@@ -91,15 +91,20 @@ function listTree(list) {
             logoEl(),
             list.shakedown ? chip('Shakedown requested', ORANGE, '#fff') : null),
         h('div', { flexDirection: 'column' },
-            h('div', { fontFamily: 'Archivo', fontSize: list.name.length > 30 ? 56 : 72, fontWeight: 800, lineHeight: 1.05, maxWidth: W - PAD_X * 2 }, clip(list.name || 'Gear list', 60)),
-            h('div', { alignItems: 'baseline', marginTop: 18 },
-                h('div', { fontSize: 104, fontWeight: 700, letterSpacing: -2 }, list.baseWeight),
+            h('div', { fontFamily: 'Archivo', fontSize: list.name.length > 30 ? 52 : 64, fontWeight: 800, lineHeight: 1.05, maxWidth: W - PAD_X * 2 }, clip(list.name || 'Gear list', 60)),
+            list.description ? h('div', { fontSize: 26, color: MUTED, marginTop: 12, lineHeight: 1.3, maxWidth: W - PAD_X * 2 }, clip(list.description, 120)) : null,
+            h('div', { alignItems: 'baseline', marginTop: list.description ? 10 : 18 },
+                h('div', { fontSize: list.description ? 88 : 104, fontWeight: 700, letterSpacing: -2 }, list.baseWeight),
                 h('div', { fontSize: 30, color: MUTED, marginLeft: 20, fontWeight: 500 }, 'base weight'))),
         h('div', { flexDirection: 'column' },
             bars.length ? h('div', { height: 18, borderRadius: 9, overflow: 'hidden', marginBottom: 24, width: W - PAD_X * 2 },
                 bars.map((c, i) => h('div', { width: `${(c.weightMg / total) * 100}%`, height: 18, background: BAR_COLORS[i % BAR_COLORS.length] }))) : null,
             h('div', { alignItems: 'center', justifyContent: 'space-between' },
-                h('div', { fontSize: 32, fontWeight: 700 }, `@${clip(list.username, 30)}`),
+                h('div', { alignItems: 'center' },
+                    list.avatarData
+                        ? { type: 'img', props: { src: list.avatarData, width: 48, height: 48, style: { display: 'flex', borderRadius: 999, marginRight: 14, border: `2px solid ${CREAM}` } } }
+                        : h('div', { width: 48, height: 48, borderRadius: 999, marginRight: 14, background: ORANGE, alignItems: 'center', justifyContent: 'center', fontFamily: 'Archivo', fontSize: 26, fontWeight: 800 }, list.username.charAt(0).toUpperCase()),
+                    h('div', { fontSize: 32, fontWeight: 700 }, `@${clip(list.username, 30)}`)),
                 h('div', { alignItems: 'center' },
                     list.weightClass ? chip(list.weightClass) : null,
                     h('div', { fontSize: 26, color: MUTED, marginLeft: 18 }, `${list.itemCount} ${list.itemCount === 1 ? 'item' : 'items'}`)))),
@@ -146,6 +151,8 @@ export function listImage(list) {
     return render('list', {
         name: list.name || '',
         username: list.username,
+        description: list.description || '',
+        avatarData: avatarData(list.avatarUrl),
         baseWeight: formatWeightMg(list.baseWeightMg, 'lb'),
         itemCount: list.itemCount,
         weightClass: list.weightClass || '',
@@ -158,7 +165,7 @@ export function listImage(list) {
 // social sites fetch a fresh one when it changes.
 export function listImageVersion(list) {
     return crypto.createHash('sha256')
-        .update(JSON.stringify([list.name, list.baseWeightMg, list.itemCount, Boolean(list.shakedown), (list.categories || []).map((c) => Math.round(c.weightMg))]))
+        .update(JSON.stringify([list.name, list.description, list.avatarUrl, list.baseWeightMg, list.itemCount, Boolean(list.shakedown), (list.categories || []).map((c) => Math.round(c.weightMg))]))
         .digest('hex').slice(0, 10);
 }
 

@@ -49,6 +49,30 @@ function initTheme() {
     });
 }
 
+/** 'system' (follow the device), 'light' or 'dark'. */
+function themePreference() {
+    try {
+        return localStorage.getItem(STORAGE_KEY) || 'system';
+    } catch {
+        return 'system';
+    }
+}
+
+/**
+ * Set the preference: 'system' clears the override and follows the device;
+ * 'light' or 'dark' sticks. Signed-in users also have it saved to their
+ * account (see store.js), so it follows them to every device.
+ */
+function setThemePreference(pref) {
+    try {
+        if (pref === 'light' || pref === 'dark') localStorage.setItem(STORAGE_KEY, pref);
+        else localStorage.removeItem(STORAGE_KEY);
+    } catch {
+        // Storage blocked: still apply for this page.
+    }
+    applyTheme(pref === 'light' || pref === 'dark' ? pref : (darkQuery().matches ? 'dark' : 'light'));
+}
+
 /** Toggle between light and dark, persist the choice, and return the new theme. */
 function toggleTheme() {
     const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -102,5 +126,5 @@ function chartHoverColor() {
 }
 
 export {
-    initTheme, toggleTheme, onThemeChange, chartLineColor, chartHoverColor,
+    initTheme, toggleTheme, themePreference, setThemePreference, onThemeChange, chartLineColor, chartHoverColor,
 };

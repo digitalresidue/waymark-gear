@@ -28,6 +28,9 @@
                     <button type="button" class="wgChip" :aria-pressed="String(hidePacked)" data-testid="pack-hide" @click="hidePacked = !hidePacked">
                         Hide packed
                     </button>
+                    <router-link to="/print" class="wgBtn wgBtnGhost wgBtnSmall" data-testid="pack-print">
+                        Print
+                    </router-link>
                     <button type="button" class="wgBtn wgBtnGhost wgBtnSmall" :disabled="!packedCount" data-testid="pack-reset" @click="reset">
                         Start over
                     </button>

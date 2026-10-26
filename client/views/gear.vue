@@ -39,8 +39,13 @@
                             {{ entry.item.name || 'Unnamed gear' }}
                         </div>
                         <div class="lpGearMeta">
-                            {{ metaLine(entry.item) }}
+                            {{ metaLine(entry.item) }}<template v-if="entry.item.closetCategory">
+                                · {{ entry.item.closetCategory }}
+                            </template>
                         </div>
+                        <button type="button" class="wgClosetDetails lpGearDetails" data-testid="closet-details" @click="detailsItem = entry.item">
+                            Details{{ (entry.item.photos && entry.item.photos.length) || entry.item.videoUrl ? ' · media' : '' }}
+                        </button>
                     </div>
 
                     <button v-if="entry.item.retired" type="button" class="lpGearRestore" data-testid="closet-restore" @click="restore(entry.item)">
@@ -94,6 +99,7 @@
             :speedbump-options="speedbumpOptions"
             @hide="showSpeedbump = false"
         />
+        <gearDetails :shown="Boolean(detailsItem)" :item="detailsItem" @hide="detailsItem = null" />
         <globalAlerts />
     </div>
 </template>
@@ -101,6 +107,7 @@
 <script>
 import globalAlerts from '../components/global-alerts.vue';
 import speedbump from '../components/speedbump.vue';
+import gearDetails from '../components/gear-details.vue';
 
 import utilsMixin from '../mixins/utils-mixin.js';
 import { confirmClosetRemoval, isPlaceholder, restoreClosetItem } from '../utils/closet.js';
@@ -110,6 +117,7 @@ export default {
     components: {
         globalAlerts,
         speedbump,
+        gearDetails,
     },
     mixins: [utilsMixin],
     data() {
@@ -120,6 +128,7 @@ export default {
             pickerItemId: null,
             showSpeedbump: false,
             speedbumpCallback: null,
+            detailsItem: null,
             speedbumpOptions: null,
         };
     },
@@ -142,6 +151,9 @@ export default {
                 { key: 'newest', label: 'Newest' },
             ];
             if (this.retiredCount) options.push({ key: 'retired', label: `Retired · ${this.retiredCount}` });
+            // The closet categories you've made (Insulation, Shelter...).
+            const cats = [...new Set(this.closetGear.map((i) => i.closetCategory).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+            for (const c of cats) options.push({ key: `cat:${c}`, label: c });
             return options;
         },
         closetGear() {
@@ -171,7 +183,10 @@ export default {
                     || item.description.toLowerCase().indexOf(search) > -1);
             }
 
-            if (this.filter === 'notInList') {
+            if (this.filter.startsWith('cat:')) {
+                const cat = this.filter.slice(4);
+                entries = entries.filter(({ item }) => item.closetCategory === cat);
+            } else if (this.filter === 'notInList') {
                 entries = entries.filter(entry => !entry.inList);
             } else if (this.filter === 'newest') {
                 entries = entries.slice().reverse();
@@ -510,5 +525,10 @@ export default {
     list-style: none;
     padding: 28px 18px;
     text-align: center;
+}
+.lpGearDetails {
+    margin-top: 4px;
+    min-height: 32px;
+    padding: 0;
 }
 </style>

@@ -4,7 +4,7 @@
             <div class="wgKitCardTitle">
                 <h3>{{ kit.name }}</h3>
                 <p class="wgMuted">
-                    by @{{ kit.username }}<span v-if="kit.featured"> · <span class="wgKitFeatured">Featured</span></span><span v-if="kit.shakedown"> · <span class="wgKitShakedown" data-testid="kit-shakedown">Shakedown requested</span></span>
+                    by @{{ kit.username }}<span v-if="kit.featured"> · <span class="wgKitFeatured">Featured</span></span><span v-if="kit.shakedown"> · <span class="wgKitShakedown" data-testid="kit-shakedown">Shakedown requested</span></span><span v-if="tripLabel"> · {{ tripLabel }}</span>
                 </p>
             </div>
             <span class="wgKitCardWeight wgMono">{{ baseWeight }}</span>
@@ -13,7 +13,7 @@
             <span v-for="(seg, i) in segments" :key="i" :class="`wgData${i + 1}`" :style="{ width: seg.pct + '%' }" />
         </div>
         <p class="wgKitCardMeta">
-            <span>{{ kit.itemCount }} {{ kit.itemCount === 1 ? 'item' : 'items' }}</span>
+            <span>{{ kit.itemCount }} {{ kit.itemCount === 1 ? 'item' : 'items' }}<template v-if="kit.score"> · <span data-testid="kit-score">{{ kit.score > 0 ? '▲' : '▼' }} {{ Math.abs(kit.score) }}</span></template><template v-if="kit.shakedown && kit.commentCount !== undefined"> · {{ kit.commentCount }} {{ kit.commentCount === 1 ? 'suggestion' : 'suggestions' }}</template></span>
             <span>{{ topCategories }}</span>
         </p>
     </a>
@@ -21,6 +21,7 @@
 
 <script>
 import { formatWeightMg } from '../utils/format.js';
+import { TRIP_TYPE_LABELS } from '../utils/gear-meta.js';
 
 export default {
     name: 'KitCard',
@@ -28,6 +29,9 @@ export default {
         kit: { type: Object, required: true },
     },
     computed: {
+        tripLabel() {
+            return TRIP_TYPE_LABELS[this.kit.tripType] || '';
+        },
         baseWeight() {
             return formatWeightMg(this.kit.baseWeightMg, 'lb');
         },

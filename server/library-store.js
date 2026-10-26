@@ -19,6 +19,7 @@
 
 import knex from './db.js';
 import { Library } from '../client/dataTypes.js';
+import { TRIP_TYPES, youTubeId } from '../client/utils/gear-meta.js';
 
 const UNITS = ['g', 'kg', 'oz', 'lb'];
 const LIMITS = { items: 20000, categories: 5000, lists: 1000, itemsPerCategory: 2000, categoriesPerList: 500 };
@@ -58,6 +59,7 @@ function plainObject(v, maxKeys = 50) {
     return out;
 }
 
+
 function itemRow(userId, item) {
     const catalogId = typeof item.catalogId === 'string' && UUID_RE.test(item.catalogId) ? item.catalogId : null;
     return {
@@ -74,7 +76,16 @@ function itemRow(userId, item) {
         catalog_id: catalogId,
         catalog_sync: catalogId ? bool(item.catalogSync) : false,
         retired: bool(item.retired),
+        closet_category: str(item.closetCategory, 60),
+        photos: JSON.stringify(ownPhotos(item.photos)),
+        video_url: youTubeId(item.videoUrl) ? str(item.videoUrl, 300) : '',
     };
+}
+
+// Gear photos must be our own uploads (server/images.js), at most 6.
+const PHOTO_RE = /^\/userimages\/[0-9a-f]{2}\/[0-9a-f]{16}\/[0-9a-f]{16}_photo\.webp$/;
+function ownPhotos(photos) {
+    return Array.isArray(photos) ? photos.filter((p) => typeof p === 'string' && PHOTO_RE.test(p)).slice(0, 6) : [];
 }
 
 // Category colors are {r, g, b} objects (client/utils/color.js), stored as
@@ -132,6 +143,7 @@ function listRow(userId, list, position) {
         pinned: bool(list.pinned),
         published: bool(list.published),
         shakedown: bool(list.shakedown),
+        trip_type: TRIP_TYPES.includes(list.tripType) ? list.tripType : '',
         trip: tripSettings(list.trip),
     };
 }
@@ -212,6 +224,7 @@ export async function loadLibrary(userId, db = knex) {
         if (l.pinned) out.pinned = true;
         if (l.published) out.published = true;
         if (l.shakedown) out.shakedown = true;
+        if (l.trip_type) out.tripType = l.trip_type;
         if (l.trip) out.trip = { days: l.trip.days, foodPerDayMg: l.trip.foodPerDayMg, waterLiters: l.trip.waterLiters };
         return out;
     });
@@ -242,6 +255,9 @@ export async function loadLibrary(userId, db = knex) {
                 out.catalogSync = i.catalog_sync;
             }
             if (i.retired) out.retired = true;
+            if (i.closet_category) out.closetCategory = i.closet_category;
+            if (Array.isArray(i.photos) && i.photos.length) out.photos = i.photos;
+            if (i.video_url) out.videoUrl = i.video_url;
             return out;
         }),
         categories: outCategories,
@@ -432,7 +448,7 @@ export async function libraryCounts(userId, db = knex) {
 // The owner of a share id, with their library, for share pages and embeds.
 export async function libraryForExternalId(externalId, db = knex) {
     const row = await db('users').join('list', 'users.user_id', 'list.user_id')
-        .select('users.user_id', 'users.username').where({ 'list.external_id': String(externalId) }).first();
+        .select('users.user_id', 'users.username', 'users.avatar_url').where({ 'list.external_id': String(externalId) }).first();
     if (!row) return null;
     const library = await loadLibrary(row.user_id, db);
     return library ? { ...row, library } : null;

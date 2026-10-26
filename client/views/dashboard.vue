@@ -16,6 +16,10 @@
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8" /><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" /></svg>
                         Pack
                     </router-link>
+                    <router-link to="/print" class="headerItem wgPackLink wgPrintLink" data-testid="open-print" title="Print a paper checklist">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6" /><rect x="3" y="9" width="18" height="8" rx="2" /><path d="M7 14h10v7H7z" /></svg>
+                        Print
+                    </router-link>
                     <share />
                     <listSettings />
                     <accountDropdown />
@@ -36,6 +40,7 @@
             />
             <copyList :shown="showCopyList" @hide="showCopyList = false" />
             <importLighterpack :shown="showImport" @hide="showImport = false" />
+            <gearDetails :shown="showGearDetails" :item="gearDetailsItem" @hide="showGearDetails = false" />
             <importCSV ref="importCSVRef" />
             <itemImage :shown="showItemImage" :item="itemImageItem" @hide="showItemImage = false" />
             <itemViewImage :shown="showItemViewImage" :image-url="itemViewImageUrl" @hide="showItemViewImage = false" />
@@ -64,6 +69,7 @@ import itemLink from '../components/item-link.vue';
 import importCSV from '../components/import-csv.vue';
 import copyList from '../components/copy-list.vue';
 import importLighterpack from '../components/import-lighterpack.vue';
+import gearDetails from '../components/gear-details.vue';
 import speedbump from '../components/speedbump.vue';
 import accountDropdown from '../components/account-dropdown.vue';
 import siteFooter from '../components/site-footer.vue';
@@ -77,6 +83,7 @@ import offlineBanner from '../components/offline-banner.vue';
 export default {
     name: 'Dashboard',
     components: {
+        gearDetails,
         importLighterpack,
         offlineBanner,
         sidebar,
@@ -106,6 +113,7 @@ export default {
             openCopyList: () => { this.showCopyList = true; },
             openImportCSV: () => { this.$refs.importCSVRef.triggerUpload(); },
             openImportLighterPack: () => { this.showImport = true; },
+            openGearDetails: (item) => { this.gearDetailsItem = item; this.showGearDetails = true; },
             openItemImage: (item) => { this.itemImageItem = item; this.showItemImage = true; },
             openItemViewImage: (imageUrl) => { this.itemViewImageUrl = imageUrl; this.showItemViewImage = true; },
             openItemLink: (item) => { this.itemLinkItem = item; this.showItemLink = true; },
@@ -132,6 +140,8 @@ export default {
             showDeleteAccount: false,
             showCopyList: false,
             showImport: false,
+            showGearDetails: false,
+            gearDetailsItem: null,
             showItemImage: false,
             itemImageItem: null,
             showItemViewImage: false,

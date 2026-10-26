@@ -21,11 +21,12 @@
             <ul v-else class="wgBellList">
                 <li v-for="n in items" :key="n.id" :class="{ wgBellNew: !n.read }">
                     <a :href="n.url" data-testid="notification">
-                        <strong>@{{ n.actor }}</strong> {{ verb(n.kind) }} <em>{{ n.listName || 'your list' }}</em>
+                        <strong>@{{ n.actor }}</strong> {{ verb(n.kind) }} <em v-if="n.kind !== 'follow'">{{ n.listName || 'your list' }}</em>
                         <span class="wgBellTime">{{ ago(n.createdAt) }}</span>
                     </a>
                 </li>
             </ul>
+            <a href="/notifications" class="wgBellAll" data-testid="notifications-all">All notifications and settings</a>
         </div>
     </div>
 </template>
@@ -33,7 +34,7 @@
 <script>
 import { api } from '../utils/format.js';
 
-const VERBS = { comment: 'commented on', suggestion: 'suggested a change to', reply: 'replied to you on' };
+const VERBS = { comment: 'commented on', suggestion: 'suggested a change to', reply: 'replied to you on', published: 'published', follow: 'started following you' };
 
 export default {
     name: 'NotificationBell',
@@ -181,6 +182,16 @@ export default {
     .wgBellNew a {
         box-shadow: inset 3px 0 0 #C4571F;
     }
+}
+
+.wgBellAll {
+    border-top: 1px solid var(--lp-border);
+    color: var(--lp-link-blue, var(--lp-primary));
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 14px;
+    text-decoration: none;
 }
 
 .wgBellTime {

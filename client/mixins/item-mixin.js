@@ -14,7 +14,13 @@ const maxSharedListNames = 2;
 // is focus moving into one of its inputs, on a phone it's the tapped row's
 // editor being open. The hint bubbles key off it either way.
 export default {
-    inject: ['openItemImage', 'openItemViewImage', 'openItemLink'],
+    inject: {
+        openItemImage: { default: () => () => {} },
+        openItemViewImage: { default: () => () => {} },
+        openItemLink: { default: () => () => {} },
+        // Gear details dialog (photos, review video, closet category).
+        openGearDetails: { default: () => () => {} },
+    },
     props: ['category', 'itemContainer'],
     data() {
         return {
@@ -29,6 +35,12 @@ export default {
         };
     },
     computed: {
+        mediaCount() {
+            return (this.item.photos ? this.item.photos.length : 0) + (this.item.videoUrl ? 1 : 0);
+        },
+        hasMedia() {
+            return this.mediaCount > 0;
+        },
         library() {
             return this.$store.state.library;
         },
