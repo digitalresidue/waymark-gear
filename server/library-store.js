@@ -114,6 +114,7 @@ function categoryItemRows(userId, category, knownItemIds) {
             worn: Math.round(num(ci.worn, { max: 1e6 })),
             consumable: bool(ci.consumable),
             star: Math.round(num(ci.star, { max: 3 })),
+            packed: bool(ci.packed),
         });
     });
     return rows;
@@ -130,7 +131,18 @@ function listRow(userId, list, position) {
         optional_fields: JSON.stringify(plainObject(list.optionalFields)),
         pinned: bool(list.pinned),
         published: bool(list.published),
+        trip: tripSettings(list.trip),
     };
+}
+
+// Trip planner settings, bounded to sensible ranges.
+function tripSettings(trip) {
+    if (!trip || typeof trip !== 'object') return null;
+    return JSON.stringify({
+        days: Math.round(num(trip.days, { min: 1, max: 365 })) || 1,
+        foodPerDayMg: num(trip.foodPerDayMg, { max: 5e6 }),
+        waterLiters: Math.round(num(trip.waterLiters, { max: 30 }) * 100) / 100,
+    });
 }
 
 function settingsRow(userId, s) {
@@ -170,6 +182,7 @@ export async function loadLibrary(userId, db = knex) {
             consumable: ci.consumable,
             star: ci.star,
             itemId: ci.item_id,
+            ...(ci.packed ? { packed: true } : {}),
         });
     }
     const categoriesByList = new Map();
@@ -197,6 +210,7 @@ export async function loadLibrary(userId, db = knex) {
         };
         if (l.pinned) out.pinned = true;
         if (l.published) out.published = true;
+        if (l.trip) out.trip = { days: l.trip.days, foodPerDayMg: l.trip.foodPerDayMg, waterLiters: l.trip.waterLiters };
         return out;
     });
 

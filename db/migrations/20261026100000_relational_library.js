@@ -3,6 +3,11 @@
 //
 // Existing libraries are converted in place; the old column is kept, emptied,
 // and made nullable so `down` can put everything back.
+//
+// This migration calls server/library-store.js to do the conversion. Later
+// changes to that module must keep working against the schema created here,
+// or add their columns in a migration that runs before the conversion would
+// need them.
 
 import { loadLibrary, replaceLibrary } from '../../server/library-store.js';
 
@@ -52,6 +57,8 @@ export async function up(knex) {
             optional_fields jsonb not null default '{}',
             pinned boolean not null default false,
             published boolean not null default false,
+            -- Trip planner: { days, foodPerDayMg, waterLiters }, or null.
+            trip jsonb,
             updated_at timestamptz not null default now(),
             primary key (user_id, id)
         );
@@ -79,6 +86,8 @@ export async function up(knex) {
             worn integer not null default 0,
             consumable boolean not null default false,
             star integer not null default 0,
+            -- Checked off in Pack mode.
+            packed boolean not null default false,
             primary key (user_id, category_id, item_id),
             foreign key (user_id, category_id) references pack_list_categories (user_id, id) on delete cascade,
             foreign key (user_id, item_id) references gear_items (user_id, id) on delete cascade

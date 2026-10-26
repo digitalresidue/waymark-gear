@@ -8,6 +8,7 @@ import { createRouter, createWebHistory, RouterView } from 'vue-router';
 
 import routes from './routes';
 import store from './store/store';
+import { writeOfflineCache } from './utils/offline-cache.js';
 import { selectOnFocus, focusOnCreate, emptyIfZero, clickOutside } from './utils/focus.js';
 
 import './utils/utils.js';
@@ -43,8 +44,13 @@ function hasUnsavedChanges(state) {
 }
 
 window.addEventListener('beforeunload', (e) => {
-    const { library, saveType, isSaving } = store.state;
+    const { library, saveType, isSaving, offline } = store.state;
     if (!library || !saveType) return;
+    // Offline edits live in the device copy and survive closing the tab.
+    if (offline) {
+        writeOfflineCache(store.state);
+        return;
+    }
     if (isSaving || hasUnsavedChanges(store.state)) {
         e.preventDefault();
     }
@@ -55,6 +61,24 @@ window.addEventListener('beforeunload', (e) => {
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') store.dispatch('refreshRemote');
 });
+
+// Back in signal: send whatever was edited offline, then catch up.
+window.addEventListener('online', () => {
+    if (!store.state.library || store.state.saveType !== 'remote') return;
+    store.commit('setOffline', false);
+    store.commit('retrySave');
+});
+window.addEventListener('offline', () => {
+    if (store.state.saveType === 'remote') store.commit('setOffline', true);
+});
+
+// Installable app + offline shell. Production builds only: in development
+// a cached shell would hide every code change behind a stale copy.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+}
 
 store.dispatch('init')
     .then(() => {

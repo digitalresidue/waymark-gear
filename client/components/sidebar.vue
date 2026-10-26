@@ -17,6 +17,10 @@
 
             <libraryLists />
             <div class="lpSidebarDivider" />
+            <router-link v-if="isMobile" to="/pack" class="lpSidebarNav" data-testid="drawer-pack">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8" /><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" /></svg>
+                Pack this list
+            </router-link>
             <router-link v-if="isMobile" to="/gear" class="lpSidebarNav" data-testid="drawer-gear">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
                 Closet

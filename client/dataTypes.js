@@ -166,13 +166,18 @@ Category.prototype.save = function () {
     const out = {
         id: this.id,
         name: this.name,
-        categoryItems: this.categoryItems.map((categoryItem) => ({
-            qty: categoryItem.qty,
-            worn: categoryItem.worn,
-            consumable: categoryItem.consumable,
-            star: categoryItem.star,
-            itemId: categoryItem.itemId,
-        })),
+        categoryItems: this.categoryItems.map((categoryItem) => {
+            const out = {
+                qty: categoryItem.qty,
+                worn: categoryItem.worn,
+                consumable: categoryItem.consumable,
+                star: categoryItem.star,
+                itemId: categoryItem.itemId,
+            };
+            // Checked off in Pack mode. Only written when set.
+            if (categoryItem.packed) out.packed = true;
+            return out;
+        }),
     };
     if (typeof this.color !== 'undefined') {
         out.color = this.color;
@@ -376,6 +381,8 @@ List.prototype.save = function () {
     // Only written when set, so libraries that never use them keep the shape
     // older clients wrote.
     if (this.pinned) out.pinned = true;
+    // Trip planner settings (client/utils/trip.js), when the user has set them.
+    if (this.trip) out.trip = { ...this.trip };
     // Published lists appear on the public Explore page and homepage; the
     // server mirrors them into public_kits on every save.
     if (this.published) out.published = true;

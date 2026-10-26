@@ -5,6 +5,7 @@ import weightUtils from '../utils/weight.js';
 import { Library } from '../dataTypes.js';
 import { fetchJson, readCookie, arrayMove } from '../utils/utils.js';
 import { diffLibrary } from '../utils/library-diff.js';
+import { writeOfflineCache, readOfflineCache, clearOfflineCache, isNetworkError } from '../utils/offline-cache.js';
 
 const saveInterval = 5000;
 
@@ -19,6 +20,10 @@ const store = createStore({
         // From /signin: email, hasPassword, googleLinked, isAdmin, isModerator.
         account: null,
         globalAlerts: [],
+        // True while the server can't be reached; edits stay on this device
+        // and are sent when the connection comes back.
+        offline: false,
+        saveRetries: 0,
     },
     getters: {
         activeList(state) {
@@ -41,7 +46,16 @@ const store = createStore({
         setIsSaving(state, isSaving) {
             state.isSaving = isSaving;
         },
+        setOffline(state, offline) {
+            state.offline = offline;
+        },
+        // Nudges the save plugin to try again (after coming back online).
+        retrySave(state) {
+            state.saveRetries++;
+        },
         signout(state) {
+            clearOfflineCache();
+            state.offline = false;
             state.library = false;
             state.loggedIn = false;
             state.account = null;
@@ -80,6 +94,22 @@ const store = createStore({
         },
         setListPublished(state, { list, published }) {
             state.library.getListById(list.id).published = published;
+        },
+        setListTrip(state, { list, trip }) {
+            const target = state.library.getListById(list.id);
+            if (trip) target.trip = trip;
+            else delete target.trip;
+        },
+        setItemPacked(state, { category, itemId, packed }) {
+            const ci = state.library.getCategoryById(category.id).getCategoryItemById(itemId);
+            if (ci) ci.packed = packed;
+        },
+        resetPacked(state, list) {
+            const target = state.library.getListById(list.id);
+            target.categoryIds.forEach((id) => {
+                const category = state.library.getCategoryById(id);
+                if (category) category.categoryItems.forEach((ci) => { ci.packed = false; });
+            });
         },
         setItemRetired(state, { item, retired }) {
             state.library.getItemById(item.id).retired = retired;
@@ -334,7 +364,11 @@ const store = createStore({
         async refreshRemote(context) {
             const { state } = context;
             if (state.saveType !== 'remote' || !state.library || state.isSaving) return;
-            if (JSON.stringify(state.library.save()) !== state.lastSaveData) return;
+            if (JSON.stringify(state.library.save()) !== state.lastSaveData) {
+                // Unsaved edits from a spell offline: try sending them first.
+                if (state.offline) context.commit('retrySave');
+                return;
+            }
             let response;
             try {
                 response = await fetchJson('/signin', {
@@ -343,8 +377,16 @@ const store = createStore({
                     credentials: 'same-origin',
                     redirectOnAuthFailure: false,
                 });
-            } catch {
+            } catch (error) {
+                if (isNetworkError(error)) context.commit('setOffline', true);
                 return;
+            }
+            if (state.offline) {
+                context.commit('setOffline', false);
+                if (JSON.stringify(state.library.save()) !== state.lastSaveData) {
+                    context.commit('retrySave');
+                    return;
+                }
             }
             if (response.sync_token === state.syncToken) return;
             if (state.isSaving || JSON.stringify(state.library.save()) !== state.lastSaveData) return;
@@ -430,6 +472,7 @@ const store = createStore({
                     context.commit('setSaveType', 'remote');
                     context.commit('setLoggedIn', response.username);
                     context.commit('setAccount', response.account || null);
+                    writeOfflineCache(context.state);
                 })
                 .catch((error) => {
                     // A refused session is the ordinary state for anyone landing
@@ -438,8 +481,23 @@ const store = createStore({
                     // than redirecting away from it. The server clears the
                     // cookies alongside these, so the next load starts clean.
                     if ([401, 403, 404].includes(error.statusCode)) {
+                        clearOfflineCache();
                         context.commit('setLoggedIn', false);
                         context.commit('clearLibraryData');
+                        return;
+                    }
+                    // No connection: open the copy kept on this device. Its
+                    // baseline is the last thing the server confirmed, so
+                    // edits made offline (then or now) are sent on reconnect.
+                    const cache = isNetworkError(error) && readOfflineCache();
+                    if (cache) {
+                        context.commit('setSyncToken', cache.syncToken);
+                        context.commit('loadLibraryData', cache.library);
+                        context.commit('setLastSaveData', cache.base || null);
+                        context.commit('setSaveType', 'remote');
+                        context.commit('setLoggedIn', cache.username);
+                        context.commit('setAccount', cache.account || null);
+                        context.commit('setOffline', true);
                         return;
                     }
                     return Promise.reject('An error occurred while fetching your data, please try again later.');
@@ -447,6 +505,15 @@ const store = createStore({
         },
     },
     plugins: [
+        // Every way into a signed-in session (sign-in, register, password
+        // reset, page load) ends with these: refresh the device copy then.
+        function offlineCopy(store) {
+            store.subscribe((mutation, state) => {
+                if (['setLoggedIn', 'setSaveType', 'setAccount'].includes(mutation.type) && !state.offline) {
+                    writeOfflineCache(state);
+                }
+            });
+        },
         function save(store) {
             store.subscribe(debounce((mutation, state) => {
                 const ignore = [
@@ -459,6 +526,7 @@ const store = createStore({
                     'loadLibraryData',
                     'clearLibraryData',
                     'setAccount',
+                    'setOffline',
                 ];
                 if (!state.library || ignore.indexOf(mutation.type) > -1) {
                     return;
@@ -498,6 +566,7 @@ const store = createStore({
                     }
 
                     store.commit('setIsSaving', true);
+                    writeOfflineCache(state);
 
                     return fetchJson('/saveLibrary/', {
                         method: 'POST',
@@ -511,18 +580,23 @@ const store = createStore({
                             store.commit('setSyncToken', response.sync_token);
                             store.commit('setLastSaveData', saveData);
                             store.commit('setIsSaving', false);
+                            if (state.offline) store.commit('setOffline', false);
+                            writeOfflineCache(state);
                         })
-                        .catch((response) => {
+                        .catch((error) => {
                             store.commit('setIsSaving', false);
-                            let error = 'An error occurred while attempting to save your data.';
-                            if (response.json && response.json.status) {
-                                error = response.json.status;
+                            // No signal: the edit is already in the device copy
+                            // and goes out when the connection returns.
+                            if (isNetworkError(error)) {
+                                store.commit('setOffline', true);
+                                return;
                             }
-                            if (response.status == 401) {
+                            if (error.statusCode === 401) {
+                                clearOfflineCache();
                                 window.location = '/signin';
-                            } else {
-                                alert(error); // TODO
+                                return;
                             }
+                            alert(error.message || 'An error occurred while attempting to save your data.'); // TODO
                         });
                 };
 

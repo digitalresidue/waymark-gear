@@ -1,6 +1,7 @@
 <template>
     <div v-if="isLoaded" class="wgApp">
         <siteHeader app active="lists" />
+        <offlineBanner />
         <div id="main" :class="{lpHasSidebar: library.showSidebar, lpDrawerOpen: drawerOpen}">
             <div class="lpFrameFill lpFrameFillLeft" />
             <sidebar />
@@ -11,6 +12,10 @@
                         <a id="hamburger" class="lpTransition" data-testid="toggle-sidebar" @click="toggleSidebar"><i class="lpSprite lpHamburger" /></a>
                     </span>
                     <input id="lpListName" :value="list.name" type="text" class="lpListName lpSilent headerItem" placeholder="Name your list" autocomplete="off" name="lastpass-disable-search" @input="updateListName">
+                    <router-link to="/pack" class="headerItem wgPackLink" data-testid="open-pack">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8" /><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" /></svg>
+                        Pack
+                    </router-link>
                     <share />
                     <listSettings />
                     <accountDropdown />
@@ -65,10 +70,12 @@ import catalogPicker from '../components/catalog-picker.vue';
 
 import { isMobile } from '../utils/viewport.js';
 import { api } from '../utils/format.js';
+import offlineBanner from '../components/offline-banner.vue';
 
 export default {
     name: 'Dashboard',
     components: {
+        offlineBanner,
         sidebar,
         share,
         listSettings,
@@ -280,6 +287,21 @@ export default {
     }
 }
 
+.wgPackLink {
+    align-items: center;
+    color: var(--lp-text);
+    display: inline-flex;
+    font-size: 13px;
+    font-weight: 600;
+    gap: 6px;
+    padding: 4px 0;
+    text-decoration: none;
+
+    &:hover {
+        color: var(--lp-link-blue);
+    }
+}
+
 #hamburger {
     cursor: pointer;
     display: inline-block;
@@ -456,6 +478,21 @@ export default {
 
         &:hover {
             color: var(--lp-sidebar-text);
+        }
+    }
+
+    // Pack keeps its icon and drops its label like the others, but stays a
+    // full 44px tap target.
+    .wgPackLink {
+        color: var(--lp-sidebar-text);
+        font-size: 0;
+        justify-content: center;
+        min-height: 44px;
+        min-width: 36px;
+
+        svg {
+            height: 19px;
+            width: 19px;
         }
     }
 
