@@ -23,15 +23,16 @@ test.describe('Cookie security', () => {
     expect(lp!.httpOnly).toBe(true);
   });
 
-  test('lp cookie has sameSite=Lax and ~1 year expiry', async ({ page }) => {
+  test('lp cookie has sameSite=Lax and lasts the configured session length', async ({ page }) => {
     const cookies = await page.context().cookies();
     const lp = cookies.find((c) => c.name === 'lp');
     expect(lp).toBeDefined();
     expect(lp!.sameSite).toBe('Lax');
-    const oneYear = 365 * 24 * 60 * 60;
+    // sessionDays in config/default.json (SESSION_DAYS)
+    const sessionLength = 90 * 24 * 60 * 60;
     const now = Date.now() / 1000;
-    expect(lp!.expires).toBeGreaterThan(now + oneYear - 86400);
-    expect(lp!.expires).toBeLessThan(now + oneYear + 86400);
+    expect(lp!.expires).toBeGreaterThan(now + sessionLength - 86400);
+    expect(lp!.expires).toBeLessThan(now + sessionLength + 86400);
   });
 
   test('lp_loggedin cookie is set and readable by JavaScript', async ({ page }) => {
@@ -91,7 +92,7 @@ test.describe('User Authentication Tests', () => {
 
     await registerUser(page, username, password, email);
     await expect(page.getByTestId('account-menu')).toContainText(username);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
   });
 
   test('should successfully log in an existing user', async ({ page }) => {
@@ -105,7 +106,7 @@ test.describe('User Authentication Tests', () => {
 
     await loginUser(page, username, password);
     await expect(page.getByTestId('account-menu')).toContainText(username);
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
   });
 
   test('should successfully change password', async ({ page }) => {
@@ -133,11 +134,11 @@ test.describe('User Authentication Tests', () => {
 
     await logoutUser(page);
 
-    await expect(page.getByText('Welcome to LighterPack!')).toBeHidden();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeHidden();
 
     await loginUser(page, username, newPassword);
 
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
   });
 
   test('should successfully delete a user', async ({ page }) => {
@@ -260,7 +261,7 @@ test.describe('User Authentication Tests', () => {
     await page.goto(testRoot);
 
     await page.getByText('Try it without an account', { exact: true }).click();
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
 
     const listNameInput = page.getByPlaceholder('Name your list', { exact: true });
     await listNameInput.fill('Local Data List');
@@ -285,7 +286,7 @@ test.describe('User Authentication Tests', () => {
     await registerForm.getByPlaceholder('Confirm password', { exact: true }).fill(password);
     await registerForm.getByRole('button', { name: 'Register' }).click();
 
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
     await expect(page.getByPlaceholder('Name your list', { exact: true })).toHaveValue('Local Data List');
   });
 

@@ -312,7 +312,7 @@ test.describe('List Settings', () => {
       { timeout: 15000 },
     );
     await page.reload();
-    await expect(page.getByText('Welcome to LighterPack!')).toBeVisible();
+    await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
 
     await page.locator('#settings').hover();
     await expect(page.locator('#currencySymbol')).toHaveValue('€');

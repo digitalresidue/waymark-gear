@@ -2,7 +2,7 @@
     <section id="listContainer">
         <div class="lpSidebarSectionHeader listContainerHeader">
             <span class="lpSectionLabel">Lists · {{ library.lists.length }}</span>
-            <PopoverHover id="addListFlyout">
+            <PopoverHover id="addListFlyout" ref="addListFlyout">
                 <template #target>
                     <span><a class="lpSidebarNew" data-testid="new-list" @click="newListFromTarget">+ New</a></span>
                 </template>
@@ -63,6 +63,11 @@ export default {
         // would mean picking "Add new list" from it left you with two.
         newListFromTarget() {
             if (window.matchMedia('(hover: hover)').matches) {
+                // Act and get out of the way, like the menu's own items. Left
+                // open, the flyout sits over the list names until the pointer
+                // leaves "+ New" - so the list you want to click next is
+                // under it.
+                this.$refs.addListFlyout?.hide();
                 this.newList();
             }
         },
