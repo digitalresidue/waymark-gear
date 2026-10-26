@@ -265,7 +265,9 @@ test.describe('Publishing and copying', () => {
         const title = page.getByPlaceholder('Name your list', { exact: true });
         await title.fill('Source kit');
         await title.blur();
+        const named = page.waitForResponse((r) => r.url().includes('saveLibrary') && r.status() === 200, { timeout: 20000 });
         await page.getByTestId('item-row').first().getByPlaceholder('Name', { exact: true }).fill('Original quilt');
+        await named;
         await page.getByText('Share', { exact: true }).hover();
         const shareInput = page.getByLabel('Share your list');
         await expect(shareInput).toHaveValue(/\/r\/[a-z0-9]+/, { timeout: 10000 });
