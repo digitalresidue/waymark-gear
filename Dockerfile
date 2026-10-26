@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---- build: install everything, compile the frontend, then drop dev deps ----
-FROM node:24-bookworm-slim AS build
+FROM node:26-bookworm-slim AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -15,7 +15,7 @@ ARG VITE_SOURCE_URL=""
 RUN npm run build && npm prune --omit=dev
 
 # ---- runtime: production deps, built assets, no compilers ----
-FROM node:24-bookworm-slim
+FROM node:26-bookworm-slim
 
 # webp provides cwebp, used to convert uploaded photos (server/images.js).
 # tini forwards SIGTERM so the app can shut down gracefully.
