@@ -9,16 +9,12 @@
 // - Each new comment notifies the list owner and the person replied to, in
 //   the app and (at most every 15 minutes per person) by email.
 
-import config from 'config';
-
 import knex from './db.js';
 import { isModerator } from './auth.js';
-import { mailEnabled, mailIdentity, sendMail } from './mail.js';
-import { logger } from './log.js';
+import { notify, sendNotificationEmails } from './notify.js';
 
 export const COMMENT_MAX = 2000;
 const MAX_DEPTH = 2;
-const EMAIL_GAP_MS = 15 * 60 * 1000;
 
 export class CommentError extends Error {
     constructor(message, status = 400) {
@@ -93,48 +89,6 @@ export async function listComments(externalId, viewer) {
     };
 }
 
-async function notify(trx, { recipientId, kind, comment, kit, actor }) {
-    await trx('notifications').insert({
-        user_id: recipientId,
-        kind,
-        comment_id: comment.id,
-        external_id: kit.external_id,
-        list_name: String(kit.name || '').slice(0, 200),
-        actor_username: actor.username,
-    });
-}
-
-const EMAIL_SUBJECTS = {
-    comment: (n) => `@${n.actor} commented on “${n.listName}”`,
-    suggestion: (n) => `@${n.actor} suggested a change to “${n.listName}”`,
-    reply: (n) => `@${n.actor} replied to you on “${n.listName}”`,
-};
-
-// Fire and forget: email trouble never fails the comment itself.
-function emailLater(jobs) {
-    if (!mailEnabled() || !jobs.length) return;
-    setImmediate(async () => {
-        for (const job of jobs) {
-            try {
-                const user = await knex('users').where({ user_id: job.recipientId }).first();
-                if (!user || !user.email || !user.notify_email) continue;
-                const last = user.last_notify_email_at ? new Date(user.last_notify_email_at).getTime() : 0;
-                if (Date.now() - last < EMAIL_GAP_MS) continue;
-                await knex('users').where({ user_id: user.user_id }).update({ last_notify_email_at: knex.fn.now() });
-                const base = config.get('deployUrl');
-                await sendMail({
-                    ...mailIdentity(),
-                    to: user.email,
-                    subject: EMAIL_SUBJECTS[job.kind](job),
-                    text: `${EMAIL_SUBJECTS[job.kind](job)}:\n\n${job.excerpt}\n\nSee the conversation: ${base}/r/${job.externalId}#comment-${job.commentId}\n\nTo stop these emails, turn them off on your profile: ${base}/profile\n`,
-                });
-            } catch (err) {
-                logger.error({ message: 'comment notification email failed', err: { message: err.message } });
-            }
-        }
-    });
-}
-
 export async function addComment(user, externalId, input = {}) {
     const body = cleanBody(input.body);
     const kind = input.kind === 'suggestion' ? 'suggestion' : 'comment';
@@ -166,8 +120,7 @@ export async function addComment(user, externalId, input = {}) {
             body,
         }).returning('*');
 
-        const actor = { username: user.username };
-        const job = (recipientId, notifyKind) => ({
+        const item = (recipientId, notifyKind) => ({
             recipientId,
             kind: notifyKind,
             actor: user.username,
@@ -176,22 +129,18 @@ export async function addComment(user, externalId, input = {}) {
             externalId: kit.external_id,
             commentId: Number(row.id),
         });
-        const notified = new Set([user.user_id]);
-        if (!notified.has(kit.user_id)) {
-            await notify(trx, { recipientId: kit.user_id, kind, comment: row, kit, actor });
-            emails.push(job(kit.user_id, kind));
-            notified.add(kit.user_id);
-        }
+        const items = [];
+        if (kit.user_id !== user.user_id) items.push(item(kit.user_id, kind));
         const repliedTo = input.parentId !== undefined && input.parentId !== null
             ? await trx('comments').where({ id: Number(input.parentId) }).first() : null;
-        if (repliedTo && !notified.has(repliedTo.author_id)) {
-            await notify(trx, { recipientId: repliedTo.author_id, kind: 'reply', comment: row, kit, actor });
-            emails.push(job(repliedTo.author_id, 'reply'));
+        if (repliedTo && repliedTo.author_id && repliedTo.author_id !== user.user_id && repliedTo.author_id !== kit.user_id) {
+            items.push(item(repliedTo.author_id, 'reply'));
         }
+        emails.push(...await notify(trx, items));
         return { row, ownerId: kit.user_id };
     });
 
-    emailLater(emails);
+    sendNotificationEmails(emails);
     const author = await knex('users').where({ user_id: user.user_id }).first();
     return present({ ...result.row, username: author.username, display_name: author.display_name, avatar_url: author.avatar_url }, { viewer: user, ownerId: result.ownerId });
 }
@@ -231,6 +180,7 @@ export async function reportComment(user, id, reason) {
 // ---- notifications ----------------------------------------------------------
 
 export async function notificationsFor(user, limit = 30) {
+    // Follows link to the follower's profile; everything else to the list.
     const rows = await knex('notifications').where({ user_id: user.user_id })
         .orderBy('created_at', 'desc').limit(Math.min(Number(limit) || 30, 100));
     const [{ count }] = await knex('notifications').where({ user_id: user.user_id }).whereNull('read_at').count({ count: '*' });
@@ -241,7 +191,7 @@ export async function notificationsFor(user, limit = 30) {
             kind: r.kind,
             actor: r.actor_username,
             listName: r.list_name,
-            url: `/r/${r.external_id}${r.comment_id ? `#comment-${r.comment_id}` : ''}`,
+            url: r.url || (r.kind === 'follow' ? `/@${r.actor_username}` : `/r/${r.external_id}${r.comment_id ? `#comment-${r.comment_id}` : ''}`),
             createdAt: r.created_at,
             read: Boolean(r.read_at),
         })),

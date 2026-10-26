@@ -3,6 +3,7 @@ import debounce from 'lodash/debounce.js';
 
 import { Library } from '../dataTypes.js';
 import { fetchJson, readCookie, arrayMove } from '../utils/utils.js';
+import { themePreference, setThemePreference } from '../utils/theme.js';
 import { diffLibrary } from '../utils/library-diff.js';
 import { writeOfflineCache, readOfflineCache, clearOfflineCache, isNetworkError } from '../utils/offline-cache.js';
 
@@ -22,6 +23,14 @@ const store = createStore({
         // True while the server can't be reached; edits stay on this device
         // and are sent when the connection comes back.
         offline: false,
+        // Planning someone's list together (/plan/:owner/:listId):
+        // { owner, listId, role, members }. The library then holds just that
+        // list, and saves go to the plan, not to your own library.
+        plan: null,
+        // Who's looking at the current list right now (live presence).
+        presence: [],
+        // People planning the current list with you (owner and members).
+        listMembers: [],
         saveRetries: 0,
     },
     getters: {
@@ -45,6 +54,18 @@ const store = createStore({
         setIsSaving(state, isSaving) {
             state.isSaving = isSaving;
         },
+        setPlan(state, plan) {
+            state.plan = plan;
+        },
+        setListMembers(state, members) {
+            state.listMembers = members;
+        },
+        setPresence(state, people) {
+            state.presence = people;
+        },
+        setPlanMembers(state, members) {
+            if (state.plan) state.plan = { ...state.plan, members };
+        },
         setOffline(state, offline) {
             state.offline = offline;
         },
@@ -64,6 +85,14 @@ const store = createStore({
         },
         setAccount(state, account) {
             state.account = account;
+            // The account's saved theme wins over this browser's, so a
+            // choice made on one device shows up on all of them.
+            if (account && account.themePref && account.themePref !== themePreference()) {
+                setThemePreference(account.themePref);
+            }
+        },
+        setThemePref(state, pref) {
+            if (state.account) state.account = { ...state.account, themePref: pref };
         },
         togglePinList(state, list) {
             const target = state.library.getListById(list.id);
@@ -97,6 +126,11 @@ const store = createStore({
             // A shakedown request only makes sense on a public list.
             if (!published) delete target.shakedown;
         },
+        setListTripType(state, { list, tripType }) {
+            const target = state.library.getListById(list.id);
+            if (tripType) target.tripType = tripType;
+            else delete target.tripType;
+        },
         setListShakedown(state, { list, shakedown }) {
             const target = state.library.getListById(list.id);
             if (shakedown) target.shakedown = true;
@@ -106,6 +140,51 @@ const store = createStore({
             const target = state.library.getListById(list.id);
             if (trip) target.trip = trip;
             else delete target.trip;
+        },
+        // Group trips: who carries this gear ('' = unassigned).
+        setCarrier(state, { category, itemId, carrier }) {
+            const ci = state.library.getCategoryById(category.id).getCategoryItemById(itemId);
+            if (!ci) return;
+            if (carrier) ci.carrier = carrier;
+            else delete ci.carrier;
+        },
+        // After the trip: this went along but wasn't used.
+        setItemUnused(state, { category, itemId, unused }) {
+            const ci = state.library.getCategoryById(category.id).getCategoryItemById(itemId);
+            if (!ci) return;
+            if (unused) ci.unused = true;
+            else delete ci.unused;
+        },
+        // Gear kits: save a category's gear as a kit, add a kit to a category.
+        createKit(state, { name, category }) {
+            const items = category.categoryItems
+                .filter((ci) => {
+                    const item = state.library.getItemById(ci.itemId);
+                    return item && (item.name || item.weight);
+                })
+                .map((ci) => ({ itemId: ci.itemId, qty: ci.qty }));
+            if (!items.length) return;
+            const id = state.library.nextSequence();
+            state.library.kits = [...(state.library.kits || []), { id, name: String(name || category.name || 'Kit').slice(0, 80), items }];
+        },
+        renameKit(state, { kitId, name }) {
+            state.library.kits = state.library.kits.map((k) => (k.id === kitId ? { ...k, name: String(name).slice(0, 80) } : k));
+        },
+        deleteKit(state, kitId) {
+            state.library.kits = state.library.kits.filter((k) => k.id !== kitId);
+        },
+        addKitToCategory(state, { kitId, categoryId }) {
+            const kit = (state.library.kits || []).find((k) => k.id === kitId);
+            const category = state.library.getCategoryById(categoryId);
+            if (!kit || !category) return;
+            category.collapsed = false;
+            for (const { itemId, qty } of kit.items) {
+                if (!state.library.getItemById(itemId)) continue;
+                const existing = category.getCategoryItemById(itemId);
+                if (existing) existing.qty = Math.max(existing.qty, qty);
+                else category.addItem({ itemId, qty });
+            }
+            state.library.getListById(state.library.defaultListId).calculateTotals();
         },
         setItemPacked(state, { category, itemId, packed }) {
             const ci = state.library.getCategoryById(category.id).getCategoryItemById(itemId);
@@ -351,6 +430,7 @@ const store = createStore({
         // list being viewed stays put if it still exists.
         async refreshRemote(context) {
             const { state } = context;
+            if (state.saveType === 'shared') return context.dispatch('refreshPlan');
             if (state.saveType !== 'remote' || !state.library || state.isSaving) return;
             if (JSON.stringify(state.library.save()) !== state.lastSaveData) {
                 // Unsaved edits from a spell offline: try sending them first.
@@ -387,6 +467,43 @@ const store = createStore({
                 context.commit('setLastSaveData', JSON.stringify(state.library.save()));
             }
             context.commit('setAccount', response.account || state.account);
+        },
+        // Open someone's shared list (or your own) to plan it together.
+        async loadPlan(context, { owner, listId }) {
+            const data = await fetchJson(`/api/plan/${encodeURIComponent(owner)}/${encodeURIComponent(listId)}`, {
+                method: 'GET', credentials: 'same-origin', redirectOnAuthFailure: false,
+            });
+            context.commit('setSyncToken', data.syncToken);
+            context.commit('loadLibraryData', JSON.stringify(data.library));
+            context.commit('setSaveType', 'shared');
+            context.commit('setPlan', { owner: data.owner, listId: data.listId, role: data.role, members: data.members });
+            return data;
+        },
+        // A collaborator saved: pick it up unless we have unsaved edits
+        // (those go first, and the next change event brings theirs).
+        async refreshPlan(context) {
+            const { state } = context;
+            if (!state.plan || state.isSaving) return;
+            if (JSON.stringify(state.library.save()) !== state.lastSaveData) return;
+            let data;
+            try {
+                data = await fetchJson(`/api/plan/${encodeURIComponent(state.plan.owner)}/${state.plan.listId}`, {
+                    method: 'GET', credentials: 'same-origin', redirectOnAuthFailure: false,
+                });
+            } catch {
+                return;
+            }
+            if (data.syncToken === state.syncToken) return;
+            if (state.isSaving || JSON.stringify(state.library.save()) !== state.lastSaveData) return;
+            context.commit('setSyncToken', data.syncToken);
+            context.commit('loadLibraryData', JSON.stringify(data.library));
+            context.commit('setPlanMembers', data.members);
+        },
+        // Back to your own library.
+        async leavePlan(context) {
+            if (context.state.saveType !== 'shared') return;
+            context.commit('setPlan', null);
+            await context.dispatch('loadRemote');
         },
         async signout(context) {
             await fetch('/signout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
@@ -503,20 +620,29 @@ const store = createStore({
             });
         },
         function save(store) {
-            store.subscribe(debounce((mutation, state) => {
-                const ignore = [
-                    'setIsSaving',
-                    'setSaveType',
-                    'setSyncToken',
-                    'setLastSaveData',
-                    'signout',
-                    'setLoggedIn',
-                    'loadLibraryData',
-                    'clearLibraryData',
-                    'setAccount',
-                    'setOffline',
-                ];
-                if (!state.library || ignore.indexOf(mutation.type) > -1) {
+            // Mutations that aren't edits to the library. They're filtered out
+            // before the debounce: inside it, one arriving just after an edit
+            // (a presence update, say) would be "the last call" and the
+            // edit would never be saved.
+            const ignore = new Set([
+                'setIsSaving',
+                'setSaveType',
+                'setSyncToken',
+                'setLastSaveData',
+                'signout',
+                'setLoggedIn',
+                'loadLibraryData',
+                'clearLibraryData',
+                'setAccount',
+                'setThemePref',
+                'setPlan',
+                'setPresence',
+                'setPlanMembers',
+                'setListMembers',
+                'setOffline',
+            ]);
+            const saveSoon = debounce((mutation, state) => {
+                if (!state.library) {
                     return;
                 }
                 const saveData = JSON.stringify(state.library.save());
@@ -524,6 +650,40 @@ const store = createStore({
                 if (saveData == state.lastSaveData) {
                     return;
                 }
+
+                // Planning a shared list: send what changed to the plan.
+                const savePlan = function (saveData) {
+                    if (state.isSaving) {
+                        setTimeout(() => savePlan(null), saveInterval + 1);
+                        return;
+                    }
+                    if (!saveData) saveData = JSON.stringify(state.library.save());
+                    if (saveData === state.lastSaveData || !state.plan) return;
+                    const changes = diffLibrary(JSON.parse(state.lastSaveData), JSON.parse(saveData));
+                    if (!changes) {
+                        store.commit('setLastSaveData', saveData);
+                        return;
+                    }
+                    store.commit('setIsSaving', true);
+                    fetchJson(`/api/plan/${encodeURIComponent(state.plan.owner)}/${state.plan.listId}/changes`, {
+                        method: 'POST',
+                        body: JSON.stringify({ changes }),
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'same-origin',
+                        redirectOnAuthFailure: false,
+                    }).then((response) => {
+                        store.commit('setSyncToken', response.syncToken);
+                        store.commit('setLastSaveData', saveData);
+                        store.commit('setIsSaving', false);
+                    }).catch((error) => {
+                        store.commit('setIsSaving', false);
+                        if (isNetworkError(error)) {
+                            store.commit('setOffline', true);
+                            return;
+                        }
+                        state.globalAlerts.push({ message: error.message || 'Your change to the shared list could not be saved.' });
+                    });
+                };
 
                 const saveRemotely = function (saveData) {
                     if (state.isSaving) {
@@ -590,10 +750,15 @@ const store = createStore({
 
                 if (state.saveType === 'remote') {
                     saveRemotely(saveData);
+                } else if (state.saveType === 'shared') {
+                    savePlan(saveData);
                 } else if (state.saveType === 'local') {
                     localStorage.library = saveData;
                 }
-            }, saveInterval, { maxWait: saveInterval * 3 }));
+            }, saveInterval, { maxWait: saveInterval * 3 });
+            store.subscribe((mutation, state) => {
+                if (!ignore.has(mutation.type)) saveSoon(mutation, state);
+            });
         },
     ],
 });

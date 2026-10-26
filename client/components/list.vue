@@ -8,7 +8,11 @@
 
         <list-description v-if="list.optionalFields['listDescription']" :list="list" />
 
+        <trip-type-picker v-if="!isListNew" :list="list" />
+
         <trip-planner v-if="!isListNew" :list="list" />
+
+        <group-gear v-if="!isListNew && people.length > 1" :list="list" :people="people" />
 
         <div v-if="categories.length > 1" class="wgCategoryTools">
             <button type="button" class="wgBtn wgBtnGhost wgBtnSmall" data-testid="expand-all" :disabled="!anyCollapsed" @click="setCollapsed(false)">
@@ -32,6 +36,8 @@ import category from './category.vue';
 import getStarted from './get-started.vue';
 import listDescription from './list-description.vue';
 import tripPlanner from './trip-planner.vue';
+import tripTypePicker from './trip-type-picker.vue';
+import groupGear from './group-gear.vue';
 import listSummary from './list-summary.vue';
 import listSummaryMobile from './list-summary-mobile.vue';
 
@@ -48,6 +54,8 @@ export default {
         listSummaryMobile,
         listDescription,
         tripPlanner,
+        tripTypePicker,
+        groupGear,
         category,
     },
     setup() {
@@ -62,6 +70,12 @@ export default {
         };
     },
     computed: {
+        // Everyone planning this list: from the plan when you're a member,
+        // else the members of your own list.
+        people() {
+            const st = this.$store.state;
+            return (st.saveType === 'shared' && st.plan ? st.plan.members : st.listMembers) || [];
+        },
         library() {
             return this.$store.state.library;
         },

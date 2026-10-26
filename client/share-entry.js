@@ -3,6 +3,7 @@ import '@fontsource-variable/geist';
 import '@fontsource-variable/geist-mono';
 import './css/share.scss';
 import pies from './pies.js';
+import { initSocial } from './social.js';
 import weightUtils from './utils/weight.js';
 import {
     initTheme, toggleTheme, chartLineColor, chartHoverColor, onThemeChange,
@@ -252,9 +253,12 @@ function initComments() {
     observer.observe(section);
 }
 
+// The same bundle runs on @profile pages, which have no list: each part
+// stands alone so one missing piece can't stop the rest.
 function start() {
-    init();
+    safely(init);
     safely(initComments);
+    safely(initSocial);
 }
 
 if (document.readyState === 'loading') {

@@ -1,11 +1,34 @@
 # Waymark Gear roadmap
 
 Living document. Each phase gets a dated entry in the changelog when it ships;
-the plan below it is what comes next. Last updated **2026-10-26**.
+the plan below it is what comes next. Last updated **2026-10-26** (Phase 5 built).
 
 ---
 
 ## Changelog
+
+### Phase 5 — Plan together · 2026-10-26 · branch `phase5`
+- **Real-time collaboration**: invite hiking partners or your group to a list (Team button). Members open it at `/plan/:owner/:list` in the regular editor and everyone's edits appear live; "Shared with you" in the list switcher; invite notifications. Server-sent events carry changes and presence ("here now" faces in the header). Members can only touch that one list: publishing, sharing, other lists and the rest of the owner's closet stay the owner's (enforced on the server).
+- **Group gear**: "Who carries what" panel on shared lists, with pack weight per person; Pack mode can show only what you carry.
+- **Gear kits**: save a category as a kit (cook kit, first aid…) and add it to any list in one click.
+- **Packed vs used**: Pack mode "After the trip" marks what you didn't use, and totals the weight you carried for nothing.
+- **Quantity owned**: set how many you own in gear details; lists flag a quantity higher than that.
+- **"New" banner** on shakedown cards asked for in the last 8 hours (homepage board and Explore).
+- Fix: a non-edit store update arriving right after an edit (e.g. a presence change) could cancel that edit's save.
+
+### Phase 4 — Community & everyday polish · 2026-10-26 · branch `phase4`
+- **Shakedown board** on the homepage: lists asking for a shakedown, fewest suggestions first.
+- **Follow hikers** from profiles and shared lists; **Following** filter on Explore; followers are notified when you publish a new list.
+- **Trip type** per list (day hike, backpacking, section hike, thru-hike); Explore filters and a sort menu (featured, newest, top this month, lightest).
+- **Votes and leaderboards**: up/down votes on published lists, counted for 30 days; `/leaderboard` by trip type (top this month, lightest).
+- **Notifications page** (`/notifications`) with per-type in-app/email settings (comments, suggestions, replies, new followers, followed hikers publishing), and the list of hikers you follow.
+- **Closet categories** you define, as filters in the closet (desktop and phone).
+- **Gear details**: up to 6 photos per item (fit within 512×512), buy link, YouTube review link; shown in lists as "Photos" / "▶ Review" links that open a **lightbox**, with an in-site video view counter.
+- **Print view** (`/print`): compact paper checklist, 1–3 columns, text size, optional descriptions/quantities/worn marks; no weights or stats.
+- **Report a problem → tickets**: `/report` from the footer, shared lists and gear details; staff queue at `/staff/tickets` with status, priority, assignee and notes.
+- **Theme per account**: follows the device by default; a light/dark choice is saved to the account and applied on every device ("Match my device" to reset).
+- **Profile tags**: activities, seasons and up to five of your own.
+- **Share images** now include the list description and the author's avatar. Still drawn on request into a bounded memory cache: nothing accumulates on disk.
 
 ### Phase 3 — Closet, packing, community · 2026-10-26 · PR #12
 - Gear Closet on relational storage (users → lists → categories → items, user_id in every key); edits sync per item, so tabs/devices don't overwrite each other; retire instead of delete.
@@ -30,7 +53,7 @@ the plan below it is what comes next. Last updated **2026-10-26**.
 
 ---
 
-## Phase 4 — Community & everyday polish (proposed next run)
+## Phase 4 — Community & everyday polish (built 2026-10-26, see changelog)
 
 **Discover and follow**
 1. **Shakedown board on the homepage**: crowdsourced cards of lists asking for a shakedown (newest and "needs help" = fewest suggestions), each opening the list's suggestion thread.
@@ -52,14 +75,15 @@ the plan below it is what comes next. Last updated **2026-10-26**.
 11. **Theme per account**: follow the device setting by default; light/dark override saved to the account and applied on every device.
 12. **Share-image upgrade**: add the list description and `@user` avatar to the card. *Disk note:* images are drawn on request and kept only in a bounded memory cache (300 images), so nothing accumulates on disk; the URL version changes on every edit, so link previews refresh. If we later store them, it'll be one file per list, overwritten on save.
 
-## Phase 5 — Plan together
+## Phase 5 — Plan together (built 2026-10-26, see changelog)
 - **Real-time collaboration**: invite partners or a group leader to one list (owner / editor / viewer); live edits and presence via WebSockets, building on the per-item sync from Phase 3.
 - **Group gear**: who owns and carries what, so a group doesn't double-pack (seen on Packry).
 - **Gear kits**: bundles you always carry together, added to any list in one click (Packstack).
 - **Packed vs used**: after a trip, mark what you didn't use, to trim the next pack (Packry).
 - **Quantity owned** warnings when a list uses more than you own (Packstack).
+- Follow-ups: add gear from your own closet while planning someone else's list; viewer-only members; live updates across several app instances (Postgres LISTEN/NOTIFY).
 
-## Phase 6 — The trip hub
+## Phase 6 — The trip hub (proposed next run)
 - **Trip journal**: trip "folders" with day-by-day entries (dated automatically or set by hand), photos, linked pack list; public, followers-only or private.
 - **Gear reviews**: staff reviews first, then users; star rating, pros/cons, linked to catalog items and closet gear.
 - **Trip details**: distance, elevation gain, terrain, expected temperatures (Packstack), feeding the trip planner.

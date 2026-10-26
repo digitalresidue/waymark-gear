@@ -4,7 +4,7 @@
 
 import knex from './db.js';
 import { kitsForUser } from './kits.js';
-import { PROFILE_LIMITS, ProfileError, normalizeLink, NETWORKS } from './profile-links.js';
+import { PROFILE_LIMITS, ProfileError, normalizeLink, NETWORKS, cleanTags } from './profile-links.js';
 import { Library } from '../client/dataTypes.js';
 import { loadLibrary } from './library-store.js';
 import { thumbnailUrl } from './images.js';
@@ -45,6 +45,7 @@ function rowToProfile(user) {
         featured: Array.isArray(user.profile_featured) ? user.profile_featured : [],
         hidden: Boolean(user.profile_hidden),
         notifyEmail: user.notify_email !== false,
+        tags: cleanTags(user.profile_tags || {}),
     };
 }
 
@@ -73,6 +74,7 @@ export async function updateProfile(user, input = {}) {
         profile_featured: JSON.stringify(featured),
         profile_hidden: Boolean(input.hidden),
         notify_email: input.notifyEmail !== false,
+        profile_tags: JSON.stringify(cleanTags(input.tags || {})),
     };
     await knex('users').where({ user_id: user.user_id }).update(row);
     forgetUserPages(user.user_id);
@@ -116,6 +118,8 @@ export async function publicGear(userId, publishedIds, limit = 200) {
                     category: category.name || '',
                     thumbUrl: thumbnailUrl(item.imageUrl || ''),
                     url: /^https?:\/\//i.test(item.url || '') ? item.url : '',
+                    photos: Array.isArray(item.photos) ? item.photos : [],
+                    videoUrl: item.videoUrl || '',
                 });
                 if (seen.size >= limit) return [...seen.values()];
             }

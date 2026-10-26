@@ -11,11 +11,17 @@
                 <router-link to="/explore" class="wgSiteNavLink" :class="{ wgActive: active === 'explore' }" data-testid="nav-explore">
                     Explore kits
                 </router-link>
+                <router-link to="/leaderboard" class="wgSiteNavLink" :class="{ wgActive: active === 'leaderboard' }" data-testid="nav-leaderboard">
+                    Leaderboards
+                </router-link>
                 <router-link v-if="!hasLibrary" to="/welcome#common" class="wgSiteNavLink">
                     Popular gear
                 </router-link>
                 <router-link v-if="isAdmin" to="/owner/catalog" class="wgSiteNavLink" :class="{ wgActive: active === 'owner' }" data-testid="nav-owner">
                     Owner
+                </router-link>
+                <router-link v-if="isStaff" to="/staff/tickets" class="wgSiteNavLink" data-testid="nav-tickets">
+                    Tickets
                 </router-link>
             </nav>
             <div v-if="!app" class="wgSiteHeaderActions">
@@ -61,6 +67,10 @@ export default {
         },
         isAdmin() {
             return Boolean(this.$store.state.account && this.$store.state.account.isAdmin);
+        },
+        isStaff() {
+            const a = this.$store.state.account;
+            return Boolean(a && (a.isAdmin || a.isModerator));
         },
         homeLink() {
             return this.hasLibrary ? '/' : '/welcome';

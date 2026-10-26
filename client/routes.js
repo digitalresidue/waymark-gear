@@ -2,6 +2,11 @@ import dashboard from './views/dashboard.vue';
 import gear from './views/gear.vue';
 import pack from './views/pack.vue';
 import profileEdit from './views/profile-edit.vue';
+import notifications from './views/notifications.vue';
+import leaderboard from './views/leaderboard.vue';
+import printList from './views/print.vue';
+import report from './views/report.vue';
+import staffTickets from './views/staff-tickets.vue';
 import home from './views/home.vue';
 import explore from './views/explore.vue';
 import ownerCatalog from './views/owner-catalog.vue';
@@ -16,7 +21,13 @@ export default [
     { path: '/', component: dashboard },
     { path: '/gear', component: gear },
     { path: '/pack', component: pack },
+    { path: '/plan/:owner/:listId', component: dashboard },
     { path: '/profile', component: profileEdit },
+    { path: '/notifications', component: notifications },
+    { path: '/leaderboard', component: leaderboard },
+    { path: '/print', component: printList },
+    { path: '/report', component: report },
+    { path: '/staff/tickets', component: staffTickets },
     { path: '/welcome', component: home },
     { path: '/explore', component: explore },
     { path: '/owner/catalog', component: ownerCatalog },

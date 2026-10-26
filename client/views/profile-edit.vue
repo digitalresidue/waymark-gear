@@ -85,6 +85,28 @@
                     </div>
                 </section>
 
+                <section class="wgCard wgProfileFields" data-testid="profile-tags-editor">
+                    <h2 class="wgProfileEditH">
+                        Tags
+                    </h2>
+                    <p class="wgMuted wgProfileHint">
+                        Shown on your profile so people can see how and when you hike.
+                    </p>
+                    <div class="wgTagGroup" role="group" aria-label="Activities">
+                        <button v-for="a in activities" :key="a" type="button" class="wgChip" :aria-pressed="String(form.tags.activities.includes(a))" :data-testid="`tag-${a}`" @click="toggleTag('activities', a)">
+                            {{ a }}
+                        </button>
+                    </div>
+                    <div class="wgTagGroup" role="group" aria-label="Seasons">
+                        <button v-for="s in seasons" :key="s" type="button" class="wgChip" :aria-pressed="String(form.tags.seasons.includes(s))" :data-testid="`tag-${s}`" @click="toggleTag('seasons', s)">
+                            {{ s }}
+                        </button>
+                    </div>
+                    <label class="wgField">Your own tags <span class="wgMuted">(up to 5, comma separated)</span>
+                        <input v-model="customTags" class="wgInput" placeholder="e.g. AT 2024, dog hiker, gram weenie" data-testid="profile-custom-tags">
+                    </label>
+                </section>
+
                 <section class="wgCard wgProfileFields">
                     <h2 class="wgProfileEditH">
                         Links
@@ -128,10 +150,11 @@
                         <input v-model="form.hidden" type="checkbox" data-testid="profile-hidden">
                         <span>Hide my profile. Your shared list links keep working.</span>
                     </label>
-                    <label class="wgProfileCheck">
-                        <input v-model="form.notifyEmail" type="checkbox" data-testid="profile-notify-email">
-                        <span>Email me when someone comments on my lists or replies to me (at most every 15 minutes).</span>
-                    </label>
+                    <p class="wgProfileHint">
+                        <router-link to="/notifications" data-testid="profile-notification-settings">
+                            Choose which notifications and emails you get →
+                        </router-link>
+                    </p>
                 </section>
 
                 <p v-if="error" class="wgImportError" role="alert" data-testid="profile-error">
@@ -154,6 +177,7 @@ import siteHeader from '../components/site-header.vue';
 import globalAlerts from '../components/global-alerts.vue';
 import { api, formatWeightMg } from '../utils/format.js';
 import { marked } from '../utils/markdown.js';
+import { SEASONS, ACTIVITIES } from '../utils/gear-meta.js';
 
 const NETWORKS = [
     { id: 'youtube', label: 'YouTube', placeholder: '@yourchannel or a link' },
@@ -171,6 +195,9 @@ export default {
             form: null,
             networks: NETWORKS,
             previewBio: false,
+            customTags: '',
+            seasons: SEASONS,
+            activities: ACTIVITIES,
             uploading: '',
             saving: false,
             saved: false,
@@ -218,7 +245,17 @@ export default {
                 featured: [...profile.featured],
                 hidden: profile.hidden,
                 notifyEmail: profile.notifyEmail !== false,
+                tags: {
+                    seasons: [...((profile.tags && profile.tags.seasons) || [])],
+                    activities: [...((profile.tags && profile.tags.activities) || [])],
+                    custom: [...((profile.tags && profile.tags.custom) || [])],
+                },
             };
+            this.customTags = this.form.tags.custom.join(', ');
+        },
+        toggleTag(group, tag) {
+            const list = this.form.tags[group];
+            this.form.tags[group] = list.includes(tag) ? list.filter((t) => t !== tag) : [...list, tag];
         },
         toggleFeatured(id, on) {
             const list = this.form.featured.filter((f) => f !== id);
@@ -250,6 +287,7 @@ export default {
             this.error = '';
             this.errorField = '';
             try {
+                this.form.tags.custom = this.customTags.split(',').map((t) => t.trim()).filter(Boolean).slice(0, 5);
                 const profile = await api('/api/profile', { method: 'PUT', body: JSON.stringify(this.form) });
                 this.setProfile(profile);
                 this.saved = true;
@@ -425,5 +463,14 @@ export default {
     align-items: center;
     display: flex;
     gap: 14px;
+}
+.wgTagGroup {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    .wgChip {
+        text-transform: capitalize;
+    }
 }
 </style>

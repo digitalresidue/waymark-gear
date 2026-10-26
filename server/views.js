@@ -16,6 +16,7 @@ import { WEIGHT_CLASSES, weightClassFor } from './kits.js';
 import knex from './db.js';
 import { formatWeightMg } from '../client/utils/format.js';
 import { publicProfile, publicGear } from './profiles.js';
+import { youTubeId, TRIP_TYPE_LABELS } from '../client/utils/gear-meta.js';
 import { listImage, listImageVersion, profileImage, profileImageVersion } from './og.js';
 import { cachedPage, storePage, sendCachedPage, NONCE_PLACEHOLDER } from './page-cache.js';
 
@@ -35,7 +36,13 @@ const vueRoutes = [ /* TODO - get this from same data source as Vue */
     { path: '/signin/reset-password' },
     { path: '/signin/forgot-username' },
     { path: '/pack' },
+    { path: '/plan/:owner/:listId' },
     { path: '/profile' },
+    { path: '/notifications' },
+    { path: '/leaderboard' },
+    { path: '/print' },
+    { path: '/report' },
+    { path: '/staff/tickets' },
     { path: '/gear' },
     { path: '/welcome' },
     { path: '/explore' },
@@ -250,12 +257,15 @@ router.get('/sitemap.xml', async (req, res) => {
 // ---- link-preview images -----------------------------------------------------
 
 // What a list's preview card shows. `library` must have `list` totals computed.
-function listCard(library, list, username) {
+function listCard(library, list, username, avatarUrl = '') {
     const categories = list.categoryIds.map((cid) => library.getCategoryById(cid)).filter(Boolean)
         .map((c) => ({ weightMg: c.subtotalWeight - c.subtotalWornWeight - c.subtotalConsumableWeight }));
     return {
         name: list.name,
         username,
+        avatarUrl: avatarUrl || '',
+        // Plain text, first ~2 lines' worth: markdown marks would look odd.
+        description: String(list.description || '').replace(/[#*_`>[\]()!]/g, '').replace(/\s+/g, ' ').trim(),
         baseWeightMg: list.totalBaseWeight,
         itemCount: list.categoryIds.reduce((n, cid) => n + ((library.getCategoryById(cid) || { categoryItems: [] }).categoryItems.length), 0),
         weightClass: (WEIGHT_CLASSES.find((c) => c.id === weightClassFor(list.totalBaseWeight)) || {}).label || '',
@@ -282,7 +292,7 @@ router.get('/og/r/:file', async (req, res) => {
         const list = library.lists.find((l) => l.externalId === m[1]);
         if (!list) return res.status(404).end();
         list.calculateTotals();
-        sendPng(req, res, await listImage(listCard(library, list, found.username)));
+        sendPng(req, res, await listImage(listCard(library, list, found.username, found.avatar_url)));
     } catch (err) {
         logWithRequest(req, { message: 'error rendering list image', err });
         res.status(500).end();
@@ -371,8 +381,15 @@ router.get('/@:username', async (req, res) => {
             hasOthers: others.length > 0,
             listsView: !gearView,
             gearView,
+            scripts: shareScriptsHtml,
+            tags: [...profile.tags.activities, ...profile.tags.seasons, ...profile.tags.custom],
             gear: gear.map((g) => ({
                 ...g,
+                photosJson: g.photos.length ? JSON.stringify(g.photos) : '',
+                photoCount: g.photos.length,
+                videoUrl: youTubeId(g.videoUrl) ? g.videoUrl : '',
+                // The grid thumbnail: an uploaded gear photo, else the item image.
+                thumbUrl: g.photos[0] || g.thumbUrl,
                 initial: g.name.trim().charAt(0).toUpperCase(),
                 weight: `${weightUtils.MgToDisplayWeight(g.weightMg, g.unit)} ${g.unit}`,
             })),
@@ -457,7 +474,8 @@ async function renderListView(req, res) {
             username: user.username,
             published: Boolean(list.published),
             shakedown: Boolean(list.published && list.shakedown),
-            ogImage: `${config.get('deployUrl')}/og/r/${id}.png?v=${listImageVersion(listCard(library, list, user.username))}`,
+            tripTypeLabel: TRIP_TYPE_LABELS[list.tripType] || '',
+            ogImage: `${config.get('deployUrl')}/og/r/${id}.png?v=${listImageVersion(listCard(library, list, user.username, user.avatar_url))}`,
             baseWeight: formatWeightMg(list.totalBaseWeight, 'lb'),
             weightClass: (WEIGHT_CLASSES.find((c) => c.id === weightClassFor(list.totalBaseWeight)) || {}).label,
             itemCount: list.categoryIds.reduce((n, cid) => n + ((library.getCategoryById(cid) || { categoryItems: [] }).categoryItems.length), 0),
@@ -684,6 +702,13 @@ const renderItem = function (item, args) {
     // Mustache escapes HTML but not URL schemes, so drop unsafe hrefs
     // (javascript:, data:, ...) before the item name is rendered as a link.
     if (out.url && !isSafeHref(out.url)) out.url = '';
+
+    // Photos and review videos open in a lightbox (client/utils/lightbox.js).
+    const photos = Array.isArray(item.photos) ? item.photos.filter((p) => /^\/userimages\//.test(p)) : [];
+    out.photoCount = photos.length;
+    out.photosJson = photos.length ? JSON.stringify(photos) : '';
+    out.videoUrl = youTubeId(item.videoUrl) ? item.videoUrl : '';
+    out.hasMedia = Boolean(photos.length || out.videoUrl);
 
     return Mustache.render(args.itemTemplate, out);
 };

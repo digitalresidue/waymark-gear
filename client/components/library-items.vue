@@ -10,12 +10,23 @@
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
             <input id="librarySearch" v-model="searchText" type="text" placeholder="Search your closet" aria-label="Search your closet">
         </div>
+        <div v-if="closetCategories.length" class="wgClosetFilter" role="group" aria-label="Closet category" data-testid="closet-filter">
+            <button type="button" class="wgClosetChip" :aria-pressed="String(closetFilter === null)" @click="closetFilter = null">
+                All
+            </button>
+            <button v-for="c in closetCategories" :key="c" type="button" class="wgClosetChip" :aria-pressed="String(closetFilter === c)" :data-testid="`closet-filter-${c}`" @click="closetFilter = c">
+                {{ c }}
+            </button>
+            <button type="button" class="wgClosetChip" :aria-pressed="String(closetFilter === '')" @click="closetFilter = ''">
+                Uncategorized
+            </button>
+        </div>
         <ul id="library" class="lpSidebarScroll">
             <li v-for="item in filteredItems" :key="item.id" class="lpLibraryItem" :class="{ wgRetired: item.retired }" :data-item-id="item.id" data-testid="closet-item">
                 <div v-if="!item.inCurrentList && !item.retired" class="lpHandle lpLibraryItemHandle" title="Drag this item into your list" />
                 <span class="lpLibraryItemBody">
                     <span class="lpLibraryItemTopline">
-                        <span class="lpName">{{ item.name }}</span>
+                        <span class="lpName">{{ item.name }}<span v-if="item.closetCategory && closetFilter === null" class="wgClosetTag">{{ item.closetCategory }}</span></span>
                         <span class="lpWeight">
                             {{ displayWeight(item.weight, item.authorUnit) }}
                             {{ item.authorUnit }}
@@ -23,6 +34,7 @@
                     </span>
                     <span class="lpLibraryItemBottomline">
                         <span class="lpDescription"><span v-if="item.retired" class="wgRetiredTag">Retired</span>{{ item.description }}</span>
+                        <button type="button" class="wgClosetDetails" :aria-label="`Details for ${item.name}`" data-testid="closet-details" @click="openGearDetails(library.getItemById(item.id))">Details</button>
                         <button v-if="item.retired" type="button" class="wgClosetRestore" data-testid="closet-restore" @click="restore(item)">Restore</button>
                         <a v-else class="lpRemove lpRemoveLibraryItem speedbump" title="Remove from your closet" @click="removeItem(item)"><i class="lpSprite lpSpriteRemove" /></a>
                     </span>
@@ -41,12 +53,14 @@ import { confirmClosetRemoval, isPlaceholder, restoreClosetItem } from '../utils
 export default {
     name: 'LibraryItem',
     mixins: [utilsMixin],
-    inject: ['initSpeedbump'],
+    inject: ['initSpeedbump', 'openGearDetails'],
     props: ['item'],
     data() {
         return {
             searchText: '',
             showRetired: false,
+            // null: everything; '': gear with no closet category; else that category.
+            closetFilter: null,
             itemDragId: false,
             drake: null,
         };
@@ -64,9 +78,14 @@ export default {
         retiredCount() {
             return this.closetGear.length - this.activeCount;
         },
+        closetCategories() {
+            return [...new Set(this.closetGear.map((i) => i.closetCategory).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+        },
         // Retired gear stays out of the way unless asked for.
         closetItems() {
-            return this.showRetired ? this.closetGear : this.closetGear.filter((item) => !item.retired);
+            const visible = this.showRetired ? this.closetGear : this.closetGear.filter((item) => !item.retired);
+            if (this.closetFilter === null) return visible;
+            return visible.filter((item) => (item.closetCategory || '') === this.closetFilter);
         },
         filteredItems() {
             let i;
@@ -357,4 +376,54 @@ export default {
 
 // No phone rules here: below $mobile the drawer links out to the gear screen
 // (see sidebar.vue) and this component isn't rendered at all.
+.wgClosetFilter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 0 0 8px;
+}
+
+.wgClosetChip {
+    background: transparent;
+    border: 1px solid var(--lp-border);
+    border-radius: 999px;
+    color: var(--lp-sidebar-text);
+    cursor: pointer;
+    font: inherit;
+    font-size: 11.5px;
+    padding: 2px 9px;
+
+    &[aria-pressed="true"] {
+        background: var(--lp-primary);
+        border-color: var(--lp-primary);
+        color: #fff;
+    }
+}
+
+.wgClosetTag {
+    background: var(--lp-surface-sunken);
+    border-radius: 5px;
+    color: var(--lp-text-secondary);
+    font-size: 10.5px;
+    font-weight: 600;
+    margin-left: 6px;
+    padding: 1px 5px;
+}
+
+#libraryContainer .wgClosetDetails,
+.wgClosetDetails {
+    background: none;
+    border: 0;
+    border-radius: 0;
+    flex: none;
+    line-height: 1.2;
+    margin-left: auto;
+    min-height: 0;
+    color: var(--lp-link-blue, var(--lp-primary));
+    cursor: pointer;
+    font: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 0 4px;
+}
 </style>

@@ -65,6 +65,12 @@ Item.prototype.save = function () {
     }
     // Retired gear is hidden from the closet but stays in lists that use it.
     if (this.retired) out.retired = true;
+    // Closet organization and media (Phase 4).
+    if (this.closetCategory) out.closetCategory = this.closetCategory;
+    if (this.photos && this.photos.length) out.photos = [...this.photos];
+    if (this.videoUrl) out.videoUrl = this.videoUrl;
+    // How many you own (Phase 5): lists warn when they use more.
+    if (Number.isInteger(this.qtyOwned)) out.qtyOwned = this.qtyOwned;
     return out;
 };
 
@@ -176,6 +182,9 @@ Category.prototype.save = function () {
             };
             // Checked off in Pack mode. Only written when set.
             if (categoryItem.packed) out.packed = true;
+            // Group trips: who carries it. After a trip: wasn't used.
+            if (categoryItem.carrier) out.carrier = categoryItem.carrier;
+            if (categoryItem.unused) out.unused = true;
             return out;
         }),
     };
@@ -388,6 +397,7 @@ List.prototype.save = function () {
     if (this.published) out.published = true;
     // The owner is asking for a shakedown: suggestions in the comments.
     if (this.shakedown) out.shakedown = true;
+    if (this.tripType) out.tripType = this.tripType;
     return out;
 };
 
@@ -410,6 +420,7 @@ const Library = function () {
     this.itemUnit = 'oz';
     this.showSidebar = true;
     this.preferences = assignIn({}, defaultPreferences);
+    this.kits = [];
     this.currencySymbol = '$';
     this.firstRun();
     return this;
@@ -761,6 +772,7 @@ Library.prototype.save = function () {
     out.showSidebar = this.showSidebar;
     out.preferences = assignIn({}, this.preferences);
     out.currencySymbol = this.currencySymbol;
+    if (this.kits && this.kits.length) out.kits = this.kits.map((k) => ({ id: k.id, name: k.name, items: k.items.map((i) => ({ itemId: i.itemId, qty: i.qty })) }));
 
     out.items = [];
     for (const i in this.items) {
@@ -802,6 +814,7 @@ Library.prototype.load = function (serializedLibrary) {
     this.items = [];
 
     this.preferences = assignIn({}, defaultPreferences, serializedLibrary.preferences);
+    this.kits = Array.isArray(serializedLibrary.kits) ? serializedLibrary.kits.map((k) => ({ ...k, items: [...(k.items || [])] })) : [];
 
     for (const i in serializedLibrary.items) {
         const temp = new Item({ id: serializedLibrary.items[i].id });

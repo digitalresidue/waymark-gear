@@ -9,14 +9,14 @@
  *   is kept by the app (see client/utils/offline-cache.js), not by this file.
  */
 
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL = `wg-shell-${VERSION}`;
 const ASSETS = `wg-assets-${VERSION}`;
 const MAX_ASSETS = 150;
 
 // Client-side routes that render the app shell (keep in step with
 // client/routes.js; server/views.js serves the same HTML for them).
-const APP_PATHS = new Set(['/', '/pack', '/gear', '/profile', '/welcome', '/explore', '/signin', '/register']);
+const APP_PATHS = new Set(['/', '/pack', '/print', '/gear', '/profile', '/notifications', '/leaderboard', '/welcome', '/explore', '/signin', '/register']);
 
 self.addEventListener('install', (event) => {
     event.waitUntil((async () => {

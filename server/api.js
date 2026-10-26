@@ -16,6 +16,16 @@ import {
     authenticateAdmin, authenticateUser, authenticateModerator, optionalUser,
 } from './auth.js';
 import * as comments from './comments.js';
+import * as follows from './follows.js';
+import * as tickets from './tickets.js';
+import * as plans from './shared-lists.js';
+import { openStream } from './live.js';
+import { LibraryError } from './library-store.js';
+import { forgetUserPages } from './page-cache.js';
+import { KINDS as NOTIFY_KINDS, preferences as notifyPreferences, cleanPreferences } from './notify.js';
+import { mailEnabled } from './mail.js';
+import knex from './db.js';
+import { youTubeId, TRIP_TYPES } from '../client/utils/gear-meta.js';
 import { profileForEditing, updateProfile, ProfileError } from './profiles.js';
 import { googleEnabled } from './google.js';
 import { logWithRequest } from './log.js';
@@ -60,7 +70,10 @@ const signedIn = (handler) => (req, res) => authenticateUser(req, res, async (re
         await handler(req, res, user);
     } catch (err) {
         if (err instanceof ProfileError) return res.status(400).json({ message: err.message, field: err.field });
-        if (err instanceof comments.CommentError) return res.status(err.status).json({ message: err.message });
+        if (err instanceof LibraryError) return res.status(400).json({ message: err.message });
+        if (err instanceof comments.CommentError || err instanceof follows.FollowError || err instanceof tickets.TicketError || err instanceof plans.PlanError) {
+            return res.status(err.status).json({ message: err.message });
+        }
         logWithRequest(req, { message: 'api error', url: req.originalUrl, err });
         if (!res.headersSent) res.status(500).json({ message: 'An error occurred.' });
     }
@@ -115,7 +128,7 @@ router.post('/api/comments/:id/report', requireJson, commentLimit, signedIn(asyn
 
 router.get('/api/notifications', signedIn(async (req, res, user) => {
     res.set('Cache-Control', 'no-store');
-    res.json(await comments.notificationsFor(user));
+    res.json(await comments.notificationsFor(user, req.query.limit));
 }));
 
 router.post('/api/notifications/read', requireJson, signedIn(async (req, res, user) => {
@@ -126,7 +139,7 @@ const moderator = (handler) => (req, res) => authenticateModerator(req, res, asy
     try {
         await handler(req, res, user);
     } catch (err) {
-        if (err instanceof comments.CommentError) return res.status(err.status).json({ message: err.message });
+        if (err instanceof comments.CommentError || err instanceof tickets.TicketError) return res.status(err.status).json({ message: err.message });
         logWithRequest(req, { message: 'moderation api error', url: req.originalUrl, err });
         if (!res.headersSent) res.status(500).json({ message: 'An error occurred.' });
     }
@@ -139,6 +152,162 @@ router.get('/api/moderation/comments', moderator(async (req, res) => {
 
 router.post('/api/moderation/comments/:id', requireJson, moderator(async (req, res, user) => {
     res.json(await comments.moderateComment(user, req.params.id, String((req.body && req.body.action) || '')));
+}));
+
+// ---- follows, votes, settings, tickets, videos (Phase 4) ------------------
+
+const publicJson = (handler) => pub(async (req, res) => {
+    try {
+        await handler(req, res);
+    } catch (err) {
+        if (err.status && err.message) return res.status(err.status).json({ message: err.message });
+        throw err;
+    }
+});
+
+router.get('/api/users/:username/follow', publicJson(async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.json(await follows.followState(await optionalUser(req), req.params.username));
+}));
+
+router.post('/api/users/:username/follow', requireJson, commentLimit, signedIn(async (req, res, user) => {
+    res.json(await follows.follow(user, req.params.username));
+}));
+
+router.delete('/api/users/:username/follow', signedIn(async (req, res, user) => {
+    res.json(await follows.unfollow(user, req.params.username));
+}));
+
+router.get('/api/following', signedIn(async (req, res, user) => {
+    res.set('Cache-Control', 'no-store');
+    res.json({ following: await follows.followingList(user) });
+}));
+
+router.get('/api/kits/:id/votes', pub(async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const viewer = await optionalUser(req);
+    res.json(await kits.voteSummary(String(req.params.id), viewer && viewer.user_id));
+}));
+
+router.post('/api/kits/:id/vote', requireJson, commentLimit, signedIn(async (req, res, user) => {
+    const result = await kits.castVote(user, String(req.params.id), req.body && req.body.value);
+    if (result.error) return res.status(result.status).json({ message: result.error });
+    res.json(result);
+}));
+
+router.get('/api/notifications/settings', signedIn(async (req, res, user) => {
+    res.set('Cache-Control', 'no-store');
+    const prefs = notifyPreferences(user);
+    res.json({
+        emailAvailable: mailEnabled(),
+        kinds: Object.entries(NOTIFY_KINDS).map(([kind, spec]) => ({ kind, label: spec.label, ...prefs[kind] })),
+    });
+}));
+
+router.put('/api/notifications/settings', requireJson, signedIn(async (req, res, user) => {
+    const prefs = cleanPreferences(req.body && req.body.prefs);
+    const anyEmail = Object.values(prefs).some((p) => p.email);
+    await knex('users').where({ user_id: user.user_id }).update({ notify_prefs: JSON.stringify(prefs), notify_email: anyEmail });
+    res.json({ ok: true });
+}));
+
+router.put('/api/preferences', requireJson, signedIn(async (req, res, user) => {
+    const theme = req.body && req.body.theme;
+    if (!['system', 'light', 'dark'].includes(theme)) return res.status(400).json({ message: 'Theme is system, light or dark.' });
+    await knex('users').where({ user_id: user.user_id }).update({ theme_pref: theme });
+    res.json({ theme });
+}));
+
+const ticketLimit = config.get('rateLimit').enabled
+    ? rateLimit({
+        windowMs: 60 * 60 * 1000,
+        limit: 10,
+        standardHeaders: 'draft-8',
+        legacyHeaders: false,
+        handler: (req, res, _next, options) => res.status(options.statusCode).json({ message: "You've sent a lot of reports. Try again later." }),
+    })
+    : (_req, _res, next) => next();
+
+router.post('/api/tickets', requireJson, ticketLimit, publicJson(async (req, res) => {
+    res.status(201).json(await tickets.fileTicket(await optionalUser(req), req.body || {}));
+}));
+
+router.get('/api/staff/tickets', moderator(async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.json(await tickets.listTickets({ status: String(req.query.status || 'active') }));
+}));
+
+router.patch('/api/staff/tickets/:id', requireJson, moderator(async (req, res) => {
+    res.json(await tickets.updateTicket(req.params.id, req.body || {}));
+}));
+
+// A gear video was opened in the lightbox: count it. One count per IP per
+// video per hour is plenty precise for "how often is this watched".
+const recentViews = new Map();
+router.post('/api/videos/:id/view', pub(async (req, res) => {
+    const id = youTubeId(`https://youtu.be/${req.params.id}`);
+    if (!id) return res.status(404).json({ message: 'Unknown video.' });
+    const key = `${req.ip}|${id}`;
+    const now = Date.now();
+    let row;
+    if ((recentViews.get(key) || 0) > now - 60 * 60 * 1000) {
+        row = await knex('video_views').where({ video_id: id }).first();
+    } else {
+        recentViews.set(key, now);
+        if (recentViews.size > 50000) recentViews.clear();
+        [row] = await knex('video_views').insert({ video_id: id, views: 1 })
+            .onConflict('video_id').merge({ views: knex.raw('video_views.views + 1') }).returning('*');
+    }
+    res.json({ views: row ? Number(row.views) : 0 });
+}));
+
+// ---- planning together (Phase 5) -------------------------------------------
+
+router.get('/api/live', signedIn(async (req, res, user) => {
+    openStream(req, res, user);
+}));
+
+router.get('/api/plans', signedIn(async (req, res, user) => {
+    res.set('Cache-Control', 'no-store');
+    res.json({ sharedWithMe: await plans.sharedWithMe(user) });
+}));
+
+router.get('/api/plan/:owner/:listId', signedIn(async (req, res, user) => {
+    const { owner, list, role } = await plans.planAccess(user, req.params.owner, req.params.listId);
+    const { sync_token: syncToken } = await knex('users').where({ user_id: owner.user_id }).first('sync_token');
+    res.set('Cache-Control', 'no-store');
+    res.json({
+        owner: owner.username,
+        listId: Number(list.id),
+        role,
+        syncToken: Number(syncToken),
+        members: await plans.members(owner.user_id, list.id),
+        library: await plans.loadPlan(owner.user_id, list.id),
+    });
+}));
+
+router.post('/api/plan/:owner/:listId/changes', requireJson, signedIn(async (req, res, user) => {
+    const { owner, list } = await plans.planAccess(user, req.params.owner, req.params.listId);
+    const result = await plans.applyPlanChanges(owner.user_id, list.id, req.body && req.body.changes);
+    forgetUserPages(owner.user_id);
+    plans.announceLibraryChange(owner.user_id, owner.username, user.username).catch(() => {});
+    res.json(result);
+}));
+
+router.get('/api/plan/:owner/:listId/members', signedIn(async (req, res, user) => {
+    const { owner, list } = await plans.planAccess(user, req.params.owner, req.params.listId);
+    res.set('Cache-Control', 'no-store');
+    res.json({ members: await plans.members(owner.user_id, list.id) });
+}));
+
+router.post('/api/plan/:owner/:listId/members', requireJson, signedIn(async (req, res, user) => {
+    const { list, role } = await plans.planAccess(user, req.params.owner, req.params.listId);
+    if (role !== 'owner') return res.status(403).json({ message: 'Only the list owner can invite people.' });
+    res.json({ members: await plans.invite(user, list.id, req.body && req.body.username) });
+}));
+
+router.delete('/api/plan/:owner/:listId/members/:username', signedIn(async (req, res, user) => {
+    res.json({ members: await plans.removeMember(user, req.params.owner, req.params.listId, req.params.username) });
 }));
 
 // ---- public ----------------------------------------------------------------
@@ -191,11 +360,23 @@ router.get('/api/explore/featured', pub(async (req, res) => {
 router.get('/api/explore/kits', pub(async (req, res) => {
     const weightClass = req.query.class ? String(req.query.class) : undefined;
     if (weightClass && !validClass(weightClass)) return res.status(400).json({ message: 'Unknown weight class.' });
-    res.set('Cache-Control', 'public, max-age=60');
+    // "Following" is personal: never cached, needs a signed-in reader.
+    let followerId = null;
+    if (req.query.following === '1') {
+        const viewer = await optionalUser(req);
+        if (!viewer) return res.status(401).json({ message: 'Sign in to see hikers you follow.' });
+        followerId = viewer.user_id;
+        res.set('Cache-Control', 'no-store');
+    } else {
+        res.set('Cache-Control', 'public, max-age=60');
+    }
     res.json(await kits.listKits({
+        followerId,
         weightClass,
         q: String(req.query.q || '').slice(0, 200),
         shakedownOnly: req.query.shakedown === '1',
+        tripType: TRIP_TYPES.includes(req.query.trip) ? req.query.trip : undefined,
+        sort: String(req.query.sort || 'featured'),
         limit: req.query.limit,
         offset: req.query.offset,
     }));

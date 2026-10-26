@@ -347,3 +347,89 @@
         border-radius: 0;
     }
 }
+
+.wgProfileTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    list-style: none;
+    margin: 10px 0 0;
+    padding: 0;
+
+    li {
+        background: var(--lp-surface-sunken);
+        border-radius: 999px;
+        font-size: 12.5px;
+        font-weight: 600;
+        padding: 3px 10px;
+        text-transform: capitalize;
+    }
+}
+
+.wgProfileFollow {
+    margin-top: 10px;
+}
+
+.wgFollow {
+    align-items: center;
+    display: inline-flex;
+    gap: 10px;
+}
+
+.wgFollowCount {
+    color: var(--lp-text-secondary);
+    font-size: 13px;
+}
+
+.wgGearMedia {
+    padding-bottom: 12px !important;
+}
+
+// Votes and follow on a shared list.
+.wgShareSocial {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 10px;
+}
+
+.wgVotes {
+    align-items: center;
+    border: 1px solid var(--lp-border);
+    border-radius: 999px;
+    display: inline-flex;
+    gap: 2px;
+    padding: 2px;
+}
+
+.wgVoteBtn {
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+    color: var(--lp-text-secondary);
+    cursor: pointer;
+    font-size: 13px;
+    height: 32px;
+    width: 32px;
+
+    &[aria-pressed="true"] {
+        background: var(--lp-primary);
+        color: #fff;
+    }
+}
+
+.wgVoteScore {
+    font-weight: 700;
+    min-width: 22px;
+    text-align: center;
+}
+
+.wgReportLink {
+    font-size: 13px;
+    margin: 24px 0 0;
+
+    a {
+        color: var(--lp-text-secondary);
+    }
+}

@@ -2,8 +2,20 @@
 // https URL on the right site, or refuse it. Pure, so it's unit tested.
 
 import { isSafeHref } from '../client/utils/markdown.js';
+import { SEASONS, ACTIVITIES } from '../client/utils/gear-meta.js';
 
 export const PROFILE_LIMITS = { displayName: 60, trailName: 40, bio: 4000, link: 300, featured: 3 };
+
+// Profile tags: pick from common seasons and activities, plus a few of your own.
+export { SEASONS, ACTIVITIES };
+
+export function cleanTags(input = {}) {
+    const pick = (list, allowed) => [...new Set((Array.isArray(list) ? list : []).map((t) => String(t).toLowerCase().trim()))]
+        .filter((t) => allowed.includes(t));
+    const custom = [...new Set((Array.isArray(input.custom) ? input.custom : [])
+        .map((t) => String(t).replace(/[^\p{L}\p{N} '&+-]/gu, '').trim().slice(0, 24)).filter(Boolean))].slice(0, 5);
+    return { seasons: pick(input.seasons, SEASONS), activities: pick(input.activities, ACTIVITIES), custom };
+}
 
 export class ProfileError extends Error {
     constructor(message, field) {

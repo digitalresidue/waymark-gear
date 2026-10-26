@@ -27,6 +27,9 @@
                     >
                         Dark mode
                     </toggle>
+                    <button v-if="themePref !== 'system'" type="button" class="lpHref wgMatchDevice" data-testid="theme-system" @click="matchDevice">
+                        Match my device
+                    </button>
                     <hr>
                     <a class="lpHref signout" @click="hide(); signout()">Sign Out</a>
                 </div>
@@ -48,7 +51,8 @@
 import PopoverHover from './popover-hover.vue';
 import notificationBell from './notification-bell.vue';
 import toggle from './toggle.vue';
-import { toggleTheme } from '../utils/theme.js';
+import { toggleTheme, themePreference, setThemePreference } from '../utils/theme.js';
+import { api } from '../utils/format.js';
 
 export default {
     name: 'AccountDropdown',
@@ -61,6 +65,7 @@ export default {
     data() {
         return {
             isDark: document.documentElement.getAttribute('data-theme') === 'dark',
+            themePref: themePreference(),
         };
     },
     computed: {
@@ -86,6 +91,20 @@ export default {
         },
         toggleDarkMode() {
             this.isDark = toggleTheme() === 'dark';
+            this.saveTheme(this.isDark ? 'dark' : 'light');
+        },
+        matchDevice() {
+            setThemePreference('system');
+            this.isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            this.saveTheme('system');
+        },
+        // Signed in: the choice follows you to every device.
+        saveTheme(pref) {
+            this.themePref = pref;
+            this.$store.commit('setThemePref', pref);
+            if (this.isSignedIn && this.$store.state.saveType === 'remote') {
+                api('/api/preferences', { method: 'PUT', body: JSON.stringify({ theme: pref }) }).catch(() => {});
+            }
         },
         async signout() {
             await this.$store.dispatch('signout');
@@ -201,5 +220,14 @@ export default {
     .lpAccountSep {
         color: var(--lp-text-secondary);
     }
+}
+
+.wgMatchDevice {
+    background: none;
+    border: 0;
+    cursor: pointer;
+    font: inherit;
+    font-size: 12.5px;
+    padding: 2px 0 0;
 }
 </style>

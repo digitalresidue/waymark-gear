@@ -11,12 +11,13 @@ import { applyCatalog } from './catalog.js';
 import { syncPublishedKits } from './kits.js';
 import { applyChanges, LibraryError, loadLibrary, normalizeLibrary, replaceLibrary } from './library-store.js';
 import { authenticateUser, isAdmin, isModerator, verifyPassword, generateSession, startSession, hashSessionToken, sessionCookieOptions, issueResetToken, hashResetToken, resetPasswordUrl, RESET_TOKEN_TTL_MS } from './auth.js';
-import { sniffImage, storeImage, storeProfileImage } from './images.js';
+import { sniffImage, storeImage, storeProfileImage, storeGearPhoto } from './images.js';
 import { deleteUserAccount } from './accounts.js';
 import { Library } from '../client/dataTypes.js';
 
 import { mailIdentity, sendMail } from './mail.js';
 import { forgetUserPages } from './page-cache.js';
+import { announceLibraryChange } from './shared-lists.js';
 
 const router = express.Router();
 
@@ -165,6 +166,7 @@ function accountInfo(user) {
     return {
         email: user.email,
         hasPassword: Boolean(user.password),
+        themePref: ['light', 'dark'].includes(user.theme_pref) ? user.theme_pref : 'system',
         googleLinked: Boolean(user.google_sub),
         isAdmin: isAdmin(user.username),
         isModerator: isModerator(user.username),
@@ -255,6 +257,7 @@ async function saveLibrary(req, res, user) {
         logWithRequest(req, { message: 'published kit sync failed', username: user.username, err });
     }
     forgetUserPages(user.user_id);
+    announceLibraryChange(user.user_id, user.username, user.username).catch(() => {});
 
     return res.status(200).json({ message: 'success', sync_token: newSyncToken });
 }
@@ -621,7 +624,7 @@ const maxImageUploadBytes = 5 * 1024 * 1024;
 // profile form saves it with everything else.
 router.post('/api/profile/image', (req, res) => {
     const kind = String(req.query.kind || '');
-    if (!['avatar', 'banner'].includes(kind)) return res.status(400).json({ message: 'Unknown image kind.' });
+    if (!['avatar', 'banner', 'photo'].includes(kind)) return res.status(400).json({ message: 'Unknown image kind.' });
     authenticateUser(req, res, async (req, res, user) => {
         let files;
         try {
@@ -637,7 +640,9 @@ router.post('/api/profile/image', (req, res) => {
             const buf = fs.readFileSync(upload.filepath);
             const sniffed = sniffImage(buf);
             if (!sniffed) return res.status(400).json({ message: 'Please upload a JPEG, PNG, or WebP image.' });
-            const { imageUrl } = await storeProfileImage(upload.filepath, buf, sniffed, user.user_id, kind);
+            const { imageUrl } = kind === 'photo'
+                ? await storeGearPhoto(upload.filepath, buf, sniffed, user.user_id)
+                : await storeProfileImage(upload.filepath, buf, sniffed, user.user_id, kind);
             return res.json({ imageUrl });
         } catch (err) {
             logWithRequest(req, { message: 'profile image conversion failed', err: { message: err.message } });
