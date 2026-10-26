@@ -407,6 +407,7 @@ const Library = function () {
 
 Library.prototype.firstRun = function () {
     const firstList = this.newList();
+    this.defaultListId = firstList.id;
     const firstCategory = this.newCategory({ list: firstList });
     this.newItem({ category: firstCategory });
 };
@@ -671,8 +672,27 @@ Library.prototype.findListWithCategoryById = function (id) {
     }
 };
 
+// New ids are random rather than the next number in sequence: two tabs or
+// devices adding things to the same library at once would otherwise hand out
+// the same id and overwrite each other's work when both save. Random 53-bit
+// ids collide with negligible probability and stay above the small sequential
+// ids older libraries already use. `sequence` still counts, for libraries and
+// tools that read it.
+const ID_FLOOR = 2 ** 32;
+function randomId() {
+    const span = Number.MAX_SAFE_INTEGER - ID_FLOOR;
+    if (globalThis.crypto && globalThis.crypto.getRandomValues) {
+        const [hi, lo] = globalThis.crypto.getRandomValues(new Uint32Array(2));
+        return ID_FLOOR + (((hi & 0x1fffff) * 2 ** 32 + lo) % span);
+    }
+    return ID_FLOOR + Math.floor(Math.random() * span);
+}
+
 Library.prototype.nextSequence = function () {
-    return ++this.sequence;
+    this.sequence += 1;
+    let id = randomId();
+    while (this.idMap[id]) id = randomId();
+    return id;
 };
 
 Library.prototype.save = function () {

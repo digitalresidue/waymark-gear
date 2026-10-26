@@ -5,13 +5,13 @@ import Mustache from 'mustache';
 import { Marked } from 'marked';
 import { thumbnailUrl } from './images.js';
 import config from 'config';
-import knex from './db.js';
 import { logWithRequest, logger } from './log.js';
 import weightUtils from '../client/utils/weight.js';
 import { marked, isSafeHref } from '../client/utils/markdown.js';
 import { Library } from '../client/dataTypes.js';
 import { listToCsv } from './csv.js';
 import { applyCatalog } from './catalog.js';
+import { libraryForExternalId } from './library-store.js';
 import { WEIGHT_CLASSES, weightClassFor } from './kits.js';
 import { formatWeightMg } from '../client/utils/format.js';
 
@@ -187,17 +187,12 @@ async function renderListView(req, res) {
     }
 
     try {
-        const users = await knex('users')
-            .join('list', 'users.user_id', '=', 'list.user_id')
-            .select('users.library', 'users.username')
-            .where({'list.external_id': id });
+        const user = await libraryForExternalId(id);
 
-        if (!users.length) {
+        if (!user) {
             res.status(400).send('Invalid list specified.');
             return;
         }
-
-        const user = users[0];
 
         const library = new Library();
         let list;
@@ -282,17 +277,12 @@ async function renderEmberView(req, res) {
     }
 
     try {
-        const users = await knex('users')
-            .join('list', 'users.user_id', '=', 'list.user_id')
-            .select('users.library')
-            .where({'list.external_id': id });
+        const user = await libraryForExternalId(id);
 
-        if (!users.length) {
+        if (!user) {
             res.status(400).send('Invalid list specified.');
             return;
         }
-
-        const user = users[0];
 
         const library = new Library();
         let list;
@@ -364,17 +354,12 @@ async function renderListCSV(req, res) {
     }
 
     try {
-        const users = await knex('users')
-            .join('list', 'users.user_id', '=', 'list.user_id')
-            .select('users.library')
-            .where({'list.external_id': id });
+        const user = await libraryForExternalId(id);
 
-        if (!users.length) {
+        if (!user) {
             res.status(400).send('Invalid list specified.');
             return;
         }
-
-        const user = users[0];
 
         const library = new Library();
         let list;
@@ -384,7 +369,7 @@ async function renderListCSV(req, res) {
             return res.status(500).send('Unknown error.');
         }
 
-        library.load(await applyCatalog(users[0].library));
+        library.load(await applyCatalog(user.library));
         for (var i in library.lists) {
             if (library.lists[i].externalId && library.lists[i].externalId == id) {
                 library.defaultListId = library.lists[i].id;

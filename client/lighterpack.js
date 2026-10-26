@@ -50,6 +50,12 @@ window.addEventListener('beforeunload', (e) => {
     }
 });
 
+// Coming back to this tab: fetch anything saved meanwhile from another tab
+// or device. Cheap when nothing changed (one small request).
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') store.dispatch('refreshRemote');
+});
+
 store.dispatch('init')
     .then(() => {
         app.mount('#lp');

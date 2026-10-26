@@ -7,7 +7,7 @@
 import express from 'express';
 
 import * as catalog from './catalog.js';
-import knex from './db.js';
+import { libraryForExternalId } from './library-store.js';
 import { Library } from '../client/dataTypes.js';
 import * as kits from './kits.js';
 import { authenticateAdmin } from './auth.js';
@@ -99,8 +99,7 @@ router.get('/api/explore/common', pub(async (req, res) => {
 // is already viewable by anyone holding it, so this exposes nothing more.
 router.get('/api/kits/:externalId', pub(async (req, res) => {
     const id = String(req.params.externalId).trim().slice(0, 40);
-    const row = await knex('users').join('list', 'users.user_id', 'list.user_id')
-        .select('users.library', 'users.username').where({ 'list.external_id': id }).first();
+    const row = await libraryForExternalId(id);
     if (!row) return res.status(404).json({ message: 'That list could not be found.' });
     const library = new Library();
     library.load(await catalog.applyCatalog(row.library));

@@ -4,6 +4,7 @@ import debounce from 'lodash/debounce.js';
 import weightUtils from '../utils/weight.js';
 import { Library } from '../dataTypes.js';
 import { fetchJson, readCookie, arrayMove } from '../utils/utils.js';
+import { diffLibrary } from '../utils/library-diff.js';
 
 const saveInterval = 5000;
 
@@ -312,6 +313,36 @@ const store = createStore({
         },
     },
     actions: {
+        // Pick up changes saved from another tab or device. Only when this
+        // tab has nothing unsaved, so local work is never thrown away; the
+        // list being viewed stays put if it still exists.
+        async refreshRemote(context) {
+            const { state } = context;
+            if (state.saveType !== 'remote' || !state.library || state.isSaving) return;
+            if (JSON.stringify(state.library.save()) !== state.lastSaveData) return;
+            let response;
+            try {
+                response = await fetchJson('/signin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    redirectOnAuthFailure: false,
+                });
+            } catch {
+                return;
+            }
+            if (response.sync_token === state.syncToken) return;
+            if (state.isSaving || JSON.stringify(state.library.save()) !== state.lastSaveData) return;
+            const viewing = state.library.defaultListId;
+            context.commit('setSyncToken', response.sync_token);
+            context.commit('loadLibraryData', response.library);
+            if (state.library && state.library.getListById(viewing)) {
+                state.library.defaultListId = viewing;
+                state.library.getListById(viewing).calculateTotals();
+                context.commit('setLastSaveData', JSON.stringify(state.library.save()));
+            }
+            context.commit('setAccount', response.account || state.account);
+        },
         async signout(context) {
             await fetch('/signout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
             context.commit('signout');
@@ -432,12 +463,30 @@ const store = createStore({
                     if (!saveData) {
                         saveData = JSON.stringify(state.library.save());
                     }
+                    if (saveData === state.lastSaveData) {
+                        return;
+                    }
+
+                    // Send only what changed since the last save, so another
+                    // tab's or device's edits to other things aren't overwritten.
+                    // Without a baseline, fall back to the whole library.
+                    let payload;
+                    if (state.lastSaveData) {
+                        const changes = diffLibrary(JSON.parse(state.lastSaveData), JSON.parse(saveData));
+                        if (!changes) {
+                            store.commit('setLastSaveData', saveData);
+                            return;
+                        }
+                        payload = { sync_token: state.syncToken, username: state.loggedIn, changes };
+                    } else {
+                        payload = { sync_token: state.syncToken, username: state.loggedIn, data: saveData };
+                    }
 
                     store.commit('setIsSaving', true);
 
                     return fetchJson('/saveLibrary/', {
                         method: 'POST',
-                        body: JSON.stringify({ sync_token: state.syncToken, username: state.loggedIn, data: saveData }),
+                        body: JSON.stringify(payload),
                         headers: {
                             'Content-Type': 'application/json',
                         },
