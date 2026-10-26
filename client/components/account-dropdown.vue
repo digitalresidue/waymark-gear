@@ -10,6 +10,9 @@
                         Signed in as <span class="username">{{ username }}</span>
                     </div>
                     <hr>
+                    <router-link to="/profile" class="lpHref" data-testid="menu-profile" @click="hide()">
+                        Your profile
+                    </router-link><br>
                     <a class="lpHref accountSettings" @click="hide(); showAccount()">Account Settings</a><br>
                     <a class="lpHref" @click="hide(); showHelp()">Help</a>
                     <hr>

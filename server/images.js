@@ -152,6 +152,51 @@ async function storeImage(srcPath, buf, width, userId) {
     return { imageUrl: `${urlPath}/${id}.webp` };
 }
 
+// Profile pictures and banners: cropped to shape (centered) and sized for a
+// 2x screen. Avatars show at up to 256px; banners at up to 1500px wide.
+const PROFILE_SHAPES = {
+    avatar: { ratio: 1, width: 512, height: 512 },
+    banner: { ratio: 3, width: 1500, height: 500 },
+};
+
+/**
+ * Store a cropped profile image owned by `userId`. `kind` is avatar|banner.
+ * Returns { imageUrl }.
+ */
+async function storeProfileImage(srcPath, buf, { width, height }, userId, kind) {
+    const shape = PROFILE_SHAPES[kind];
+    if (!shape) throw new Error(`Unknown profile image kind: ${kind}`);
+    let cropW = width;
+    let cropH = height;
+    if (width / height > shape.ratio) cropW = Math.round(height * shape.ratio);
+    else cropH = Math.round(width / shape.ratio);
+    const x = Math.floor((width - cropW) / 2);
+    const y = Math.floor((height - cropH) / 2);
+
+    const { urlPath, dir } = userImageLocation(userId);
+    const id = crypto.createHash('sha256').update(buf).digest('hex').slice(0, 16);
+    const name = `${id}_${kind}.webp`;
+    const dest = path.join(dir, name);
+    if (!fs.existsSync(dest)) {
+        fs.mkdirSync(dir, { recursive: true });
+        const cwebp = config.has('cwebpPath') ? config.get('cwebpPath') : 'cwebp';
+        const tmpPath = `${dest}.tmp-${process.pid}-${crypto.randomBytes(4).toString('hex')}`;
+        try {
+            await execFileAsync(cwebp, [
+                '-q', CWEBP_QUALITY, '-metadata', 'none',
+                '-crop', String(x), String(y), String(cropW), String(cropH),
+                '-resize', String(Math.min(shape.width, cropW)), String(Math.min(shape.height, cropH)),
+                srcPath, '-o', tmpPath,
+            ]);
+            fs.renameSync(tmpPath, dest);
+        } catch (err) {
+            fs.rmSync(tmpPath, { force: true });
+            throw err;
+        }
+    }
+    return { imageUrl: `${urlPath}/${name}` };
+}
+
 /**
  * Give a user their own copy of an image already converted elsewhere, and
  * return the URL that serves it. Used by the imgur mirror, which converts once
@@ -196,5 +241,5 @@ function thumbnailUrl(imageUrl) {
 }
 
 export {
-    sniffImage, storeImage, storeImageFiles, adoptImage, thumbnailUrl, deleteUserImages, userImageLocation,
+    sniffImage, storeImage, storeImageFiles, storeProfileImage, adoptImage, thumbnailUrl, deleteUserImages, userImageLocation,
 };

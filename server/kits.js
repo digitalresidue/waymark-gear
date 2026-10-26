@@ -102,7 +102,7 @@ export async function syncPublishedKits(user, serializedLibrary, db = knex) {
     return valid.length;
 }
 
-function kitToApi(row) {
+export function kitToApi(row) {
     return {
         externalId: row.external_id,
         username: row.username,
@@ -128,6 +128,12 @@ export async function featuredKits({ weightClass, limit = 6 }) {
         .where({ weight_class: weightClass })
         .orderBy([{ column: 'featured', order: 'desc' }, { column: 'featured_rank', order: 'asc' }, { column: 'updated_at', order: 'desc' }])
         .limit(Math.min(Number(limit) || 6, 24));
+    return rows.map(kitToApi);
+}
+
+// One person's published kits, newest first (their profile page).
+export async function kitsForUser(userId, db = knex) {
+    const rows = await db('public_kits').where({ user_id: userId }).orderBy('updated_at', 'desc').limit(100);
     return rows.map(kitToApi);
 }
 

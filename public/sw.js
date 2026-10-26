@@ -16,7 +16,7 @@ const MAX_ASSETS = 150;
 
 // Client-side routes that render the app shell (keep in step with
 // client/routes.js; server/views.js serves the same HTML for them).
-const APP_PATHS = new Set(['/', '/pack', '/gear', '/welcome', '/explore', '/signin', '/register']);
+const APP_PATHS = new Set(['/', '/pack', '/gear', '/profile', '/welcome', '/explore', '/signin', '/register']);
 
 self.addEventListener('install', (event) => {
     event.waitUntil((async () => {

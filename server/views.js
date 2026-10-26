@@ -14,6 +14,7 @@ import { applyCatalog } from './catalog.js';
 import { libraryForExternalId } from './library-store.js';
 import { WEIGHT_CLASSES, weightClassFor } from './kits.js';
 import { formatWeightMg } from '../client/utils/format.js';
+import { publicProfile, publicGear } from './profiles.js';
 
 const router = express.Router();
 
@@ -31,6 +32,7 @@ const vueRoutes = [ /* TODO - get this from same data source as Vue */
     { path: '/signin/reset-password' },
     { path: '/signin/forgot-username' },
     { path: '/pack' },
+    { path: '/profile' },
     { path: '/gear' },
     { path: '/welcome' },
     { path: '/explore' },
@@ -175,6 +177,76 @@ for (let i = 0; i < vueRoutes.length; i++) {
         res.send(index);
     });
 }
+
+// ---- public @profiles --------------------------------------------------------
+
+const profileTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/profile.mustache'), 'utf8');
+const NETWORK_LABELS = { youtube: 'YouTube', x: 'X', instagram: 'Instagram', website: 'Website' };
+
+function kitCardModel(kit) {
+    return {
+        externalId: kit.externalId,
+        name: kit.name,
+        baseWeight: formatWeightMg(kit.baseWeightMg, 'lb'),
+        weightClass: (WEIGHT_CLASSES.find((c) => c.id === kit.weightClass) || {}).label || '',
+        itemCount: `${kit.itemCount} ${kit.itemCount === 1 ? 'item' : 'items'}`,
+        description: kit.description ? kit.description.replace(/[#*_`>[\]()]/g, '').slice(0, 140) : '',
+    };
+}
+
+router.get('/@:username', async (req, res) => {
+    const username = String(req.params.username || '');
+    if (!/^[A-Za-z0-9_.-]{1,64}$/.test(username)) return res.status(404).send('No such profile.');
+    try {
+        const found = await publicProfile(username);
+        if (!found) return res.status(404).send('No such profile.');
+        const { profile, featured, others, kits } = found;
+        const gearView = req.query.view === 'gear';
+        const gear = await publicGear(found.userId, kits.map((k) => k.externalId));
+        const name = profile.displayName || `@${profile.username}`;
+        const lightest = kits.length ? formatWeightMg(Math.min(...kits.map((k) => k.baseWeightMg)), 'lb') : '';
+        const links = Object.entries(profile.links)
+            .filter(([network, url]) => NETWORK_LABELS[network] && /^https:\/\//.test(url))
+            .map(([network, url]) => ({ network, url, label: NETWORK_LABELS[network] }));
+        const deployUrl = config.get('deployUrl');
+
+        const model = {
+            styles: shareStylesHtml,
+            cspNonce: res.locals.cspNonce,
+            deployUrl,
+            username: profile.username,
+            name,
+            initial: (profile.displayName || profile.username).trim().charAt(0).toUpperCase(),
+            trailName: profile.trailName,
+            avatarUrl: profile.avatarUrl,
+            bannerUrl: profile.bannerUrl,
+            ogImage: profile.avatarUrl ? `${deployUrl}${profile.avatarUrl}` : `${deployUrl}/images/og-image.png`,
+            bioHtml: profile.bio ? marked(profile.bio) : '',
+            links,
+            hasLinks: links.length > 0,
+            kitCount: kits.length,
+            gearCount: gear.length,
+            lightest,
+            featured: featured.map(kitCardModel),
+            others: others.map(kitCardModel),
+            hasFeatured: featured.length > 0,
+            hasOthers: others.length > 0,
+            listsView: !gearView,
+            gearView,
+            gear: gear.map((g) => ({
+                ...g,
+                initial: g.name.trim().charAt(0).toUpperCase(),
+                weight: `${weightUtils.MgToDisplayWeight(g.weightMg, g.unit)} ${g.unit}`,
+            })),
+            metaDescription: `${name} on Waymark Gear: ${kits.length} published ${kits.length === 1 ? 'list' : 'lists'}${lightest ? `, lightest base weight ${lightest}` : ''}.`,
+        };
+        res.set('Cache-Control', 'public, max-age=60');
+        res.send(Mustache.render(profileTemplate, model, { kitCard: templates.t_kitCard || '' }));
+    } catch (err) {
+        logWithRequest(req, { message: 'error rendering profile', err });
+        res.status(500).send('An error occurred.');
+    }
+});
 
 router.get('/r/:id', (req, res) => {
     renderListView(req, res);

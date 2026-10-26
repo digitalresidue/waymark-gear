@@ -10,7 +10,8 @@ import * as catalog from './catalog.js';
 import { libraryForExternalId } from './library-store.js';
 import { Library } from '../client/dataTypes.js';
 import * as kits from './kits.js';
-import { authenticateAdmin } from './auth.js';
+import { authenticateAdmin, authenticateUser } from './auth.js';
+import { profileForEditing, updateProfile, ProfileError } from './profiles.js';
 import { googleEnabled } from './google.js';
 import { logWithRequest } from './log.js';
 import { importFromLighterPack, importRateLimit, ImportError } from './lighterpack.js';
@@ -46,6 +47,27 @@ const pub = (handler) => async (req, res) => {
 };
 
 const validClass = (c) => kits.WEIGHT_CLASSES.some((w) => w.id === c);
+
+// ---- your profile ----------------------------------------------------------
+
+const signedIn = (handler) => (req, res) => authenticateUser(req, res, async (req, res, user) => {
+    try {
+        await handler(req, res, user);
+    } catch (err) {
+        if (err instanceof ProfileError) return res.status(400).json({ message: err.message, field: err.field });
+        logWithRequest(req, { message: 'api error', url: req.originalUrl, err });
+        if (!res.headersSent) res.status(500).json({ message: 'An error occurred.' });
+    }
+});
+
+router.get('/api/profile', signedIn(async (req, res, user) => {
+    res.set('Cache-Control', 'no-store');
+    res.json(await profileForEditing(user));
+}));
+
+router.put('/api/profile', requireJson, signedIn(async (req, res, user) => {
+    res.json(await updateProfile(user, req.body || {}));
+}));
 
 // ---- public ----------------------------------------------------------------
 

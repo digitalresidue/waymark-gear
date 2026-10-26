@@ -12,7 +12,7 @@ import { applyCatalog } from './catalog.js';
 import { syncPublishedKits } from './kits.js';
 import { applyChanges, LibraryError, loadLibrary, normalizeLibrary, replaceLibrary } from './library-store.js';
 import { authenticateUser, isAdmin, isModerator, verifyPassword, generateSession, startSession, hashSessionToken, sessionCookieOptions, issueResetToken, hashResetToken, resetPasswordUrl, RESET_TOKEN_TTL_MS } from './auth.js';
-import { sniffImage, storeImage } from './images.js';
+import { sniffImage, storeImage, storeProfileImage } from './images.js';
 import { deleteUserAccount } from './accounts.js';
 import { Library } from '../client/dataTypes.js';
 
@@ -635,6 +635,37 @@ router.post('/imageUpload', (req, res) => {
 });
 
 const maxImageUploadBytes = 5 * 1024 * 1024;
+
+// Profile picture or banner: ?kind=avatar|banner. Returns the URL; the
+// profile form saves it with everything else.
+router.post('/api/profile/image', (req, res) => {
+    const kind = String(req.query.kind || '');
+    if (!['avatar', 'banner'].includes(kind)) return res.status(400).json({ message: 'Unknown image kind.' });
+    authenticateUser(req, res, async (req, res, user) => {
+        let files;
+        try {
+            [, files] = await formidable({ maxFileSize: maxImageUploadBytes }).parse(req);
+        } catch (err) {
+            if (err.httpCode === 413) return res.status(413).json({ message: 'Image is too large (5MB max).' });
+            logWithRequest(req, { message: 'form parse error', err });
+            return res.status(500).json({ message: 'An error occurred' });
+        }
+        const upload = files?.image?.[0];
+        if (!upload) return res.status(400).json({ message: 'No image provided.' });
+        try {
+            const buf = fs.readFileSync(upload.filepath);
+            const sniffed = sniffImage(buf);
+            if (!sniffed) return res.status(400).json({ message: 'Please upload a JPEG, PNG, or WebP image.' });
+            const { imageUrl } = await storeProfileImage(upload.filepath, buf, sniffed, user.user_id, kind);
+            return res.json({ imageUrl });
+        } catch (err) {
+            logWithRequest(req, { message: 'profile image conversion failed', err: { message: err.message } });
+            return res.status(500).json({ message: 'An error occurred while processing the image.' });
+        } finally {
+            fs.rmSync(upload.filepath, { force: true });
+        }
+    });
+});
 
 async function imageUpload(req, res, user) {
     let files;

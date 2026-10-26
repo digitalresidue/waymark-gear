@@ -10,6 +10,9 @@
                 <router-link to="/explore">
                     Explore kits
                 </router-link>
+                <router-link v-if="$store.state.loggedIn" to="/profile" data-testid="drawer-profile">
+                    Your profile
+                </router-link>
                 <router-link v-if="isAdmin" to="/owner/catalog">
                     Owner
                 </router-link>
