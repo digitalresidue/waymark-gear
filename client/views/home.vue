@@ -30,11 +30,8 @@
                         <a href="#kits" class="wgBtn wgBtnGhost">Browse kits →</a>
                     </div>
                     <p v-if="!hasLibrary" class="wgHeroNote wgMuted">
-                        Free. Prefer email? <router-link to="/register">
-                            Create an account
-                        </router-link> or <router-link to="/signin">
-                            sign in
-                        </router-link>.
+                        <!-- eslint-disable-next-line vue/singleline-html-element-content-newline -->
+                        Free. Prefer email? <router-link to="/register">Create an account</router-link> or <router-link to="/signin">sign in</router-link>.
                     </p>
                 </div>
 
