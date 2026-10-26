@@ -14,6 +14,9 @@
                     <router-link to="/profile" class="lpHref" data-testid="menu-profile" @click="hide()">
                         Your profile
                     </router-link><br>
+                    <router-link to="/trips" class="lpHref" data-testid="menu-trips" @click="hide()">
+                        Trip journals
+                    </router-link><br>
                     <a class="lpHref accountSettings" @click="hide(); showAccount()">Account Settings</a><br>
                     <a class="lpHref" @click="hide(); showHelp()">Help</a>
                     <hr>

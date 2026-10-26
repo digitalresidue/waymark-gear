@@ -19,6 +19,8 @@ import * as comments from './comments.js';
 import * as follows from './follows.js';
 import * as tickets from './tickets.js';
 import * as plans from './shared-lists.js';
+import * as trips from './trips.js';
+import * as reviews from './reviews.js';
 import { openStream } from './live.js';
 import { LibraryError } from './library-store.js';
 import { forgetUserPages } from './page-cache.js';
@@ -71,7 +73,8 @@ const signedIn = (handler) => (req, res) => authenticateUser(req, res, async (re
     } catch (err) {
         if (err instanceof ProfileError) return res.status(400).json({ message: err.message, field: err.field });
         if (err instanceof LibraryError) return res.status(400).json({ message: err.message });
-        if (err instanceof comments.CommentError || err instanceof follows.FollowError || err instanceof tickets.TicketError || err instanceof plans.PlanError) {
+        if (err instanceof comments.CommentError || err instanceof follows.FollowError || err instanceof tickets.TicketError || err instanceof plans.PlanError
+            || err instanceof trips.TripError || err instanceof reviews.ReviewError) {
             return res.status(err.status).json({ message: err.message });
         }
         logWithRequest(req, { message: 'api error', url: req.originalUrl, err });
@@ -308,6 +311,81 @@ router.post('/api/plan/:owner/:listId/members', requireJson, signedIn(async (req
 
 router.delete('/api/plan/:owner/:listId/members/:username', signedIn(async (req, res, user) => {
     res.json({ members: await plans.removeMember(user, req.params.owner, req.params.listId, req.params.username) });
+}));
+
+// ---- trip journals and gear reviews (Phase 6) ------------------------------
+
+router.get('/api/trips', signedIn(async (req, res, user) => {
+    res.set('Cache-Control', 'no-store');
+    res.json({ trips: await trips.myTrips(user) });
+}));
+
+router.post('/api/trips', requireJson, signedIn(async (req, res, user) => {
+    res.status(201).json(await trips.createTrip(user, req.body || {}));
+}));
+
+// Anyone may read a trip they're allowed to see; the owner gets it for editing.
+router.get('/api/trips/:id', publicJson(async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const viewer = await optionalUser(req);
+    const view = await trips.viewTrip(req.params.id, viewer);
+    if (!view) return res.status(404).json({ message: 'That trip could not be found.' });
+    const { ownerId, ...rest } = view;
+    res.json({ ...rest, mine: Boolean(viewer && viewer.user_id === ownerId) });
+}));
+
+router.put('/api/trips/:id', requireJson, signedIn(async (req, res, user) => {
+    res.json(await trips.updateTrip(user, req.params.id, req.body || {}));
+}));
+
+router.delete('/api/trips/:id', signedIn(async (req, res, user) => {
+    res.json(await trips.deleteTrip(user, req.params.id));
+}));
+
+router.post('/api/trips/:id/entries', requireJson, signedIn(async (req, res, user) => {
+    res.status(201).json(await trips.addEntry(user, req.params.id, req.body || {}));
+}));
+
+router.put('/api/trips/:id/entries/:entryId', requireJson, signedIn(async (req, res, user) => {
+    res.json(await trips.updateEntry(user, req.params.id, req.params.entryId, req.body || {}));
+}));
+
+router.delete('/api/trips/:id/entries/:entryId', signedIn(async (req, res, user) => {
+    res.json(await trips.deleteEntry(user, req.params.id, req.params.entryId));
+}));
+
+router.get('/api/users/:username/trips', publicJson(async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const owner = await knex('users').whereRaw('lower(username) = ?', [String(req.params.username).toLowerCase()]).first('user_id');
+    if (!owner) return res.status(404).json({ message: 'No such hiker.' });
+    res.json({ trips: await trips.tripsOnProfile(owner.user_id, await optionalUser(req)) });
+}));
+
+router.get('/api/reviews', pub(async (req, res) => {
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json({ reviews: await reviews.latestReviews({ limit: req.query.limit }) });
+}));
+
+router.get('/api/reviews/ratings', pub(async (req, res) => {
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json(await reviews.ratingsFor(String(req.query.ids || '').split(',').slice(0, 200)));
+}));
+
+router.get('/api/catalog/:id/reviews', pub(async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.json(await reviews.reviewsFor(String(req.params.id), await optionalUser(req)));
+}));
+
+router.post('/api/catalog/:id/reviews', requireJson, commentLimit, signedIn(async (req, res, user) => {
+    res.json(await reviews.saveReview(user, String(req.params.id), req.body || {}));
+}));
+
+router.delete('/api/reviews/:id', signedIn(async (req, res, user) => {
+    res.json(await reviews.deleteReview(user, req.params.id));
+}));
+
+router.post('/api/reviews/:id/moderate', requireJson, signedIn(async (req, res, user) => {
+    res.json(await reviews.moderateReview(user, req.params.id, String((req.body && req.body.action) || '')));
 }));
 
 // ---- public ----------------------------------------------------------------

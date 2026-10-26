@@ -26,7 +26,7 @@
                 <div v-if="!item.inCurrentList && !item.retired" class="lpHandle lpLibraryItemHandle" title="Drag this item into your list" />
                 <span class="lpLibraryItemBody">
                     <span class="lpLibraryItemTopline">
-                        <span class="lpName">{{ item.name }}<span v-if="item.closetCategory && closetFilter === null" class="wgClosetTag">{{ item.closetCategory }}</span></span>
+                        <span class="lpName">{{ item.name }}<span v-if="item.closetCategory && closetFilter === null" class="wgClosetTag">{{ item.closetCategory }}</span><span v-if="needsReplacing(item)" class="wgReplaceTag" data-testid="replace-soon">Replace soon</span></span>
                         <span class="lpWeight">
                             {{ displayWeight(item.weight, item.authorUnit) }}
                             {{ item.authorUnit }}
@@ -49,6 +49,7 @@ import utilsMixin from '../mixins/utils-mixin.js';
 import dragula from 'dragula';
 import { getElementIndex } from '../utils/utils.js';
 import { confirmClosetRemoval, isPlaceholder, restoreClosetItem } from '../utils/closet.js';
+import { replaceSoon } from '../utils/gear-meta.js';
 
 export default {
     name: 'LibraryItem',
@@ -133,6 +134,9 @@ export default {
         this.handleItemDrag();
     },
     methods: {
+        needsReplacing(item) {
+            return replaceSoon(item);
+        },
         handleItemDrag() {
             if (this.drake) {
                 this.drake.destroy();

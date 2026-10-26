@@ -2,6 +2,9 @@
     <modal id="wgGearDetails" :shown="shown" @hide="close">
         <template v-if="item">
             <h2>{{ item.name || 'Gear details' }}</h2>
+            <p v-if="item.catalogId" class="wgGearReviewsLink">
+                <a :href="`/g/${item.catalogId}`" target="_blank" rel="noopener" data-testid="gear-reviews-link">Reviews and specs ›</a>
+            </p>
             <form class="wgGearForm" data-testid="gear-details" @submit.prevent="save">
                 <label class="wgField">Closet category
                     <input
@@ -44,6 +47,28 @@
                     <span class="wgMuted wgProfileHint">Lists warn you when they use more than this.</span>
                 </label>
 
+                <fieldset class="wgGearLife" data-testid="gear-lifecycle">
+                    <legend>Condition</legend>
+                    <label class="wgField">Bought
+                        <input v-model="form.purchasedOn" class="wgInput" type="month" data-testid="gear-bought">
+                    </label>
+                    <label class="wgField">Condition
+                        <select v-model="form.condition" class="wgSelect" data-testid="gear-condition">
+                            <option value="">—</option>
+                            <option v-for="(label, id) in conditions" :key="id" :value="id">{{ label }}</option>
+                        </select>
+                    </label>
+                    <label class="wgField">Expected life
+                        <span class="wgTripUnitField">
+                            <input v-model.number="form.lifeYears" class="wgInput" type="number" min="0" max="50" step="0.5" placeholder="—" data-testid="gear-life">
+                            <span class="wgMuted">years</span>
+                        </span>
+                    </label>
+                    <p v-if="ageText || soon" class="wgGearLifeNote" data-testid="gear-life-note">
+                        {{ ageText }}<span v-if="soon" class="wgReplaceTag">Replace soon</span>
+                    </p>
+                </fieldset>
+
                 <label class="wgField">Where to buy (link)
                     <input v-model.trim="form.url" class="wgInput" type="url" inputmode="url" placeholder="https://" data-testid="gear-buy-link">
                     <span v-if="item.catalogId && item.catalogSync" class="wgMuted wgProfileHint">From the Waymark catalog. Changing it makes this item your own copy.</span>
@@ -74,7 +99,7 @@
 
 <script>
 import modal from './modal.vue';
-import { youTubeId } from '../utils/gear-meta.js';
+import { youTubeId, CONDITION_LABELS, gearAge, replaceSoon } from '../utils/gear-meta.js';
 import { openPhotos, openVideo } from '../utils/lightbox.js';
 
 export default {
@@ -86,7 +111,12 @@ export default {
     },
     emits: ['hide'],
     data() {
-        return { form: { closetCategory: '', photos: [], url: '', videoUrl: '', qtyOwned: '' }, uploading: false, error: '' };
+        return {
+            form: { closetCategory: '', photos: [], url: '', videoUrl: '', qtyOwned: '', purchasedOn: '', condition: '', lifeYears: '' },
+            conditions: CONDITION_LABELS,
+            uploading: false,
+            error: '',
+        };
     },
     computed: {
         signedIn() {
@@ -94,6 +124,12 @@ export default {
         },
         closetCategories() {
             return [...new Set(this.$store.state.library.items.map((i) => i.closetCategory).filter(Boolean))].sort();
+        },
+        ageText() {
+            return gearAge({ purchasedOn: this.form.purchasedOn });
+        },
+        soon() {
+            return replaceSoon({ purchasedOn: this.form.purchasedOn, condition: this.form.condition, lifeYears: Number(this.form.lifeYears) || 0 });
         },
         videoOk() {
             return Boolean(youTubeId(this.form.videoUrl));
@@ -114,6 +150,9 @@ export default {
                     url: item.url || '',
                     videoUrl: item.videoUrl || '',
                     qtyOwned: Number.isInteger(item.qtyOwned) ? item.qtyOwned : '',
+                    purchasedOn: item.purchasedOn || '',
+                    condition: item.condition || '',
+                    lifeYears: Number.isFinite(item.lifeYears) ? item.lifeYears : '',
                 };
                 this.error = '';
             },
@@ -156,6 +195,9 @@ export default {
                 photos: [...this.form.photos],
                 videoUrl: this.form.videoUrl,
                 qtyOwned: this.form.qtyOwned !== '' && Number.isInteger(owned) && owned >= 0 ? owned : null,
+                purchasedOn: this.form.purchasedOn || '',
+                condition: this.form.condition || '',
+                lifeYears: this.form.lifeYears !== '' && Number(this.form.lifeYears) > 0 ? Number(this.form.lifeYears) : null,
             };
             if (this.form.url !== (this.item.url || '')) changes.url = this.form.url;
             this.$store.commit('updateItem', changes);
@@ -166,6 +208,10 @@ export default {
 </script>
 
 <style lang="scss">
+.wgGearReviewsLink {
+    margin: -6px 0 10px;
+}
+
 #wgGearDetails {
     max-width: calc(100vw - 32px);
     width: 480px;
@@ -247,5 +293,36 @@ export default {
 }
 .wgQtyOwned {
     max-width: 120px;
+}
+.wgGearLife {
+    border: 1px solid var(--lp-border);
+    border-radius: 12px;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    margin: 0;
+    padding: 8px 12px 12px;
+
+    legend {
+        font-weight: 650;
+        padding: 0 4px;
+    }
+}
+
+.wgGearLifeNote {
+    color: var(--lp-text-secondary);
+    font-size: 13px;
+    grid-column: 1 / -1;
+    margin: 0;
+}
+
+.wgReplaceTag {
+    background: #FBE9E4;
+    border-radius: 6px;
+    color: #8A2A12;
+    font-size: 11px;
+    font-weight: 700;
+    margin-left: 8px;
+    padding: 2px 7px;
 }
 </style>

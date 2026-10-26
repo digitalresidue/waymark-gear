@@ -109,6 +109,8 @@ export default defineConfig({
         rateLimit: { enabled: false },
         // One site-owner account per worker, like the moderators above.
         admins: Array.from({ length: 32 }, (_, i) => `wge2eowner${i}`),
+        // Named gear reviewers (staff who aren't owners or moderators).
+        reviewers: Array.from({ length: 32 }, (_, i) => `wge2ereviewer${i}`),
         google: {
           clientId: 'test-client',
           clientSecret: 'test-secret',

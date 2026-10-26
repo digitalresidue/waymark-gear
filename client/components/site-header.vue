@@ -14,6 +14,10 @@
                 <router-link to="/leaderboard" class="wgSiteNavLink" :class="{ wgActive: active === 'leaderboard' }" data-testid="nav-leaderboard">
                     Leaderboards
                 </router-link>
+                <router-link v-if="signedIn" to="/trips" class="wgSiteNavLink" :class="{ wgActive: active === 'trips' }" data-testid="nav-trips">
+                    Trips
+                </router-link>
+                <a href="/reviews" class="wgSiteNavLink" data-testid="nav-reviews">Reviews</a>
                 <router-link v-if="!hasLibrary" to="/welcome#common" class="wgSiteNavLink">
                     Popular gear
                 </router-link>
