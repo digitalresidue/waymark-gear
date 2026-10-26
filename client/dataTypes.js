@@ -32,15 +32,23 @@ const Item = function ({ id, unit }) {
     this.image = '';
     this.imageUrl = '';
     this.url = '';
+    // Set when the item was picked from the site's gear catalog. While
+    // catalogSync is true the server refreshes name, weight, price, link and
+    // photo from the catalog each time the library loads, so a corrected
+    // catalog entry reaches every list. Editing any of those turns sync off.
+    this.catalogId = '';
+    this.catalogSync = false;
 
     return this;
 };
+
+const CATALOG_SYNCED_FIELDS = ['name', 'weight', 'price', 'url', 'imageUrl'];
 
 // save() methods enumerate their fields explicitly: anything unknown is
 // dropped at the next save, so junk from older formats can't accumulate.
 // Safe because load() refuses versions newer than this code knows.
 Item.prototype.save = function () {
-    return {
+    const out = {
         id: this.id,
         name: this.name,
         description: this.description,
@@ -51,6 +59,11 @@ Item.prototype.save = function () {
         imageUrl: this.imageUrl,
         url: this.url,
     };
+    if (this.catalogId) {
+        out.catalogId = this.catalogId;
+        out.catalogSync = !!this.catalogSync;
+    }
+    return out;
 };
 
 Item.prototype.load = function (input) {
@@ -161,6 +174,9 @@ Category.prototype.save = function () {
     };
     if (typeof this.color !== 'undefined') {
         out.color = this.color;
+    }
+    if (this.collapsed) {
+        out.collapsed = true;
     }
     return out;
 };
@@ -347,7 +363,7 @@ List.prototype.calculateTotals = function () {
 };
 
 List.prototype.save = function () {
-    return {
+    const out = {
         id: this.id,
         name: this.name,
         categoryIds: this.categoryIds.slice(),
@@ -355,6 +371,13 @@ List.prototype.save = function () {
         externalId: this.externalId,
         optionalFields: assignIn({}, this.optionalFields),
     };
+    // Only written when set, so libraries that never use them keep the shape
+    // older clients wrote.
+    if (this.pinned) out.pinned = true;
+    // Published lists appear on the public Explore page and homepage; the
+    // server mirrors them into public_kits on every save.
+    if (this.published) out.published = true;
+    return out;
 };
 
 List.prototype.load = function (input) {
@@ -400,8 +423,32 @@ Library.prototype.newItem = function ({ category, _isNew }) {
 
 Library.prototype.updateItem = function (item) {
     const oldItem = this.getItemById(item.id);
+    if (oldItem.catalogId && oldItem.catalogSync
+        && CATALOG_SYNCED_FIELDS.some((f) => f in item && item[f] !== oldItem[f])) {
+        // The user has made this item their own; stop overwriting it.
+        item = { ...item, catalogSync: false };
+    }
     assignIn(oldItem, item);
     return oldItem;
+};
+
+// Add a gear-catalog entry to a category as a new, catalog-linked item.
+// `entry` is the shape /api/catalog returns.
+Library.prototype.newItemFromCatalog = function ({ category, entry }) {
+    const item = this.newItem({ category, _isNew: false });
+    item.name = entry.name;
+    item.description = entry.description || '';
+    item.weight = Number(entry.weightMg) || 0;
+    item.authorUnit = entry.unit || this.itemUnit;
+    item.price = Number(entry.price) || 0;
+    item.url = entry.url || '';
+    item.imageUrl = entry.imageUrl || '';
+    item.catalogId = entry.id;
+    item.catalogSync = true;
+    const categoryItem = category.getCategoryItemById(item.id);
+    if (entry.wornDefault) categoryItem.worn = 1;
+    if (entry.consumableDefault) categoryItem.consumable = true;
+    return item;
 };
 
 Library.prototype.removeItem = function (id) {
@@ -452,7 +499,8 @@ Library.prototype.removeCategory = function (id, force) {
 
 Library.prototype.newList = function () {
     const temp = new List({ id: this.nextSequence(), library: this });
-    this.lists.push(temp);
+    // Newest first: the list you just made is the one you want at hand.
+    this.lists.unshift(temp);
     this.idMap[temp.id] = temp;
     if (!this.defaultListId) this.defaultListId = temp.id;
     return temp;

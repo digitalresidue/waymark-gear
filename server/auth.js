@@ -6,6 +6,9 @@ import knex from './db.js';
 import { logWithRequest } from './log.js';
 
 const moderatorList = config.get('moderators');
+// Site owners: manage the gear catalog and featured kits. Owners can also
+// do everything a moderator can.
+const adminList = config.has('admins') ? config.get('admins') : [];
 
 const sessionCookieOptions = () => ({
     path: '/',
@@ -145,6 +148,10 @@ const verifyPassword = async function (username, password) {
         }
 
         const user = users[0];
+        if (!user.password) {
+            // Google-only account: there is no password to check.
+            throw new AuthError(404, 'Invalid username and/or password.');
+        }
         const match = await bcrypt.compare(password, user.password);
 
         if (match) {
@@ -166,8 +173,21 @@ const generateSession = async function (req, res, user, callback) {
     await callback(req, res, user);
 };
 
-function isModerator(username) {
-    return moderatorList.indexOf(username) > -1;
+function isAdmin(username) {
+    return adminList.indexOf(username) > -1;
 }
 
-export { authenticateModerator, authenticateUser, verifyPassword, generateSession, startSession, hashSessionToken, isModerator, sessionCookieOptions, issueResetToken, hashResetToken, resetPasswordUrl, RESET_TOKEN_TTL_MS };
+function isModerator(username) {
+    return moderatorList.indexOf(username) > -1 || isAdmin(username);
+}
+
+const authenticateAdmin = async function (req, res, callback) {
+    authenticateUser(req, res, (req, res, user) => {
+        if (!isAdmin(user.username)) {
+            return res.status(403).json({ message: 'Denied.' });
+        }
+        callback(req, res, user);
+    });
+};
+
+export { authenticateAdmin, isAdmin, authenticateModerator, authenticateUser, verifyPassword, generateSession, startSession, hashSessionToken, isModerator, sessionCookieOptions, issueResetToken, hashResetToken, resetPasswordUrl, RESET_TOKEN_TTL_MS };

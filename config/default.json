@@ -23,5 +23,10 @@
     "mailgunAPIKey": "",
     "mailFrom": "",
     "mailReplyTo": "",
-    "moderators": []
+    "moderators": [],
+    "admins": [],
+    "google": {
+        "clientId": "",
+        "clientSecret": ""
+    }
 }

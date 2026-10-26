@@ -8,7 +8,9 @@ import formidable from 'formidable';
 import config from 'config';
 import knex from './db.js';
 import { logWithRequest } from './log.js';
-import { authenticateUser, verifyPassword, generateSession, startSession, hashSessionToken, sessionCookieOptions, issueResetToken, hashResetToken, resetPasswordUrl, RESET_TOKEN_TTL_MS } from './auth.js';
+import { applyCatalog } from './catalog.js';
+import { syncPublishedKits } from './kits.js';
+import { authenticateUser, isAdmin, isModerator, verifyPassword, generateSession, startSession, hashSessionToken, sessionCookieOptions, issueResetToken, hashResetToken, resetPasswordUrl, RESET_TOKEN_TTL_MS } from './auth.js';
 import { sniffImage, storeImage } from './images.js';
 import { deleteUserAccount } from './accounts.js';
 import { Library } from '../client/dataTypes.js';
@@ -168,7 +170,24 @@ async function signin(req, res, user) {
         .update({
             last_seen: new Date()
         });
-    return res.json({ username: user.username, library: JSON.stringify(user.library), sync_token: user.sync_token });
+    const library = await applyCatalog(user.library);
+    return res.json({
+        username: user.username,
+        library: JSON.stringify(library),
+        sync_token: user.sync_token,
+        account: accountInfo(user),
+    });
+}
+
+// What the client needs to know about the signed-in account.
+function accountInfo(user) {
+    return {
+        email: user.email,
+        hasPassword: Boolean(user.password),
+        googleLinked: Boolean(user.google_sub),
+        isAdmin: isAdmin(user.username),
+        isModerator: isModerator(user.username),
+    };
 }
 
 router.post('/saveLibrary', (req, res) => {
@@ -222,6 +241,15 @@ async function saveLibrary(req, res, user) {
         }
 
         logWithRequest(req, { message: 'saved library', username: user.username });
+
+        // Keep the public copies of published lists current. The save itself
+        // has succeeded either way, so a failure here is logged, not returned.
+        try {
+            await syncPublishedKits(user, library);
+        } catch (err) {
+            logWithRequest(req, { message: 'published kit sync failed', username: user.username, err });
+        }
+
         return res.status(200).json({ message: 'success', sync_token: newSyncToken });
     } catch (err) {
         logWithRequest(req, { message: 'Library saving error', username: user.username, err });
@@ -452,14 +480,18 @@ router.post('/account', (req, res) => {
 async function account(req, res, user) {
     logWithRequest(req, { message: 'Starting account changes', username: user.username });
 
-    try {
-        await verifyPassword(user.username, String(req.body.currentPassword));
-    } catch (err) {
-        logWithRequest(req, { message: 'Account bad current password', username: user.username, err });
-        if (err.code === 500) {
-            return res.status(500).json({ errors: [{ message: err.message }] });
+    // A Google-only account has no password to confirm with; the session
+    // is the proof. Everyone else confirms with their current password.
+    if (user.password) {
+        try {
+            await verifyPassword(user.username, String(req.body.currentPassword));
+        } catch (err) {
+            logWithRequest(req, { message: 'Account bad current password', username: user.username, err });
+            if (err.code === 500) {
+                return res.status(500).json({ errors: [{ message: err.message }] });
+            }
+            return res.status(400).json({ errors: [{ field: 'currentPassword', message: 'Your current password is incorrect.' }] });
         }
-        return res.status(400).json({ errors: [{ field: 'currentPassword', message: 'Your current password is incorrect.' }] });
     }
 
     try {
@@ -528,15 +560,18 @@ router.post('/delete-account', (req, res) => {
 async function deleteAccount(req, res, user) {
     logWithRequest(req, { message: 'Starting account delete', username: user.username });
 
-    try {
-        await verifyPassword(user.username, String(req.body.password));
-    } catch (err) {
-        logWithRequest(req, { message: 'Bad account deletion - invalid password', username: req.body.username, err });
-        if (err.code === 500) {
-            return res.status(500).json({ errors: [{ message: err.message }] });
+    if (user.password) {
+        try {
+            await verifyPassword(user.username, String(req.body.password));
+        } catch (err) {
+            logWithRequest(req, { message: 'Bad account deletion - invalid password', username: req.body.username, err });
+            if (err.code === 500) {
+                return res.status(500).json({ errors: [{ message: err.message }] });
+            }
+            return res.status(400).json({ errors: [{ field: 'currentPassword', message: 'Your current password is incorrect.' }] });
         }
-        return res.status(400).json({ errors: [{ field: 'currentPassword', message: 'Your current password is incorrect.' }] });
     }
+    // Google-only accounts confirm by typing their username, checked below.
 
     if (req.body.username !== user.username) {
         logWithRequest(req, { message: 'Bad account deletion - wrong user', requestedUsername: req.body.username, initiatedby: user.username });

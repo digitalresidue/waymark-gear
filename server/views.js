@@ -11,6 +11,7 @@ import weightUtils from '../client/utils/weight.js';
 import { marked, isSafeHref } from '../client/utils/markdown.js';
 import { Library } from '../client/dataTypes.js';
 import { listToCsv } from './csv.js';
+import { applyCatalog } from './catalog.js';
 
 const router = express.Router();
 
@@ -199,7 +200,7 @@ async function renderListView(req, res) {
             return res.status(500).send('Unknown error.');
         }
 
-        library.load(user.library);
+        library.load(await applyCatalog(user.library));
         for (const i in library.lists) {
             if (library.lists[i].externalId && library.lists[i].externalId == id) {
                 library.defaultListId = library.lists[i].id;
@@ -287,7 +288,7 @@ async function renderEmberView(req, res) {
             return res.status(500).send('Unknown error.');
         }
 
-        library.load(user.library);
+        library.load(await applyCatalog(user.library));
         for (const i in library.lists) {
             if (library.lists[i].externalId && library.lists[i].externalId == id) {
                 library.defaultListId = library.lists[i].id;
@@ -369,7 +370,7 @@ async function renderListCSV(req, res) {
             return res.status(500).send('Unknown error.');
         }
 
-        library.load(users[0].library);
+        library.load(await applyCatalog(users[0].library));
         for (var i in library.lists) {
             if (library.lists[i].externalId && library.lists[i].externalId == id) {
                 library.defaultListId = library.lists[i].id;

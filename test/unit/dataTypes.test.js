@@ -179,13 +179,16 @@ describe('per-list settings', () => {
 
     test("copyList copies the source list's settings", () => {
         const library = new Library();
-        library.lists[0].optionalFields.price = true;
-        library.lists[0].optionalFields.worn = false;
+        const source = library.lists[0];
+        source.optionalFields.price = true;
+        source.optionalFields.worn = false;
 
-        const copy = library.copyList(library.lists[0].id);
+        const copy = library.copyList(source.id);
 
-        assert.deepEqual(copy.optionalFields, library.lists[0].optionalFields);
-        assert.notEqual(copy.optionalFields, library.lists[0].optionalFields);
+        assert.deepEqual(copy.optionalFields, source.optionalFields);
+        assert.notEqual(copy.optionalFields, source.optionalFields);
+        // New lists, copies included, go to the top.
+        assert.equal(library.lists[0], copy);
     });
 });
 
@@ -324,7 +327,8 @@ describe('Library.getListsContainingItem', () => {
         library.newCategory({ list: thirdList });
 
         const lists = library.getListsContainingItem(sharedItem.id);
-        assert.deepEqual(lists.map((list) => list.id), [firstList.id, secondList.id]);
+        // In library order, which is newest first.
+        assert.deepEqual(lists.map((list) => list.id), [secondList.id, firstList.id]);
     });
 
     test('returns an empty array for an item in no list', () => {

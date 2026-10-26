@@ -5,7 +5,12 @@ const fullUnits = {
 };
 
 const escapeField = function (field) {
-    const str = field === null || typeof field === 'undefined' ? '' : `${field}`;
+    let str = field === null || typeof field === 'undefined' ? '' : `${field}`;
+    // A cell starting with = + - @ runs as a formula when the file is opened
+    // in a spreadsheet. Lists are shared publicly, so neutralize it.
+    if (/^[=+\-@\t\r]/.test(str)) {
+        str = `'${str}`;
+    }
     if (/[",\n\r]/.test(str)) {
         return `"${str.replace(/"/g, '""')}"`;
     }

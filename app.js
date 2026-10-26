@@ -8,6 +8,8 @@ import knex from './server/db.js';
 import { logger } from './server/log.js';
 import endpoints from './server/endpoints.js';
 import moderationEndpoints from './server/moderation-endpoints.js';
+import apiEndpoints from './server/api.js';
+import googleAuth from './server/google.js';
 import views, { hasBuiltAssets } from './server/views.js';
 import { authRateLimit, cspNonce, securityHeaders } from './server/security.js';
 
@@ -118,6 +120,8 @@ if (!hasBuiltAssets && config.get('environment') !== 'production') {
 
 app.use('/', endpoints);
 app.use('/', moderationEndpoints);
+app.use('/', apiEndpoints);
+app.use('/', googleAuth);
 app.use('/', views);
 
 app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars

@@ -45,5 +45,13 @@
         "__name": "MODERATORS",
         "__format": "json"
     },
+    "admins": {
+        "__name": "ADMINS",
+        "__format": "json"
+    },
+    "google": {
+        "clientId": "GOOGLE_CLIENT_ID",
+        "clientSecret": "GOOGLE_CLIENT_SECRET"
+    },
     "cwebpPath": "CWEBP_PATH"
 }
