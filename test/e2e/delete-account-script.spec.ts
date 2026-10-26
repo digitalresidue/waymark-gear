@@ -31,12 +31,9 @@ test.describe('delete-account script', () => {
     let userImageLocation: (id: string) => { dir: string };
 
     test.beforeAll(async () => {
-        const config = (await import('config')).default;
         const Knex = (await import('knex')).default;
-        knex = Knex({
-            client: 'pg',
-            connection: JSON.parse(JSON.stringify(config.get('pgDatabase'))),
-        });
+        const { connectionConfig } = await import('../../server/db-config.js');
+        knex = Knex({ client: 'pg', connection: connectionConfig() });
         ({ userImageLocation } = await import('../../server/images.js'));
     });
 

@@ -24,3 +24,6 @@ app.sublime-workspace
 
 # Local migration runbook -- deliberately untracked
 /MIGRATION.md
+
+# Local environment
+.env

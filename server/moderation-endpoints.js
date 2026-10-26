@@ -1,16 +1,10 @@
 import express from 'express';
-import config from 'config';
-import cloneDeep from 'lodash/cloneDeep.js';
-import Knex from 'knex';
+import knex from './db.js';
 import { logWithRequest } from './log.js';
 import { authenticateModerator, issueResetToken, resetPasswordUrl } from './auth.js';
 
 const router = express.Router();
 
-const knex = Knex({
-    client: 'pg',
-    connection: cloneDeep(config.get('pgDatabase'))
-});
 
 function escapeRegExp(text) {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');

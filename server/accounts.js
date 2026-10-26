@@ -1,12 +1,6 @@
-import config from 'config';
-import cloneDeep from 'lodash/cloneDeep.js';
-import Knex from 'knex';
+import knex from './db.js';
 import { deleteUserImages } from './images.js';
 
-const knex = Knex({
-    client: 'pg',
-    connection: cloneDeep(config.get('pgDatabase'))
-});
 
 /**
  * Erase one account: its share links, its row, and its uploaded images.

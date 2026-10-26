@@ -1,0 +1,49 @@
+{
+    "environment": "NODE_ENV",
+    "deployUrl": "DEPLOY_URL",
+    "port": {
+        "__name": "PORT",
+        "__format": "number"
+    },
+    "trustProxy": {
+        "__name": "TRUST_PROXY",
+        "__format": "number"
+    },
+    "databaseUrl": "DATABASE_URL",
+    "dbPoolMax": {
+        "__name": "DB_POOL_MAX",
+        "__format": "number"
+    },
+    "migrateOnStart": {
+        "__name": "MIGRATE_ON_START",
+        "__format": "boolean"
+    },
+    "sessionDays": {
+        "__name": "SESSION_DAYS",
+        "__format": "number"
+    },
+    "jsonBodyLimit": "JSON_BODY_LIMIT",
+    "rateLimit": {
+        "enabled": {
+            "__name": "RATE_LIMIT_ENABLED",
+            "__format": "boolean"
+        },
+        "authWindowMinutes": {
+            "__name": "RATE_LIMIT_AUTH_WINDOW_MINUTES",
+            "__format": "number"
+        },
+        "authMaxPerWindow": {
+            "__name": "RATE_LIMIT_AUTH_MAX",
+            "__format": "number"
+        }
+    },
+    "mailgunDomain": "MAILGUN_DOMAIN",
+    "mailgunAPIKey": "MAILGUN_API_KEY",
+    "mailFrom": "MAIL_FROM",
+    "mailReplyTo": "MAIL_REPLY_TO",
+    "moderators": {
+        "__name": "MODERATORS",
+        "__format": "json"
+    },
+    "cwebpPath": "CWEBP_PATH"
+}

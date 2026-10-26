@@ -24,15 +24,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import config from 'config';
-import cloneDeep from 'lodash/cloneDeep.js';
-import Knex from 'knex';
+import knex from '../server/db.js';
 import { deleteUserAccount, closeAccountsDb } from '../server/accounts.js';
 import { userImageLocation } from '../server/images.js';
 
-const knex = Knex({
-    client: 'pg',
-    connection: cloneDeep(config.get('pgDatabase'))
-});
 
 const BACKUP_DIR = path.join(import.meta.dirname, '..', 'logs', 'deleted-accounts');
 
@@ -197,8 +192,7 @@ async function main() {
 try {
     await main();
 } finally {
-    // Both pools, or the process sits idle instead of exiting: server/accounts.js
-    // opens its own for the shared delete path.
-    await knex.destroy();
+    // The script shares the server's pool (server/db.js); close it or the
+    // process sits idle instead of exiting.
     await closeAccountsDb();
 }
