@@ -63,6 +63,8 @@ Item.prototype.save = function () {
         out.catalogId = this.catalogId;
         out.catalogSync = !!this.catalogSync;
     }
+    // Retired gear is hidden from the closet but stays in lists that use it.
+    if (this.retired) out.retired = true;
     return out;
 };
 

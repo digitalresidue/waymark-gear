@@ -19,8 +19,8 @@
             <div class="lpSidebarDivider" />
             <router-link v-if="isMobile" to="/gear" class="lpSidebarNav" data-testid="drawer-gear">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
-                Gear library
-                <span class="lpSidebarNavCount">{{ library.items.length }}</span>
+                Closet
+                <span class="lpSidebarNavCount">{{ library.items.filter((i) => !i.retired && (i.name || i.weight || i.description)).length }}</span>
             </router-link>
             <libraryItems v-else />
         </div>
@@ -135,6 +135,7 @@ export default {
     align-items: center;
     display: flex;
     flex: 0 0 auto;
+    justify-content: space-between;
     padding: 2px 18px 4px;
 }
 

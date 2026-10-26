@@ -81,6 +81,21 @@ const store = createStore({
         setListPublished(state, { list, published }) {
             state.library.getListById(list.id).published = published;
         },
+        setItemRetired(state, { item, retired }) {
+            state.library.getItemById(item.id).retired = retired;
+        },
+        // Put existing closet gear into a category (linked, not copied).
+        addClosetItems(state, { categoryId, itemIds }) {
+            const category = state.library.getCategoryById(categoryId);
+            if (!category) return;
+            category.collapsed = false;
+            for (const itemId of itemIds) {
+                if (!category.getCategoryItemById(itemId) && state.library.getItemById(itemId)) {
+                    category.addItem({ itemId });
+                }
+            }
+            state.library.getListById(state.library.defaultListId).calculateTotals();
+        },
         importSharedList(state, shared) {
             state.library.importSharedList(shared);
         },

@@ -10,6 +10,15 @@
                 </button>
             </div>
 
+            <div class="wgSegmented wgPickerSource" role="tablist" aria-label="Add from">
+                <button type="button" role="tab" :aria-selected="String(source === 'catalog')" data-testid="picker-source-catalog" @click="setSource('catalog')">
+                    Catalog
+                </button>
+                <button type="button" role="tab" :aria-selected="String(source === 'closet')" data-testid="picker-source-closet" @click="setSource('closet')">
+                    My closet
+                </button>
+            </div>
+
             <label class="wgField">Adding to
                 <select v-model="targetId" class="wgSelect" data-testid="catalog-picker-target">
                     <option v-for="c in listCategories" :key="c.id" :value="c.id">{{ c.name || 'Untitled category' }}</option>
@@ -17,12 +26,12 @@
             </label>
 
             <label class="wgSearch">
-                <span class="wgVisuallyHidden">Search the gear catalog</span>
+                <span class="wgVisuallyHidden">{{ source === 'closet' ? 'Search your closet' : 'Search the gear catalog' }}</span>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
-                <input ref="search" v-model="query" type="search" class="wgInput" placeholder="Search tents, quilts, stoves…" data-testid="catalog-picker-search" @input="queue">
+                <input ref="search" v-model="query" type="search" class="wgInput" :placeholder="source === 'closet' ? 'Search your closet' : 'Search tents, quilts, stoves…'" data-testid="catalog-picker-search" @input="queue">
             </label>
 
-            <div v-if="catalogCategories.length" class="wgChips wgPickerChips" role="group" aria-label="Catalog category">
+            <div v-if="source === 'catalog' && catalogCategories.length" class="wgChips wgPickerChips" role="group" aria-label="Catalog category">
                 <button type="button" class="wgChip" :aria-pressed="String(category === '')" @click="pickCategory('')">
                     All
                 </button>
@@ -31,7 +40,27 @@
                 </button>
             </div>
 
-            <div class="wgPickerResults" aria-live="polite">
+            <!-- My closet: check off gear you already own, add it in one go.
+                 The list gets the same item (linked), not a copy. -->
+            <div v-if="source === 'closet'" class="wgPickerResults" aria-live="polite">
+                <ul v-if="closetResults.length" class="wgPickerList">
+                    <li v-for="item in closetResults" :key="item.id" data-testid="closet-result">
+                        <label class="wgPickerCheck">
+                            <input v-model="checked" type="checkbox" :value="item.id" :aria-label="`Select ${item.name || 'unnamed gear'}`">
+                            <span class="wgPickerItem">
+                                <span class="wgPickerName">{{ item.name || 'Unnamed gear' }}</span>
+                                <span class="wgMuted wgPickerSpec">{{ item.description }}</span>
+                            </span>
+                            <span class="wgMono wgPickerWeight">{{ closetWeight(item) }}</span>
+                        </label>
+                    </li>
+                </ul>
+                <p v-else class="wgMuted wgPickerEmpty">
+                    {{ query ? `Nothing in your closet matches “${query}”.` : 'Everything in your closet is already in this list.' }}
+                </p>
+            </div>
+
+            <div v-else class="wgPickerResults" aria-live="polite">
                 <ul v-if="results.length" class="wgPickerList">
                     <li v-for="entry in results" :key="entry.id" data-testid="catalog-result">
                         <div class="wgPickerItem">
@@ -67,7 +96,13 @@
                 </button>
             </div>
 
-            <div class="wgPickerFoot">
+            <div v-if="source === 'closet'" class="wgPickerFoot">
+                <button type="button" class="wgBtn wgBtnPrimary wgPickerCustom" :disabled="!checked.length" data-testid="closet-add-selected" @click="addChecked">
+                    {{ checked.length ? `Add ${checked.length} to ${targetName}` : 'Select gear to add' }}
+                </button>
+            </div>
+
+            <div v-else class="wgPickerFoot">
                 <p class="wgMuted">
                     Can't find it?
                 </p>
@@ -81,6 +116,8 @@
 
 <script>
 import { api } from '../utils/format.js';
+import weightUtils from '../utils/weight.js';
+import { isPlaceholder } from '../utils/closet.js';
 
 const PAGE = 30;
 
@@ -103,6 +140,8 @@ export default {
             loaded: false,
             added: {},
             timer: null,
+            source: 'catalog',
+            checked: [],
         };
     },
     computed: {
@@ -111,6 +150,18 @@ export default {
         },
         list() {
             return this.library.getListById(this.library.defaultListId);
+        },
+        targetName() {
+            const category = this.targetId && this.library.getCategoryById(this.targetId);
+            return category ? (category.name || 'this category') : 'a new category';
+        },
+        // Closet gear not already in this list, newest first, retired hidden.
+        closetResults() {
+            const inList = new Set(this.library.getItemsInCurrentList());
+            const q = this.query.trim().toLowerCase();
+            return this.library.items.slice().reverse()
+                .filter((item) => !item.retired && !inList.has(item.id) && !isPlaceholder(item))
+                .filter((item) => !q || `${item.name} ${item.description}`.toLowerCase().includes(q));
         },
         listCategories() {
             return this.list.categoryIds.map((id) => this.library.getCategoryById(id)).filter(Boolean);
@@ -128,6 +179,7 @@ export default {
         open() {
             this.targetId = this.initialCategoryId || (this.listCategories[0] && this.listCategories[0].id) || null;
             this.added = {};
+            this.checked = [];
             this.$nextTick(() => this.$refs.search && this.$refs.search.focus());
             if (!this.loaded) this.load(true);
             if (!this.catalogCategories.length) {
@@ -137,7 +189,21 @@ export default {
         close() {
             this.$emit('hide');
         },
+        setSource(source) {
+            this.source = source;
+            this.checked = [];
+            this.$nextTick(() => this.$refs.search && this.$refs.search.focus());
+        },
+        closetWeight(item) {
+            return `${weightUtils.MgToWeight(item.weight, item.authorUnit)} ${item.authorUnit}`;
+        },
+        addChecked() {
+            const categoryId = this.ensureTarget();
+            this.$store.commit('addClosetItems', { categoryId, itemIds: this.checked.slice() });
+            this.checked = [];
+        },
         queue() {
+            if (this.source === 'closet') return;
             clearTimeout(this.timer);
             this.timer = setTimeout(() => this.load(true), 200);
         },
@@ -233,6 +299,30 @@ export default {
 
     &:hover {
         background: var(--lp-row-hover);
+    }
+}
+
+.wgPickerSource {
+    align-self: flex-start;
+}
+
+.wgPickerCheck {
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+    gap: 12px;
+    min-height: 44px;
+    width: 100%;
+
+    input {
+        flex: none;
+        height: 20px;
+        width: 20px;
+    }
+
+    .wgPickerItem {
+        display: flex;
+        flex-direction: column;
     }
 }
 

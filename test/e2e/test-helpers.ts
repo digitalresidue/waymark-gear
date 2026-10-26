@@ -296,6 +296,6 @@ export const removeItemFromCategory = async (itemRow: Locator): Promise<void> =>
  */
 export const deleteItemFromLibrary = async (page: Page, libraryItem: Locator): Promise<void> => {
   await libraryItem.hover();
-  await libraryItem.getByTitle('Delete this item permanently').click();
-  await page.getByRole('button', { name: 'Yes' }).click();
+  await libraryItem.getByTitle('Remove from your closet').click();
+  await page.getByTestId('speedbump-confirm').click();
 };
