@@ -1,11 +1,15 @@
 # Privacy Policy
 
-**Effective date:** July 26, 2026
+**Effective date:** [DATE]
 
-LighterPack is a website for tracking the gear you take on adventures. It is
-operated by Galen Maly and is open source under the GPL-2.0 license — you can
-read every line of the code that handles your data at
-[github.com/galenmaly/lighterpack](https://github.com/galenmaly/lighterpack).
+> **Draft, not yet in effect.** Adapted from LighterPack's policy to match how
+> Waymark Gear works. Replace every [bracketed] item, remove this note, and have
+> it reviewed before launch.
+
+Waymark Gear is a website for planning, weighing and sharing the gear you take
+on adventures. It is operated by [OPERATOR NAME] and is open source under the
+GPL-2.0 license — you can read every line of the code that handles your data at
+[SOURCE URL].
 
 ## The short version
 
@@ -28,7 +32,7 @@ When you create an account we store:
 - **Your password** - hashed with bcrypt.
 - **The date you registered and last visited** - for debugging and diagnostics
 
-Everything you enter into LighterPack including list names, item names, descriptions,
+Everything you enter into Waymark Gear, including list names, item names, descriptions,
 weights, prices, quantities, links, and the images you upload, is stored in our
 database and associated with your account. We attempt to strip all EXIF metadata from uploaded images.
 
@@ -47,12 +51,12 @@ These logs exist to debug problems, understand load, and investigate abuse.
 
 ### Cookies
 
-LighterPack sets two cookies, both functional:
+Waymark Gear sets two cookies, both functional:
 
 | Cookie | Purpose | Lifetime |
 | --- | --- | --- |
-| `lp` | Your session token — this is what keeps you signed in. Not readable by JavaScript. | 1 year |
-| `lp_loggedin` | A flag that tells the page you're signed in so it can render the right navigation. Contains no personal data. | 1 year |
+| `lp` | Your session token — this is what keeps you signed in. Not readable by JavaScript. | 90 days |
+| `lp_loggedin` | A flag that tells the page you're signed in so it can render the right navigation. Contains no personal data. | 90 days |
 
 **We set no advertising, analytics, or tracking cookies**, and no third party
 sets cookies through our site.
@@ -66,12 +70,12 @@ sets cookies through our site.
 
 ## Who else handles your data
 
-- **Linode** — hosts the application and database, and
+- **[HOSTING PROVIDER]** — hosts the application and database, and
   therefore stores everything above on our behalf.
 - **Mailgun** — delivers the transactional email we
   send. Your email address is passed to Mailgun when we send transactional emails.
 
-We used to use Imgur to store images. Newly uploaded images are stored by LighterPack.
+Uploaded images are stored on our own servers.
 No one else receives your data, except where required by law.
 
 ## Email we send you
@@ -85,9 +89,9 @@ We do not send marketing email, so there is nothing to unsubscribe from.
 
 ## Lists you share are public
 
-When you share a list, LighterPack gives it a URL. Anyone who has
+When you share a list, Waymark Gear gives it a URL. Anyone who has
 that link can view the list, embed it, or export it as CSV — **no account and no
-password is required.**. Shared list URLs are hard to guess but they are unlisted, not private.
+password is required.** Shared list URLs are hard to guess but they are unlisted, not private.
 
 Images you upload are likewise served from public URLs and can be viewed by
 anyone who has the link.
@@ -107,7 +111,7 @@ Deleting your account **immediately and permanently removes**:
 
 - your user record, including your email address and password hash
 - all of your gear lists and their contents
-- your uploaded photos that are hosted by LighterPack
+- your uploaded photos
 
 ## Your rights
 
@@ -123,4 +127,4 @@ We will disclose information if we are legally required to.
 
 ## Contact
 
-Questions about this policy, or about your data: **info@lighterpack.com**
+Questions about this policy, or about your data: **[CONTACT EMAIL]**
