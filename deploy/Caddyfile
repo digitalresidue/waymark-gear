@@ -1,0 +1,11 @@
+# Caddy gets and renews the HTTPS certificate automatically once DNS for
+# both names points at this server.
+
+waymarkgear.com {
+	encode zstd gzip
+	reverse_proxy app:3000
+}
+
+www.waymarkgear.com {
+	redir https://waymarkgear.com{uri} permanent
+}

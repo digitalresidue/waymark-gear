@@ -1,0 +1,46 @@
+name: Release image
+
+# Builds the production image and publishes it to GitHub Container Registry
+# (ghcr.io/<owner>/<repo>) on every push to main, after CI passes on the same
+# commit. The server pulls :latest (see DEPLOY.md).
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Image name (registry names must be lowercase)
+        id: name
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.name.outputs.image }}:latest
+            ${{ steps.name.outputs.image }}:${{ github.event.workflow_run.head_sha }}
+          # Set these under Settings → Secrets and variables → Actions → Variables.
+          build-args: |
+            VITE_CONTACT_EMAIL=${{ vars.VITE_CONTACT_EMAIL }}
+            VITE_SOURCE_URL=${{ vars.VITE_SOURCE_URL }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

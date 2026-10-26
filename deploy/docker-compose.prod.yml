@@ -1,0 +1,67 @@
+# Production stack for a single server: Caddy (HTTPS) -> app -> Postgres.
+#
+# On the server, in /opt/waymark:
+#   docker-compose.prod.yml  (this file)
+#   Caddyfile
+#   .env                     (copy of .env.production.example, filled in)
+#
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Updates: docker compose -f docker-compose.prod.yml pull && \
+#          docker compose -f docker-compose.prod.yml up -d
+# Migrations run automatically when the app starts. See DEPLOY.md.
+
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+  app:
+    # Built and published by .github/workflows/release.yml.
+    image: ${APP_IMAGE:-ghcr.io/your-github-user/waymark-gear:latest}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      # Caddy is the one proxy in front of the app.
+      TRUST_PROXY: 1
+      DATABASE_URL: postgres://waymark:${POSTGRES_PASSWORD}@db:5432/waymark
+    volumes:
+      - userimages:/app/public/userimages
+    depends_on:
+      db:
+        condition: service_healthy
+    # Not published to the host: only Caddy reaches it.
+    expose:
+      - "3000"
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: waymark
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: waymark
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U waymark -d waymark"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  caddy_data:
+  caddy_config:
+  pgdata:
+  userimages:
