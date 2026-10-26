@@ -13,6 +13,7 @@ import * as kits from './kits.js';
 import { authenticateAdmin } from './auth.js';
 import { googleEnabled } from './google.js';
 import { logWithRequest } from './log.js';
+import { importFromLighterPack, importRateLimit, ImportError } from './lighterpack.js';
 
 const router = express.Router();
 
@@ -47,6 +48,21 @@ const pub = (handler) => async (req, res) => {
 const validClass = (c) => kits.WEIGHT_CLASSES.some((w) => w.id === c);
 
 // ---- public ----------------------------------------------------------------
+
+// Read a public LighterPack list from its share link. Returns the parsed list;
+// the browser adds it to the library like any other edit, so this works the
+// same for signed-in and account-less users.
+router.post('/api/import/lighterpack', requireJson, importRateLimit(), async (req, res) => {
+    try {
+        const list = await importFromLighterPack(String((req.body && req.body.url) || '').slice(0, 500));
+        res.set('Cache-Control', 'no-store');
+        res.json(list);
+    } catch (err) {
+        if (err instanceof ImportError) return res.status(err.status).json({ message: err.message });
+        logWithRequest(req, { message: 'lighterpack import error', err });
+        res.status(500).json({ message: 'An error occurred.' });
+    }
+});
 
 router.get('/api/config', (req, res) => {
     res.set('Cache-Control', 'no-store');

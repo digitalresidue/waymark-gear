@@ -35,6 +35,7 @@
                 @hide="showSpeedbump = false"
             />
             <copyList :shown="showCopyList" @hide="showCopyList = false" />
+            <importLighterpack :shown="showImport" @hide="showImport = false" />
             <importCSV ref="importCSVRef" />
             <itemImage :shown="showItemImage" :item="itemImageItem" @hide="showItemImage = false" />
             <itemViewImage :shown="showItemViewImage" :image-url="itemViewImageUrl" @hide="showItemViewImage = false" />
@@ -62,6 +63,7 @@ import itemViewImage from '../components/item-view-image.vue';
 import itemLink from '../components/item-link.vue';
 import importCSV from '../components/import-csv.vue';
 import copyList from '../components/copy-list.vue';
+import importLighterpack from '../components/import-lighterpack.vue';
 import speedbump from '../components/speedbump.vue';
 import accountDropdown from '../components/account-dropdown.vue';
 import siteFooter from '../components/site-footer.vue';
@@ -75,6 +77,7 @@ import offlineBanner from '../components/offline-banner.vue';
 export default {
     name: 'Dashboard',
     components: {
+        importLighterpack,
         offlineBanner,
         sidebar,
         share,
@@ -102,6 +105,7 @@ export default {
             openDeleteAccount: () => { this.showDeleteAccount = true; },
             openCopyList: () => { this.showCopyList = true; },
             openImportCSV: () => { this.$refs.importCSVRef.triggerUpload(); },
+            openImportLighterPack: () => { this.showImport = true; },
             openItemImage: (item) => { this.itemImageItem = item; this.showItemImage = true; },
             openItemViewImage: (imageUrl) => { this.itemViewImageUrl = imageUrl; this.showItemViewImage = true; },
             openItemLink: (item) => { this.itemLinkItem = item; this.showItemLink = true; },
@@ -127,6 +131,7 @@ export default {
             showHelp: false,
             showDeleteAccount: false,
             showCopyList: false,
+            showImport: false,
             showItemImage: false,
             itemImageItem: null,
             showItemViewImage: false,
@@ -161,9 +166,12 @@ export default {
     },
     beforeMount() {
         const copyId = this.$route.query.copy;
+        // "Import from LighterPack" on the homepage: same, an account-less
+        // library to import into if there isn't one yet.
+        const importing = this.$route.query.import === 'lighterpack';
         // "Copy to my lists" from a shared page works without an account:
         // a visitor with no library gets an account-less one to copy into.
-        if (!this.$store.state.library && copyId) {
+        if (!this.$store.state.library && (copyId || importing)) {
             this.$store.dispatch('startLocalLibrary');
         }
         if (!this.$store.state.library) {
@@ -171,6 +179,10 @@ export default {
         } else {
             this.isLoaded = true;
             if (copyId) this.copySharedList(String(copyId));
+            if (importing) {
+                this.$router.replace({ query: {} });
+                this.showImport = true;
+            }
         }
     },
     methods: {

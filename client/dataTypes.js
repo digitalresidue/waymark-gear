@@ -474,6 +474,50 @@ Library.prototype.importSharedList = function (shared) {
     return list;
 };
 
+// Add a list read from a LighterPack link or a CSV file
+// (client/utils/lighterpack-import.js). Gear already in the closet with the
+// same name and weight is reused rather than duplicated, so importing a
+// second list from the same closet doesn't double it.
+Library.prototype.importGearList = function (parsed) {
+    const key = (name, weight) => `${String(name).trim().toLowerCase()}|${Math.round(weight)}`;
+    const closet = new Map();
+    for (const item of this.items) {
+        if (!item.retired && item.name) closet.set(key(item.name, item.weight), item);
+    }
+    const list = this.newList();
+    list.name = parsed.name || 'Imported list';
+    list.description = parsed.description || '';
+    let reused = 0;
+    for (const source of parsed.categories || []) {
+        const category = this.newCategory({ list });
+        category.name = source.name || '';
+        for (const s of source.items || []) {
+            const weight = Math.max(0, Number(s.weightMg) || 0);
+            let item = closet.get(key(s.name, weight));
+            if (item && !category.getCategoryItemById(item.id)) {
+                category.addItem({ itemId: item.id, _isNew: false });
+                reused++;
+            } else {
+                item = this.newItem({ category, _isNew: false });
+                item.name = s.name || '';
+                item.description = s.description || '';
+                item.weight = weight;
+                item.authorUnit = ['g', 'kg', 'oz', 'lb'].includes(s.unit) ? s.unit : this.itemUnit;
+                item.price = Number(s.price) || 0;
+                item.url = s.url || '';
+                closet.set(key(item.name, item.weight), item);
+            }
+            const ci = category.getCategoryItemById(item.id);
+            ci.qty = Number.isFinite(Number(s.qty)) ? Number(s.qty) : 1;
+            ci.worn = s.worn ? 1 : 0;
+            ci.consumable = Boolean(s.consumable);
+        }
+    }
+    list.calculateTotals();
+    this.defaultListId = list.id;
+    return { list, reused };
+};
+
 // Add a gear-catalog entry to a category as a new, catalog-linked item.
 // `entry` is the shape /api/catalog returns.
 Library.prototype.newItemFromCatalog = function ({ category, entry }) {

@@ -53,5 +53,6 @@
         "clientId": "GOOGLE_CLIENT_ID",
         "clientSecret": "GOOGLE_CLIENT_SECRET"
     },
-    "cwebpPath": "CWEBP_PATH"
+    "cwebpPath": "CWEBP_PATH",
+    "lighterpackUrl": "LIGHTERPACK_URL"
 }

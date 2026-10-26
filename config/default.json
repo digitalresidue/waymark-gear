@@ -17,8 +17,11 @@
     "rateLimit": {
         "enabled": true,
         "authWindowMinutes": 15,
-        "authMaxPerWindow": 30
+        "authMaxPerWindow": 30,
+        "importWindowMinutes": 10,
+        "importMaxPerWindow": 20
     },
+    "lighterpackUrl": "https://lighterpack.com",
     "mailgunDomain": "",
     "mailgunAPIKey": "",
     "mailFrom": "",

@@ -17,6 +17,8 @@ sign-in, email, and nightly backups. Plan on an afternoon the first time.
 | **Off-site storage** | Backups | Backblaze B2, AWS S3, or DigitalOcean Spaces | Step 8. |
 | **Uptime monitor** | Tells you if the site goes down | UptimeRobot or Better Stack (free tiers) | Monitor `https://waymarkgear.com/healthz`. |
 
+The server needs outbound HTTPS to `lighterpack.com` for "Import from LighterPack" links (CSV uploads work without it). It only ever requests that site's public `/csv/:id` and `/r/:id` pages, never follows redirects, and is rate limited per IP (`rateLimit.importMaxPerWindow`, default 20 per 10 minutes). `LIGHTERPACK_URL` overrides the address if you ever need to.
+
 Check each provider's current pricing; a small VPS, storage and a domain are
 the only recurring costs at launch.
 

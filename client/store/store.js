@@ -1,7 +1,6 @@
 import { createStore } from 'vuex';
 import debounce from 'lodash/debounce.js';
 
-import weightUtils from '../utils/weight.js';
 import { Library } from '../dataTypes.js';
 import { fetchJson, readCookie, arrayMove } from '../utils/utils.js';
 import { diffLibrary } from '../utils/library-diff.js';
@@ -316,42 +315,23 @@ const store = createStore({
             const copiedList = state.library.copyList(listId);
             state.library.defaultListId = copiedList.id;
         },
-        importCSV(state, importData) {
-            const previousList = state.library.getListById(state.library.defaultListId);
-            const list = state.library.newList({});
-            if (previousList) {
-                list.optionalFields = Object.assign({}, previousList.optionalFields);
-            }
-            let category;
-            const newCategories = {};
-            let item;
-            let categoryItem;
-            let row;
-            let i;
-
-            list.name = importData.name;
-
-            for (i in importData.data) {
-                row = importData.data[i];
-                if (newCategories[row.category]) {
-                    category = newCategories[row.category];
-                } else {
-                    category = state.library.newCategory({ list });
-                    newCategories[row.category] = category;
-                }
-
-                item = state.library.newItem({ category, _isNew: false });
-                categoryItem = category.getCategoryItemById(item.id);
-
-                item.name = row.name;
-                item.description = row.description;
-                categoryItem.qty = parseFloat(row.qty);
-                item.weight = weightUtils.WeightToMg(parseFloat(row.weight), row.unit);
-                item.authorUnit = row.unit;
-                category.name = row.category;
-            }
-            list.calculateTotals();
-            state.library.defaultListId = list.id;
+        importGearList(state, parsed) {
+            const library = state.library;
+            const previous = library.getListById(library.defaultListId);
+            // A brand-new library's untouched starter list would just sit
+            // under the import; drop it.
+            const starter = library.lists.length === 1 && previous && !previous.name
+                && previous.categoryIds.every((id) => {
+                    const c = library.getCategoryById(id);
+                    return c && c.categoryItems.every((ci) => {
+                        const item = library.getItemById(ci.itemId);
+                        return !item || (!item.name && !item.weight && !item.description);
+                    });
+                });
+            const result = library.importGearList(parsed);
+            if (previous) result.list.optionalFields = { ...previous.optionalFields };
+            if (starter) library.removeList(previous.id);
+            parsed.result = { reused: result.reused };
         },
         save() {
             // no-op
