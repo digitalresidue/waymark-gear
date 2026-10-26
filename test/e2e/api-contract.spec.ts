@@ -472,60 +472,76 @@ test.describe('share page URL sanitization', () => {
     });
 });
 
-test.describe('legacy sha3 password upgrade on signin', () => {
-    // Legacy users (pre-bcrypt) have passwords stored either as a raw sha3 hash
-    // or as bcrypt-of-sha3. verifyPassword upgrades both to plain bcrypt on
-    // first successful login. A regression here locks out every legacy user.
+test.describe('session tokens', () => {
+    // users.token holds sha256(cookie), never the cookie itself, so a copy of
+    // the database can't be replayed as a session.
 
     let knex: any;
-    let CryptoJS: any;
 
     test.beforeAll(async () => {
-        const config = (await import('config')).default;
         const Knex = (await import('knex')).default;
-        knex = Knex({
-            client: 'pg',
-            connection: JSON.parse(JSON.stringify(config.get('pgDatabase'))),
-        });
-
-        CryptoJS = (await import('../../server/sha3.js')).default;
+        const { connectionConfig } = await import('../../server/db-config.js');
+        knex = Knex({ client: 'pg', connection: connectionConfig() });
     });
 
     test.afterAll(async () => {
         await knex?.destroy();
     });
 
-    for (const variant of ['raw sha3', 'bcrypt of sha3'] as const) {
-        test(`${variant} password still signs in and is rehashed to bcrypt`, async ({ playwright }) => {
-            const request = await playwright.request.newContext();
-            const user = await registerViaApi(request);
-            await request.post(url('/signout'));
+    const sessionCookie = async (request: APIRequestContext) => {
+        const { cookies } = await request.storageState();
+        return cookies.find((c) => c.name === 'lp')?.value;
+    };
 
-            const sha3password = CryptoJS.SHA3(user.password + user.username).toString(CryptoJS.enc.Base64);
-            let legacyStored = sha3password;
-            if (variant === 'bcrypt of sha3') {
-                const bcrypt = (await import('bcryptjs')).default;
-                legacyStored = await bcrypt.hash(sha3password, 10);
-            }
-            await knex('users').where({ username: user.username }).update({ password: legacyStored });
+    test('only the hash of the session token is stored', async ({ playwright }) => {
+        const crypto = await import('node:crypto');
+        const request = await playwright.request.newContext();
+        const user = await registerViaApi(request);
 
-            const response = await request.post(url('/signin'), {
-                data: { username: user.username, password: user.password },
-            });
-            expect(response.status()).toBe(200);
+        const cookie = await sessionCookie(request);
+        expect(cookie).toBeTruthy();
 
-            // the stored hash is upgraded to bcrypt-of-plain-password
-            const rows = await knex('users').select('password').where({ username: user.username });
-            expect(rows[0].password).not.toBe(legacyStored);
-            expect(rows[0].password).toMatch(/^\$2/);
+        const rows = await knex('users').select('token').where({ username: user.username });
+        expect(rows[0].token).not.toBe(cookie);
+        expect(rows[0].token).toBe(crypto.createHash('sha256').update(cookie!).digest('hex'));
 
-            // and a second signin succeeds through the normal bcrypt path
-            await request.post(url('/signout'));
-            const again = await request.post(url('/signin'), {
-                data: { username: user.username, password: user.password },
-            });
-            expect(again.status()).toBe(200);
-            await request.dispose();
+        // and the cookie still authenticates
+        const save = await request.post(url('/saveLibrary'), {
+            data: { username: user.username, sync_token: user.sync_token, data: user.library },
         });
-    }
+        expect(save.status()).toBe(200);
+        await request.dispose();
+    });
+
+    test('changing password signs out other sessions but keeps this one', async ({ playwright }) => {
+        const deviceA = await playwright.request.newContext();
+        const user = await registerViaApi(deviceA);
+
+        const deviceB = await playwright.request.newContext();
+        const signin = await deviceB.post(url('/signin'), {
+            data: { username: user.username, password: user.password },
+        });
+        expect(signin.status()).toBe(200);
+        const { sync_token: syncToken, library } = await signin.json();
+
+        const change = await deviceB.post(url('/account'), {
+            data: { currentPassword: user.password, newPassword: `${user.password}x` },
+        });
+        expect(change.status()).toBe(200);
+
+        // device B, which made the change, is still signed in
+        const saveB = await deviceB.post(url('/saveLibrary'), {
+            data: { username: user.username, sync_token: syncToken, data: library },
+        });
+        expect(saveB.status()).toBe(200);
+
+        // device A's session is gone
+        const saveA = await deviceA.post(url('/saveLibrary'), {
+            data: { username: user.username, sync_token: syncToken + 1, data: library },
+        });
+        expect(saveA.status()).toBe(404);
+
+        await deviceA.dispose();
+        await deviceB.dispose();
+    });
 });

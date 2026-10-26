@@ -5,8 +5,7 @@ import Mustache from 'mustache';
 import { Marked } from 'marked';
 import { thumbnailUrl } from './images.js';
 import config from 'config';
-import cloneDeep from 'lodash/cloneDeep.js';
-import Knex from 'knex';
+import knex from './db.js';
 import { logWithRequest, logger } from './log.js';
 import weightUtils from '../client/utils/weight.js';
 import { marked, isSafeHref } from '../client/utils/markdown.js';
@@ -15,10 +14,6 @@ import { listToCsv } from './csv.js';
 
 const router = express.Router();
 
-const knex = Knex({
-    client: 'pg',
-    connection: cloneDeep(config.get('pgDatabase'))
-});
 
 const templates = {};
 let shareTemplate = '';
@@ -115,13 +110,13 @@ const docPages = [
         path: '/privacy',
         file: 'PRIVACY.md',
         title: 'Privacy Policy',
-        description: 'What LighterPack collects, who else handles it, and how to delete it.',
+        description: 'What Waymark Gear collects, who else handles it, and how to delete it.',
     },
     {
         path: '/terms',
         file: 'TERMS.md',
         title: 'Terms of Use',
-        description: 'The house rules for using LighterPack, in plain English.',
+        description: 'The house rules for using Waymark Gear, in plain English.',
     },
 ];
 
@@ -238,6 +233,7 @@ async function renderListView(req, res) {
             renderedDescription: marked(list.description),
             scripts: shareScriptsHtml,
             styles: shareStylesHtml,
+            cspNonce: res.locals.cspNonce,
         };
 
         Object.assign(model, templates);

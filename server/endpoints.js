@@ -6,10 +6,9 @@ import { customAlphabet } from 'nanoid';
 import { promisify } from 'util';
 import formidable from 'formidable';
 import config from 'config';
-import cloneDeep from 'lodash/cloneDeep.js';
-import Knex from 'knex';
+import knex from './db.js';
 import { logWithRequest } from './log.js';
-import { authenticateUser, verifyPassword, generateSession, sessionCookieOptions, issueResetToken, hashResetToken, resetPasswordUrl, RESET_TOKEN_TTL_MS } from './auth.js';
+import { authenticateUser, verifyPassword, generateSession, startSession, hashSessionToken, sessionCookieOptions, issueResetToken, hashResetToken, resetPasswordUrl, RESET_TOKEN_TTL_MS } from './auth.js';
 import { sniffImage, storeImage } from './images.js';
 import { deleteUserAccount } from './accounts.js';
 import { Library } from '../client/dataTypes.js';
@@ -17,6 +16,15 @@ import { Library } from '../client/dataTypes.js';
 const router = express.Router();
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+// Sender identity for password-reset and forgot-username email. Falls back to
+// an address on the Mailgun sending domain, which Mailgun will always accept.
+function mailIdentity() {
+    const from = (config.has('mailFrom') && config.get('mailFrom'))
+        || `Waymark Gear <noreply@${config.get('mailgunDomain')}>`;
+    const replyTo = (config.has('mailReplyTo') && config.get('mailReplyTo')) || from;
+    return { from, replyTo };
+}
 
 async function sendMail({ from, to, replyTo, subject, text }) {
     const apiKey = config.get('mailgunAPIKey');
@@ -30,11 +38,6 @@ async function sendMail({ from, to, replyTo, subject, text }) {
     if (!response.ok) throw new Error(`Mailgun error: ${response.status} ${await response.text()}`);
     return response.json();
 }
-
-const knex = Knex({
-    client: 'pg',
-    connection: cloneDeep(config.get('pgDatabase'))
-});
 
 const randomBytesAsync = promisify(crypto.randomBytes);
 
@@ -123,7 +126,7 @@ async function register(req, res) {
             username,
             password: hash,
             email,
-            token,
+            token: hashSessionToken(token),
             library,
             sync_token: newSyncToken,
             registered: new Date(),
@@ -145,7 +148,7 @@ async function register(req, res) {
                 logWithRequest(req, { message: 'Register unique violation race', username, email, err });
                 return res.status(400).json({ errors: [{ message: 'That username or email already exists, please pick a different one.' }] });
             }
-            logWithRequest(req, { message: 'Error inserting user', newUser, err });
+            logWithRequest(req, { message: 'Error inserting user', username, err });
             return res.status(500).json({ errors: [{ message: 'An error occurred when registering.' }] });
         }
     } catch (err) {
@@ -175,7 +178,7 @@ router.post('/saveLibrary', (req, res) => {
 async function saveLibrary(req, res, user) {
     if (typeof req.body.sync_token === 'undefined') {
         logWithRequest(req, { message: 'Missing syncToken', username: user.username });
-        return res.status(400).send('Please refresh this page to upgrade to the latest version of LighterPack.');
+        return res.status(400).send('Please refresh this page to upgrade to the latest version of Waymark Gear.');
     }
     if (!req.body.username || !req.body.data) {
         logWithRequest(req, { message: 'bad save: missing username or data', username: user.username });
@@ -318,10 +321,9 @@ async function forgotPassword(req, res) {
         logWithRequest(req, { message: 'Attempting to send password reset link', email });
         try {
             const mailgunResponse = await sendMail({
-                from: 'LighterPack <info@mg.lighterpack.com>',
+                ...mailIdentity(),
                 to: email,
-                replyTo: 'LighterPack <info@lighterpack.com>',
-                subject: 'Reset your LighterPack password',
+                subject: 'Reset your Waymark Gear password',
                 text: message,
             });
             logWithRequest(req, { message: 'Message sent', response: mailgunResponse.message });
@@ -425,10 +427,9 @@ async function forgotUsername(req, res) {
         logWithRequest(req, { message: 'Attempting to send username', email, username });
         try {
             const mailgunResponse = await sendMail({
-                from: 'LighterPack <info@mg.lighterpack.com>',
+                ...mailIdentity(),
                 to: email,
-                replyTo: 'LighterPack <info@lighterpack.com>',
-                subject: 'Your LighterPack username',
+                subject: 'Your Waymark Gear username',
                 text: message,
             });
             logWithRequest(req, { message: 'Message sent', response: mailgunResponse.message });
@@ -482,6 +483,11 @@ async function account(req, res, user) {
             await knex('users').where({user_id: user.user_id}).update({
                 password: newPasswordHash
             });
+
+            // A new password should sign out every other device. Re-issuing
+            // the session replaces users.token, and this browser gets the new
+            // cookie so it stays signed in.
+            await startSession(res, user.user_id);
         }
 
         if (req.body.newEmail) {
@@ -557,7 +563,7 @@ async function deleteAccount(req, res, user) {
 router.post('/signout', async (req, res) => {
     if (req.cookies.lp) {
         try {
-            await knex('users').where({token: String(req.cookies.lp)}).update({token: ''});
+            await knex('users').where({ token: hashSessionToken(String(req.cookies.lp)) }).update({ token: '' });
         } catch (err) {
             logWithRequest(req, { message: 'Error invalidating token on signout', err });
         }

@@ -1,21 +1,15 @@
 import config from 'config';
-import cloneDeep from 'lodash/cloneDeep.js';
 import { promisify } from 'util';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import Knex from 'knex';
+import knex from './db.js';
 import { logWithRequest } from './log.js';
-
-const knex = Knex({
-    client: 'pg',
-    connection: cloneDeep(config.get('pgDatabase'))
-});
 
 const moderatorList = config.get('moderators');
 
 const sessionCookieOptions = () => ({
     path: '/',
-    maxAge: 365 * 24 * 60 * 60 * 1000,
+    maxAge: Number(config.get('sessionDays')) * 24 * 60 * 60 * 1000,
     httpOnly: true,
     secure: config.get('environment') === 'production',
     sameSite: 'lax',
@@ -28,6 +22,25 @@ const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
 // Only the hash is stored, so a leaked database dump can't be used to reset
 // anyone's password - the same reasoning that applies to the password column.
 const hashResetToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+
+// Session tokens get the same treatment: users.token holds the hash, and the
+// raw value only ever exists in the user's cookie. Migration
+// 20261025000100_hash_session_tokens converted the tokens already stored.
+const hashSessionToken = hashResetToken;
+
+// Mint a session token, store its hash and set the cookies. Shared by signin,
+// registration and anything that rotates the session (password change/reset).
+const startSession = async function (res, userId) {
+    const tokenBuffer = await randomBytesAsync(48);
+    const token = tokenBuffer.toString('hex');
+
+    await knex('users').where({ user_id: userId }).update({ token: hashSessionToken(token) });
+
+    const opts = sessionCookieOptions();
+    res.cookie('lp', token, opts);
+    res.cookie('lp_loggedin', '1', { ...opts, httpOnly: false });
+    return token;
+};
 
 // The raw token is the only copy that ever leaves the server. How it reaches
 // the user is the caller's business: the public flow emails it, moderation
@@ -45,9 +58,6 @@ const issueResetToken = async function (user) {
 };
 
 const resetPasswordUrl = (token) => `${config.get('deployUrl')}/reset-password/${token}`;
-
-// one day in many years this can go away.
-import CryptoJS from './sha3.js';
 
 const authenticateModerator = async function (req, res, callback) {
     authenticateUser(req, res, (req, res, user) => {
@@ -99,7 +109,7 @@ const authenticateUser = async function (req, res, callback) {
         const token = String(req.cookies.lp);
 
         try {
-            const users = await knex('users').select().where({token});
+            const users = await knex('users').select().where({ token: hashSessionToken(token) });
 
             if (!users.length) {
                 logWithRequest(req, { message: 'bad cookie!' });
@@ -141,32 +151,6 @@ const verifyPassword = async function (username, password) {
             return user;
         }
 
-        /* TODO: remove the below steps & force password reset of non-updated passwords */
-        const sha3password = CryptoJS.SHA3(password + username).toString(CryptoJS.enc.Base64);
-        const sha3Match = await bcrypt.compare(sha3password, user.password);
-
-        if (sha3Match) {
-            const salt = await bcrypt.genSalt(10);
-            const newPasswordHash = await bcrypt.hash(password, salt);
-
-            await knex('users').where({username}).update({
-                password: newPasswordHash
-            });
-
-            return user;
-        }
-
-        if (sha3password === user.password) {
-            const salt = await bcrypt.genSalt(10);
-            const newPasswordHash = await bcrypt.hash(password, salt);
-
-            await knex('users').where({username}).update({
-                password: newPasswordHash
-            });
-
-            return user;
-        }
-
         throw new AuthError(404, 'Invalid username and/or password.');
     } catch (err) {
         if (err instanceof AuthError) {
@@ -178,16 +162,7 @@ const verifyPassword = async function (username, password) {
 };
 
 const generateSession = async function (req, res, user, callback) {
-    const tokenBuffer = await randomBytesAsync(48);
-    const token = tokenBuffer.toString('hex');
-
-    await knex('users').where({user_id: user.user_id}).update({
-        token
-    });
-
-    const opts = sessionCookieOptions();
-    res.cookie('lp', token, opts);
-    res.cookie('lp_loggedin', '1', { ...opts, httpOnly: false });
+    await startSession(res, user.user_id);
     await callback(req, res, user);
 };
 
@@ -195,4 +170,4 @@ function isModerator(username) {
     return moderatorList.indexOf(username) > -1;
 }
 
-export { authenticateModerator, authenticateUser, verifyPassword, generateSession, isModerator, sessionCookieOptions, issueResetToken, hashResetToken, resetPasswordUrl, RESET_TOKEN_TTL_MS };
+export { authenticateModerator, authenticateUser, verifyPassword, generateSession, startSession, hashSessionToken, isModerator, sessionCookieOptions, issueResetToken, hashResetToken, resetPasswordUrl, RESET_TOKEN_TTL_MS };

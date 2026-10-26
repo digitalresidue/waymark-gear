@@ -12,7 +12,7 @@
              Only an explicit choice is applied; with none stored the media
              query in _base.scss is already correct. initTheme() re-applies
              this and adds the OS listener once the bundle runs. -->
-        <script>
+        <script nonce="{{{cspNonce}}}">
             (function () {
                 try {
                     var t = localStorage.getItem('lpTheme');
@@ -61,6 +61,6 @@
         <div class="lpDialog" id="lpImageDialog"></div>
         <div class="lpModalOverlay"></div>
         {{{scripts}}}
-        <script type="text/javascript">chartData="{{{chartData}}}";</script>
+        <script nonce="{{{cspNonce}}}">chartData="{{{chartData}}}";</script>
     </body>
 </html>

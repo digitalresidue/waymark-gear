@@ -4,10 +4,12 @@ import config from 'config';
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import knex from './server/db.js';
 import { logger } from './server/log.js';
 import endpoints from './server/endpoints.js';
 import moderationEndpoints from './server/moderation-endpoints.js';
 import views, { hasBuiltAssets } from './server/views.js';
+import { authRateLimit, cspNonce, securityHeaders } from './server/security.js';
 
 // Backstop: a rejected promise that escapes a handler (e.g. a transient DB
 // error on a detached async call) would otherwise terminate the process on
@@ -16,14 +18,25 @@ process.on('unhandledRejection', (err) => {
     logger.error({ message: 'Unhandled promise rejection', err: { message: err?.message, stack: err?.stack } });
 });
 
-const app = express();
+// Apply pending schema migrations before taking traffic. Knex's lock table
+// makes this safe when several instances start together.
+if (config.get('migrateOnStart')) {
+    const [batch, applied] = await knex.migrate.latest();
+    if (applied.length) {
+        logger.info({ message: `Applied migrations (batch ${batch})`, migrations: applied });
+    }
+}
 
-// Trust exactly one hop - nginx - rather than the whole X-Forwarded-For chain.
-// Trusting the chain means req.ip is the leftmost entry, which the client sets
-// itself: anyone could forge the address in the access log below, and any future
-// per-IP throttle would be a header away from useless. This number is the count
-// of proxies in front of node, so adding a CDN ahead of nginx makes it 2.
-app.set('trust proxy', 1);
+const app = express();
+app.disable('x-powered-by');
+
+// Trust exactly as many X-Forwarded-For hops as there are proxies in front of
+// node (config trustProxy / TRUST_PROXY; default 1, for nginx). Trusting more
+// than that lets the client pick its own req.ip: anyone could forge the
+// address in the access log below, and the per-IP rate limit would be a header
+// away from useless. Exposed directly with no proxy, set it to 0; with a CDN
+// ahead of nginx, 2.
+app.set('trust proxy', Number(config.get('trustProxy')));
 
 app.use((req, res, next) => {
     req.uuid = uuidv4();
@@ -46,21 +59,45 @@ app.use((req, res, next) => {
     next();
 });
 
+// Liveness/readiness for Docker and load balancers. Answers before any other
+// middleware so a probe never touches sessions or static files.
+app.get('/healthz', async (_req, res) => {
+    try {
+        await knex.raw('select 1');
+        res.set('Cache-Control', 'no-store').json({ status: 'ok' });
+    } catch {
+        res.status(503).set('Cache-Control', 'no-store').json({ status: 'unavailable' });
+    }
+});
+
+app.use(cspNonce);
+app.use(securityHeaders({ enforceCsp: hasBuiltAssets }));
+
 const oneDay = 86400000;
 
 app.use((req, _res, next) => {
     req.cookies = {};
     for (const part of (req.headers.cookie || '').split(';')) {
         const [key, ...val] = part.trim().split('=');
-        if (key) req.cookies[decodeURIComponent(key)] = decodeURIComponent(val.join('='));
+        if (!key) continue;
+        try {
+            req.cookies[decodeURIComponent(key)] = decodeURIComponent(val.join('='));
+        } catch {
+            // A malformed %-sequence in someone else's cookie on this domain
+            // shouldn't turn every request into a 500.
+        }
     }
     next();
 });
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({
-    extended: true,
-    limit: '50mb',
-}));
+
+// The whole library travels in one request (see /saveLibrary), so this has
+// to stay generous; 10mb is far above any real library and far below the
+// 50mb this used to allow.
+const bodyLimit = config.get('jsonBodyLimit');
+app.use(express.json({ limit: bodyLimit }));
+app.use(express.urlencoded({ extended: true, limit: bodyLimit }));
+
+app.use(authRateLimit());
 
 app.use(express.static(`${import.meta.dirname}/public/`, { maxAge: oneDay }));
 
@@ -94,12 +131,35 @@ app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
         method: req.method,
     });
     if (res.headersSent) return;
+    if (status === 413) {
+        return res.status(413).json({ message: 'That request is too large.' });
+    }
     if (status < 500) {
         return res.status(status).json({ message: 'Invalid request.' });
     }
     return res.status(500).json({ message: 'An unexpected error occurred.' });
 });
 
-logger.info({ message: 'Starting up Lighterpack...' });
-server.listen(config.get('port'));
-logger.info({ message: `Listening on ${config.get('port')}` });
+logger.info({ message: 'Starting up Waymark Gear...' });
+server.listen(config.get('port'), () => {
+    logger.info({ message: `Listening on ${config.get('port')}` });
+});
+
+// Docker and most process managers send SIGTERM and wait a few seconds before
+// killing. Stop accepting connections, let in-flight saves finish, close the
+// pool, then exit.
+let shuttingDown = false;
+function shutdown(signal) {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    logger.info({ message: `${signal} received, shutting down` });
+    const force = setTimeout(() => process.exit(1), 10_000);
+    force.unref();
+    server.close(async () => {
+        await knex.destroy().catch(() => {});
+        process.exit(0);
+    });
+    server.closeIdleConnections();
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

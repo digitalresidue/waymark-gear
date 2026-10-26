@@ -22,7 +22,7 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
+  reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -82,7 +82,7 @@ export default defineConfig({
      the default so a worktree doesn't reuse the server of another checkout —
      which would silently test that checkout's code instead of this one's. */
   webServer: {
-    command: 'npm run start',
+    command: 'npm run build && npm run start',
     url: `http://127.0.0.1:${process.env.LP_PORT || '3000'}`,
     reuseExistingServer: !process.env.CI,
     env: {
@@ -94,6 +94,9 @@ export default defineConfig({
         // per worker, because a user row holds a single session token - sharing
         // an account across workers would sign each other out.
         moderators: Array.from({ length: 32 }, (_, i) => `lpe2emoderator${i}`),
+        // Hundreds of sign-ins from one IP in a few minutes is exactly what the
+        // limiter exists to stop. It has its own test in test/unit.
+        rateLimit: { enabled: false },
       }),
     },
   },
