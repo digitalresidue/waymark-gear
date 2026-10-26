@@ -1,0 +1,43 @@
+@import "../globals";
+
+// Query container for the breakpoints below. Must be an ancestor of .lpList,
+// not .lpList itself. Keep position: fixed elements (the image modal) outside
+// it — containment would pin them to the list instead of the viewport.
+#main.lpShare,
+.lpEmbedBody {
+    container: lpList / inline-size;
+}
+
+// 56px side gutters are the edit page's (.lpListBody in list.vue); the top and
+// bottom are this page's own, standing in for the app bar and footer it has
+// no equivalent of.
+.lpList {
+    background: inherit;
+    min-height: 100%;
+    padding: 32px 56px 64px;
+    position: relative;
+    z-index: $aboveSidebar;
+}
+
+#chart.activeHover {
+    cursor: pointer;
+}
+
+.lpCategories {
+    margin: 0;
+    padding: 0;
+}
+
+#lpListDescription {
+    h2 {
+        border-bottom: 1px solid var(--lp-border-strong);
+    }
+}
+
+// Desktop gutters exist so the columns have room to breathe; at this width
+// they are just lost content, so the page keeps a modest inset instead.
+@container lpList (width <= 720px) {
+    .lpList {
+        padding: 24px 16px 40px;
+    }
+}

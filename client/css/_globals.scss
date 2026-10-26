@@ -1,0 +1,205 @@
+@use 'sass:color';
+
+// ============================================================
+// Tier 1 · Primitives — the complete palette.
+// A color value exists only here (or as a color.mix of these).
+// Components should not reference tier 1 directly for theming;
+// use the semantic tokens (tier 2) so dark mode keeps working.
+// ============================================================
+
+/* Brand — the LighterPack palette. The authoritative source for accent
+   colors: semantic accent tokens below must reference these. */
+$blue1: #1b77d3;
+$blue2: #3db7ff;
+$green1: #7ab317;
+$green2: #a8d46f;
+$orange1: #efa026;
+
+// $orange1: #ffb036;
+// $orange2: #F18828;
+$orange2: #ee801c;
+$red1: #ce1836;
+$yellow1: #f2d000;
+$yellow2: #fcefa9;
+$darkYellow: #a58c00;
+
+/* Neutrals — one ramp, numbered by darkness. A new grey must land on an
+   existing step or earn a new one; never add a near-duplicate value.
+   Tags list each step's consumers by theme: [L] light only, [D] dark
+   only, [both] both themes (mostly the always-dark sidebar chrome). */
+$grey-0: #fff;      // [L] page/surface bg, [both] white ink on fills
+$grey-50: #f4f5f6;  // [L] hovered/active row band, sunken strips
+$grey-100: #e0e1e3; // [L] hairline · [D] body text · [both] sidebar text
+$grey-200: #BBB; // [L] strong hairline, resting icons
+$grey-400: #9a9da3; // [D] secondary text
+$grey-500: #82868c; // [both] sidebar muted text
+$grey-600: #6c6c70; // [L] secondary text · [both] sidebar handle
+$grey-650: #4a4a4a; // [D] subtle border, resting icons
+$grey-700: #3a3d42; // [D] strong hairline · [both] sidebar border
+$grey-750: #333336; // [D] faint hairline (kept distinct from surface) · [L] chart hover ring
+$grey-800: #2e2e30; // [D] surface · [both] sidebar bg
+$grey-850: #26262a; // [both] sidebar inset · [D] sunken strips
+$grey-900: #24272b; // [L] body text
+$grey-950: #1e1e1e; // [D] page bg
+$grey-1000: #111;   // [L] bubble-text mix
+
+/* breakpoints — the phone layout. Kept in sync with client/utils/viewport.js,
+   which drives the component swaps (mobile item rows, mobile summary) that
+   a media query can't express. Change one, change the other. */
+$mobile: 720px;
+
+/* spacing */
+$spacingSmall: 10px;
+$spacingMedium: 15px;
+$spacingLarge: 30px;
+
+/* z-index stack */
+// Dims the page behind an open header menu but stays under the app bar, so the
+// header and the menu hanging off it both read as above the overlay.
+$popoverScrim: 5;
+$mobileHeader: 10; // sticky app bar — under the drawer and its scrim
+$mobileScrim: 19; // dims the list behind the open drawer, over the app bar
+$sidebar: 20;
+$aboveSidebar: 30;
+$belowDialog: 90;
+$dialog: 100;
+$tooltip: 105; // above open dialogs
+$aboveDialog: 110;
+$blackoutFooter: 120; // welcome/register footer sits above the blackout modal
+$dragMirror: 9999; // dragula's floating copy tops everything while dragging
+$transitionDuration: 0.2s;
+$transitionDurationSlow: 0.4s;
+
+// ============================================================
+// Tier 2 · Semantic tokens — the only names components reference.
+// Declared exactly once per bundle by _base.scss: light on .lp,
+// dark via the OS media query and the [data-theme] toggle.
+// Values marked "placeholder" are provisional, not designed.
+// ============================================================
+
+@mixin lp-light-theme {
+    color-scheme: light;
+
+    // Surfaces
+    --lp-bg: #{$grey-0}; // page background
+    --lp-content-bg: #{$grey-0}; // content column
+    --lp-surface: #{$grey-0}; // panels, modals, lifted rows
+    --lp-surface-invert: #{$grey-900};
+    // A strip recessed *inside* a surface -- a tab bar behind its active tab,
+    // a footer strip on a card. One step under the surface it sits in, which is
+    // not the same relationship as row-hover's one step off the page.
+    --lp-surface-sunken: #{$grey-50};
+    --lp-welcome-footer-bg: rgba(255, 255, 255, 0.65);
+    --lp-welcome-panel-bg: rgba(255, 255, 255, 0.9);
+
+    // Text
+    --lp-text: #{$grey-900};
+    --lp-text-secondary: #{$grey-600};
+    --lp-text-invert: #{$grey-50};
+    --lp-icon-rest: #{$grey-200};
+
+    // Lines & shadows
+    --lp-border-strong: #{$grey-200};
+    --lp-border: #{$grey-100};
+    // One step past border-strong: a hairline darkening under a hovered title.
+    --lp-border-hover: #{$grey-400};
+    --lp-lift-shadow: 0 6px 22px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    // Neutral band behind a hovered or actively-edited item row.
+    --lp-row-hover: #{$grey-50};
+    // Separator stroked between pie-chart slices. One step off the content bg
+    // so the slices read as split without a visible outline. Canvas can't use
+    // a CSS variable, so pies.js is handed this value at chart creation.
+    --lp-chart-line: #{$grey-50};
+    // Ring around the hovered slice — ink against the content bg, so it has to
+    // invert per theme rather than sit one step off the background.
+    --lp-chart-hover-line: #{$grey-750};
+
+    // Accents (brand)
+    --lp-link-blue: #{$blue1};
+    --lp-accent-green: #{$green2};
+    --lp-accent-green-deep: #{$green1};
+    --lp-accent-orange: #{$orange1};
+    --lp-active-yellow: #{$yellow1};
+    --lp-selected-bg: #{$green1}; // selection fill; white text sits on it, so it holds in both themes
+
+    // Status / highlight
+    --lp-danger: #{$red1};
+    --lp-success: #{color.adjust($green1, $lightness: -10%)};
+    --lp-warning-bg: #{$yellow2};
+    --lp-warning-border: #{$darkYellow};
+    --lp-alert-bg: #{$yellow1};
+    --lp-alert-border: #{$darkYellow};
+    --lp-hover-bg: #{$yellow2};
+
+    // Shared-item bubble — tints of the brand greens
+    --lp-bubble-bg: #{color.mix($green2, $grey-0, 12%)};
+    --lp-bubble-border: #{color.mix($green2, $grey-0, 40%)};
+    --lp-bubble-text: #{color.mix($green1, $grey-1000, 75%)};
+
+    // Sidebar (dark surface in both themes, so no dark overrides)
+    --lp-sidebar-bg: #{$grey-800};
+    --lp-sidebar-inset: #{$grey-850};
+    --lp-sidebar-border: #{$grey-700};
+    --lp-sidebar-text: #{$grey-100};
+    --lp-sidebar-muted: #{$grey-400};
+    --lp-sidebar-handle: #{$grey-600};
+    --lp-sidebar-link: #{$blue2};
+
+    --lp-page-bg-url: url("/images/lp_bg_light.webp");
+}
+
+@mixin lp-dark-theme {
+    color-scheme: dark;
+
+    // Surfaces
+    --lp-bg: #{$grey-950};
+    --lp-content-bg: #{$grey-950};
+    --lp-surface: #{$grey-800};
+    --lp-surface-invert: #{$grey-200};
+    // Its own step rather than row-hover's: on dark the row band and the
+    // surface land on the same grey, so a strip inside a card would vanish
+    // into the card. This recesses instead, the way light's grey-50 does.
+    --lp-surface-sunken: #{$grey-850};
+    --lp-welcome-footer-bg: rgba(0, 0, 0, 0.65);
+    --lp-welcome-panel-bg: rgba(30, 30, 30, 0.92);
+
+    // Text
+    --lp-text: #{$grey-100};
+    --lp-text-secondary: #{$grey-400};
+    --lp-text-invert: #{$grey-900};
+    --lp-icon-rest: #{$grey-650};
+
+    // Lines & shadows
+    --lp-border-strong: #{$grey-700};
+    --lp-border: #{$grey-750};
+    --lp-border-hover: #{$grey-600};
+    --lp-lift-shadow: 0 6px 22px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    // Mirror of light's row band: one step off the page bg, not a tint.
+    --lp-row-hover: #{$grey-800};
+    // Mirror of light's chart line: one step *lighter* than the content bg,
+    // where light goes one step darker than its white.
+    --lp-chart-line: #{$grey-850};
+    // Inverted from light: dark ink on white becomes light ink on the dark bg.
+    --lp-chart-hover-line: #{$grey-100};
+
+    // Accents — only the hues too dim on the dark surface are re-tuned.
+    // accent-green, accent-green-deep, accent-orange, active-yellow and
+    // selected-bg are luminous enough to inherit the brand values as-is.
+    --lp-link-blue: #{$blue2}; // $blue1 falls below AA on the dark bg; brighten to the sidebar's blue
+    --lp-danger: #{color.adjust($red1, $lightness: 12%)}; // lift the deep brand red into legible range
+    --lp-success: #{color.adjust($green1, $lightness: 12%)}; // light darkens it; dark brightens it
+
+    // Status / highlight
+    --lp-warning-bg: #2e2700;
+    --lp-warning-border: #786800;
+    --lp-alert-bg: #3a3200; // louder than warning, mirroring light; inherited text stays legible on it
+    --lp-alert-border: #{$darkYellow};
+    --lp-hover-bg: #3a3500;
+
+    // Shared-item bubble
+    --lp-bubble-bg: #{color.mix($green1, $grey-950, 12%)};
+    --lp-bubble-border: #{color.mix($green1, $grey-950, 25%)};
+    --lp-bubble-text: #{$green2};
+
+    --lp-page-bg-url: url("/images/lp_bg_dark.webp");
+}

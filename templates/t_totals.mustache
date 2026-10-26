@@ -1,0 +1,84 @@
+<ul class="lpTotals lpTable lpDataTable">
+    {{#categories}}
+        <li class="lpTotalCategory lpRow" id="total_{{id}}" category="{{id}}">
+            <span class="lpCell lpLegendCell">
+                <span class="lpLegend" style="background-color: {{displayColor}}"></span>
+            </span>
+            <span class="lpCell lpCategoryCell">
+                {{name}}
+            </span>
+            {{#showPrices}}<span class="lpCell lpNumber">
+                {{currencySymbol}}{{subtotalPriceDisplay}}
+            </span>{{/showPrices}}
+            <span class="lpCell lpNumber lpWeightVal">
+                <span class="lpDisplaySubtotal" mg="{{subtotalWeight}}">{{subtotalWeightDisplay}}</span> <span class="lpSubtotalUnit">{{subtotalUnit}}</span>
+            </span>
+        </li>
+    {{/categories}}
+    <li class="lpRow lpFooter lpTotal">
+        <span class="lpCell lpLegendCell"></span>
+        <span class="lpCell lpCategoryCell lpSubtotal" title="{{totalQty}} items">
+            Total
+        </span>
+        {{#showPrices}}<span class="lpCell lpNumber items">{{currencySymbol}}{{totalPriceDisplay}}</span>{{/showPrices}}
+        <span class="lpCell lpNumber lpWeightVal lpSubtotal">
+            <span class="lpTotalValue" title="{{totalQty}} items">{{totalWeightDisplay}}</span> <span class="lpTotalUnit">{{{totalUnit}}}</span>
+        </span>
+    </li>
+    {{#totalConsumableWeight}}
+        <li data-weight-type="consumable" class="lpRow lpFooter lpBreakdown lpConsumableWeight">
+            <span class="lpCell lpLegendCell"></span>
+            <span class="lpCell lpCategoryCell">
+                Consumable
+            </span>
+            {{#showPrices}}
+            <span class="lpCell lpNumber"></span>
+            {{/showPrices}}
+            <span class="lpCell lpNumber lpWeightVal">
+                <span class="lpDisplaySubtotal" mg="{{totalConsumableWeight}}">{{totalConsumableWeightDisplay}}</span> <span class="lpSubtotalUnit">{{subtotalUnit}}</span>
+            </span>
+        </li>
+    {{/totalConsumableWeight}}
+    {{#totalWornWeight}}
+        <li data-weight-type="worn" class="lpRow lpFooter lpBreakdown lpWornWeight">
+            <span class="lpCell lpLegendCell"></span>
+            <span class="lpCell lpCategoryCell">
+                Worn
+            </span>
+            {{#showPrices}}
+            <span class="lpCell lpNumber"></span>
+            {{/showPrices}}
+            <span class="lpCell lpNumber lpWeightVal">
+                <span class="lpDisplaySubtotal" mg="{{totalWornWeight}}">{{totalWornWeightDisplay}}</span> <span class="lpSubtotalUnit">{{subtotalUnit}}</span>
+            </span>
+        </li>
+    {{/totalWornWeight}}
+    {{#shouldDisplayBaseWeight}}
+        <li data-weight-type="base" class="lpRow lpFooter lpBreakdown lpBaseWeight">
+            <span class="lpCell lpLegendCell"></span>
+            <span class="lpCell lpCategoryCell">
+                Base Weight
+            </span>
+            {{#showPrices}}
+            <span class="lpCell lpNumber"></span>
+            {{/showPrices}}
+            <span class="lpCell lpNumber lpWeightVal">
+                <span class="lpDisplaySubtotal" mg="{{totalBaseWeight}}">{{totalBaseWeightDisplay}}</span> <span class="lpSubtotalUnit">{{subtotalUnit}}</span>
+            </span>
+        </li>
+    {{/shouldDisplayBaseWeight}}
+    {{#showPackWeight}}
+        <li data-weight-type="pack" class="lpRow lpFooter lpBreakdown lpTotalPackWeight">
+            <span class="lpCell lpLegendCell"></span>
+            <span class="lpCell lpCategoryCell" title="Total weight minus worn items">
+                Total Pack Weight
+            </span>
+            {{#showPrices}}
+            <span class="lpCell lpNumber"></span>
+            {{/showPrices}}
+            <span class="lpCell lpNumber lpWeightVal">
+                <span class="lpDisplaySubtotal" mg="{{totalPackWeight}}" title="Total weight minus worn items">{{totalPackWeightDisplay}}</span> <span class="lpSubtotalUnit">{{subtotalUnit}}</span>
+            </span>
+        </li>
+    {{/showPackWeight}}
+</ul>

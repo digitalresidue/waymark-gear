@@ -1,0 +1,158 @@
+listReport_{{externalId}} = function() {
+    var $ = jQuery,
+        $list = $("#{{externalId}}"),
+        $categories,
+        $chartContainer,
+        chart = null,
+        externalId = "{{externalId}}",
+        renderedTemplate = "{{{renderedTemplate}}}",
+        chartData = "{{{chartData}}}";
+
+
+    function init() {
+        $list.append(unescape(renderedTemplate));
+        $categories = $(".lpCategories", $list);
+        $chartContainer = $(".lpChart", $list);
+        if (chartData && window.lpPies) {
+            chartData = JSON.parse(unescape(chartData));
+            addParents(chartData, false);
+            // pies() wants the canvas node, not the jQuery object.
+            chart = window.lpPies({processedData: chartData, container: $chartContainer[0], hoverCallback: chartHover});
+        }
+        initEventHandlers();
+    }
+
+    function addParents(chartData, parent) {
+        if (parent) chartData.parent = parent;
+        for (var i in chartData.points) {
+            addParents(chartData.points[i], chartData);
+        }
+    }
+
+    function chartHover(chartItem) {
+        $(".hover").removeClass("hover");
+        if (chartItem && chartItem.id) {
+            $("#total_"+chartItem.id).addClass("hover");
+        }
+    }
+
+    function updateSubtotalsUnit(unit) {
+        $(".lpDisplaySubtotal").each(function() {
+            $(this).text(MgToWeight(parseFloat($(this).attr("mg")), unit));
+            $(this).next().text(unit);
+        });
+    }
+
+    function MgToWeight(value, unit, display) {
+        if (typeof display === 'undefined') display = false;
+        if (unit == 'g') {
+            return Math.round(100 * value / 1000.0) / 100;
+        } if (unit == 'kg') {
+            return Math.round(100 * value / 1000000.0, 2) / 100;
+        } if (unit == 'oz') {
+            return Math.round(100 * value / 28349.5, 2) / 100;
+        } if (unit == 'lb') {
+            if (display) {
+                let out = '';
+                const poundsFloat = value / 453592.0;
+                const pounds = Math.floor(poundsFloat);
+                const oz = Math.round((poundsFloat % 1) * 16 * 100) / 100;
+                if (pounds) {
+                    out += 'lb';
+                    if (pounds > 1) out += 's';
+                }
+            } else {
+                return Math.round(100 * value / 453592.0, 2) / 100;
+            }
+        }
+    }
+
+    function initEventHandlers() {
+        $list.on("click", ".lpUnitSelect", function(evt) {
+            evt.stopPropagation();
+            $(this).toggleClass("lpOpen");
+            var value = $(".lpUnit", this).val();
+            $("ul", this).removeClass("oz lb g kg");
+            $("ul", this).addClass(value);
+        });
+
+         $list.on("click", ".lpUnitSelect li", function() {
+            var unit = $(this).text();
+            $(".lpDisplay", $(this).parents(".lpUnitSelect")).text(unit)
+            $(".lpUnit", $(this).parents(".lpUnitSelect")).val(unit);
+            if ($(this).parents(".lpTotalUnit").length) {
+                $(".lpTotalValue", $(this).parents(".lpTotal")).text(MgToWeight(parseFloat($(".lpMG", $(this).parents(".lpTotalUnit")).val()), unit));
+                updateSubtotalsUnit(unit);
+            } else {
+                var $item = $(this).parents(".lpItem");
+                $(".lpWeight", $item).text(MgToWeight(parseFloat($(".lpMG", $item).val()), unit));
+            }
+        });
+
+        // Scoped to $list so several embeds on a page keep their own dialog.
+        // .on("load"), not .load(): a host page's jQuery 3 has no .load().
+        $categories.on("click", ".lpItemImage", function() {
+            var imageUrl = $(this).attr("href"),
+                $dialog = $("#lpImageDialog", $list),
+                $overlay = $(".lpModalOverlay", $list);
+
+            var $modalImage = $("<img src='"+imageUrl+"' />");
+            $dialog.empty().append($modalImage);
+            $modalImage.on("load", function() {
+                $dialog.show();
+                $overlay.show();
+            });
+        });
+
+        $list.on("click", ".lpModalOverlay", function() {
+            $(".lpModalOverlay, #lpImageDialog", $list).hide();
+        });
+
+        $(document).on("click", function() {
+            $(".lpOpen").removeClass("lpOpen");
+        });
+    }
+
+    init();
+};
+
+init_{{externalId}} = function() {
+    function run() {
+        jQuery(function() {
+            listReport_{{externalId}}();
+        });
+    }
+
+    // The bundle is an ES module, so it needs a module script -- $.getScript
+    // injects a classic one and `import` throws there.
+    var srcs = [{{#scripts}}"{{{.}}}",{{/scripts}}],
+        pending = srcs.length;
+
+    if (window.lpPies || !pending) {
+        run();
+        return;
+    }
+
+    for (var i = 0; i < srcs.length; i++) {
+        var s = document.createElement("script");
+        s.type = "module";
+        s.src = srcs[i];
+        // onerror too: a failed bundle should still leave the list readable.
+        s.onload = s.onerror = function() {
+            if (!--pending) run();
+        };
+        document.head.appendChild(s);
+    }
+}
+
+if (typeof jQuery === "undefined") {
+    var head = document.getElementsByTagName("head")[0],
+        jq = document.createElement("script");
+
+    jq.type = "text/javascript";
+    jq.src = "{{{baseUrl}}}/js/jquery.min.js";
+    jq.onload = init_{{externalId}};
+    head.appendChild(jq);
+} else {
+     init_{{externalId}}();
+}

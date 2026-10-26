@@ -1,0 +1,297 @@
+@use 'sass:color';
+@import "globals";
+
+// Links
+.lpHref {
+    color: var(--lp-link-blue);
+    cursor: pointer;
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+.lpHref.close {
+    margin-left: 10px;
+}
+
+// Layout helpers
+.lpInvisible {
+    height: 1px;
+    left: -9999px;
+    overflow: hidden;
+    position: absolute;
+    width: 1px;
+}
+
+.lpNumber {
+    text-align: right;
+}
+
+.lpHalf {
+    float: left;
+    width: 50%;
+}
+
+// Add / copy links
+.lpAdd,
+.lpCopy {
+    color: var(--lp-accent-green-deep);
+    cursor: pointer;
+    display: inline-block;
+    text-decoration: none;
+
+    i {
+        margin-right: 5px;
+    }
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+// Drag handle: one glyph definition for every draggable surface (gear rail,
+// lists rail, category headers, item rows). Components only position their
+// handle; reveal-on-hover behavior stays with each surface's rules.
+.lpHandle {
+    color: var(--lp-icon-rest);
+    cursor: grab;
+    font-size: 19px;
+    line-height: 1;
+    // Padding + matching negative margin grow the grab target to roughly the
+    // full row height without shifting the glyph's visual position.
+    margin: -6px -5px;
+    padding: 6px 5px;
+    text-align: center;
+    user-select: none;
+    visibility: hidden;
+    width: 16px;
+
+    &::before {
+        content: "≡";
+    }
+
+    &:hover {
+        color: var(--lp-text-secondary);
+    }
+}
+
+#sidebar .lpHandle {
+    color: var(--lp-sidebar-handle);
+
+    &:hover {
+        color: var(--lp-sidebar-text);
+    }
+}
+
+// Remove button
+.lpRemove {
+    border-radius: 16px;
+    cursor: pointer;
+    display: inline-block;
+    line-height: 8px;
+    margin-bottom: 3px;
+    opacity: 0.4;
+    padding: 5px 6px 6px;
+    visibility: hidden;
+
+    &:hover {
+        background: var(--lp-danger);
+        box-shadow: 0 3px 3px rgba(0, 0, 0, 0.25) inset;
+        opacity: 1;
+    }
+}
+
+// Shared header/subtotal weight
+.lpHeader,
+.lpSubtotal {
+    font-weight: 600;
+}
+
+// Form fields
+.lpFields {
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    select,
+    textarea {
+        background: var(--lp-surface);
+        border: 1px solid var(--lp-border-strong);
+        // Matches .lpButton, which sits directly under these fields in every
+        // form that uses them.
+        border-radius: 4px;
+        display: block;
+        margin: 0 0 $spacingMedium;
+        padding: $spacingSmall;
+        width: 100%;
+
+        &:focus {
+            border-color: $orange1;
+            outline: none;
+        }
+    }
+}
+
+.lpButtons {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+
+    > * {
+        margin-bottom: $spacingMedium;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+}
+
+// Primary button
+.lp .lpButton {
+    background-image: linear-gradient(165deg, $orange1 50%, $orange2 100%);
+    background-position: 100% 100%;
+    background-size: 200%;
+    border: none;
+    border-radius: 4px;
+    box-shadow: rgba(255, 255, 255, 0.32) 0px 1px 0px inset, rgba(0, 0, 0, 0.12) 0px -1px 0px inset;
+    color: #fff;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 23px;
+    padding: 8px 20px;
+    position: relative;
+    text-align: center;
+    text-decoration: none;
+    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.15);
+    transition: all 0.2s;
+    width: auto;
+
+    &.lpSmall {
+        font-size: 13px;
+        padding: 5px 10px;
+    }
+
+    &:hover:not(:disabled),
+    &:active {
+        background-position: 0 0;
+        box-shadow: 0 0 1px rgba(255, 255, 255, 0.5) inset, 0 1px 3px color.adjust($orange2, $lightness: -25%);
+    }
+
+    &:focus,
+    &:active {
+        outline: none;
+    }
+
+    &:focus:not(:active) {
+        box-shadow: 0 0 0 1px color.adjust($orange2, $lightness: -15%) inset, 0 1px 3px color.adjust($orange2, $lightness: -25%);
+        outline: none;
+    }
+
+    &::-moz-focus-inner {
+        border: none;
+    }
+
+    &:disabled,
+    &.lpButtonDisabled {
+        cursor: default;
+        opacity: 0.5;
+    }
+}
+
+.lpButtons .lpButton {
+    width: 100%;
+}
+
+// Status messages
+.lpError {
+    color: var(--lp-danger);
+}
+
+.lpSuccess {
+    color: var(--lp-success);
+}
+
+.lpWarning {
+    background: var(--lp-warning-bg);
+    border: 1px solid var(--lp-warning-border);
+    border-radius: 5px;
+    padding: 10px;
+}
+
+// Image dialog sizing — #lpImageDialog is both the app's image modal
+// (item-view-image.vue) and the share/embed lightbox (share.mustache)
+#lpImageDialog {
+    width: auto;
+
+    img {
+        max-width: 800px;
+    }
+}
+
+@media only screen and (width <= 720px) {
+    #lpImageDialog {
+        padding: 5px;
+        width: 90%;
+
+        img {
+            display: block;
+            max-width: 100%;
+        }
+    }
+}
+
+// Silent inline inputs: plain text that happens to be editable. The
+// transparent border reserves the box every context outlines on :focus, so
+// revealing it never shifts the text. This is the state-independent base
+// only — each context wires its own affordance trigger (see item.vue,
+// category.vue and the list title in dashboard.vue).
+.lpSilent {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 0;
+    box-shadow: none;
+    outline: none;
+
+    &::placeholder {
+        color: var(--lp-text-secondary);
+        opacity: 1;
+    }
+
+    &.lpSilentError {
+        border-color: var(--lp-danger);
+    }
+}
+
+// Hidden file inputs
+#csv,
+#image {
+    height: 1px;
+    left: -999px;
+    overflow: hidden;
+    position: absolute;
+    width: 1px;
+}
+
+// Dragula drag-and-drop
+.gu-mirror {
+    margin: 0 !important;
+    opacity: 0.8;
+    position: fixed !important;
+    z-index: $dragMirror !important;
+}
+
+.gu-hide {
+    display: none !important;
+}
+
+.gu-unselectable {
+    user-select: none !important;
+}
+
+.gu-transit {
+    opacity: 0.2;
+}

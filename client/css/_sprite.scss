@@ -1,0 +1,126 @@
+// Icons: monochrome SVGs applied as CSS masks over currentColor, so every
+// glyph inherits text color and re-themes (dark mode, hover, active) like
+// text does. Vite inlines each url() as a data URI at build time, so the
+// whole set ships inside the stylesheet with no extra requests.
+.lpSprite {
+    background-color: currentColor;
+    display: inline-block;
+    height: 16px;
+    -webkit-mask: var(--lp-icon) center / contain no-repeat;
+    mask: var(--lp-icon) center / contain no-repeat;
+    position: relative;
+    top: 2px;
+    width: 16px;
+
+    &.hidden {
+        visibility: hidden;
+    }
+}
+
+// Green: inherited from .lpAdd / .lpCopy link color.
+.lpSpriteAdd {
+    --lp-icon: url("./icons/plus.svg");
+}
+
+.lpSpriteUpload {
+    --lp-icon: url("./icons/up.svg");
+}
+
+// Blue: inherited from the .lpHref link it sits in.
+.lpSpriteDownload {
+    --lp-icon: url("./icons/down.svg");
+}
+
+.lpSpriteCopy {
+    --lp-icon: url("./icons/copy.svg");
+}
+
+// The ✕ glyph fills only the middle half of its viewBox; oversizing the mask
+// crops that padding so the glyph stays legible in the small remove pill.
+.lpSpriteRemove {
+    --lp-icon: url("./icons/x.svg");
+    height: 8px;
+    -webkit-mask-size: 165%;
+    mask-size: 165%;
+    top: 0;
+    width: 8px;
+
+    .lpRemove:hover & {
+        color: $grey-0; // stays white-on-red in both themes
+    }
+}
+
+.lpWorn {
+    --lp-icon: url("./icons/worn.svg");
+
+    &.lpActive {
+        color: var(--lp-link-blue);
+    }
+}
+
+.lpCamera {
+    --lp-icon: url("./icons/camera.svg");
+}
+
+.lpExpand {
+    --lp-icon: url("./icons/triangle.svg");
+    height: 12px;
+    width: 12px;
+}
+
+.lpHamburger {
+    --lp-icon: url("./icons/hamburger.svg");
+    height: 22px;
+    width: 22px;
+}
+
+.lpLink {
+    --lp-icon: url("./icons/link.svg");
+
+    &.lpActive {
+        color: var(--lp-link-blue);
+    }
+}
+
+// Qty stepper carets reuse the dropdown triangle, flipped for "up"; the
+// oversized mask keeps the tiny boxes filled (item.vue positions them).
+.lpUp,
+.lpDown {
+    --lp-icon: url("./icons/triangle.svg");
+    height: 7px;
+    -webkit-mask-size: 150%;
+    mask-size: 150%;
+    width: 7px;
+}
+
+.lpUp {
+    transform: rotate(180deg);
+}
+
+.lpStar {
+    --lp-icon: url("./icons/star.svg");
+
+    &.lpStar1 {
+        color: var(--lp-active-yellow);
+    }
+
+    &.lpStar2 {
+        color: var(--lp-danger);
+    }
+
+    &.lpStar3 {
+        color: var(--lp-accent-green-deep);
+    }
+}
+
+.lpConsumable {
+    --lp-icon: url("./icons/consumable.svg");
+
+    &.lpActive {
+        color: var(--lp-link-blue);
+    }
+}
+
+.lpSettings {
+    --lp-icon: url("./icons/settings.svg");
+}

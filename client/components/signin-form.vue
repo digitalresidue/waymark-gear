@@ -1,0 +1,94 @@
+<template>
+    <form class="signin" data-testid="signin-form" @submit.prevent="signin">
+        <p v-if="message" class="lpSuccess">
+            {{ message }}
+        </p>
+        <div class="lpFields">
+            <input v-model="username" v-focus-on-create="autofocus" type="text" placeholder="Username" name="username" class="username">
+            <input ref="passwordInput" v-model="password" type="password" placeholder="Password" name="password" class="password">
+        </div>
+
+        <errors :errors="errors" />
+
+        <div class="lpButtons">
+            <button class="lpButton">
+                Sign in
+                <spinner v-if="fetching" />
+            </button>
+
+            <router-link to="/forgot-password" class="lpHref signin-forgot-password">
+                Forgot username/password?
+            </router-link>
+        </div>
+    </form>
+</template>
+
+<script>
+import errors from './errors.vue';
+import spinner from './spinner.vue';
+import { fetchJson } from '../utils/utils.js';
+
+export default {
+    name: 'SigninForm',
+    components: {
+        errors,
+        spinner,
+    },
+    props: {
+        message: { type: String, default: '' },
+        // Off on the mobile landing card: both tabs are mounted at once, and
+        // focusing a field there would raise the keyboard over the hero.
+        autofocus: { type: Boolean, default: true },
+    },
+    data() {
+        return {
+            fetching: false,
+            errors: [],
+            username: '',
+            password: '',
+        };
+    },
+    methods: {
+        signin() {
+            this.errors = [];
+
+            if (!this.username) {
+                this.errors.push({ field: 'username', message: 'Please enter a username.' });
+            }
+
+            if (!this.password) {
+                this.errors.push({ field: 'password', message: 'Please enter a password.' });
+            }
+
+            if (this.errors.length) {
+                return;
+            }
+
+            this.fetching = true; // ho ho
+
+            return fetchJson('/signin/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ username: this.username, password: this.password }),
+            })
+                .then((response) => {
+                    this.$store.commit('setSyncToken', response.sync_token);
+                    this.$store.commit('loadLibraryData', response.library);
+                    this.$store.commit('setSaveType', 'remote');
+                    this.$store.commit('setLoggedIn', response.username);
+                    this.$router.push('/');
+                    this.fetching = false;
+                })
+                .catch((err) => {
+                    this.errors = err;
+                    this.$refs.passwordInput.select();
+                    this.password = '';
+                    this.fetching = false;
+                });
+        },
+    },
+};
+</script>

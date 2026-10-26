@@ -1,0 +1,26 @@
+extIds.txt
+node_modules
+.DS_Store
+/config/local.json
+/public/dist/*
+app.sublime-project
+app.sublime-workspace
+*.code-workspace
+*.pyc
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+*.pyc
+*__pycache__*
+/logs/
+
+# CSS refactor baseline (machine-local, see scripts/css-baseline.mjs)
+/.css-baseline/
+*snapshots/
+
+# User-uploaded images (content-hashed webp files)
+/public/userimages/
+
+# Local migration runbook -- deliberately untracked
+/MIGRATION.md

@@ -1,0 +1,200 @@
+@import "../globals";
+
+.lpItems {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+.lpItem,
+.lpItemsHeader {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    justify-content: stretch;
+
+    .lpImageCell {
+        flex: 0 0 90px;
+
+        .lpItemImage {
+            cursor: pointer;
+            max-width: 90px;
+            position: relative;
+            top: 3px;
+        }
+    }
+
+    .lpName {
+        flex: 1 1 150px;
+        margin-right: 4px;
+        min-width: 50px;
+    }
+
+    .lpDescription {
+        flex: 2 0 200px;
+        margin-right: 4px;
+        min-width: 100px;
+    }
+
+    .lpActionsCell {
+        align-self: center;
+        flex: 0 0 130px;
+    }
+
+    .lpWeightCell {
+        flex: 0 0 110px;
+
+        .lpWeight {
+            width: 50px;
+        }
+    }
+
+    .lpPriceCell {
+        flex: 0 0 66px;
+        margin-right: 4px;
+    }
+
+    .lpQtyCell {
+        flex: 0 0 60px;
+    }
+
+    // Swatch + category name; the flexible track the fixed cells sit against.
+    .lpCategoryHead {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+}
+
+// Rows carry a soft hairline underneath rather than a dotted rule above, and
+// enough vertical padding to sit at the app's comfortable row height — there
+// are no inputs here to set it the way they do on the edit page.
+.lpItem {
+    border-bottom: 1px solid var(--lp-border);
+    padding: 5px 0;
+}
+
+.lpItemsHeader {
+    border-bottom: 1px solid var(--lp-border-strong);
+    padding: 4px 0;
+}
+
+// Action icons: hidden unless the item has the state (worn/consumable/star)
+.lpActionsCell {
+    .lpWorn,
+    .lpConsumable,
+    .lpStar {
+        cursor: pointer;
+        margin-right: 8px;
+        opacity: 0.5;
+        visibility: hidden;
+
+        &:hover {
+            opacity: 1;
+        }
+
+        &.lpActive,
+        &.lpStar1,
+        &.lpStar2,
+        &.lpStar3 {
+            opacity: 1;
+            visibility: visible;
+        }
+    }
+
+    i:last-child {
+        margin-right: 0;
+    }
+}
+
+// Narrow-viewport layout, shared by the app and the share/embed pages.
+// Items reflow into a wrapping row: qty, name, price, weight, then the
+// description and actions on their own lines. Share-specific read-only
+// tweaks (qty rendered as "N x", hiding inactive icons) stay in
+// _share-overrides.scss.
+@container lpList (width <= 720px) {
+    .lpItems {
+        position: relative;
+
+        .lpWeightCell {
+            flex-basis: 100px;
+        }
+
+        .lpPriceCell {
+            flex-basis: 65px;
+        }
+
+        // The rows reflow at this width, so there are no columns left for the
+        // header subtotals to line up with — it becomes a band of swatch, name
+        // and totals. It keeps price and weight and drops the item count, the
+        // same trade the app's mobile header makes.
+        .lpItemsHeader {
+            column-gap: 7px;
+
+            .lpPriceCell,
+            .lpWeightCell {
+                flex: 0 0 auto;
+                margin: 0;
+            }
+
+            .lpQtyCell {
+                display: none;
+            }
+        }
+    }
+
+    .lpItem {
+        align-items: baseline;
+        flex-flow: row wrap;
+        justify-content: flex-end;
+        padding: 3px 0;
+
+        .lpShowImages &.lpItemHasImage {
+            min-height: 90px;
+            padding-left: 100px;
+            position: relative;
+
+            .lpImageCell {
+                height: 90px;
+                left: 0;
+                position: absolute;
+                top: 0;
+                width: 90px;
+            }
+        }
+
+        .lpImageCell {
+            flex-basis: 0;
+        }
+
+        .lpName {
+            flex-basis: 90px;
+            font-weight: bold;
+            order: 2;
+        }
+
+        .lpQtyCell {
+            flex-basis: auto;
+            order: 1;
+        }
+
+        .lpPriceCell {
+            order: 4;
+        }
+
+        .lpWeightCell {
+            order: 5;
+        }
+
+        .lpDescription {
+            flex-basis: calc(100% - 50px); /* Always wrap */
+            order: 98;
+        }
+
+        .lpActionsCell {
+            flex: 0 0 auto;
+            order: 99;
+            padding: 0 10px;
+            text-align: right;
+        }
+    }
+}

@@ -1,0 +1,68 @@
+@import "../globals";
+
+.lpUnitSelect {
+    border: 1px solid transparent;
+    cursor: pointer;
+    display: inline-block;
+    padding: 0 5px;
+    position: relative;
+
+    &:hover {
+        background: var(--lp-surface);
+        border: 1px solid var(--lp-border-strong);
+
+        i {
+            opacity: 1;
+        }
+    }
+
+    i {
+        opacity: 0.6;
+    }
+
+    &.lpOpen {
+        background: var(--lp-surface);
+
+        .lpUnitDropdown {
+            display: block;
+        }
+    }
+
+    .lpDisplay {
+        display: inline-block;
+        width: 1.1em;
+    }
+
+    .lpUnitDropdown {
+        background: var(--lp-surface);
+        border: 1px solid var(--lp-border-strong);
+        display: none;
+        left: 0;
+        padding: 0;
+        position: absolute;
+        top: -1px;
+        z-index: $aboveSidebar + 1;
+
+        &.lb {
+            top: -30px;
+        }
+
+        &.g {
+            top: -55px;
+        }
+
+        &.kg {
+            top: -81px;
+        }
+
+        li {
+            list-style: none;
+            padding: 2px 14px;
+
+            &:hover {
+                background: var(--lp-selected-bg);
+                color: $grey-0;
+            }
+        }
+    }
+}
