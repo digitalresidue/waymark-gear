@@ -43,9 +43,11 @@ async function importCsv(request: APIRequestContext, rows: string[]) {
 }
 
 async function catalogId(request: APIRequestContext, q: string) {
+    // Search ranks loosely: pick the item with exactly this name.
     const found = await (await request.get(url(`/api/catalog?q=${encodeURIComponent(q)}`))).json();
-    expect(found.items.length).toBeGreaterThan(0);
-    return found.items[0].id as string;
+    const hit = found.items.find((i: any) => i.name === q);
+    expect(hit).toBeTruthy();
+    return hit.id as string;
 }
 
 const tag = () => `t${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
