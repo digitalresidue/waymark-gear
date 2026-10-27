@@ -21,8 +21,25 @@ export WAYMARK_EMAIL=owner@example.com WAYMARK_PASSWORD=first-password-1
 mkdir -p "$WORK/bin"
 WAYMARK="$WAYMARK_BIN"
 
-step() { printf '\n\033[1m== %s\033[0m\n' "$*"; }
-fail() { printf '\n\033[31mFAIL:\033[0m %s\n' "$*" >&2; docker compose --project-directory "$WAYMARK_DIR" -f "$WAYMARK_DIR/docker-compose.prod.yml" logs --tail 60 >&2 || true; exit 1; }
+CURRENT=start
+step() { CURRENT=$*; printf '\n\033[1m== %s\033[0m\n' "$*"; }
+# On GitHub, failures also become annotations (readable without the log).
+annotate() { # message
+    [ -n "${GITHUB_ACTIONS:-}" ] || return 0
+    local logs out
+    logs=$(docker compose --project-directory "$WAYMARK_DIR" -f "$WAYMARK_DIR/docker-compose.prod.yml" logs --no-color --tail 25 2>&1 || true)
+    out=$(tail -n 25 "$WORK"/*.log 2>/dev/null || true)
+    printf '%s\n\n--- script output ---\n%s\n\n--- containers ---\n%s\n' "$1" "$out" "$logs" \
+        | sed -e 's/%/%25/g' -e 's/\r/%0D/g' | sed ':a;N;$!ba;s/\n/%0A/g' | sed 's/^/::error title=Install guide (step: '"${CURRENT//[:,]/ }"')::/'
+}
+fail() {
+    printf '\n\033[31mFAIL:\033[0m %s\n' "$*" >&2
+    docker compose --project-directory "$WAYMARK_DIR" -f "$WAYMARK_DIR/docker-compose.prod.yml" logs --tail 60 >&2 || true
+    annotate "$*"
+    exit 1
+}
+# shellcheck disable=SC2154
+trap 'rc=$?; [ $rc -eq 0 ] || annotate "command failed (exit $rc) at line $LINENO: $BASH_COMMAND"' ERR
 cleanup() {
     docker compose --project-directory "$WAYMARK_DIR" -f "$WAYMARK_DIR/docker-compose.prod.yml" down -v >/dev/null 2>&1 || true
     rm -rf "$WORK"

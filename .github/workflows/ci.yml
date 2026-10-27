@@ -97,4 +97,4 @@ jobs:
       # INSTALL.md's server steps, run for real on this build: install.sh,
       # HTTPS through Caddy, the owner account, and every waymark command.
       - name: Install guide works (test/install/run.sh)
-        run: sudo bash test/install/run.sh waymark-gear:test
+        run: sudo --preserve-env=GITHUB_ACTIONS bash test/install/run.sh waymark-gear:test

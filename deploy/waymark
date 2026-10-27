@@ -6,6 +6,7 @@
 set -euo pipefail
 
 DIR="${WAYMARK_DIR:-/opt/waymark}"
+SELF=$(readlink -f "$0")
 COMPOSE=(docker compose --project-directory "$DIR" -f "$DIR/docker-compose.prod.yml")
 
 bold() { printf '\n\033[1m%s\033[0m\n' "$*"; }
@@ -129,14 +130,15 @@ cmd_update() {
     # Keep the current files so we can go back.
     tmp=$(mktemp -d)
     cp -a "$DIR/docker-compose.prod.yml" "$DIR/Caddyfile" "$DIR/backup.sh" "$tmp/"
-    cp -a "$0" "$tmp/waymark" 2>/dev/null || true
+    cp -a "$SELF" "$tmp/waymark"
 
     note "Backing up first..."
     "$DIR/backup.sh" >/dev/null 2>&1 && ok "Backed up" || note "(backup failed; carrying on)"
 
     extract "$image" "$DIR"
     chmod 700 "$DIR/backup.sh"
-    install -m 755 "$DIR/waymark" "$(command -v waymark || echo /usr/local/bin/waymark)" 2>/dev/null || true
+    # install(1) writes a new file, so this running copy isn't disturbed.
+    install -m 755 "$DIR/waymark" "$SELF"
     rm -f "$DIR/waymark"
 
     # New settings the release added: put them in .env (as notes) once.
@@ -160,7 +162,7 @@ cmd_update() {
     bold "The new version didn't start, so going back"
     "${COMPOSE[@]}" logs --tail 30 app >&2 || true
     cp -a "$tmp/docker-compose.prod.yml" "$tmp/Caddyfile" "$tmp/backup.sh" "$DIR/"
-    [ ! -f "$tmp/waymark" ] || install -m 755 "$tmp/waymark" "$(command -v waymark || echo /usr/local/bin/waymark)"
+    install -m 755 "$tmp/waymark" "$SELF"
     [ -z "$old" ] || docker tag "$old" "$image"
     "${COMPOSE[@]}" up -d
     if wait_healthy 120; then

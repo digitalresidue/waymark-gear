@@ -70,8 +70,9 @@ if [ -f "$DIR/.installed" ] && [ -z "${WAYMARK_REINSTALL:-}" ]; then
 fi
 
 if [ -r /etc/os-release ]; then
-    . /etc/os-release
-    [ "${ID:-}" = "ubuntu" ] || warn "This was written for Ubuntu; you have ${PRETTY_NAME:-something else}. Carrying on."
+    os_id=$(. /etc/os-release && echo "${ID:-}")
+    os_name=$(. /etc/os-release && echo "${PRETTY_NAME:-something else}")
+    [ "$os_id" = "ubuntu" ] || warn "This was written for Ubuntu; you have $os_name. Carrying on."
 fi
 
 # ------------------------------------------------------------- questions
@@ -295,7 +296,10 @@ unset PASSWORD
 # HTTPS: Caddy fetches the certificate on the first visit.
 bold "Getting the HTTPS certificate"
 if [ "$DOMAIN" = "localhost" ]; then
-    curl -fsSk -m 30 "https://localhost/healthz" >/dev/null && ok "https://localhost works (test certificate)"
+    for i in $(seq 1 15); do
+        if curl -fsSk -m 10 "https://localhost/healthz" >/dev/null 2>&1; then ok "https://localhost works (test certificate)"; break; fi
+        sleep 2
+    done
 else
     got=
     for i in $(seq 1 20); do
