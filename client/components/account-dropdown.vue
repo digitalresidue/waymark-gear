@@ -17,6 +17,12 @@
                     <router-link to="/trips" class="lpHref" data-testid="menu-trips" @click="hide()">
                         Trip journals
                     </router-link><br>
+                    <router-link to="/developers" class="lpHref" data-testid="menu-developers" @click="hide()">
+                        AI assistants and API
+                    </router-link><br>
+                    <router-link to="/supporter" class="lpHref" data-testid="menu-supporter" @click="hide()">
+                        {{ $store.state.account && $store.state.account.supporter ? 'Supporter ✓' : 'Become a Supporter' }}
+                    </router-link><br>
                     <a class="lpHref accountSettings" @click="hide(); showAccount()">Account Settings</a><br>
                     <a class="lpHref" @click="hide(); showHelp()">Help</a>
                     <hr>

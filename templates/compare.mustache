@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html class="lp" lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>{{pageTitle}} — Waymark Gear</title>
+        <meta name="description" content="{{metaDescription}}">
+        <meta name="robots" content="noindex">
+        <meta property="og:site_name" content="Waymark Gear">
+        <meta property="og:title" content="{{pageTitle}}">
+        <meta property="og:description" content="{{metaDescription}}">
+        {{{styles}}}
+        <link rel="icon" href="/favicon.png" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script nonce="{{{cspNonce}}}">
+            (function () {
+                try {
+                    var t = localStorage.getItem('lpTheme');
+                    if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+                } catch (e) { /* storage blocked; the media query decides */ }
+            }());
+        </script>
+    </head>
+    <body class="wgProfilePage wgComparePage">
+        <header class="wgShareBar">
+            <a href="/welcome" class="wgShareBrand" aria-label="Waymark Gear home">
+                <img class="wgLogo wgLogoOnLight" src="/images/waymark-logo.png" alt="Waymark Gear" width="843" height="127">
+                <img class="wgLogo wgLogoOnDark" src="/images/waymark-logo-light.png" alt="Waymark Gear" width="843" height="127">
+            </a>
+            <nav class="wgShareActions" aria-label="Site">
+                <a href="/reviews" class="wgBtn wgBtnGhost">Gear reviews</a>
+                <a href="/" class="wgBtn wgBtnPrimary">Build your own</a>
+            </nav>
+        </header>
+
+        <main class="wgCompare">
+            <header class="wgJournalHead">
+                <p class="wgJournalKicker">Compare gear</p>
+                <h1>Side by side</h1>
+            </header>
+            <form class="wgCompareAdd" id="wgCompareAdd" data-ids="{{idsCsv}}" role="search">
+                <label class="wgField">Add gear to compare
+                    <input class="wgInput" name="q" autocomplete="off" placeholder="Search the catalog, e.g. quilt" data-testid="compare-search">
+                </label>
+                <ul class="wgCompareResults" data-testid="compare-results"></ul>
+            </form>
+
+            {{#hasItems}}
+            <div class="wgCompareScroll">
+                <table class="wgCompareTable" data-testid="compare-table">
+                    <thead>
+                        <tr>
+                            <th scope="col"><span class="wgVisuallyHidden">Spec</span></th>
+                            {{#items}}
+                            <th scope="col" data-testid="compare-col">
+                                <div class="wgCompareImg">{{#imageUrl}}<img src="{{imageUrl}}" alt="" width="120" height="120">{{/imageUrl}}{{^imageUrl}}<span aria-hidden="true">{{initial}}</span>{{/imageUrl}}</div>
+                                <a href="/g/{{id}}">{{brand}} {{name}}</a>
+                                <a href="{{removeUrl}}" class="wgCompareRemove" aria-label="Remove {{name}} from the comparison">Remove</a>
+                            </th>
+                            {{/items}}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><th scope="row">Weight</th>{{#items}}<td class="wgMono{{#lightest}} wgCompareBest{{/lightest}}" data-testid="compare-weight">{{weight}}{{#lightest}} <span class="wgCompareTag">lightest</span>{{/lightest}}</td>{{/items}}</tr>
+                        <tr><th scope="row">Price</th>{{#items}}<td class="{{#cheapest}}wgCompareBest{{/cheapest}}">{{price}}{{^price}}—{{/price}}{{#cheapest}} <span class="wgCompareTag">cheapest</span>{{/cheapest}}</td>{{/items}}</tr>
+                        <tr><th scope="row">Lowest seen</th>{{#items}}<td>{{lowest}}{{^lowest}}—{{/lowest}}</td>{{/items}}</tr>
+                        <tr><th scope="row">Rating</th>{{#items}}<td>{{#average}}<span class="wgStars" aria-hidden="true">{{stars}}</span> {{average}} ({{reviewCount}}){{/average}}{{^average}}—{{/average}}</td>{{/items}}</tr>
+                        <tr><th scope="row">In public lists</th>{{#items}}<td>{{uses}}</td>{{/items}}</tr>
+                        <tr><th scope="row">Category</th>{{#items}}<td>{{category}}</td>{{/items}}</tr>
+                        <tr><th scope="row">About</th>{{#items}}<td class="wgCompareAbout">{{description}}</td>{{/items}}</tr>
+                        <tr><th scope="row"></th>{{#items}}<td>{{#url}}<a href="/go/{{id}}?from=compare" rel="sponsored nofollow noopener" target="_blank" class="wgBtn wgBtnPrimary wgBtnSmall" data-testid="compare-buy">Buy</a> {{/url}}<a href="/gear?wish={{id}}" class="wgBtn wgBtnGhost wgBtnSmall" data-testid="compare-wish">Add to wishlist</a></td>{{/items}}</tr>
+                    </tbody>
+                </table>
+            </div>
+            {{/hasItems}}
+            {{^hasItems}}<p class="wgProfileEmpty">Search above to add gear to compare.</p>{{/hasItems}}
+            {{#hasItems}}<p class="wgDisclosure">Buy links may earn Waymark Gear a commission; it never changes how gear is compared. <a href="/supporter">Supporters</a> get plain links.</p>{{/hasItems}}
+        </main>
+        {{{scripts}}}
+        <footer class="wgProfileFoot">
+            <a href="/welcome">Waymark Gear</a> · Build it. Share it. Go.
+        </footer>
+    </body>
+</html>

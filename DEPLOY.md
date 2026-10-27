@@ -215,6 +215,57 @@ Live updates are in-memory in the app process. With a single app instance
 several instances, add a shared message bus between them (Postgres
 LISTEN/NOTIFY is the simplest) in `server/live.js`.
 
+## Supporter plan and affiliate links
+
+Waymark pays for itself two ways: affiliate links on catalog gear, and the
+Supporter plan ($5 a month or $48 a year), whose members get plain links and a
+profile badge. Both are off until you set them up.
+
+**Affiliate links.** Join the programs you want (Amazon Associates, AvantLink
+for REI and many outdoor brands, a brand's own program). Then either:
+
+- **Owner → Revenue → Affiliate rules**: one rule per shop, e.g. domain
+  `amazon.com`, parameter `tag`, value `yourtag-20`. Every catalog product link
+  on that shop gets your code; or
+- set an item's own **Affiliate link** in the catalog editor (or the
+  `affiliate_url` CSV column) for programs that use a tracking URL instead of a
+  parameter. An item's own link wins over the rules.
+
+Buy buttons go through `/go/<item>`, which picks the link per reader and counts
+clicks (Owner → Revenue). Every page with Buy buttons carries a short
+commission notice, and TERMS.md has the full disclosure; keep both. Amazon's
+rules also forbid its links in email, which is why price-drop emails link to
+the gear page instead.
+
+**Stripe.**
+
+1. Create a Stripe account. In **Product catalog**, add a product "Waymark
+   Supporter" with two recurring prices: $5 / month and $48 / year. Copy both
+   price ids (`price_…`) into `.env` as `STRIPE_PRICE_MONTHLY` and
+   `STRIPE_PRICE_YEARLY`.
+2. **Developers → API keys**: put the secret key in `STRIPE_SECRET_KEY`. (A
+   restricted key needs write access to Checkout Sessions and Customer portal
+   and read access to Subscriptions.)
+3. **Developers → Webhooks → Add endpoint**: `https://waymarkgear.com/stripe/webhook`,
+   events `checkout.session.completed`, `customer.subscription.created`,
+   `customer.subscription.updated`, `customer.subscription.deleted`. Put its
+   signing secret in `STRIPE_WEBHOOK_SECRET`.
+4. **Settings → Billing → Customer portal**: turn on cancelling and switching
+   between the two prices.
+5. `docker compose -f docker-compose.prod.yml up -d`. The Subscribe buttons
+   appear at `/supporter`. Try it first with test-mode keys and Stripe's test
+   card 4242 4242 4242 4242.
+
+To give someone Supporter for free (a contributor, a reviewer): Owner →
+Revenue → Supporters.
+
+## AI assistants (MCP) and the API
+
+Nothing to set up: `/mcp` and `/api/v1` run on every install. People connect
+Claude or ChatGPT at `/developers` (the assistant signs them in through
+`/oauth/authorize`) or make personal tokens there. The API is described in
+API.md.
+
 ## Running somewhere else
 
 The app is a standard Docker image that needs `DATABASE_URL`, a persistent

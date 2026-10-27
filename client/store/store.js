@@ -215,6 +215,22 @@ const store = createStore({
         importSharedList(state, shared) {
             state.library.importSharedList(shared);
         },
+        setListNotNeeded(state, { list, notNeeded }) {
+            const target = state.library.getListById(list.id);
+            if (notNeeded.length) target.notNeeded = [...notNeeded];
+            else delete target.notNeeded;
+        },
+        // Wishlist (Phase 7): gear you want, kept in the closet but out of lists.
+        addWishlistItem(state, { entry }) {
+            const item = state.library.newItemFromCatalog({ category: null, entry });
+            item.wishlist = true;
+        },
+        setItemWishlist(state, { itemId, wishlist }) {
+            const item = state.library.getItemById(itemId);
+            if (!item) return;
+            if (wishlist) item.wishlist = true;
+            else delete item.wishlist;
+        },
         addCatalogItem(state, { categoryId, entry }) {
             const category = state.library.getCategoryById(categoryId);
             if (!category) return;

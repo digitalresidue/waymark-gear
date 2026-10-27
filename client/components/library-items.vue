@@ -33,7 +33,7 @@
                         </span>
                     </span>
                     <span class="lpLibraryItemBottomline">
-                        <span class="lpDescription"><span v-if="item.retired" class="wgRetiredTag">Retired</span>{{ item.description }}</span>
+                        <span class="lpDescription"><span v-if="item.retired" class="wgRetiredTag">Retired</span><span v-else-if="item.wishlist" class="wgRetiredTag wgWishTag" data-testid="closet-wishlist-tag">Wishlist</span>{{ item.description }}</span>
                         <button type="button" class="wgClosetDetails" :aria-label="`Details for ${item.name}`" data-testid="closet-details" @click="openGearDetails(library.getItemById(item.id))">Details</button>
                         <button v-if="item.retired" type="button" class="wgClosetRestore" data-testid="closet-restore" @click="restore(item)">Restore</button>
                         <a v-else class="lpRemove lpRemoveLibraryItem speedbump" title="Remove from your closet" @click="removeItem(item)"><i class="lpSprite lpSpriteRemove" /></a>
@@ -206,6 +206,11 @@ export default {
 .lpLibraryItem.wgRetired .lpName,
 .lpLibraryItem.wgRetired .lpWeight {
     color: var(--lp-sidebar-muted);
+}
+
+.wgWishTag {
+    background: #FCEFD9 !important;
+    color: #5A3B06 !important;
 }
 
 .wgRetiredTag {

@@ -21,6 +21,8 @@ import * as tickets from './tickets.js';
 import * as plans from './shared-lists.js';
 import * as trips from './trips.js';
 import * as reviews from './reviews.js';
+import { listInsights } from './insights.js';
+import * as tokens from './tokens.js';
 import { openStream } from './live.js';
 import { LibraryError } from './library-store.js';
 import { forgetUserPages } from './page-cache.js';
@@ -74,7 +76,7 @@ const signedIn = (handler) => (req, res) => authenticateUser(req, res, async (re
         if (err instanceof ProfileError) return res.status(400).json({ message: err.message, field: err.field });
         if (err instanceof LibraryError) return res.status(400).json({ message: err.message });
         if (err instanceof comments.CommentError || err instanceof follows.FollowError || err instanceof tickets.TicketError || err instanceof plans.PlanError
-            || err instanceof trips.TripError || err instanceof reviews.ReviewError) {
+            || err instanceof trips.TripError || err instanceof reviews.ReviewError || err instanceof tokens.TokenError) {
             return res.status(err.status).json({ message: err.message });
         }
         logWithRequest(req, { message: 'api error', url: req.originalUrl, err });
@@ -388,6 +390,31 @@ router.post('/api/reviews/:id/moderate', requireJson, signedIn(async (req, res, 
     res.json(await reviews.moderateReview(user, req.params.id, String((req.body && req.body.action) || '')));
 }));
 
+// ---- gear insights (Phase 7) -----------------------------------------------
+
+// Lighter alternatives and favorites for the rows of one list. Works without
+// an account, like the rest of the editor.
+router.post('/api/insights', requireJson, pub(async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.json(await listInsights(req.body && req.body.items));
+}));
+
+// ---- API tokens (Phase 7) ----------------------------------------------------
+
+router.get('/api/tokens', signedIn(async (req, res, user) => {
+    res.set('Cache-Control', 'no-store');
+    res.json({ tokens: await tokens.listTokens(user) });
+}));
+
+router.post('/api/tokens', requireJson, signedIn(async (req, res, user) => {
+    res.set('Cache-Control', 'no-store');
+    res.status(201).json(await tokens.createToken(user, { name: req.body && req.body.name, scope: req.body && req.body.scope }));
+}));
+
+router.delete('/api/tokens/:id', signedIn(async (req, res, user) => {
+    res.json(await tokens.revokeToken(user, req.params.id));
+}));
+
 // ---- public ----------------------------------------------------------------
 
 // Read a public LighterPack list from its share link. Returns the parsed list;
@@ -420,7 +447,7 @@ router.get('/api/catalog', pub(async (req, res) => {
         ids,
     });
     res.set('Cache-Control', 'public, max-age=60');
-    res.json(result);
+    res.json({ ...result, items: result.items.map(catalog.publicEntry) });
 }));
 
 router.get('/api/catalog/categories', pub(async (req, res) => {

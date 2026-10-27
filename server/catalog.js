@@ -14,7 +14,7 @@ import weightUtils from '../client/utils/weight.js';
 export const UNITS = ['g', 'kg', 'oz', 'lb'];
 export const CSV_COLUMNS = [
     'sku', 'name', 'brand', 'category', 'description', 'weight', 'unit', 'price', 'currency',
-    'url', 'image_url', 'worn_default', 'consumable_default', 'tags', 'status',
+    'url', 'image_url', 'worn_default', 'consumable_default', 'tags', 'status', 'affiliate_url',
 ];
 export const MAX_IMPORT_ROWS = 5000;
 
@@ -43,8 +43,17 @@ export function toApi(row) {
         consumableDefault: row.consumable_default,
         tags: row.tags || [],
         status: row.status,
+        // Owner-only: public routes drop it (publicEntry).
+        affiliateUrl: row.affiliate_url || '',
         updatedAt: row.updated_at,
     };
+}
+
+// What anyone may see of a catalog entry: everything but the affiliate link,
+// which only the /go redirect uses.
+export function publicEntry(entry) {
+    const { affiliateUrl, ...rest } = entry; // eslint-disable-line no-unused-vars
+    return rest;
 }
 
 const truthy = (v) => /^(1|true|yes|y|x)$/i.test(String(v ?? '').trim());
@@ -99,6 +108,10 @@ export function validateEntry(input) {
 
     const url = str(get('url'), 2000);
     if (!isSafeUrl(url)) errors.push('url must start with http:// or https://');
+    // Only set when given, so a CSV without the column keeps existing links.
+    const rawAffiliate = get('affiliateUrl', 'affiliate_url');
+    const affiliateUrl = rawAffiliate === undefined ? undefined : str(rawAffiliate, 2000);
+    if (affiliateUrl && !/^https:\/\/[^\s]+$/i.test(affiliateUrl)) errors.push('affiliate_url must start with https://');
     const imageUrl = str(get('imageUrl', 'image_url'), 2000);
     if (!isSafeUrl(imageUrl)) errors.push('image_url must start with http:// or https://');
 
@@ -131,6 +144,7 @@ export function validateEntry(input) {
             consumable_default: truthy(get('consumableDefault', 'consumable_default')) || get('consumableDefault') === true,
             tags,
             status,
+            ...(affiliateUrl === undefined ? {} : { affiliate_url: affiliateUrl }),
         },
     };
 }
@@ -176,8 +190,13 @@ export async function getById(id) {
     return row ? toApi(row) : null;
 }
 
+// Price changes go into the item's history (server/prices.js). Imported
+// lazily: prices.js imports this module.
+const recordPrices = async (ids) => (await import('./prices.js')).recordPrices(ids);
+
 export async function create(value) {
     const [row] = await knex('catalog_items').insert(value).returning('*');
+    await recordPrices([row.id]);
     return toApi(row);
 }
 
@@ -185,6 +204,7 @@ export async function update(id, value) {
     if (!isUuid(id)) return null;
     const [row] = await knex('catalog_items').where({ id })
         .update({ ...value, updated_at: knex.fn.now() }).returning('*');
+    if (row) await recordPrices([row.id]);
     return row ? toApi(row) : null;
 }
 
@@ -231,7 +251,7 @@ export function toCsv(items) {
         i.sku, i.name, i.brand, i.category, i.description, i.weight, i.unit,
         i.price === null ? '' : i.price.toFixed(2), i.currency, i.url, i.imageUrl,
         i.wornDefault ? 'true' : 'false', i.consumableDefault ? 'true' : 'false',
-        (i.tags || []).join(';'), i.status,
+        (i.tags || []).join(';'), i.status, i.affiliateUrl || '',
     ].map(neutralizeFormula));
     return stringify([CSV_COLUMNS, ...rows]);
 }
@@ -240,7 +260,7 @@ export function templateCsv() {
     return stringify([
         CSV_COLUMNS,
         ['WG-0001', 'Example tent, 1 person', 'Example Brand', 'Shelter', 'Single wall, trekking-pole pitched',
-            '28', 'oz', '399.00', 'USD', 'https://example.com/tent', '', 'false', 'false', 'tent;1p', 'draft'],
+            '28', 'oz', '399.00', 'USD', 'https://example.com/tent', '', 'false', 'false', 'tent;1p', 'draft', ''],
     ]);
 }
 
@@ -256,12 +276,13 @@ function parseCsv(text) {
 }
 
 const COMPARED = ['sku', 'name', 'brand', 'category', 'description', 'weight_mg', 'unit', 'price', 'currency',
-    'url', 'image_url', 'worn_default', 'consumable_default', 'tags', 'status'];
+    'url', 'image_url', 'worn_default', 'consumable_default', 'tags', 'status', 'affiliate_url'];
 
 function differs(row, value) {
     return COMPARED.some((k) => {
         if (k === 'price') return (row.price === null ? null : Number(row.price)) !== value.price;
         if (k === 'tags') return (row.tags || []).join('\u0000') !== value.tags.join('\u0000');
+        if (k === 'affiliate_url' && value[k] === undefined) return false;
         return (row[k] ?? null) !== (value[k] ?? null);
     });
 }
@@ -309,14 +330,18 @@ export async function planImport(text) {
 export async function applyImport(text) {
     const plan = await planImport(text);
     if (plan.error) return plan;
+    const touched = [];
     await knex.transaction(async (trx) => {
         for (const row of plan.rows) {
             if (row.action === 'new') {
-                await trx('catalog_items').insert(row.value);
+                const [created] = await trx('catalog_items').insert(row.value).returning('id');
+                touched.push(created.id);
             } else if (row.action === 'update') {
                 await trx('catalog_items').where({ id: row.id }).update({ ...row.value, updated_at: trx.fn.now() });
+                touched.push(row.id);
             }
         }
     });
+    await recordPrices(touched);
     return { summary: plan.summary, errors: plan.rows.filter((r) => r.action === 'error') };
 }

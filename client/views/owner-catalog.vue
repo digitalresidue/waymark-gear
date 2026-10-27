@@ -217,6 +217,9 @@
                         <label class="wgField wgSpan2">Product link
                             <input v-model="form.url" class="wgInput" type="url" placeholder="https://">
                         </label>
+                        <label class="wgField wgSpan2">Affiliate link <span class="wgMuted">(optional; used for Buy buttons, never shown to Supporters)</span>
+                            <input v-model="form.affiliateUrl" class="wgInput" type="url" placeholder="https://" data-testid="catalog-affiliate-url">
+                        </label>
                         <label class="wgField wgSpan2">Photo URL
                             <input v-model="form.imageUrl" class="wgInput" type="url" placeholder="https://">
                         </label>
@@ -266,7 +269,7 @@ import { api } from '../utils/format.js';
 const PAGE = 100;
 const emptyForm = () => ({
     name: '', brand: '', sku: '', category: '', weight: '', unit: 'oz', price: '', currency: 'USD',
-    status: 'published', description: '', url: '', imageUrl: '', tags: '', wornDefault: false, consumableDefault: false,
+    status: 'published', description: '', url: '', affiliateUrl: '', imageUrl: '', tags: '', wornDefault: false, consumableDefault: false,
 });
 
 export default {

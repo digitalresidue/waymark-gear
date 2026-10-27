@@ -54,6 +54,7 @@
                     <h1 data-testid="profile-name">{{name}}</h1>
                     <p class="wgProfileHandle">
                         <span>@{{username}}</span>
+                        {{#supporter}}<span class="wgSupporterBadge" data-testid="supporter-badge" title="Supports Waymark Gear">Supporter</span>{{/supporter}}
                         {{#trailName}}<span class="wgProfileTrail" data-testid="profile-trail">Trail name “{{trailName}}”</span>{{/trailName}}
                     </p>
                     {{#tags.length}}

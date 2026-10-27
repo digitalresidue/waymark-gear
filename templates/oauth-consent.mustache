@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html class="lp" lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Connect {{clientName}} — Waymark Gear</title>
+        <meta name="robots" content="noindex">
+        {{{styles}}}
+        <link rel="icon" href="/favicon.png" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script nonce="{{{cspNonce}}}">
+            (function () {
+                try {
+                    var t = localStorage.getItem('lpTheme');
+                    if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+                } catch (e) { /* storage blocked; the media query decides */ }
+            }());
+        </script>
+    </head>
+    <body class="wgProfilePage">
+        <header class="wgShareBar">
+            <a href="/welcome" class="wgShareBrand" aria-label="Waymark Gear home">
+                <img class="wgLogo wgLogoOnLight" src="/images/waymark-logo.png" alt="Waymark Gear" width="843" height="127">
+                <img class="wgLogo wgLogoOnDark" src="/images/waymark-logo-light.png" alt="Waymark Gear" width="843" height="127">
+            </a>
+        </header>
+        <main class="wgJournal wgConsent" data-testid="oauth-consent">
+            <h1>Connect {{clientName}} to Waymark Gear?</h1>
+            <p>Signed in as <strong>@{{username}}</strong>. {{clientName}} wants to use your gear through Waymark's AI connection (MCP).</p>
+            <p class="wgMuted" data-testid="oauth-destination">After you choose, you'll be sent back to <strong>{{redirectHost}}</strong>. Only connect apps you set up yourself.</p>
+            <p class="wgMuted">It will be able to see your closet, wishlist, pack lists and gear checks. It can't see your email, password or anything outside Waymark Gear.</p>
+            <form method="post" action="/oauth/authorize">
+                {{#fields}}<input type="hidden" name="{{name}}" value="{{value}}">{{/fields}}
+                <label class="wgConsentWrite">
+                    <input type="checkbox" name="write" value="1" {{#wantsWrite}}checked{{/wantsWrite}} data-testid="oauth-write">
+                    Also let it add and change gear and lists
+                </label>
+                <p class="wgConsentActions">
+                    <button type="submit" name="decision" value="allow" class="wgBtn wgBtnPrimary" data-testid="oauth-allow">Connect</button>
+                    <button type="submit" name="decision" value="deny" class="wgBtn wgBtnGhost" data-testid="oauth-deny">Cancel</button>
+                </p>
+            </form>
+            <p class="wgMuted">You can disconnect it any time under <a href="/developers">API and AI assistants</a>.</p>
+        </main>
+        {{{scripts}}}
+    </body>
+</html>

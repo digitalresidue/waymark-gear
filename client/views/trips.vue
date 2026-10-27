@@ -128,6 +128,12 @@ export default {
     }
 }
 
+.wgTripsPage,
+.wgTripEdit {
+    padding-bottom: 48px;
+    padding-top: 28px;
+}
+
 .wgTripsPage .wgTripCards {
     display: grid;
     gap: 14px;

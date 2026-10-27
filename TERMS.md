@@ -81,6 +81,37 @@ and no support obligation.
 Don't let Waymark Gear be the only copy of anything you'd be upset to lose
 — you can export any list to CSV at any time.
 
+## Affiliate links {#affiliate}
+
+Waymark Gear is paid for partly by affiliate links. When you follow a **Buy**
+link to a shop from a gear page, a comparison or a shared list and then buy
+something, we may earn a commission from that shop. You pay the same price.
+As an Amazon Associate, [OPERATOR NAME] earns from qualifying purchases.
+
+Commissions never decide what we suggest: lighter options, popular gear and
+comparisons are ranked by weight, price and how many hikers use an item, and
+gear without an affiliate deal is treated the same way. Supporters get plain
+shop links with no affiliate code.
+
+## The Supporter plan
+
+Supporter is an optional subscription ([PRICE] a month or [PRICE] a year)
+that removes affiliate codes from the links you follow and adds a badge to
+your profile. Everything else on Waymark Gear stays free. Payments are taken
+and stored by Stripe; we never see your card. The plan renews until you
+cancel, which you can do at any time from the Supporter page; you keep it
+until the end of the period you've paid for. [REFUND POLICY, e.g. "If you
+cancel within 14 days of a payment, email us for a refund."] We may change the
+price for future periods with at least 30 days' notice by email.
+
+## AI assistants and the API
+
+You can connect an AI assistant (through our MCP server) or your own software
+(through the API) to your account. It acts for you, with the access you chose
+when you connected it, and these terms apply to what it does. Don't use the API
+to scrape other people's content or to put a load on the service it can't
+take; we may limit or revoke tokens that do.
+
 ## Liability
 
 To the fullest extent the law allows, we aren't liable for any damages arising

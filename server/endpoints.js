@@ -17,6 +17,7 @@ import { Library } from '../client/dataTypes.js';
 
 import { mailIdentity, sendMail } from './mail.js';
 import { forgetUserPages } from './page-cache.js';
+import { isSupporter } from './billing.js';
 import { announceLibraryChange } from './shared-lists.js';
 
 const router = express.Router();
@@ -170,6 +171,7 @@ function accountInfo(user) {
         googleLinked: Boolean(user.google_sub),
         isAdmin: isAdmin(user.username),
         isModerator: isModerator(user.username),
+        supporter: isSupporter(user),
     };
 }
 

@@ -57,6 +57,14 @@
         "__name": "OPEN_REVIEWS",
         "__format": "boolean"
     },
+    "stripe": {
+        "secretKey": "STRIPE_SECRET_KEY",
+        "webhookSecret": "STRIPE_WEBHOOK_SECRET",
+        "priceMonthly": "STRIPE_PRICE_MONTHLY",
+        "priceYearly": "STRIPE_PRICE_YEARLY",
+        "monthlyLabel": "SUPPORTER_MONTHLY_LABEL",
+        "yearlyLabel": "SUPPORTER_YEARLY_LABEL"
+    },
     "google": {
         "clientId": "GOOGLE_CLIENT_ID",
         "clientSecret": "GOOGLE_CLIENT_SECRET"

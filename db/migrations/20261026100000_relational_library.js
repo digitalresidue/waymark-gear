@@ -54,6 +54,7 @@ export async function up(knex) {
             purchased_on text not null default '',
             condition text not null default '',
             life_years real,
+            wishlist boolean not null default false,
             updated_at timestamptz not null default now(),
             primary key (user_id, id)
         );
@@ -74,6 +75,7 @@ export async function up(knex) {
             trip_type text not null default '',
             -- Trip planner: { days, foodPerDayMg, waterLiters }, or null.
             trip jsonb,
+            not_needed jsonb not null default '[]',
             updated_at timestamptz not null default now(),
             primary key (user_id, id)
         );

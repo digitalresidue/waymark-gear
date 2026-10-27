@@ -75,6 +75,32 @@ your username; you can edit or delete yours, and moderators can hide reviews
 that break the rules. Deleting your account deletes your trips; your reviews
 are deleted too.
 
+### Wishlist, price alerts and buy links
+
+Gear you add to your wishlist is stored with the rest of your closet. If a
+catalog price drops for something on it, we tell you in the app and, if you
+choose, by email. When you follow a **Buy** link we count the click (per item
+and per day, with no record of who clicked) so we can see which gear people
+buy; the shop then sees you arrive, as with any link. If you're not a
+Supporter, the link carries our affiliate code, which tells the shop the
+visit came from us.
+
+### Supporter plan
+
+If you subscribe, Stripe handles the payment and stores your card; we
+receive your Stripe customer number, the plan and when it renews. We don't
+see or store card details.
+
+### AI assistants and API tokens
+
+If you connect an AI assistant or make an API token, the assistant or
+software you connected can read your closet, wishlist and lists (and change
+them, if you allowed that). We store a fingerprint of each token, its name,
+when it was made and when it was last used; the token itself is shown to you
+once and never stored. What an assistant does with the data it reads is up to
+that assistant's provider and its privacy policy. Disconnect or revoke any of
+them at /developers.
+
 ### Importing from LighterPack
 
 When you paste a LighterPack link, our server fetches that list's public
@@ -119,6 +145,8 @@ sets cookies through our site.
   therefore stores everything above on our behalf.
 - **Mailgun** — delivers the transactional email we
   send. Your email address is passed to Mailgun when we send transactional emails.
+- **Stripe** — takes payments for the Supporter plan, if you subscribe. Stripe
+  receives your email address and payment details directly.
 
 Uploaded images are stored on our own servers.
 No one else receives your data, except where required by law.

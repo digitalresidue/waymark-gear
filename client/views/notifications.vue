@@ -8,7 +8,7 @@
                         Notifications
                     </h1>
                     <p class="wgLede">
-                        Comments, replies, shakedown suggestions, new followers and new lists from hikers you follow.
+                        Comments, replies, shakedown suggestions, new followers, new lists from hikers you follow, and price drops on your wishlist.
                     </p>
                 </div>
                 <button v-if="unread" type="button" class="wgBtn wgBtnGhost" data-testid="mark-all-read" @click="markRead">
@@ -30,7 +30,8 @@
                     <ul v-else>
                         <li v-for="n in items" :key="n.id" :class="{ wgNoticeNew: !n.read }" data-testid="notice">
                             <a :href="n.url">
-                                <strong>@{{ n.actor }}</strong> {{ describe(n) }}
+                                <template v-if="n.kind === 'price'"><strong>Price drop:</strong> {{ n.listName }}</template>
+                                <template v-else><strong>@{{ n.actor }}</strong> {{ describe(n) }}</template>
                                 <span class="wgMuted wgNoticeTime">{{ when(n.createdAt) }}</span>
                             </a>
                         </li>
