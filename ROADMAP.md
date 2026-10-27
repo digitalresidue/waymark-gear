@@ -8,7 +8,7 @@ the plan below it is what comes next. Last updated **2026-10-26** (Phase 8 start
 ## Changelog
 
 ### Phase 8, part 1 — Trails, and the phone web · 2026-10-26 · branch `phase8`
-- **Trails page** (`/trails/pct`): what people carry on a trail. The trail's facts and what it asks of your pack; packs, median and lightest base weight; how many use quilts, trail runners, bear canisters, ice axes, satellite messengers; the three most carried shelters, sleep systems, packs and shoes, ranked; every pack, sorted by top, lightest, newest, shakedown requests or this year's class; and the trail against the two most-packed others.
+- **Trails page** (`/trails/pct`): what people carry on a trail. The trail's facts and what it asks of your pack; packs, median and lightest base weight; how many use quilts, trail runners, bear canisters, ice axes, satellite messengers; the three most carried shelters, sleep systems, packs, insulation layers and shell layers (rain, snow, wind), ranked; every pack, sorted by top, lightest, newest, shakedown requests or this year's class; and the trail against the two most-packed others.
 - **Picker** that scales to thousands of trails: chips for the 8 most-packed trails (your own trails first, starred), and a search that finds any trail by name, nickname or place. Switching trails or sorts swaps the page in place (with working Back), while every trail keeps its own link for search engines. `/trails/all` lists every trail by country; trail pages are in the sitemap.
 - **Curated trail list**, seeded with about 40 long trails (Triple Crown, National Scenic Trails, popular routes in Canada, Europe, New Zealand, Australia, Nepal), with nicknames, regions, lengths, sections and "what it asks of your pack" notes.
 - **Trail tag on lists**: next to the trip type, with year and direction (NOBO, SOBO, flip-flop, section). A list named "PCT 2026" offers the tag in one tap. Shared lists link to their trail. The API and MCP tools report it.
@@ -125,7 +125,7 @@ the plan below it is what comes next. Last updated **2026-10-26** (Phase 8 start
 - **Trails page** (`/trails?t=pct`), the headline feature: one page with a trail picker (AT, PCT, CDT, Colorado Trail, JMT, Arizona Trail, Long Trail, …). Picking a trail reloads, in place:
   - the trail's facts and what it asks of your pack (bear canister in the Sierra, long water carries, snow gear);
   - live stats from every list tagged with that trail: number of packs, median and lightest base weight, share using quilts, trail runners, bear canisters, ice axes, satellite messengers;
-  - the three most carried shelters, sleep systems, packs and shoes, ranked;
+  - the three most carried shelters, sleep systems, packs, insulation layers and shell layers (rain, snow, wind), ranked;
   - the packs themselves, sorted by top, lightest, newest, shakedown requests, or this year's class;
   - a trail-vs-trail table.
   **Picking a trail when there are thousands:** chips for the 6–8 trails with the most packs (your own trails first when signed in), then an **"All trails" search box**: type a few letters, get matches ranked by pack count, with aliases ("AT", "A.T.", "Appalachian") and region ("Colorado", "Scotland"). On a phone the chips scroll sideways and the search opens full screen. A `/trails/all` directory lists every trail by region and A–Z for browsing and search engines.

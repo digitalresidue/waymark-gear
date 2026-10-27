@@ -8,6 +8,7 @@
 import knex from './db.js';
 import { listKits, kitToApi } from './kits.js';
 import { PACK_FEATURES } from '../client/utils/trails.js';
+import { clothingLayer } from '../client/utils/insights.js';
 import { ensureTrails, trailIndex, withSections, keyOf } from './trails-index.js';
 
 export class TrailError extends Error {
@@ -134,27 +135,40 @@ async function trailStats(ids) {
 }
 
 // The most used catalog item in each of a few categories.
-const CARRIED = ['Shelter', 'Sleep', 'Packs', 'Footwear'];
+// Most carried, by what it is: gear by catalog category, and clothing
+// split into the two layers that change most from trail to trail.
+const CARRIED = [
+    { label: 'Shelter', category: 'Shelter' },
+    { label: 'Sleep', category: 'Sleep' },
+    { label: 'Packs', category: 'Packs' },
+    { label: 'Insulation', category: 'Clothing', layer: 'insulation', hint: 'Warmth for cold camps and mornings' },
+    { label: 'Shell layers', category: 'Clothing', layer: 'shell', hint: 'Rain, snow and wind' },
+];
+
 async function mostCarried(ids, packs) {
     if (!packs) return [];
+    const categories = [...new Set(CARRIED.map((c) => c.category))];
     const rows = await knex.with('uses', (qb) => qb.select(knex.raw('distinct external_id, unnest(catalog_ids) as catalog_id')).from('public_kits').whereIn('trail_id', ids))
-        .select('c.id', 'c.name', 'c.brand', 'c.category', 'c.weight_mg', 'c.unit')
+        .select('c.id', 'c.name', 'c.brand', 'c.description', 'c.category', 'c.weight_mg', 'c.unit')
         .count({ n: '*' })
         .from('uses').join('catalog_items as c', 'c.id', 'uses.catalog_id')
-        .whereIn('c.category', CARRIED).where('c.status', 'published')
+        .whereIn('c.category', categories).where('c.status', 'published')
         .groupBy('c.id').orderBy([{ column: 'n', order: 'desc' }, { column: 'c.name', order: 'asc' }]);
-    // The top three in each category, most carried first.
+    // The top three in each group, most carried first.
     const out = [];
-    for (const cat of CARRIED) {
-        const items = rows.filter((r) => r.category === cat).slice(0, 3).map((r, i) => ({
-            rank: i + 1,
-            id: r.id,
-            name: [r.brand, r.name].filter(Boolean).join(' '),
-            weightMg: r.weight_mg,
-            unit: r.unit,
-            share: Math.round((100 * Number(r.n)) / packs),
-        }));
-        if (items.length) out.push({ category: cat, items });
+    for (const group of CARRIED) {
+        const items = rows
+            .filter((r) => r.category === group.category && (!group.layer || clothingLayer(r.name, r.description) === group.layer))
+            .slice(0, 3)
+            .map((r, i) => ({
+                rank: i + 1,
+                id: r.id,
+                name: [r.brand, r.name].filter(Boolean).join(' '),
+                weightMg: r.weight_mg,
+                unit: r.unit,
+                share: Math.round((100 * Number(r.n)) / packs),
+            }));
+        if (items.length) out.push({ category: group.label, hint: group.hint || '', items });
     }
     return out;
 }

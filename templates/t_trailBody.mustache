@@ -25,9 +25,9 @@
     </section>
 
     {{#hasCarried}}
-    <div class="wgTrailHead"><h2>Most carried</h2><span class="wgMuted">The three most common catalog items in each category</span></div>
+    <div class="wgTrailHead"><h2>Most carried</h2><span class="wgMuted">The three most common closet items for each part of the kit</span></div>
     <ul class="wgTrailCarried" data-testid="trail-carried">
-        {{#carried}}<li data-testid="trail-carried-category"><span class="wgTrailLabel">{{category}}</span>
+        {{#carried}}<li data-testid="trail-carried-category"><span class="wgTrailLabel">{{category}}</span>{{#hint}}<span class="wgTrailCarriedHint">{{hint}}</span>{{/hint}}
             <ol>{{#items}}<li data-testid="trail-carried-item"><span class="wgTrailRank">{{rank}}</span><span class="wgTrailCarriedItem"><a href="/g/{{id}}">{{name}}</a><span class="wgMuted"><span class="wgMono">{{weight}}</span> · {{share}}% of packs</span></span></li>{{/items}}</ol>
         </li>{{/carried}}
     </ul>
