@@ -644,8 +644,10 @@ test.describe('Phone onboarding', () => {
     const bottom = await start.evaluate((el) => el.getBoundingClientRect().bottom);
     expect(bottom).toBeLessThan(PHONE.height);
 
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-    expect(overflow).toBeLessThanOrEqual(0);
+    // Against the phone's width, not innerWidth, which Chromium's phone
+    // emulation widens to fit overflowing content.
+    const width = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(width).toBeLessThanOrEqual(PHONE.width);
   });
 
   test('register shows its validation inside the card', async ({ page }) => {

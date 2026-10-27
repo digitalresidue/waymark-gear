@@ -547,8 +547,11 @@
         grid-template-columns: 1fr;
     }
 
+    // Single line: in a wrapping column the chips' unwrapped width would
+    // set the line's width and push the page sideways.
     .wgTrailPicker {
         flex-direction: column;
+        flex-wrap: nowrap;
         align-items: stretch;
         padding: 8px;
     }

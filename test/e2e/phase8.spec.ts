@@ -192,6 +192,8 @@ test.describe('Phase 8: phone menus', () => {
         await expect(page.locator('.wgShareMenuPhone nav')).toBeVisible();
         await page.mouse.click(200, 760);
         await expect(page.locator('.wgShareMenuPhone nav')).toBeHidden();
-        expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBe(0);
+        // Against the 390px screen, not window.innerWidth: Chromium's phone
+        // emulation zooms out to fit wide content, which would hide overflow.
+        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
     });
 });
