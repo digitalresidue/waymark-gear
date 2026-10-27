@@ -251,14 +251,19 @@ export default {
     }
 
     .wgSiteHeaderLogo {
-        flex: 1 1 auto;
+        flex: 0 1 auto;
+        margin-right: auto;
         min-width: 0;
+    }
 
-        img,
-        svg {
-            height: auto;
-            max-width: 150px;
-        }
+    // Shrink by width only; the height follows the 843:127 ratio so the
+    // logo never squashes. Needs to outrank `.lp .wgLogo`.
+    .lp .wgSiteHeaderLogo .wgLogo {
+        aspect-ratio: 843 / 127;
+        height: auto;
+        max-width: 100%;
+        object-fit: contain;
+        width: 150px;
     }
 
     .wgSiteHeaderActions {

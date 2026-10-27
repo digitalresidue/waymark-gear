@@ -143,10 +143,18 @@ async function mostCarried(ids, packs) {
         .from('uses').join('catalog_items as c', 'c.id', 'uses.catalog_id')
         .whereIn('c.category', CARRIED).where('c.status', 'published')
         .groupBy('c.id').orderBy([{ column: 'n', order: 'desc' }, { column: 'c.name', order: 'asc' }]);
+    // The top three in each category, most carried first.
     const out = [];
     for (const cat of CARRIED) {
-        const top = rows.find((r) => r.category === cat);
-        if (top) out.push({ category: cat, id: top.id, name: [top.brand, top.name].filter(Boolean).join(' '), weightMg: top.weight_mg, unit: top.unit, share: Math.round((100 * Number(top.n)) / packs) });
+        const items = rows.filter((r) => r.category === cat).slice(0, 3).map((r, i) => ({
+            rank: i + 1,
+            id: r.id,
+            name: [r.brand, r.name].filter(Boolean).join(' '),
+            weightMg: r.weight_mg,
+            unit: r.unit,
+            share: Math.round((100 * Number(r.n)) / packs),
+        }));
+        if (items.length) out.push({ category: cat, items });
     }
     return out;
 }

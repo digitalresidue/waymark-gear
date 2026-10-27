@@ -682,7 +682,7 @@ function trailBodyModel(data, comparison) {
         median: lbLabel(stats.medianMg),
         lightest: lbLabel(stats.lightestMg),
         statTiles: stats.packs ? tiles.map((k) => ({ label: PACK_FEATURES[k].label.replace(' instead of a bag', 's'), value: pct(f[k]) })) : [],
-        carried: data.carried.map((c) => ({ ...c, weight: `${weightUtils.MgToDisplayWeight(c.weightMg, c.unit)} ${c.unit}` })),
+        carried: data.carried.map((c) => ({ ...c, items: c.items.map((i) => ({ ...i, weight: `${weightUtils.MgToDisplayWeight(i.weightMg, i.unit)} ${i.unit}` })) })),
         hasCarried: data.carried.length > 0,
         sorts: Object.entries(trails.SORTS).map(([id, label]) => ({ id, label: id === 'year' ? `${data.year} class` : label, on: id === data.sort })),
         kits: data.kits.map((k) => {

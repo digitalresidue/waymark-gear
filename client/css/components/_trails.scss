@@ -268,19 +268,68 @@
     margin: 0 0 24px;
     padding: 0;
 
-    li {
+    > li {
         background: var(--lp-surface);
         border: 1px solid var(--lp-border);
         border-radius: 14px;
         display: flex;
         flex-direction: column;
-        gap: 3px;
+        gap: 6px;
         padding: 12px 14px;
+    }
+
+    ol {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    ol li {
+        align-items: flex-start;
+        display: flex;
+        gap: 8px;
+    }
+
+    ol li + li {
+        border-top: 1px solid var(--lp-border);
+        padding-top: 8px;
     }
 
     a {
         font-weight: 700;
     }
+
+    ol li:not(:first-child) a {
+        font-weight: 600;
+    }
+}
+
+.wgTrailRank {
+    background: var(--lp-row-hover);
+    border-radius: 99px;
+    color: var(--lp-text-secondary);
+    flex: none;
+    font-size: 12px;
+    font-weight: 700;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    width: 20px;
+}
+
+.wgTrailCarried ol li:first-child .wgTrailRank {
+    background: var(--lp-primary);
+    color: #fff;
+}
+
+.wgTrailCarriedItem {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
 }
 
 .wgTrailSorts {
@@ -480,6 +529,10 @@
 @media (max-width: 640px) {
     .wgTrails {
         padding-top: 18px;
+    }
+
+    .wgTrailCarried {
+        grid-template-columns: 1fr;
     }
 
     .wgTrailPicker {

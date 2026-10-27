@@ -131,13 +131,18 @@
     }
 
     .wgShareBrand {
-        flex: 1 1 auto;
+        flex: 0 1 auto;
+        margin-right: auto;
         min-width: 0;
+    }
 
-        img {
-            height: auto;
-            max-width: 140px;
-        }
+    // Width only, so the logo keeps its ratio (outranks `.lp .wgLogo`).
+    .lp .wgShareBrand .wgLogo {
+        aspect-ratio: 843 / 127;
+        height: auto;
+        max-width: 100%;
+        object-fit: contain;
+        width: 140px;
     }
 
     .wgShareActions {

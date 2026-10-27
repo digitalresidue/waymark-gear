@@ -169,6 +169,9 @@ test.describe('Phase 8: phone menus', () => {
         const header = page.locator('.wgSiteHeader');
         const box = await header.boundingBox();
         expect(box!.height).toBeLessThan(70);
+        // The logo shrinks without squashing: same 843:127 ratio.
+        const ratio = async (sel: string) => page.locator(sel).locator('visible=true').first().evaluate((e) => { const r = e.getBoundingClientRect(); return r.width / r.height; });
+        expect(await ratio('.wgSiteHeader .wgLogo')).toBeCloseTo(843 / 127, 1);
         await expect(page.getByTestId('header-signin')).toBeHidden();
         await expect(page.getByTestId('nav-leaderboard')).toBeHidden();
         await page.getByTestId('site-menu').click();
@@ -184,6 +187,7 @@ test.describe('Phase 8: phone menus', () => {
         await page.goto(url('/trails/pct'));
         const bar = await page.locator('.wgShareBar').boundingBox();
         expect(bar!.height).toBeLessThan(70);
+        expect(await ratio('.wgShareBrand .wgLogo')).toBeCloseTo(843 / 127, 1);
         await page.getByTestId('share-menu').click();
         await expect(page.locator('.wgShareMenuPhone nav')).toBeVisible();
         await page.mouse.click(200, 760);
