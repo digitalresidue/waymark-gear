@@ -22,6 +22,8 @@ import { Library } from '../client/dataTypes.js';
 import { normalizeTrip } from '../client/utils/trip.js';
 import { TRIP_TYPES, youTubeId, CONDITIONS } from '../client/utils/gear-meta.js';
 import { ESSENTIALS } from '../client/utils/insights.js';
+import { normalizeTrailTag } from '../client/utils/trails.js';
+import { ensureTrails, resolveTrail, trailIndex } from './trails-index.js';
 
 const UNITS = ['g', 'kg', 'oz', 'lb'];
 const LIMITS = { items: 20000, categories: 5000, lists: 1000, itemsPerCategory: 2000, categoriesPerList: 500 };
@@ -157,7 +159,16 @@ function listRow(userId, list, position) {
         trip_type: TRIP_TYPES.includes(list.tripType) ? list.tripType : '',
         trip: tripSettings(list.trip),
         not_needed: JSON.stringify(notNeeded(list.notNeeded)),
+        ...trailColumns(list.trail),
     };
+}
+
+// The trail tag: kept as typed, matched to the curated list when it can be
+// (callers run ensureTrails() first).
+function trailColumns(input) {
+    const t = normalizeTrailTag(input);
+    if (!t) return { trail_text: '', trail_id: null, trail_year: null, trail_direction: '' };
+    return { trail_text: t.name, trail_id: resolveTrail(t.name), trail_year: t.year ?? null, trail_direction: t.direction || '' };
 }
 
 // Essentials marked "not needed" on this list: known ids only.
@@ -202,6 +213,7 @@ function cleanKits(kits) {
 // The serialized library (Library.save() shape) for a user, or null if they
 // have none.
 export async function loadLibrary(userId, db = knex) {
+    await ensureTrails();
     const settings = await db('library_settings').where({ user_id: userId }).first();
     if (!settings) return null;
 
@@ -255,6 +267,13 @@ export async function loadLibrary(userId, db = knex) {
         if (l.trip_type) out.tripType = l.trip_type;
         if (l.trip) out.trip = normalizeTrip(l.trip);
         if (Array.isArray(l.not_needed) && l.not_needed.length) out.notNeeded = l.not_needed;
+        if (l.trail_text) {
+            const t = l.trail_id ? trailIndex().byId.get(l.trail_id) : null;
+            out.trail = { name: l.trail_text };
+            if (t) Object.assign(out.trail, { id: t.id, slug: t.slug, short: t.short });
+            if (l.trail_year) out.trail.year = l.trail_year;
+            if (l.trail_direction) out.trail.direction = l.trail_direction;
+        }
         return out;
     });
 
@@ -331,6 +350,7 @@ export function normalizeLibrary(input) {
 // Replace everything a user has with `serialized`. Runs in the caller's
 // transaction when given one.
 export async function replaceLibrary(userId, serialized, db = knex) {
+    await ensureTrails();
     const lib = normalizeLibrary(serialized);
     const run = async (trx) => {
         await trx('pack_lists').where({ user_id: userId }).del(); // cascades categories and their items
@@ -378,6 +398,7 @@ function changeSet(group) {
 // the same item keep whichever saved last.
 export async function applyChanges(userId, changes, db = knex) {
     if (!changes || typeof changes !== 'object') throw new LibraryError('No changes sent.');
+    await ensureTrails();
     const items = changeSet(changes.items);
     const categories = changeSet(changes.categories);
     const lists = changeSet(changes.lists);

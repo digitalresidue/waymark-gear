@@ -48,6 +48,29 @@ export default {
     margin: 0 0 14px;
 }
 
+// On a phone the chips stay on one line and scroll, and line up with the
+// cards below.
+@media (max-width: 720px) {
+    .wgTripType,
+    .wgTrailTag {
+        padding: 0 12px;
+    }
+
+    .wgTripType {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
+
+        .wgChip {
+            flex: none;
+        }
+    }
+}
+
 .wgTripTypeLabel {
     color: var(--lp-text-secondary);
     font-size: 12px;
@@ -55,5 +78,6 @@ export default {
     letter-spacing: 0.06em;
     margin-right: 4px;
     text-transform: uppercase;
+    white-space: nowrap;
 }
 </style>

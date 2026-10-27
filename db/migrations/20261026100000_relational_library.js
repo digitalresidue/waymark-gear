@@ -76,6 +76,11 @@ export async function up(knex) {
             -- Trip planner: { days, foodPerDayMg, waterLiters }, or null.
             trip jsonb,
             not_needed jsonb not null default '[]',
+            -- Trail tag (Phase 8): as typed, matched trail, year, direction.
+            trail_text text not null default '',
+            trail_id integer,
+            trail_year smallint,
+            trail_direction text not null default '',
             updated_at timestamptz not null default now(),
             primary key (user_id, id)
         );

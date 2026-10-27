@@ -5,6 +5,10 @@
     margin: 0 auto;
     max-width: 760px;
     padding: 24px 16px 48px;
+
+    @media (max-width: 560px) {
+        padding-top: 16px;
+    }
 }
 
 .wgJournalCover img {
@@ -194,8 +198,16 @@
         margin: 2px 0;
     }
 
+    // On a phone a small thumbnail sits beside the name instead of a big
+    // block above it.
     @media (max-width: 560px) {
-        grid-template-columns: 1fr;
+        gap: 14px;
+        grid-template-columns: 72px 1fr;
+
+        .wgGearHeroImg {
+            border-radius: 10px;
+            font-size: 28px;
+        }
     }
 }
 

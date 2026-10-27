@@ -180,6 +180,11 @@ export default {
 .wgExplore {
     padding-bottom: 72px;
     padding-top: 48px;
+
+    @media (max-width: 720px) {
+        padding-bottom: 40px;
+        padding-top: 20px;
+    }
 }
 
 .wgExploreTools {

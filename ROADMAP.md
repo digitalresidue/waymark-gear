@@ -1,11 +1,20 @@
 # Waymark Gear roadmap
 
 Living document. Each phase gets a dated entry in the changelog when it ships;
-the plan below it is what comes next. Last updated **2026-10-26** (Phase 7 built).
+the plan below it is what comes next. Last updated **2026-10-26** (Phase 8 started: Trails and the phone web).
 
 ---
 
 ## Changelog
+
+### Phase 8, part 1 — Trails, and the phone web · 2026-10-26 · branch `phase8`
+- **Trails page** (`/trails/pct`): what people carry on a trail. The trail's facts and what it asks of your pack; packs, median and lightest base weight; how many use quilts, trail runners, bear canisters, ice axes, satellite messengers; the most carried shelter, sleep system, pack and shoes; every pack, sorted by top, lightest, newest, shakedown requests or this year's class; and the trail against the two most-packed others.
+- **Picker** that scales to thousands of trails: chips for the 8 most-packed trails (your own trails first, starred), and a search that finds any trail by name, nickname or place. Switching trails or sorts swaps the page in place (with working Back), while every trail keeps its own link for search engines. `/trails/all` lists every trail by country; trail pages are in the sitemap.
+- **Curated trail list**, seeded with about 40 long trails (Triple Crown, National Scenic Trails, popular routes in Canada, Europe, New Zealand, Australia, Nepal), with nicknames, regions, lengths, sections and "what it asks of your pack" notes.
+- **Trail tag on lists**: next to the trip type, with year and direction (NOBO, SOBO, flip-flop, section). A list named "PCT 2026" offers the tag in one tap. Shared lists link to their trail. The API and MCP tools report it.
+- **Owner → Trails**: edit trails, and a queue of names hikers typed that match nothing yet: add as a trail, merge into an existing one (it becomes a nickname, and those lists join the trail), or ignore.
+- **Phone web**: the header is one row (logo, bell, one button, menu) with the links in a menu sheet, instead of two or three rows of links; the public pages' bar the same, with a menu that works without JavaScript. Less padding on the homepage, Explore and page headings; the trip-type chips scroll in one row; the gear page puts a small thumbnail beside the name; the revenue rules stack.
+- Fixes: the closet's selected filter chip was white on white; lighter-option search now sends item descriptions.
 
 ### Phase 7 — Smarter gear, and paying for the site · 2026-10-26 · branch `phase7`
 - **Gear check** on every list: a readiness score (0–100) from twelve essentials (shelter, sleep, warm layer, water treatment, navigation, light, first aid count most; rain, sun, fire, knife/repair, emergency signal less), adjusted for day hikes and for cold or hot trips. Mark any essential "not needed" for that list. **Lighter options** from the catalog, with the weight each saves and how many public lists use it, and **what other hikers carry** in each of your categories.
@@ -112,7 +121,7 @@ the plan below it is what comes next. Last updated **2026-10-26** (Phase 7 built
 - Comparisons, gear analysis (essentials, lighter options, readiness), wishlist, price history and alerts, affiliate links with a Supporter plan, MCP server and REST API.
 - Follow-ups: price data from retailer feeds (today prices change when the owner updates the catalog); essentials tuned by trip type and season; MCP resources/prompts ("shakedown this list").
 
-## Phase 8 — Trails and reach (proposed next run)
+## Phase 8 — Trails and reach (Trails and phone web built 2026-10-26; native apps and languages next)
 - **Trails page** (`/trails?t=pct`), the headline feature: one page with a trail picker (AT, PCT, CDT, Colorado Trail, JMT, Arizona Trail, Long Trail, …). Picking a trail reloads, in place:
   - the trail's facts and what it asks of your pack (bear canister in the Sierra, long water carries, snow gear);
   - live stats from every list tagged with that trail: number of packs, median and lightest base weight, share using quilts, trail runners, bear canisters, ice axes, satellite messengers;

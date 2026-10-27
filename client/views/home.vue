@@ -765,4 +765,33 @@ export default {
     font-weight: 700;
     margin-top: 4px;
 }
+
+// On a phone, less air between the homepage's sections: the page was
+// mostly padding at 390px wide.
+@media (max-width: $mobile) {
+    .wgHero {
+        gap: 28px;
+        padding-bottom: 32px;
+        padding-top: 24px;
+    }
+
+    .wgCommon {
+        gap: 24px;
+        padding-bottom: 40px;
+        padding-top: 40px;
+    }
+
+    .wgShakedownBoard {
+        padding-top: 32px;
+    }
+
+    .wgBand {
+        padding-bottom: 36px;
+        padding-top: 36px;
+    }
+
+    .wgSectionHead {
+        margin-bottom: 16px;
+    }
+}
 </style>

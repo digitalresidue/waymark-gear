@@ -1,0 +1,69 @@
+<div id="wgTrailBody" data-slug="{{trail.slug}}" data-title="{{pageTitle}}">
+    <section class="wgTrailHero">
+        <div class="wgTrailFacts">
+            <h2 class="wgTrailName" data-testid="trail-name">{{trail.name}}</h2>
+            <p class="wgTrailMeta">
+                {{#trail.lengthMiLabel}}<b class="wgMono">{{trail.lengthMiLabel}} mi</b>{{/trail.lengthMiLabel}}
+                {{#trail.region}}<span>{{trail.region}}</span>{{/trail.region}}
+                {{#parent}}<span>Part of <a href="/trails/{{slug}}" data-trail="{{slug}}">{{name}}</a></span>{{/parent}}
+            </p>
+            {{#hasNotes}}
+            <p class="wgTrailLabel">What this trail asks of your pack</p>
+            <ul class="wgTrailNotes">{{#trail.notes}}<li>{{.}}</li>{{/trail.notes}}</ul>
+            {{/hasNotes}}
+            {{#hasSections}}
+            <p class="wgTrailLabel">Sections</p>
+            <p class="wgTrailSections">{{#sections}}<a href="/trails/{{slug}}" data-trail="{{slug}}">{{name}}</a>{{/sections}}</p>
+            {{/hasSections}}
+        </div>
+        <dl class="wgTrailStats" data-testid="trail-stats">
+            <div><dt>Packs</dt><dd data-testid="trail-packs">{{stats.packs}}</dd></div>
+            <div><dt>Median base</dt><dd>{{median}}</dd></div>
+            <div><dt>Lightest</dt><dd>{{lightest}}</dd></div>
+            {{#statTiles}}<div><dt>{{label}}</dt><dd>{{value}}</dd></div>{{/statTiles}}
+        </dl>
+    </section>
+
+    {{#hasCarried}}
+    <div class="wgTrailHead"><h2>Most carried</h2><span class="wgMuted">The most common catalog item in each category</span></div>
+    <ul class="wgTrailCarried" data-testid="trail-carried">
+        {{#carried}}<li><span class="wgTrailLabel">{{category}}</span><a href="/g/{{id}}">{{name}}</a><span class="wgMuted"><span class="wgMono">{{weight}}</span> · in {{share}}% of packs</span></li>{{/carried}}
+    </ul>
+    {{/hasCarried}}
+
+    <div class="wgTrailHead">
+        <h2>Packs for the {{trail.shortOrName}}</h2>
+        <nav class="wgTrailSorts" aria-label="Sort packs">
+            {{#sorts}}<a href="/trails/{{trail.slug}}?sort={{id}}" data-trail="{{trail.slug}}" data-sort="{{id}}" {{#on}}aria-current="true"{{/on}} data-testid="trail-sort-{{id}}">{{label}}</a>{{/sorts}}
+        </nav>
+    </div>
+    {{#hasKits}}
+    <ul class="wgTrailCards" data-testid="trail-packs-list">
+        {{#kits}}
+        <li class="wgTrailCard" data-testid="trail-pack">
+            <a href="/r/{{externalId}}">
+                <span class="wgTrailCardTop"><strong>{{name}}</strong><span class="wgMono">{{baseWeight}}</span></span>
+                <span class="wgTrailCardBy">@{{username}}{{#tag}} · {{tag}}{{/tag}}{{#shakedown}} · <span class="wgTrailShakedown">Shakedown requested</span>{{/shakedown}}</span>
+                <span class="wgTrailBar">{{#bars}}<span style="flex: {{flex}}" class="wgBar{{i}}"></span>{{/bars}}</span>
+                <span class="wgTrailCardFoot"><span>▲ {{score}} · {{comments}}</span><span>{{itemCount}} items</span></span>
+            </a>
+        </li>
+        {{/kits}}
+    </ul>
+    {{/hasKits}}
+    {{^hasKits}}
+    <p class="wgTrailEmpty" data-testid="trail-empty">No packs here yet{{#sortNote}} {{sortNote}}{{/sortNote}}. Tag one of your lists with the {{trail.shortOrName}} in the list editor and publish it to be the first.</p>
+    {{/hasKits}}
+
+    {{#hasComparison}}
+    <div class="wgTrailHead"><h2>Trail vs trail</h2></div>
+    <div class="wgTrailCompareWrap">
+        <table class="wgTrailCompare" data-testid="trail-compare">
+            <thead><tr><th></th>{{#comparison}}<th {{#me}}class="wgOn"{{/me}}><a href="/trails/{{slug}}" data-trail="{{slug}}">{{label}}</a></th>{{/comparison}}</tr></thead>
+            <tbody>
+                {{#compareRows}}<tr><th>{{label}}</th>{{#cells}}<td {{#me}}class="wgOn"{{/me}}>{{value}}</td>{{/cells}}</tr>{{/compareRows}}
+            </tbody>
+        </table>
+    </div>
+    {{/hasComparison}}
+</div>

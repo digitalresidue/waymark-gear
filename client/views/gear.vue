@@ -427,8 +427,9 @@ export default {
 }
 
 .lpGearChipActive {
-    background: var(--lp-sidebar-bg);
-    color: $grey-0;
+    // The sidebar is white since the redesign, which left white text on white.
+    background: var(--lp-primary);
+    color: #fff;
 }
 
 .lpGearList {

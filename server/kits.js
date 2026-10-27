@@ -7,6 +7,8 @@ import { Library } from '../client/dataTypes.js';
 import { isUuid } from './catalog.js';
 import { TRIP_TYPES } from '../client/utils/gear-meta.js';
 import { notifyFollowersOfNewKits } from './follows.js';
+import { packFeatures, normalizeTrailTag } from '../client/utils/trails.js';
+import { ensureTrails, resolveTrail } from './trails-index.js';
 
 const LB = 453592; // mg
 
@@ -33,6 +35,7 @@ export function publishedKits(serializedLibrary) {
         const catalogIds = new Set();
         let itemCount = 0;
         const categories = [];
+        const rows = [];
         for (const categoryId of list.categoryIds) {
             const category = library.getCategoryById(categoryId);
             if (!category) continue;
@@ -41,6 +44,7 @@ export function publishedKits(serializedLibrary) {
                 if (!item) continue;
                 itemCount += 1;
                 if (item.catalogId && isUuid(item.catalogId)) catalogIds.add(item.catalogId);
+                rows.push({ name: item.name, description: item.description });
             }
             categories.push({
                 name: category.name || 'Untitled',
@@ -60,6 +64,8 @@ export function publishedKits(serializedLibrary) {
             catalogIds: [...catalogIds],
             shakedown: Boolean(list.shakedown),
             tripType: TRIP_TYPES.includes(list.tripType) ? list.tripType : '',
+            trail: normalizeTrailTag(list.trail),
+            features: packFeatures(rows),
         });
     }
     return kits;
@@ -68,6 +74,7 @@ export function publishedKits(serializedLibrary) {
 // Bring public_kits in line with what this user has published. Featured
 // flags set by the site owner survive republishing.
 export async function syncPublishedKits(user, serializedLibrary, db = knex) {
+    await ensureTrails();
     const kits = publishedKits(serializedLibrary);
     const owned = kits.length
         ? new Set((await db('list').where({ user_id: user.user_id })
@@ -100,6 +107,10 @@ export async function syncPublishedKits(user, serializedLibrary, db = knex) {
                 catalog_ids: k.catalogIds,
                 shakedown: k.shakedown,
                 trip_type: k.tripType,
+                trail_id: k.trail ? resolveTrail(k.trail.name) : null,
+                trail_year: k.trail && k.trail.year ? k.trail.year : null,
+                trail_direction: k.trail && k.trail.direction ? k.trail.direction : '',
+                features: k.features,
                 updated_at: trx.fn.now(),
             };
             // When the shakedown was asked for: kept while it stays on, so
@@ -138,6 +149,9 @@ export function kitToApi(row) {
         featuredRank: row.featured_rank,
         shakedown: Boolean(row.shakedown),
         tripType: row.trip_type || '',
+        trailId: row.trail_id ?? null,
+        trailYear: row.trail_year ?? null,
+        trailDirection: row.trail_direction || '',
         shakedownAt: row.shakedown_at || null,
         score: row.score === undefined ? undefined : Number(row.score),
         commentCount: row.comment_count === undefined ? undefined : Number(row.comment_count),
@@ -180,9 +194,11 @@ const SORTS = {
 
 export async function listKits({
     weightClass, tripType, q = '', featuredOnly = false, shakedownOnly = false, followerId = null,
-    sort = 'featured', limit = 24, offset = 0,
+    sort = 'featured', limit = 24, offset = 0, trailIds = null, trailYear = null,
 } = {}) {
     const query = knex('public_kits');
+    if (trailIds) query.whereIn('trail_id', trailIds.length ? trailIds : [0]);
+    if (trailYear) query.where({ trail_year: trailYear });
     if (weightClass) query.where({ weight_class: weightClass });
     if (tripType) query.where({ trip_type: tripType });
     if (featuredOnly) query.where({ featured: true });

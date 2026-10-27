@@ -406,6 +406,9 @@ List.prototype.save = function () {
     if (this.tripType) out.tripType = this.tripType;
     // Essentials the owner says this list doesn't need (client/utils/insights.js).
     if (this.notNeeded && this.notNeeded.length) out.notNeeded = [...this.notNeeded];
+    // The trail this list is for (Phase 8): { name, year, direction }; the
+    // server adds the matched trail's id, slug and short name.
+    if (this.trail && this.trail.name) out.trail = { ...this.trail };
     return out;
 };
 
