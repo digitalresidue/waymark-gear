@@ -12,7 +12,12 @@ set -euo pipefail
 
 DIR="${WAYMARK_DIR:-/opt/waymark}"
 cd "$DIR"
+# Nightly backups are named by date (waymark-db-2026-10-27.sql.gz). An
+# optional label makes a separate copy instead, e.g. backup.sh before-restore
+# -> waymark-db-2026-10-27-before-restore-1432.sql.gz, so a safety copy never
+# replaces the backup it protects.
 STAMP=$(date +%F)
+if [ -n "${1:-}" ]; then STAMP="$STAMP-$(printf '%s' "$1" | tr -cd 'a-z0-9-')-$(date +%H%M%S)"; fi
 DEST="$DIR/backups"
 KEEP_DAYS=14
 mkdir -p "$DEST"

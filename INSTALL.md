@@ -385,10 +385,11 @@ To set up off-site copies with **DigitalOcean Spaces** ($5 a month, 250 GB):
    It runs a backup straight away to check it works. (Backblaze B2 works the
    same way: choose `b2` as the storage type.)
 
-**Restoring:** `waymark backups` lists the days you have, and
-`waymark restore 2026-10-27` (with your date) puts the site back to that
-day. It backs up the current state first, so you can undo a restore with
-another restore.
+**Restoring:** `waymark backups` lists the backups you have, and
+`waymark restore 2026-10-27` (with a name from that list) puts the site back
+to it. It saves a copy of the site as it is first (listed as
+`...-before-restore-...`), so you can undo a restore by restoring that
+copy.
 
 ## If something goes wrong
 

@@ -106,6 +106,13 @@ if signin trailboss first-password-1; then fail "old password still works"; fi
 step "waymark restore (puts back the backup, from before the reset)"
 echo RESTORE | "$WAYMARK" restore "$day"
 signin trailboss first-password-1 || fail "restored password"
+"$WAYMARK" backups | tee backups.log
+grep -q -- "-before-restore-" backups.log || fail "restore should keep a safety copy"
+
+step "Restoring the safety copy undoes the restore"
+safety=$(grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}-before-restore-[0-9]{6}' backups.log | head -1)
+echo RESTORE | "$WAYMARK" restore "$safety"
+signin trailboss second-password-2 || fail "undo restore"
 
 step "waymark update (same image, forced) keeps the site up"
 WAYMARK_FORCE=1 "$WAYMARK" update | tee update.log

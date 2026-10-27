@@ -133,7 +133,7 @@ cmd_update() {
     cp -a "$SELF" "$tmp/waymark"
 
     note "Backing up first..."
-    "$DIR/backup.sh" >/dev/null 2>&1 && ok "Backed up" || note "(backup failed; carrying on)"
+    if "$DIR/backup.sh" before-update >/dev/null 2>&1; then ok "Backed up"; else note "(backup failed; carrying on)"; fi
 
     extract "$image" "$DIR"
     chmod 700 "$DIR/backup.sh"
@@ -184,7 +184,14 @@ cmd_backup() {
 
 cmd_backups() {
     need_install
-    ls -1sh "$DIR"/backups/ 2>/dev/null || note "No backups yet (waymark backup)."
+    local f found=
+    for f in "$DIR"/backups/waymark-db-*.sql.gz; do
+        [ -e "$f" ] || continue
+        found=1
+        f=$(basename "$f" .sql.gz)
+        note "${f#waymark-db-}    ($(du -h "$DIR/backups/$f.sql.gz" | cut -f1))"
+    done
+    if [ -n "$found" ]; then note "Restore one with:  waymark restore <name on the left>"; else note "No backups yet (waymark backup)."; fi
 }
 
 cmd_offsite() {
@@ -204,16 +211,18 @@ cmd_offsite() {
 cmd_restore() {
     need_root restore; need_install
     local day=${1:-}
-    [ -n "$day" ] || { note "Which day? These are on the server:"; cmd_backups; stop "run  waymark restore <date>,  e.g. waymark restore $(date +%F)"; }
+    [ -n "$day" ] || { note "Which one? These are on the server:"; cmd_backups; stop "run  waymark restore <date>,  e.g. waymark restore $(date +%F)"; }
     local db="$DIR/backups/waymark-db-$day.sql.gz" img="$DIR/backups/waymark-images-$day.tar.gz"
-    [ -f "$db" ] || stop "no backup for $day in $DIR/backups (waymark backups lists them)."
+    [ -f "$db" ] || stop "no backup called $day in $DIR/backups (waymark backups lists them)."
     bold "Restoring the backup from $day"
     note "This replaces everything on the site with the copy from $day."
     note "Anything saved since then will be lost (a backup of now is made first)."
     read -r -p "  Type RESTORE to go ahead: " yes || true
     [ "$yes" = "RESTORE" ] || stop "nothing changed."
-    "$DIR/backup.sh" >/dev/null && ok "Backed up the current site first"
-    "${COMPOSE[@]}" stop app caddy
+    "$DIR/backup.sh" before-restore >/dev/null
+    ok "Backed up the current site first (waymark backups lists it as ...-before-restore-...)"
+    # Caddy keeps running and shows a brief error page while the app is down.
+    "${COMPOSE[@]}" stop app
     gunzip -c "$db" | "${COMPOSE[@]}" exec -T db psql -q -U waymark -d waymark -v ON_ERROR_STOP=0 >/dev/null
     ok "Database restored"
     if [ -f "$img" ]; then
