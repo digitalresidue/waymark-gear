@@ -1,11 +1,21 @@
 # Waymark Gear roadmap
 
 Living document. Each phase gets a dated entry in the changelog when it ships;
-the plan below it is what comes next. Last updated **2026-10-26** (Phase 6 built).
+the plan below it is what comes next. Last updated **2026-10-26** (Phase 7 built).
 
 ---
 
 ## Changelog
+
+### Phase 7 — Smarter gear, and paying for the site · 2026-10-26 · branch `phase7`
+- **Gear check** on every list: a readiness score (0–100) from twelve essentials (shelter, sleep, warm layer, water treatment, navigation, light, first aid count most; rain, sun, fire, knife/repair, emergency signal less), adjusted for day hikes and for cold or hot trips. Mark any essential "not needed" for that list. **Lighter options** from the catalog, with the weight each saves and how many public lists use it, and **what other hikers carry** in each of your categories.
+- **Wishlist**: gear you want, kept in the closet but apart from it; add from the gear check, a gear page or a comparison; "Got it" moves it into your closet.
+- **Price history** on catalog items (every price change the owner makes is kept), with the lowest price seen; **price-drop alerts** for wishlist gear, in the app and by email.
+- **Compare** up to four catalog items side by side at `/compare`: weight, price, lowest price, rating, how many lists use it.
+- **Calorie estimate** now gives carbs, fat and protein, and totals for the whole trip.
+- **Affiliate links**: Buy buttons on gear pages, comparisons and shared lists go through `/go/<item>`, which adds the shop's affiliate code (per-item link, or site-wide rules per shop) and counts clicks for the owner (Owner → Revenue). Commission notice next to every Buy button; full disclosure in the Terms. Suggestions are never ranked by commission.
+- **Supporter plan**: $5 a month or $48 a year through Stripe Checkout, managed in Stripe's portal. Supporters get plain links and a profile badge; owners can grant it by hand.
+- **AI assistants and API**: an MCP server at `/mcp` so Claude, ChatGPT and others can read your closet and lists, run the gear check, search the catalog, and (if you allow it) add and change gear. Assistants connect by signing in (OAuth 2.1 with PKCE); personal tokens (read or read-and-write) work too. REST API at `/api/v1` (API.md). Manage both at `/developers`.
 
 ### Phase 6 — The trip hub · 2026-10-26 · branch `phase6`
 - **Trip journals** (`/trips`): a trip with dates, a summary, a linked pack list and a cover photo, plus day-by-day entries (dated automatically from the start date, or set by hand) with notes, distance and up to 8 photos each. Each trip is public, followers-only or private. Public page at `/t/:id` (photos open in the lightbox) and a Trips tab on profiles; followers-only trips show only to followers. Photos must be your own uploads.
@@ -98,22 +108,53 @@ the plan below it is what comes next. Last updated **2026-10-26** (Phase 6 built
 - **Gear lifecycle**: condition, age and a replace-soon hint.
 - Follow-ups: comments on trip journals; GPX upload for distance and elevation; reviews from the closet view; share images for trips.
 
-## Phase 7 — Smarter gear
-- **Comparisons**: side-by-side catalog items (weight, price, specs).
-- **Gear analysis**: missing-essentials check, lighter-alternative suggestions, trip-readiness score (Hikt).
-- **Retail and affiliate links**, price tracking and alerts (PackWizard).
-- **Public API + an MCP server**, so people's AI assistants can read (and with permission edit) their gear (Packstack offers this).
-- Native mobile apps if the PWA isn't enough; more languages (Hikt has 9).
+## Phase 7 — Smarter gear (built 2026-10-26, see changelog)
+- Comparisons, gear analysis (essentials, lighter options, readiness), wishlist, price history and alerts, affiliate links with a Supporter plan, MCP server and REST API.
+- Follow-ups: price data from retailer feeds (today prices change when the owner updates the catalog); essentials tuned by trip type and season; MCP resources/prompts ("shakedown this list").
+
+## Phase 8 — Trails and reach (proposed next run)
+- **Trails page** (`/trails?t=pct`), the headline feature: one page with a trail picker (AT, PCT, CDT, Colorado Trail, JMT, Arizona Trail, Long Trail, …). Picking a trail reloads, in place:
+  - the trail's facts and what it asks of your pack (bear canister in the Sierra, long water carries, snow gear);
+  - live stats from every list tagged with that trail: number of packs, median and lightest base weight, share using quilts, trail runners, bear canisters, ice axes, satellite messengers;
+  - the most carried shelter, sleep system, pack and shoes;
+  - the packs themselves, sorted by top, lightest, newest, shakedown requests, or this year's class;
+  - a trail-vs-trail table.
+  **Picking a trail when there are thousands:** chips for the 6–8 trails with the most packs (your own trails first when signed in), then an **"All trails" search box**: type a few letters, get matches ranked by pack count, with aliases ("AT", "A.T.", "Appalachian") and region ("Colorado", "Scotland"). On a phone the chips scroll sideways and the search opens full screen. A `/trails/all` directory lists every trail by region and A–Z for browsing and search engines.
+  **Where trails come from:** a curated trail list, like the gear catalog: the owner seeds the well-known long trails (Triple Crown, the other National Scenic Trails, the big state and international trails) with length, region and aliases, and imports more by CSV. When hikers type a trail that isn't there, it's kept on their list as written and counted; once a few people use the same name it shows up in the owner's queue to approve, merge into an existing trail, or ignore. That keeps "AT" and "Appalachian Trail" from splitting into two pages. Trails can have sections (PCT Section J) and overlaps (the JMT is part of the PCT), so a JMT list also counts toward the PCT's Sierra.
+  Lists get an optional **trail** tag (with year and direction) next to the trip type; the editor suggests it from the list name. Each trail has its own link for search engines ("PCT gear list" is a big search). Nothing like this exists: Halfway Anywhere publishes a static PCT/CDT gear survey once a year; no list app groups real packs by trail. Mockup in the 2026-10-26 site tour.
+- **Native apps** for iOS and Android (Capacitor around the existing PWA, so one codebase), with offline packing and push notifications. Both hikt and Packstack have them.
+- **Languages**: translation framework and the first few languages (Spanish, French, German); hikt has 9.
+- **Trip details from a place**: pick a trail or area and fill in distance, elevation and typical temperatures (Packstack does this with AI).
+- **Trip journal follow-ups**: comments, GPX upload for distance and elevation, share images for trips.
 
 ---
 
 ## Competitors we watch
-| Site | What stands out |
-| --- | --- |
-| hikt.app | Smart insights (missing safety gear, lighter alternatives, readiness score), collaboration, 9 languages |
-| packry.app | Group inventory (who owns what), packed-vs-used tracking, self-hostable |
-| packstack.io | Gear kits, quantity-owned warnings, lifecycle/replacement score, calorie estimates, MCP server for AI assistants |
-| packwizard.com | Lightweight gear research, suggestions and price tracking |
+Re-checked 2026-10-26 after Phase 7.
+
+| | Waymark Gear | Packstack | hikt | Packry | PackWizard |
+| --- | --- | --- | --- | --- | --- |
+| Closet, lists, weights, LighterPack import | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Gear catalog / weight autofill | ✓ | ✓ | – | – | ✓ |
+| Kits, quantity owned | ✓ | ✓ (kits: Pro) | – | – | – |
+| Trip details, calories, macros, water | ✓ | ✓ (Pro) | – | calories | – |
+| Gear lifecycle / replace soon | ✓ | ✓ | – | – | – |
+| Missing essentials, readiness, lighter options | ✓ | – | ✓ | – | suggestions |
+| Comparisons, price history | ✓ | – | – | – | research tools |
+| Wishlist, price-drop alerts | ✓ | – | wishlist | – | price tracking (planned) |
+| Live co-editing, group gear | ✓ | multiple packs (Pro) | ✓ | ✓ | – |
+| Packed vs used | ✓ | – | – | ✓ | – |
+| Community: shakedowns, comments, votes, follows, profiles | ✓ | – | community lists | – | public lists |
+| Trip journals, staff gear reviews | ✓ | gear reviews (articles) | – | – | – |
+| MCP server for AI assistants, REST API | ✓ | ✓ (edits: Pro) | – | – | – |
+| Native iOS/Android apps | PWA | ✓ | ✓ | – | – |
+| Languages | 1 | 1 | 9 | 1 | 1 |
+| Open source / self-host | ✓ | ✓ | – | ✓ | – |
+| Paid by | affiliate links + $5 Supporter | Pro plan | – | free | affiliate links |
+
+Where we stand: the broadest feature set of the five. Phase 8 adds the one
+thing none of them has, pack lists grouped by trail, plus the reach the others
+have and we don't: native apps and languages.
 
 ## Before launch (owner to-do)
 - Merge PR #12 and deploy (migrations run automatically).
@@ -121,3 +162,4 @@ the plan below it is what comes next. Last updated **2026-10-26** (Phase 6 built
 - Real Google OAuth client; Mailgun keys (resets and notification email).
 - Fill in PRIVACY.md / TERMS.md placeholders; optional Cloudflare cache rule (DEPLOY.md).
 - Review Dependabot majors one at a time (Node 26, config 5, nanoid 6, ESLint 10).
+- Revenue: join affiliate programs and add rules (Owner → Revenue); set up Stripe products, keys and webhook (DEPLOY.md); fill in the Terms' affiliate and Supporter sections (operator name, price, refund policy).

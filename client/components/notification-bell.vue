@@ -21,7 +21,12 @@
             <ul v-else class="wgBellList">
                 <li v-for="n in items" :key="n.id" :class="{ wgBellNew: !n.read }">
                     <a :href="n.url" data-testid="notification">
-                        <strong>@{{ n.actor }}</strong> {{ verb(n.kind) }} <em v-if="n.kind !== 'follow'">{{ n.listName || 'your list' }}</em>
+                        <template v-if="n.kind === 'price'">
+                            <strong>Price drop</strong> <em>{{ n.listName }}</em>
+                        </template>
+                        <template v-else>
+                            <strong>@{{ n.actor }}</strong> {{ verb(n.kind) }} <em v-if="n.kind !== 'follow'">{{ n.listName || 'your list' }}</em>
+                        </template>
                         <span class="wgBellTime">{{ ago(n.createdAt) }}</span>
                     </a>
                 </li>

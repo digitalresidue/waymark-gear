@@ -53,10 +53,19 @@
                         {{^average}}<span class="wgMuted">No reviews yet.</span>{{/average}}
                     </p>
                     {{#description}}<p>{{description}}</p>{{/description}}
+                    {{#prices}}
+                    <figure class="wgPriceHistory" data-testid="price-history">
+                        <svg viewBox="0 0 240 48" width="240" height="48" aria-hidden="true"><polyline points="{{points}}" fill="none" stroke="currentColor" stroke-width="2" /></svg>
+                        <figcaption>Lowest seen <strong data-testid="price-lowest">{{lowest}}</strong> · {{#changes}}<span>{{price}} <span class="wgMuted">{{when}}</span></span> {{/changes}}</figcaption>
+                    </figure>
+                    {{/prices}}
                     <p class="wgGearHeroLinks">
-                        {{#url}}<a href="{{url}}" rel="nofollow noopener" target="_blank">Maker's page</a>{{/url}}
+                        <a href="/gear?wish={{id}}" class="wgBtn wgBtnPrimary wgBtnSmall" data-testid="gear-wish">Add to wishlist</a>
+                        <a href="/compare?ids={{id}}" class="wgBtn wgBtnGhost wgBtnSmall" data-testid="gear-compare">Compare</a>
+                        {{#url}}<a href="/go/{{id}}?from=gear" rel="sponsored nofollow noopener" target="_blank" class="wgBtn wgBtnGhost wgBtnSmall" data-testid="gear-buy">Buy</a>{{/url}}
                         {{#kitCount}}<a href="/explore?q={{searchName}}">In {{kitCountLabel}}</a>{{/kitCount}}
                     </p>
+                    {{#url}}<p class="wgDisclosure">Buy links may earn Waymark Gear a commission; it never changes what we suggest. <a href="/supporter">Supporters</a> get plain links.</p>{{/url}}
                 </div>
             </section>
 

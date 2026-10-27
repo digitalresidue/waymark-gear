@@ -89,6 +89,12 @@ export default defineConfig({
     url: 'http://127.0.0.1:3999/',
     reuseExistingServer: !process.env.CI,
   }, {
+    // Stands in for Stripe (test/support/fake-stripe.mjs).
+    command: 'node test/support/fake-stripe.mjs',
+    url: 'http://127.0.0.1:3998/',
+    reuseExistingServer: !process.env.CI,
+    env: { FAKE_STRIPE_APP: `http://127.0.0.1:${process.env.LP_PORT || '3000'}` },
+  }, {
     command: 'npm run build && npm run start',
     url: `http://127.0.0.1:${process.env.LP_PORT || '3000'}`,
     reuseExistingServer: !process.env.CI,
@@ -111,6 +117,13 @@ export default defineConfig({
         admins: Array.from({ length: 32 }, (_, i) => `wge2eowner${i}`),
         // Named gear reviewers (staff who aren't owners or moderators).
         reviewers: Array.from({ length: 32 }, (_, i) => `wge2ereviewer${i}`),
+        stripe: {
+          secretKey: 'sk_test_fake',
+          webhookSecret: 'whsec_test',
+          priceMonthly: 'price_month',
+          priceYearly: 'price_year',
+          apiBase: 'http://127.0.0.1:3998',
+        },
         google: {
           clientId: 'test-client',
           clientSecret: 'test-secret',

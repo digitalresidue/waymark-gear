@@ -32,6 +32,10 @@ export const KINDS = {
         label: 'Invitations to plan a list together', app: true, email: true,
         subject: (n) => `@${n.actor} invited you to plan “${n.listName}”`,
     },
+    price: {
+        label: 'Price drops on my wishlist', app: true, email: true,
+        subject: (n) => `Price drop: ${n.listName}`,
+    },
     published: {
         label: 'Hikers I follow publish a list', app: true, email: false,
         subject: (n) => `@${n.actor} published “${n.listName}”`,

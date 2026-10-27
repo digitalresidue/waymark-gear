@@ -40,6 +40,14 @@ describe('tripEstimates', async () => {
         assert.equal(base.foodPerDayMg, Math.round((base.kcalPerDay / 125) * 28349.5));
     });
 
+    test('macros add back up to the calories, and totals cover every day', () => {
+        const e = tripEstimates({ days: 4, bodyKg: 70, distanceKm: 80 }, 10 * LB);
+        const kcal = e.macros.carbs * 4 + e.macros.fat * 9 + e.macros.protein * 4;
+        assert.ok(Math.abs(kcal - e.kcalPerDay) < 15, `${kcal} vs ${e.kcalPerDay}`);
+        assert.equal(e.totals.kcal, e.kcalPerDay * 4);
+        assert.equal(e.totals.foodMg, e.foodPerDayMg * 4);
+    });
+
     test('trip details are optional and bounded', () => {
         const t = normalizeTrip({ days: 2, distanceKm: -5, terrain: 'lava', bodyKg: 500 });
         assert.equal(t.distanceKm, 0);

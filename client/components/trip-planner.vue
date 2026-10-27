@@ -80,6 +80,13 @@
                         <strong class="wgMono">{{ fmt(estimate.foodPerDayMg) }}</strong> of food at {{ estimate.kcalPerOz }} kcal/oz,
                         and roughly <strong>{{ estimate.waterLitersPerDay }} L</strong> of water to drink.
                     </p>
+                    <p class="wgTripMacros" data-testid="trip-macros">
+                        A day: <strong>{{ estimate.macros.carbs }} g</strong> carbs · <strong>{{ estimate.macros.fat }} g</strong> fat · <strong>{{ estimate.macros.protein }} g</strong> protein
+                    </p>
+                    <p class="wgTripMacros" data-testid="trip-totals">
+                        Whole trip ({{ trip.days }} {{ trip.days === 1 ? 'day' : 'days' }}): <strong>{{ estimate.totals.kcal.toLocaleString() }} kcal</strong>,
+                        <strong class="wgMono">{{ fmt(estimate.totals.foodMg) }}</strong> of food, about <strong>{{ estimate.totals.waterLiters }} L</strong> to drink
+                    </p>
                     <button type="button" class="wgBtn wgBtnSmall wgBtnPrimary" :disabled="Math.abs(estimate.foodPerDayMg - trip.foodPerDayMg) < 1000" data-testid="trip-use-estimate" @click="set('foodPerDayMg', estimate.foodPerDayMg)">
                         Use this for food per day
                     </button>
@@ -307,6 +314,11 @@ export default {
     font-size: 14px;
     font-weight: 400;
     margin-left: auto;
+}
+
+.wgTripMacros {
+    font-size: 14px;
+    margin: 0 0 6px;
 }
 
 .wgTripBody {

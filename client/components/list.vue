@@ -11,6 +11,7 @@
         <trip-type-picker v-if="!isListNew" :list="list" />
 
         <trip-planner v-if="!isListNew" :list="list" />
+        <gear-insights v-if="!isListNew" :list="list" />
 
         <group-gear v-if="!isListNew && people.length > 1" :list="list" :people="people" />
 
@@ -36,6 +37,7 @@ import category from './category.vue';
 import getStarted from './get-started.vue';
 import listDescription from './list-description.vue';
 import tripPlanner from './trip-planner.vue';
+import gearInsights from './gear-insights.vue';
 import tripTypePicker from './trip-type-picker.vue';
 import groupGear from './group-gear.vue';
 import listSummary from './list-summary.vue';
@@ -54,6 +56,7 @@ export default {
         listSummaryMobile,
         listDescription,
         tripPlanner,
+        gearInsights,
         tripTypePicker,
         groupGear,
         category,

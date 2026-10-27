@@ -30,6 +30,15 @@
     "admins": [],
     "reviewers": [],
     "openReviews": false,
+    "stripe": {
+        "secretKey": "",
+        "webhookSecret": "",
+        "priceMonthly": "",
+        "priceYearly": "",
+        "monthlyLabel": "$5",
+        "yearlyLabel": "$48",
+        "apiBase": "https://api.stripe.com"
+    },
     "google": {
         "clientId": "",
         "clientSecret": ""

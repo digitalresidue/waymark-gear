@@ -17,7 +17,8 @@
     "test:visual": "VISUAL=1 playwright test visual --project=chromium",
     "test:visual:update": "VISUAL=1 playwright test visual --project=chromium --update-snapshots",
     "css:baseline": "node scripts/css-baseline.mjs save",
-    "css:diff": "node scripts/css-baseline.mjs diff"
+    "css:diff": "node scripts/css-baseline.mjs diff",
+    "db:seed-demo": "node scripts/seed-demo.mjs"
   },
   "author": "",
   "license": "GPL-2.0",

@@ -18,6 +18,9 @@ import resetPassword from './views/reset-password.vue';
 import moderation from './views/moderation.vue';
 import trips from './views/trips.vue';
 import tripEdit from './views/trip-edit.vue';
+import developers from './views/developers.vue';
+import supporter from './views/supporter.vue';
+import ownerRevenue from './views/owner-revenue.vue';
 
 export default [
     { path: '/', component: dashboard },
@@ -43,5 +46,8 @@ export default [
     { path: '/moderation', component: moderation },
     { path: '/trips', component: trips },
     { path: '/trips/:id', component: tripEdit },
+    { path: '/developers', component: developers },
+    { path: '/supporter', component: supporter },
+    { path: '/owner/revenue', component: ownerRevenue },
     { path: '/:pathMatch(.*)*', component: dashboard },
 ];

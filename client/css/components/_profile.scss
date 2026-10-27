@@ -433,3 +433,12 @@
         color: var(--lp-text-secondary);
     }
 }
+
+.wgSupporterBadge {
+    background: linear-gradient(135deg, #C4571F, #E39B3B);
+    border-radius: 999px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 9px;
+}

@@ -13,6 +13,12 @@
                 <router-link to="/explore">
                     Explore
                 </router-link>
+                <router-link to="/supporter" data-testid="footer-supporter">
+                    Support Waymark
+                </router-link>
+                <router-link to="/developers">
+                    API and AI
+                </router-link>
                 <a href="/report" data-testid="footer-report">Report a problem</a>
                 <a href="/privacy">Privacy</a>
                 <a href="/terms">Terms</a>

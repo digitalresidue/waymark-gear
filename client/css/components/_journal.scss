@@ -358,3 +358,131 @@
     color: #B3261E;
     margin: 0;
 }
+
+// Price history on gear pages.
+.wgPriceHistory {
+    color: var(--lp-primary);
+    margin: 8px 0;
+
+    svg {
+        display: block;
+        max-width: 100%;
+    }
+
+    figcaption {
+        color: var(--lp-text);
+        font-size: 13px;
+    }
+}
+
+// /compare
+.wgCompare {
+    margin: 0 auto;
+    max-width: 1100px;
+    padding: 24px 16px 48px;
+}
+
+.wgCompareAdd {
+    margin: 0 0 16px;
+    max-width: 480px;
+    position: relative;
+}
+
+.wgCompareResults {
+    list-style: none;
+    margin: 4px 0 0;
+    padding: 0;
+
+    li {
+        padding: 4px 0;
+    }
+}
+
+.wgCompareScroll {
+    overflow-x: auto;
+}
+
+.wgCompareTable {
+    border-collapse: collapse;
+    min-width: 520px;
+    width: 100%;
+
+    th,
+    td {
+        border-top: 1px solid var(--lp-border);
+        padding: 8px 10px;
+        text-align: left;
+        vertical-align: top;
+    }
+
+    thead th {
+        border-top: 0;
+        font-weight: 700;
+        min-width: 150px;
+    }
+
+    tbody th {
+        color: var(--lp-text-secondary);
+        font-size: 13px;
+        white-space: nowrap;
+    }
+}
+
+.wgCompareImg {
+    align-items: center;
+    aspect-ratio: 1;
+    background: var(--lp-surface-sunken);
+    border-radius: 10px;
+    display: flex;
+    font-size: 32px;
+    justify-content: center;
+    margin-bottom: 6px;
+    max-width: 120px;
+    overflow: hidden;
+
+    img {
+        height: 100%;
+        object-fit: contain;
+        width: 100%;
+    }
+}
+
+.wgCompareRemove {
+    display: block;
+    font-size: 12px;
+    font-weight: 400;
+    margin-top: 4px;
+}
+
+.wgCompareBest {
+    font-weight: 700;
+}
+
+.wgCompareTag {
+    background: #2F7D4F;
+    border-radius: 999px;
+    color: #fff;
+    font-family: $font-body;
+    font-size: 11px;
+    padding: 1px 6px;
+}
+
+.wgCompareAbout {
+    font-size: 13px;
+}
+
+.wgLinkBtn {
+    background: none;
+    border: 0;
+    color: var(--lp-link-blue);
+    cursor: pointer;
+    font: inherit;
+    padding: 0;
+    text-decoration: underline;
+}
+
+.wgDisclosure {
+    color: var(--lp-text-secondary);
+    font-size: 12px;
+    margin: 8px 0 0;
+}

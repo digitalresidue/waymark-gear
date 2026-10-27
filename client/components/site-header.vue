@@ -153,6 +153,21 @@ export default {
 .wgSiteHeaderUser {
     font-size: 14px;
     margin-right: 4px;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+// Owners and staff carry two more links; tighten up before anything wraps.
+@media (max-width: 1400px) {
+    .wgSiteNavLink {
+        padding: 9px 10px;
+    }
+
+    .wgSiteHeaderUser {
+        display: none;
+    }
 }
 
 @media (max-width: $mobile) {

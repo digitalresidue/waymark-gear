@@ -52,6 +52,9 @@
                     <button v-if="entry.item.retired" type="button" class="lpGearRestore" data-testid="closet-restore" @click="restore(entry.item)">
                         Restore
                     </button>
+                    <button v-else-if="entry.item.wishlist" type="button" class="lpGearRestore" data-testid="closet-got-it" title="Bought it: move it into your closet" @click="gotIt(entry.item)">
+                        Got it
+                    </button>
                     <span v-else-if="entry.inList" class="lpGearInList" data-testid="gear-in-list">✓ In list</span>
                     <a
                         v-else
@@ -110,6 +113,7 @@ import globalAlerts from '../components/global-alerts.vue';
 import speedbump from '../components/speedbump.vue';
 import gearDetails from '../components/gear-details.vue';
 import { replaceSoon } from '../utils/gear-meta.js';
+import { api } from '../utils/format.js';
 
 import utilsMixin from '../mixins/utils-mixin.js';
 import { confirmClosetRemoval, isPlaceholder, restoreClosetItem } from '../utils/closet.js';
@@ -152,6 +156,7 @@ export default {
                 // first is that order reversed.
                 { key: 'newest', label: 'Newest' },
             ];
+            if (this.wishlistCount) options.push({ key: 'wishlist', label: `Wishlist · ${this.wishlistCount}` });
             if (this.retiredCount) options.push({ key: 'retired', label: `Retired · ${this.retiredCount}` });
             // The closet categories you've made (Insulation, Shelter...).
             const cats = [...new Set(this.closetGear.map((i) => i.closetCategory).filter(Boolean))].sort((a, b) => a.localeCompare(b));
@@ -162,10 +167,13 @@ export default {
             return this.library.items.filter((item) => !isPlaceholder(item));
         },
         activeCount() {
-            return this.closetGear.filter((item) => !item.retired).length;
+            return this.closetGear.filter((item) => !item.retired && !item.wishlist).length;
         },
         retiredCount() {
-            return this.closetGear.length - this.activeCount;
+            return this.closetGear.filter((item) => item.retired).length;
+        },
+        wishlistCount() {
+            return this.closetGear.filter((item) => item.wishlist && !item.retired).length;
         },
         itemsInList() {
             return this.library.getItemsInCurrentList();
@@ -174,7 +182,11 @@ export default {
             const search = this.searchText.trim().toLowerCase();
 
             let entries = this.closetGear
-                .filter((item) => (this.filter === 'retired' ? item.retired : !item.retired))
+                .filter((item) => {
+                    if (this.filter === 'retired') return item.retired;
+                    if (this.filter === 'wishlist') return item.wishlist && !item.retired;
+                    return !item.retired && !item.wishlist;
+                })
                 .map(item => ({
                     item,
                     inList: this.itemsInList.indexOf(item.id) > -1,
@@ -203,6 +215,9 @@ export default {
             if (this.filter === 'notInList') {
                 return 'Every piece of gear you own is already in this list.';
             }
+            if (this.filter === 'wishlist') {
+                return 'Nothing on your wishlist.';
+            }
             if (this.filter === 'retired') {
                 return 'No retired gear.';
             }
@@ -214,9 +229,29 @@ export default {
             this.$router.push('/welcome');
         } else {
             this.isLoaded = true;
+            this.takeWish();
         }
     },
     methods: {
+        // /gear?wish=<catalog id>, from a gear page or a comparison: add it
+        // to the wishlist (once) and show the wishlist.
+        async takeWish() {
+            const id = String(this.$route.query.wish || '');
+            if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+            this.$router.replace('/gear');
+            if (!this.library.items.some((i) => i.catalogId === id && i.wishlist)) {
+                try {
+                    const { items } = await api(`/api/catalog?ids=${encodeURIComponent(id)}`);
+                    if (items && items[0]) this.$store.commit('addWishlistItem', { entry: items[0] });
+                } catch {
+                    return;
+                }
+            }
+            this.filter = 'wishlist';
+        },
+        gotIt(item) {
+            this.$store.commit('setItemWishlist', { itemId: item.id, wishlist: false });
+        },
         needsReplacing(item) {
             return replaceSoon(item);
         },

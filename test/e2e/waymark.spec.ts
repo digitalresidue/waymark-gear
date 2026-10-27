@@ -91,7 +91,7 @@ test.describe('Gear catalog', () => {
 
         const csv = await (await page.request.get(url('/api/admin/catalog/export.csv'))).text();
         expect(csv).toContain(`Test tent ${tag}`);
-        expect(csv.split('\n')[0]).toBe('sku,name,brand,category,description,weight,unit,price,currency,url,image_url,worn_default,consumable_default,tags,status');
+        expect(csv.split('\n')[0]).toBe('sku,name,brand,category,description,weight,unit,price,currency,url,image_url,worn_default,consumable_default,tags,status,affiliate_url');
     });
 
     test('owner adds and edits an item by hand', async ({ page }, testInfo) => {

@@ -21,6 +21,7 @@ import knex from './db.js';
 import { Library } from '../client/dataTypes.js';
 import { normalizeTrip } from '../client/utils/trip.js';
 import { TRIP_TYPES, youTubeId, CONDITIONS } from '../client/utils/gear-meta.js';
+import { ESSENTIALS } from '../client/utils/insights.js';
 
 const UNITS = ['g', 'kg', 'oz', 'lb'];
 const LIMITS = { items: 20000, categories: 5000, lists: 1000, itemsPerCategory: 2000, categoriesPerList: 500 };
@@ -85,6 +86,8 @@ function itemRow(userId, item) {
         purchased_on: /^\d{4}-(0[1-9]|1[0-2])$/.test(item.purchasedOn || '') ? item.purchasedOn : '',
         condition: CONDITIONS.includes(item.condition) ? item.condition : '',
         life_years: Number.isFinite(item.lifeYears) && item.lifeYears > 0 && item.lifeYears <= 50 ? item.lifeYears : null,
+        // Gear you want but don't own yet (Phase 7).
+        wishlist: bool(item.wishlist),
     };
 }
 
@@ -153,7 +156,13 @@ function listRow(userId, list, position) {
         shakedown: bool(list.shakedown),
         trip_type: TRIP_TYPES.includes(list.tripType) ? list.tripType : '',
         trip: tripSettings(list.trip),
+        not_needed: JSON.stringify(notNeeded(list.notNeeded)),
     };
+}
+
+// Essentials marked "not needed" on this list: known ids only.
+function notNeeded(ids) {
+    return Array.isArray(ids) ? ESSENTIALS.map((e) => e.id).filter((id) => ids.includes(id)) : [];
 }
 
 // Trip planner settings, bounded to sensible ranges.
@@ -245,6 +254,7 @@ export async function loadLibrary(userId, db = knex) {
         if (l.shakedown) out.shakedown = true;
         if (l.trip_type) out.tripType = l.trip_type;
         if (l.trip) out.trip = normalizeTrip(l.trip);
+        if (Array.isArray(l.not_needed) && l.not_needed.length) out.notNeeded = l.not_needed;
         return out;
     });
 
@@ -282,6 +292,7 @@ export async function loadLibrary(userId, db = knex) {
             if (i.purchased_on) out.purchasedOn = i.purchased_on;
             if (i.condition) out.condition = i.condition;
             if (i.life_years !== null && i.life_years !== undefined) out.lifeYears = Number(i.life_years);
+            if (i.wishlist) out.wishlist = true;
             return out;
         }),
         categories: outCategories,

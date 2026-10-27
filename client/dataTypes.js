@@ -75,6 +75,8 @@ Item.prototype.save = function () {
     if (this.purchasedOn) out.purchasedOn = this.purchasedOn;
     if (this.condition) out.condition = this.condition;
     if (Number.isFinite(this.lifeYears)) out.lifeYears = this.lifeYears;
+    // Wanted, not owned yet (Phase 7).
+    if (this.wishlist) out.wishlist = true;
     return out;
 };
 
@@ -402,6 +404,8 @@ List.prototype.save = function () {
     // The owner is asking for a shakedown: suggestions in the comments.
     if (this.shakedown) out.shakedown = true;
     if (this.tripType) out.tripType = this.tripType;
+    // Essentials the owner says this list doesn't need (client/utils/insights.js).
+    if (this.notNeeded && this.notNeeded.length) out.notNeeded = [...this.notNeeded];
     return out;
 };
 
@@ -548,6 +552,8 @@ Library.prototype.newItemFromCatalog = function ({ category, entry }) {
     item.imageUrl = entry.imageUrl || '';
     item.catalogId = entry.id;
     item.catalogSync = true;
+    // No category: straight into the closet (or the wishlist).
+    if (!category) return item;
     const categoryItem = category.getCategoryItemById(item.id);
     if (entry.wornDefault) categoryItem.worn = 1;
     if (entry.consumableDefault) categoryItem.consumable = true;

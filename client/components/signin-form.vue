@@ -80,6 +80,12 @@ export default {
                     this.$store.commit('setSaveType', 'remote');
                     this.$store.commit('setLoggedIn', response.username);
                     this.$store.commit('setAccount', response.account || null);
+                    // Signing in to connect an AI assistant: back to its consent page.
+                    const next = String(this.$route.query.next || '');
+                    if (next.startsWith('/oauth/authorize?')) {
+                        window.location.href = next;
+                        return;
+                    }
                     this.$router.push('/');
                     this.fetching = false;
                 })

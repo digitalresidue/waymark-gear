@@ -2,6 +2,7 @@
 // chosen to publish. Only published lists ever appear (public_kits), and a
 // profile can be hidden entirely.
 
+import { isSupporter } from './billing.js';
 import knex from './db.js';
 import { kitsForUser } from './kits.js';
 import { PROFILE_LIMITS, ProfileError, normalizeLink, NETWORKS, cleanTags } from './profile-links.js';
@@ -90,7 +91,7 @@ export async function publicProfile(username) {
     const rank = new Map(profile.featured.map((id, i) => [id, i]));
     const featured = kits.filter((k) => rank.has(k.externalId)).sort((a, b) => rank.get(a.externalId) - rank.get(b.externalId));
     const others = kits.filter((k) => !rank.has(k.externalId));
-    return { userId: user.user_id, profile, featured, others, kits };
+    return { userId: user.user_id, profile, featured, others, kits, supporter: isSupporter(user) };
 }
 
 // Gear grid: every distinct item across someone's published lists.

@@ -71,7 +71,26 @@ export function tripEstimates(trip, packMg) {
     let water = 2 + 0.05 * kmPerDay + 0.5 * (gainPerDay / 500);
     if (t.tempHighC !== undefined && t.tempHighC > 27) water += 0.1 * (t.tempHighC - 27);
     if (t.terrain === 'desert') water += 1;
-    return { kcalPerDay: kcal, foodPerDayMg, kcalPerOz, waterLitersPerDay: Math.round(water * 10) / 10, kmPerDay, gainPerDay };
+    const waterLitersPerDay = Math.round(water * 10) / 10;
+    return {
+        kcalPerDay: kcal,
+        foodPerDayMg,
+        kcalPerOz,
+        waterLitersPerDay,
+        kmPerDay,
+        gainPerDay,
+        macros: macrosFor(kcal),
+        totals: { kcal: kcal * days, foodMg: foodPerDayMg * days, waterLiters: Math.round(waterLitersPerDay * days * 10) / 10 },
+    };
+}
+
+// A common split for long days on trail: carbs for fuel, fat for density
+// (9 kcal/g instead of 4), and enough protein for recovery.
+export const MACRO_SPLIT = { carbs: 0.5, fat: 0.35, protein: 0.15 };
+const KCAL_PER_G = { carbs: 4, fat: 9, protein: 4 };
+
+export function macrosFor(kcal) {
+    return Object.fromEntries(Object.entries(MACRO_SPLIT).map(([k, share]) => [k, Math.round((kcal * share) / KCAL_PER_G[k])]));
 }
 
 // One row per day: { day, foodMg, waterMg, packMg, skinOutMg }.

@@ -135,7 +135,42 @@ function addModeration(reviews) {
     }
 }
 
+// The search box on /compare: pick catalog gear to add as a column.
+function initCompare() {
+    const form = document.getElementById('wgCompareAdd');
+    if (!form) return;
+    const ids = form.dataset.ids ? form.dataset.ids.split(',') : [];
+    const input = form.querySelector('input');
+    const out = form.querySelector('ul');
+    let timer = null;
+    const go = (id) => {
+        window.location.href = `/compare?ids=${[...ids.filter((x) => x !== id), id].slice(-4).join(',')}`;
+    };
+    input.addEventListener('input', () => {
+        clearTimeout(timer);
+        const q = input.value.trim();
+        if (q.length < 2) {
+            out.innerHTML = '';
+            return;
+        }
+        timer = setTimeout(async () => {
+            const { items } = await call(`/api/catalog?limit=8&q=${encodeURIComponent(q)}`).catch(() => ({ items: [] }));
+            out.innerHTML = items.filter((i) => !ids.includes(i.id)).map((i) => `<li><button type="button" class="wgLinkBtn" data-id="${esc(i.id)}" data-testid="compare-result">${esc(i.brand)} ${esc(i.name)}</button></li>`).join('');
+        }, 250);
+    });
+    out.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-id]');
+        if (b) go(b.dataset.id);
+    });
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const first = out.querySelector('[data-id]');
+        if (first) go(first.dataset.id);
+    });
+}
+
 export function initSocial() {
+    initCompare();
     initVotes();
     initFollow();
     initReviews();

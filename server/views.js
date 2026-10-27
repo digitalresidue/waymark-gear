@@ -22,7 +22,9 @@ import { cachedPage, storePage, sendCachedPage, NONCE_PLACEHOLDER } from './page
 import { optionalUser } from './auth.js';
 import { viewTrip, tripsOnProfile } from './trips.js';
 import { reviewsFor, latestReviews } from './reviews.js';
-import { getById as catalogItem, isUuid } from './catalog.js';
+import { getById as catalogItem, isUuid, search as catalogSearch } from './catalog.js';
+import { priceHistory } from './prices.js';
+import { ratingsFor } from './reviews.js';
 
 const router = express.Router();
 
@@ -58,6 +60,9 @@ const vueRoutes = [ /* TODO - get this from same data source as Vue */
     { path: '/moderation' },
     { path: '/trips' },
     { path: '/trips/:id' },
+    { path: '/developers' },
+    { path: '/supporter' },
+    { path: '/owner/revenue' },
 ];
 
 let index = fs.readFileSync(path.join(import.meta.dirname, '../_index.html'), 'utf8');
@@ -373,6 +378,7 @@ router.get('/@:username', async (req, res) => {
             name,
             initial: (profile.displayName || profile.username).trim().charAt(0).toUpperCase(),
             trailName: profile.trailName,
+            supporter: found.supporter,
             avatarUrl: profile.avatarUrl,
             bannerUrl: profile.bannerUrl,
             ogImage: `${deployUrl}/og/@${profile.username}.png?v=${profileImageVersion({
@@ -426,6 +432,7 @@ router.get('/@:username', async (req, res) => {
 
 const tripTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/trip.mustache'), 'utf8');
 const gearTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/gear-item.mustache'), 'utf8');
+const compareTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/compare.mustache'), 'utf8');
 const VISIBILITY_LABELS = { followers: 'Followers only', private: 'Only you' };
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -444,6 +451,9 @@ export function tripDateRange(start, end) {
 
 const kmLabel = (km, imperial) => (imperial ? `${(km * 0.621371).toFixed(1)} mi` : `${km.toFixed(1)} km`);
 const plain = (md) => String(md || '').replace(/[#*_`>[\]()!]/g, '').replace(/\s+/g, ' ').trim();
+
+// For other modules' server-rendered pages (the OAuth consent page).
+export const shareAssets = () => ({ styles: shareStylesHtml, scripts: shareScriptsHtml });
 
 function shareHead() {
     return { styles: shareStylesHtml, scripts: shareScriptsHtml, deployUrl: config.get('deployUrl') };
@@ -535,6 +545,7 @@ router.get('/g/:id', async (req, res) => {
         const uses = await knex('public_kits').whereRaw('? = any(catalog_ids)', [id]).count({ n: '*' }).first();
         const kitCount = Number(uses.n);
         const fullName = [item.brand, item.name].filter(Boolean).join(' ');
+        const history = await priceHistory(id);
         const model = {
             ...shareHead(),
             cspNonce: NONCE_PLACEHOLDER,
@@ -554,11 +565,86 @@ router.get('/g/:id', async (req, res) => {
                 kitCountLabel: `${kitCount} public ${kitCount === 1 ? 'list' : 'lists'}`,
                 searchName: encodeURIComponent(item.name),
                 reviews: reviews.map(reviewModel),
+                prices: priceModel(history),
             },
         };
         sendFresh(res, Mustache.render(gearTemplate, model, { reviewCard: templates.t_reviewCard || '' }));
     } catch (err) {
         logWithRequest(req, { message: 'error rendering gear page', err });
+        res.status(500).send('An error occurred.');
+    }
+});
+
+const moneyLabel = (n, currency) => `${!currency || currency === 'USD' ? '$' : `${currency} `}${Number(n).toFixed(2).replace(/\.00$/, '')}`;
+
+// Price history for the gear page: a small line, the lowest price and the
+// changes, oldest first.
+function priceModel(history) {
+    if (history.length < 2) return null;
+    const values = history.map((h) => h.price);
+    const lo = Math.min(...values);
+    const hi = Math.max(...values);
+    const w = 240;
+    const h = 48;
+    const points = history.map((p, i) => {
+        const x = (i / (history.length - 1)) * w;
+        const y = hi === lo ? h / 2 : h - 4 - ((p.price - lo) / (hi - lo)) * (h - 8);
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    return {
+        points,
+        lowest: moneyLabel(lo, history[0].currency),
+        changes: history.slice(-6).reverse().map((p) => ({ price: moneyLabel(p.price, p.currency), when: shortDate(new Date(p.at).toISOString().slice(0, 10)) })),
+    };
+}
+
+// Side-by-side comparison of up to four catalog items: /compare?ids=a,b,c
+router.get('/compare', async (req, res) => {
+    try {
+        const ids = [...new Set(String(req.query.ids || '').split(',').map((x) => x.trim()).filter(isUuid))].slice(0, 4);
+        const found = ids.length ? (await catalogSearch({ ids, limit: 4 })).items : [];
+        const items = ids.map((id) => found.find((f) => f.id === id)).filter(Boolean);
+        const ratings = await ratingsFor(items.map((i) => i.id));
+        const lowestRows = items.length ? await knex('catalog_price_history').whereIn('catalog_id', items.map((i) => i.id))
+            .groupBy('catalog_id').select('catalog_id', knex.raw('min(price)::float as low')) : [];
+        const lowest = new Map(lowestRows.map((r) => [r.catalog_id, r.low]));
+        const uses = items.length ? await knex.select('catalog_id').count({ n: '*' })
+            .from(knex.select(knex.raw('unnest(catalog_ids) as catalog_id')).from('public_kits').as('u'))
+            .whereIn('catalog_id', items.map((i) => i.id)).groupBy('catalog_id') : [];
+        const useCount = new Map(uses.map((u) => [u.catalog_id, Number(u.n)]));
+        const minWeight = Math.min(...items.map((i) => i.weightMg).filter((w) => w > 0));
+        const priced = items.filter((i) => i.price);
+        const minPrice = priced.length > 1 ? Math.min(...priced.map((i) => i.price)) : null;
+        const names = items.map((i) => [i.brand, i.name].filter(Boolean).join(' '));
+        const model = {
+            ...shareHead(),
+            cspNonce: NONCE_PLACEHOLDER,
+            pageTitle: names.length ? `Compare: ${names.join(' vs ')}` : 'Compare gear',
+            metaDescription: names.length ? `${names.join(', ')}: weight, price, ratings side by side.` : 'Compare backpacking gear side by side.',
+            idsCsv: items.map((i) => i.id).join(','),
+            hasItems: items.length > 0,
+            items: items.map((i) => {
+                const r = ratings[i.id];
+                return {
+                    ...i,
+                    initial: i.name.trim().charAt(0).toUpperCase(),
+                    weight: `${weightUtils.MgToDisplayWeight(i.weightMg, i.unit)} ${i.unit}`,
+                    lightest: items.length > 1 && i.weightMg === minWeight,
+                    price: i.price ? moneyLabel(i.price, i.currency) : '',
+                    cheapest: minPrice !== null && i.price === minPrice,
+                    lowest: lowest.has(i.id) ? moneyLabel(lowest.get(i.id), i.currency) : '',
+                    average: r ? r.average : null,
+                    stars: r ? STARS(Math.round(r.average)) : '',
+                    reviewCount: r ? r.count : 0,
+                    uses: useCount.get(i.id) || 0,
+                    description: i.description.slice(0, 300),
+                    removeUrl: `/compare?ids=${items.filter((x) => x.id !== i.id).map((x) => x.id).join(',')}`,
+                };
+            }),
+        };
+        sendFresh(res, Mustache.render(compareTemplate, model));
+    } catch (err) {
+        logWithRequest(req, { message: 'error rendering comparison', err });
         res.status(500).send('An error occurred.');
     }
 });
@@ -880,6 +966,13 @@ const renderItem = function (item, args) {
     // Mustache escapes HTML but not URL schemes, so drop unsafe hrefs
     // (javascript:, data:, ...) before the item name is rendered as a link.
     if (out.url && !isSafeHref(out.url)) out.url = '';
+    // Catalog gear still showing the catalog's link goes through /go, which
+    // picks the affiliate or plain link per reader (server/affiliate.js).
+    // Absolute, because embeds render this on other sites.
+    if (out.url && item.catalogId && item.catalogSync) {
+        out.url = `${config.get('deployUrl')}/go/${item.catalogId}?from=list`;
+        out.sponsored = true;
+    }
 
     // Photos and review videos open in a lightbox (client/utils/lightbox.js).
     const photos = Array.isArray(item.photos) ? item.photos.filter((p) => /^\/userimages\//.test(p)) : [];
