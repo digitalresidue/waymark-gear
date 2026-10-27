@@ -72,7 +72,7 @@ jobs:
       - name: Why tests failed
         if: failure()
         run: node scripts/ci-failures.mjs test-results/results.json
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report-${{ matrix.browser }}
