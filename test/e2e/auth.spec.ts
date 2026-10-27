@@ -80,7 +80,7 @@ test.describe('Cookie security — guest flow', () => {
     // Should not be redirected to /signin
     await expect(page).not.toHaveURL(/\/signin/);
     // Should show the welcome/landing content
-    await expect(page.getByText('Sign in', { exact: true }).first()).toBeVisible();
+    await expect(page.getByTestId('header-signin')).toBeVisible();
   });
 });
 

@@ -217,6 +217,7 @@ function initTrails() {
                 a.href = `/trails/${slug}`;
                 a.dataset.trail = slug;
                 a.className = 'wgTrailChip';
+                a.dataset.testid = `trail-chip-${slug}`;
                 a.innerHTML = `<b>${esc(label || slug)}</b>`;
                 chips.prepend(a);
             }
