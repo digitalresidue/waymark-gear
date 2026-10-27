@@ -112,7 +112,14 @@ the plan below it is what comes next. Last updated **2026-10-26** (Phase 7 built
 - Comparisons, gear analysis (essentials, lighter options, readiness), wishlist, price history and alerts, affiliate links with a Supporter plan, MCP server and REST API.
 - Follow-ups: price data from retailer feeds (today prices change when the owner updates the catalog); essentials tuned by trip type and season; MCP resources/prompts ("shakedown this list").
 
-## Phase 8 — Reach (proposed next run)
+## Phase 8 — Trails and reach (proposed next run)
+- **Trails page** (`/trails?t=pct`), the headline feature: one page with a trail picker (AT, PCT, CDT, Colorado Trail, JMT, Arizona Trail, Long Trail, …). Picking a trail reloads, in place:
+  - the trail's facts and what it asks of your pack (bear canister in the Sierra, long water carries, snow gear);
+  - live stats from every list tagged with that trail: number of packs, median and lightest base weight, share using quilts, trail runners, bear canisters, ice axes, satellite messengers;
+  - the most carried shelter, sleep system, pack and shoes;
+  - the packs themselves, sorted by top, lightest, newest, shakedown requests, or this year's class;
+  - a trail-vs-trail table.
+  Lists get an optional **trail** tag (with year and direction) next to the trip type; the editor suggests it from the list name. Each trail has its own link for search engines ("PCT gear list" is a big search). Nothing like this exists: Halfway Anywhere publishes a static PCT/CDT gear survey once a year; no list app groups real packs by trail. Mockup in the 2026-10-26 site tour.
 - **Native apps** for iOS and Android (Capacitor around the existing PWA, so one codebase), with offline packing and push notifications. Both hikt and Packstack have them.
 - **Languages**: translation framework and the first few languages (Spanish, French, German); hikt has 9.
 - **Trip details from a place**: pick a trail or area and fill in distance, elevation and typical temperatures (Packstack does this with AI).
@@ -143,8 +150,9 @@ Re-checked 2026-10-26 after Phase 7.
 | Open source / self-host | ✓ | ✓ | – | ✓ | – |
 | Paid by | affiliate links + $5 Supporter | Pro plan | – | free | affiliate links |
 
-Where we stand: the broadest feature set of the five. What's left is reach:
-native apps and languages (Phase 8).
+Where we stand: the broadest feature set of the five. Phase 8 adds the one
+thing none of them has, pack lists grouped by trail, plus the reach the others
+have and we don't: native apps and languages.
 
 ## Before launch (owner to-do)
 - Merge PR #12 and deploy (migrations run automatically).

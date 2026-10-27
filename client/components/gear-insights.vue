@@ -45,7 +45,7 @@
                     </button>
                 </li>
             </ul>
-            <p class="wgMuted wgTripFine">
+            <p class="wgMuted wgTripFine wgInsightNote">
                 Found by the names of your gear and categories. Hover a ✓ to see what counted.
             </p>
 
@@ -89,7 +89,7 @@
                 </ul>
             </template>
             <p v-if="loaded && !alternatives.length && !favorites.length" class="wgMuted wgTripFine">
-                Add gear from the catalog to see lighter options and what other hikers carry.
+                No lighter options in the catalog for this list yet. Gear picked from the catalog gets the best matches.
             </p>
         </div>
     </section>
@@ -162,7 +162,7 @@ export default {
         },
         async fetch() {
             try {
-                const body = { items: this.rows.map(({ itemId, name, category, weightMg, catalogId }) => ({ itemId, name, category, weightMg, catalogId })) };
+                const body = { items: this.rows.map(({ itemId, name, description, category, weightMg, catalogId }) => ({ itemId, name, description, category, weightMg, catalogId })) };
                 const res = await api('/api/insights', { method: 'POST', body: JSON.stringify(body) });
                 this.alternatives = res.alternatives;
                 this.favorites = res.favorites;
@@ -247,10 +247,18 @@ export default {
     padding: 6px 10px;
 }
 
+.wgInsights .wgInsightNote {
+    margin: 6px 0 0;
+}
+
+.wgInsights .wgInsightH {
+    margin-top: 22px;
+}
+
 .wgInsightH {
     font-size: 14px;
     letter-spacing: 0.04em;
-    margin: 14px 0 6px;
+    margin: 18px 0 6px;
     text-transform: uppercase;
 }
 

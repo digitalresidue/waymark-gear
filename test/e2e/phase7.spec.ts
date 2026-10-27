@@ -352,8 +352,6 @@ test.describe('Phase 7: API, MCP and AI assistant sign-in', () => {
         await expect(page.getByTestId('oauth-write')).toBeChecked();
         await page.getByTestId('oauth-allow').click();
         await expect.poll(() => landed).toContain('code=');
-        // Let the failed navigation to the callback finish before moving on.
-        await page.waitForURL((u) => !u.toString().startsWith(testRoot));
         const back = new URL(landed);
         expect(back.searchParams.get('state')).toBe('xyz');
         const code = back.searchParams.get('code')!;
@@ -371,8 +369,11 @@ test.describe('Phase 7: API, MCP and AI assistant sign-in', () => {
         const res = await (await rpc(app.request, access, { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'get_profile', arguments: {} } })).json();
         expect(res.result.structuredContent.username).toBe(u.username);
 
-        await page.goto(url('/developers'));
-        await expect(page.getByTestId('token-row').filter({ hasText: 'Test Assistant' })).toContainText('connected app');
+        // A fresh tab: the first one is stuck on the unreachable callback,
+        // which Firefox never finishes loading.
+        const dev = await u.context.newPage();
+        await dev.goto(url('/developers'));
+        await expect(dev.getByTestId('token-row').filter({ hasText: 'Test Assistant' })).toContainText('connected app');
         for (const c of [u.context, app]) await c.close();
     });
 });

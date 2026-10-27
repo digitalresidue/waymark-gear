@@ -55,3 +55,20 @@ describe('checkEssentials', () => {
         assert.equal(readinessLabel(10), 'Just getting started');
     });
 });
+
+describe('gearKind', async () => {
+    const { gearKind } = await import('../../client/utils/insights.js');
+    test('like for like', () => {
+        assert.equal(gearKind('Trekking poles (aluminum)'), 'poles');
+        assert.equal(gearKind('Deuce #2 trowel'), 'trowel');
+        assert.equal(gearKind('Flash cooking system', 'Integrated stove and 1 L pot'), 'stove');
+        assert.equal(gearKind('750 ml titanium pot'), 'pot');
+        assert.equal(gearKind('Copper Spur HV UL2', 'Freestanding two-person tent'), 'shelter');
+        assert.equal(gearKind('NeoAir XLite NXT', 'Inflatable pad'), 'sleep-pad');
+        assert.equal(gearKind('Enigma 20°F quilt'), 'quilt-bag');
+        assert.equal(gearKind('Thinlight foam pad'), 'foam-pad');
+        assert.equal(gearKind('Camp shoes (Crocs)'), 'footwear');
+        assert.equal(gearKind('Fuel canister 230 g'), null);
+        assert.equal(gearKind('BV450 bear canister'), 'bear-container');
+    });
+});

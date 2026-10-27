@@ -106,6 +106,43 @@ export function listRows(library, list) {
     return rows;
 }
 
+// What a piece of gear is, so lighter options are like for like: a lighter
+// tent for a tent, never a trowel for trekking poles. First match wins, so
+// specific kinds come before general ones. Null when we can't tell.
+export const GEAR_KINDS = [
+    ['bear-container', ['bear canister', 'bearvault', 'bear vault', 'ursack', 'bv450', 'bv500']],
+    ['hammock', ['hammock']],
+    ['shelter', ['tent', 'tarp', 'bivy', 'shelter', 'duplex', 'x-mid', 'the one', 'notch', 'copper spur', 'lunar solo', 'pyramid']],
+    ['foam-pad', ['thinlight', 'z lite', 'foam pad', 'sit pad']],
+    ['sleep-pad', ['sleeping pad', 'neoair', 'xlite', 'xtherm', 'tensor', 'mattress', 'pad']],
+    ['quilt-bag', ['quilt', 'sleeping bag', 'ultralite', 'sleep*']],
+    ['pack', ['backpack', 'southwest', 'mariposa', 'circuit', 'kakwa', 'exos', 'simple pack', 'pack']],
+    ['stove', ['stove', 'jetboil', 'cooking system', 'pocketrocket']],
+    ['pot', ['pot', 'mug', 'cookset']],
+    ['filter', ['filter', 'befree', 'squeeze', 'purif*', 'steripen']],
+    ['rain-jacket', ['rain jacket', 'rain shell', 'helium', 'frogg', 'ultra-lite 2', 'poncho', 'hardshell']],
+    ['insulation', ['puffy', 'down jacket', 'nano puff', 'ghost whisperer', 'fleece', 'alpha', 'insulat*']],
+    ['sun-shirt', ['sun hoody', 'sun shirt', 'echo']],
+    ['footwear', ['shoe', 'shoes', 'boot', 'boots', 'lone peak', 'speedgoat', 'x ultra', 'trail runner']],
+    ['poles', ['trekking pole', 'trekking poles', 'poles']],
+    ['headlamp', ['headlamp', 'head lamp', 'nu25', 'flashlight']],
+    ['messenger', ['inreach', 'zoleo', 'plb', 'satellite']],
+    ['battery', ['power bank', 'battery', 'nb10000']],
+    ['knife', ['knife', 'classic sd', 'multitool', 'skeletool']],
+    ['trowel', ['trowel', 'deuce']],
+    ['traction', ['microspikes', 'spikes', 'crampon*']],
+    ['ice-axe', ['ice axe', 'axe']],
+    ['umbrella', ['umbrella']],
+    ['socks', ['socks', 'sock']],
+    ['spoon', ['spoon', 'spork']],
+];
+
+export function gearKind(name, description = '') {
+    const text = haystack(name, description);
+    for (const [kind, words] of GEAR_KINDS) if (words.some((w) => matches(text, w))) return kind;
+    return null;
+}
+
 export function readinessLabel(score) {
     if (score >= 90) return 'Ready';
     if (score >= 70) return 'Nearly there';

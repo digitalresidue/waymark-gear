@@ -6,6 +6,7 @@
 
 import knex from './db.js';
 import { isUuid } from './catalog.js';
+import { gearKind } from '../client/utils/insights.js';
 
 const MAX_ROWS = 200;
 const LIGHTER_BY = 0.9; // at least 10% lighter to be worth suggesting
@@ -14,6 +15,7 @@ function cleanRows(rows) {
     return (Array.isArray(rows) ? rows : []).slice(0, MAX_ROWS).map((r) => ({
         itemId: Number.isSafeInteger(r.itemId) ? r.itemId : null,
         name: String(r.name || '').slice(0, 200),
+        description: String(r.description || '').slice(0, 500),
         category: String(r.category || '').slice(0, 80),
         weightMg: Math.max(0, Number(r.weightMg) || 0),
         catalogId: isUuid(r.catalogId) ? r.catalogId : null,
@@ -45,7 +47,7 @@ export async function listInsights(input) {
         .where('catalog_items.status', 'published')
         .whereIn('catalog_items.category', categories)
         .where('catalog_items.weight_mg', '>', 0)
-        .select('catalog_items.id', 'catalog_items.name', 'catalog_items.brand', 'catalog_items.category',
+        .select('catalog_items.id', 'catalog_items.name', 'catalog_items.brand', 'catalog_items.category', 'catalog_items.description',
             'catalog_items.weight_mg', 'catalog_items.price', 'catalog_items.url', knex.raw('coalesce(c.uses, 0)::int as uses'));
     const byCategory = new Map();
     for (const p of pool) {
@@ -64,11 +66,15 @@ export async function listInsights(input) {
         share: kitCount ? Math.round((p.uses / kitCount) * 100) : 0,
     });
 
+    // Like for like: same catalog category and the same kind of gear.
+    const kindOf = new Map(pool.map((p) => [p.id, gearKind(p.name, p.description)]));
     const alternatives = [];
     for (const r of rows) {
         const cat = categoryOf(r);
-        if (!cat || !r.weightMg) continue;
+        const kind = gearKind(r.name, r.description);
+        if (!cat || !kind || !r.weightMg) continue;
         const lighter = (byCategory.get(cat) || [])
+            .filter((p) => kindOf.get(p.id) === kind)
             .filter((p) => p.id !== r.catalogId && !ownedIds.has(p.id) && p.weight_mg <= r.weightMg * LIGHTER_BY)
             .sort((a, b) => b.uses - a.uses || a.weight_mg - b.weight_mg)
             .slice(0, 2);
