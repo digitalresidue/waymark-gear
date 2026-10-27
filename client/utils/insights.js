@@ -143,6 +143,21 @@ export function gearKind(name, description = '') {
     return null;
 }
 
+// Which clothing layer a garment is, for "most carried" on trail pages:
+// insulation keeps you warm, a shell keeps rain, snow and wind out.
+// Insulation is checked first so a down jacket with a "weatherproof shell
+// fabric" stays insulation. Null for everything else (socks, shirts...).
+export const CLOTHING_LAYERS = [
+    ['insulation', ['puffy', 'puffer', 'down jacket', 'down hoody', 'down vest', 'down', 'fill', 'synthetic insulat*', 'insulat*', 'nano puff', 'ghost whisperer', 'fleece', 'alpha', 'grid fleece', 'beanie', 'balaclava', 'thermal', 'base layer', 'baselayer', 'long underwear', 'gloves', 'mittens', 'warm*']],
+    ['shell', ['rain jacket', 'rain shell', 'rain pants', 'rain kilt', 'rain skirt', 'rain*', 'waterproof', 'hardshell', 'softshell', 'shell', 'poncho', 'wind jacket', 'wind shirt', 'windshirt', 'wind pants', 'wind*', 'anorak', 'gore-tex', 'goretex', 'frogg', 'helium', 'houdini', 'versalite', 'storm*', 'gaiters']],
+];
+
+export function clothingLayer(name, description = '') {
+    const text = haystack(name, description);
+    for (const [layer, words] of CLOTHING_LAYERS) if (words.some((w) => matches(text, w))) return layer;
+    return null;
+}
+
 export function readinessLabel(score) {
     if (score >= 90) return 'Ready';
     if (score >= 70) return 'Nearly there';

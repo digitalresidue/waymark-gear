@@ -23,6 +23,7 @@ import * as trips from './trips.js';
 import * as reviews from './reviews.js';
 import { listInsights } from './insights.js';
 import * as tokens from './tokens.js';
+import * as trails from './trails.js';
 import { openStream } from './live.js';
 import { LibraryError } from './library-store.js';
 import { forgetUserPages } from './page-cache.js';
@@ -76,7 +77,7 @@ const signedIn = (handler) => (req, res) => authenticateUser(req, res, async (re
         if (err instanceof ProfileError) return res.status(400).json({ message: err.message, field: err.field });
         if (err instanceof LibraryError) return res.status(400).json({ message: err.message });
         if (err instanceof comments.CommentError || err instanceof follows.FollowError || err instanceof tickets.TicketError || err instanceof plans.PlanError
-            || err instanceof trips.TripError || err instanceof reviews.ReviewError || err instanceof tokens.TokenError) {
+            || err instanceof trips.TripError || err instanceof reviews.ReviewError || err instanceof tokens.TokenError || err instanceof trails.TrailError) {
             return res.status(err.status).json({ message: err.message });
         }
         logWithRequest(req, { message: 'api error', url: req.originalUrl, err });
@@ -413,6 +414,64 @@ router.post('/api/tokens', requireJson, signedIn(async (req, res, user) => {
 
 router.delete('/api/tokens/:id', signedIn(async (req, res, user) => {
     res.json(await tokens.revokeToken(user, req.params.id));
+}));
+
+// ---- trails (Phase 8) -----------------------------------------------------------
+
+router.get('/api/trails/search', pub(async (req, res) => {
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json({ trails: await trails.searchTrails(String(req.query.q || '').slice(0, 80), req.query.limit) });
+}));
+
+router.get('/api/trails/top', pub(async (req, res) => {
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json({ trails: await trails.topTrails(req.query.limit) });
+}));
+
+// A trail the list's name points to, to suggest tagging it.
+router.get('/api/trails/match', pub(async (req, res) => {
+    res.set('Cache-Control', 'public, max-age=300');
+    res.json({ trail: await trails.matchName(String(req.query.name || '').slice(0, 300)) });
+}));
+
+router.get('/api/trails/mine', signedIn(async (req, res, user) => {
+    res.set('Cache-Control', 'no-store');
+    res.json({ trails: await trails.myTrails(user.user_id) });
+}));
+
+const trailAdmin = (handler) => admin(async (req, res, user) => {
+    try {
+        await handler(req, res, user);
+    } catch (err) {
+        if (err instanceof trails.TrailError) return res.status(err.status).json({ message: err.message });
+        throw err;
+    }
+});
+
+router.get('/api/admin/trails', trailAdmin(async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.json({ trails: await trails.ownerTrails(), suggestions: await trails.suggestions() });
+}));
+
+router.post('/api/admin/trails', requireJson, trailAdmin(async (req, res) => {
+    res.status(201).json({ id: await trails.createTrail(req.body || {}) });
+}));
+
+router.put('/api/admin/trails/:id', requireJson, trailAdmin(async (req, res) => {
+    res.json({ id: await trails.updateTrail(req.params.id, req.body || {}) });
+}));
+
+router.delete('/api/admin/trails/:id', trailAdmin(async (req, res) => {
+    res.json(await trails.deleteTrail(req.params.id));
+}));
+
+router.post('/api/admin/trails/suggestions/:action', requireJson, trailAdmin(async (req, res) => {
+    const name = String((req.body && req.body.name) || '').trim();
+    if (!name) return res.status(400).json({ message: 'Which suggestion?' });
+    if (req.params.action === 'approve') return res.json({ id: await trails.approveSuggestion(name, req.body || {}) });
+    if (req.params.action === 'merge') return res.json({ id: await trails.mergeSuggestion(name, req.body && req.body.trailId) });
+    if (req.params.action === 'ignore') return res.json(await trails.ignoreSuggestion(name));
+    res.status(404).json({ message: 'Unknown action.' });
 }));
 
 // ---- public ----------------------------------------------------------------

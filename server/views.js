@@ -24,6 +24,8 @@ import { viewTrip, tripsOnProfile } from './trips.js';
 import { reviewsFor, latestReviews } from './reviews.js';
 import { getById as catalogItem, isUuid, search as catalogSearch } from './catalog.js';
 import { priceHistory } from './prices.js';
+import * as trails from './trails.js';
+import { PACK_FEATURES, DIRECTIONS } from '../client/utils/trails.js';
 import { ratingsFor } from './reviews.js';
 
 const router = express.Router();
@@ -63,6 +65,7 @@ const vueRoutes = [ /* TODO - get this from same data source as Vue */
     { path: '/developers' },
     { path: '/supporter' },
     { path: '/owner/revenue' },
+    { path: '/owner/trails' },
 ];
 
 let index = fs.readFileSync(path.join(import.meta.dirname, '../_index.html'), 'utf8');
@@ -244,6 +247,7 @@ router.get('/sitemap.xml', async (req, res) => {
                 .where('users.profile_hidden', false)
                 .groupBy('users.username').select('users.username').max({ updated_at: 'public_kits.updated_at' }).limit(9000);
             const url = (loc, lastmod) => `<url><loc>${xmlEscape(loc)}</loc>${lastmod ? `<lastmod>${new Date(lastmod).toISOString()}</lastmod>` : ''}</url>`;
+            const trailSlugs = await knex('trails').where({ status: 'published' }).pluck('slug').catch(() => []);
             sitemap = {
                 built: Date.now(),
                 xml: [
@@ -251,6 +255,8 @@ router.get('/sitemap.xml', async (req, res) => {
                     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
                     url(`${base}/welcome`),
                     url(`${base}/explore`),
+                    url(`${base}/trails/all`),
+                    ...trailSlugs.map((slug) => url(`${base}/trails/${slug}`)),
                     ...kits.map((k) => url(`${base}/r/${k.external_id}`, k.updated_at)),
                     ...people.map((p) => url(`${base}/@${p.username}`, p.updated_at)),
                     '</urlset>',
@@ -433,6 +439,7 @@ router.get('/@:username', async (req, res) => {
 const tripTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/trip.mustache'), 'utf8');
 const gearTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/gear-item.mustache'), 'utf8');
 const compareTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/compare.mustache'), 'utf8');
+const trailsTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/trails.mustache'), 'utf8');
 const VISIBILITY_LABELS = { followers: 'Followers only', private: 'Only you' };
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -649,6 +656,128 @@ router.get('/compare', async (req, res) => {
     }
 });
 
+// ---- trails (Phase 8) ---------------------------------------------------------
+
+const lbLabel = (mg) => (mg || mg === 0 ? formatWeightMg(mg, 'lb') : '—');
+const pct = (v) => (v === undefined || v === null ? '—' : `${v}%`);
+// The three feature tiles worth showing for a trail: the ones that set it
+// apart, so the PCT shows bear canisters and the CDT ice axes.
+const TILE_ORDER = ['bear-canister', 'ice-axe', 'messenger', 'umbrella', 'hammock', 'cold-soak'];
+
+function trailBodyModel(data, comparison) {
+    const { trail, stats } = data;
+    const f = stats.features || {};
+    const distinctive = TILE_ORDER.filter((k) => f[k] > 0).slice(0, 1);
+    const tiles = ['quilt', 'trail-runners', ...(distinctive.length ? distinctive : ['messenger'])];
+    const shortOrName = trail.short || trail.name;
+    const compareKeys = [['packs', 'Packs'], ['median', 'Median base weight'], ['lightest', 'Lightest'], ...['quilt', 'trail-runners', 'bear-canister', 'ice-axe', 'messenger'].map((k) => [k, PACK_FEATURES[k].label])];
+    return {
+        pageTitle: `What people carry on the ${shortOrName}`,
+        trail: { ...trail, shortOrName, notes: trail.notes || [] },
+        parent: data.parent,
+        sections: data.sections,
+        hasSections: data.sections.length > 0,
+        hasNotes: (trail.notes || []).length > 0,
+        stats,
+        median: lbLabel(stats.medianMg),
+        lightest: lbLabel(stats.lightestMg),
+        statTiles: stats.packs ? tiles.map((k) => ({ label: PACK_FEATURES[k].label.replace(' instead of a bag', 's'), value: pct(f[k]) })) : [],
+        carried: data.carried.map((c) => ({ ...c, items: c.items.map((i) => ({ ...i, weight: `${weightUtils.MgToDisplayWeight(i.weightMg, i.unit)} ${i.unit}` })) })),
+        hasCarried: data.carried.length > 0,
+        sorts: Object.entries(trails.SORTS).map(([id, label]) => ({ id, label: id === 'year' ? `${data.year} class` : label, on: id === data.sort })),
+        kits: data.kits.map((k) => {
+            const total = k.categories.reduce((n, c) => n + Math.max(c.weightMg, 0), 0) || 1;
+            return {
+                ...k,
+                baseWeight: lbLabel(k.baseWeightMg),
+                tag: [k.trailYear, DIRECTIONS[k.trailDirection]].filter(Boolean).join(' '),
+                comments: `${k.commentCount || 0} ${k.commentCount === 1 ? 'comment' : 'comments'}`,
+                score: k.score || 0,
+                bars: k.categories.filter((c) => c.weightMg > 0).map((c, i) => ({ flex: Math.max(1, Math.round((c.weightMg / total) * 100)), i: i % 6 })),
+            };
+        }),
+        hasKits: data.kits.length > 0,
+        sortNote: data.sort === 'shakedown' ? 'asking for a shakedown' : data.sort === 'year' ? `for ${data.year}` : '',
+        hasComparison: comparison.length > 1,
+        comparison: comparison.map((c, i) => ({ slug: c.trail.slug, label: c.trail.short || c.trail.name, me: i === 0 })),
+        compareRows: compareKeys.map(([key, label]) => ({
+            label,
+            cells: comparison.map((c, i) => {
+                const st = c.stats;
+                let value = '—';
+                if (key === 'packs') value = String(st.packs);
+                else if (!st.packs) value = '—';
+                else if (key === 'median') value = lbLabel(st.medianMg);
+                else if (key === 'lightest') value = lbLabel(st.lightestMg);
+                else value = pct(st.features[key]);
+                return { value, me: i === 0 };
+            }),
+        })),
+    };
+}
+
+router.get('/trails', async (req, res) => {
+    if (req.query.t) return res.redirect(301, `/trails/${encodeURIComponent(String(req.query.t))}`);
+    const top = await trails.topTrails(1).catch(() => []);
+    if (!top.length) return res.redirect(302, '/trails/all');
+    res.redirect(302, `/trails/${top[0].slug}`);
+});
+
+router.get('/trails/all', async (req, res) => {
+    try {
+        const q = String(req.query.q || '').trim().slice(0, 80);
+        const list = q ? await trails.searchTrails(q, 25) : await trails.allTrails();
+        const COUNTRY = { US: 'United States', CA: 'Canada', NZ: 'New Zealand', AU: 'Australia', GB: 'United Kingdom', FR: 'France', ES: 'Spain', CH: 'Switzerland', SE: 'Sweden', TR: 'Turkey', NP: 'Nepal' };
+        const groups = new Map();
+        for (const t of list) {
+            const label = COUNTRY[t.country] || 'Elsewhere';
+            if (!groups.has(label)) groups.set(label, []);
+            groups.get(label).push(t);
+        }
+        const model = {
+            ...shareHead(),
+            cspNonce: NONCE_PLACEHOLDER,
+            path: '/trails/all',
+            pageTitle: 'All trails',
+            metaDescription: 'Every trail on Waymark Gear, with the pack lists hikers have published for each.',
+            directory: { q, count: list.length, groups: [...groups].map(([label, ts]) => ({ label, trails: ts })) },
+        };
+        sendFresh(res, Mustache.render(trailsTemplate, model, { trailBody: templates.t_trailBody || '' }));
+    } catch (err) {
+        logWithRequest(req, { message: 'error rendering trail directory', err });
+        res.status(500).send('An error occurred.');
+    }
+});
+
+router.get('/trails/:slug', async (req, res) => {
+    try {
+        const data = await trails.trailPage(req.params.slug, { sort: String(req.query.sort || 'top') });
+        if (!data) return res.status(404).send('No such trail. See /trails/all.');
+        const body = trailBodyModel(data, await trails.comparison(data.trail.slug));
+        // The picker swaps just the body in place.
+        if (req.query.partial === '1') {
+            res.set('Cache-Control', 'no-store');
+            return res.type('html').send(Mustache.render(templates.t_trailBody || '', body));
+        }
+        const top = await trails.topTrails(8);
+        const chips = [...top];
+        if (!chips.some((t) => t.slug === data.trail.slug)) chips.unshift(data.trail);
+        const model = {
+            ...shareHead(),
+            cspNonce: NONCE_PLACEHOLDER,
+            path: `/trails/${data.trail.slug}`,
+            metaDescription: `${data.stats.packs} pack lists for the ${data.trail.name}${data.stats.packs ? `: median base weight ${lbLabel(data.stats.medianMg)}` : ''}. What hikers carry, and how it compares.`,
+            ...body,
+            trailView: true,
+            chips: chips.map((t) => ({ slug: t.slug, label: t.short || t.name, count: t.count || 0, on: t.slug === data.trail.slug })),
+        };
+        sendFresh(res, Mustache.render(trailsTemplate, model, { trailBody: templates.t_trailBody || '' }));
+    } catch (err) {
+        logWithRequest(req, { message: 'error rendering trail', err });
+        res.status(500).send('An error occurred.');
+    }
+});
+
 router.get('/reviews', async (req, res) => {
     try {
         const reviews = await latestReviews({ limit: 30 });
@@ -739,6 +868,8 @@ async function renderListView(req, res) {
             published: Boolean(list.published),
             shakedown: Boolean(list.published && list.shakedown),
             tripTypeLabel: TRIP_TYPE_LABELS[list.tripType] || '',
+            trailLabel: list.trail ? [list.trail.short || list.trail.name, list.trail.year, DIRECTIONS[list.trail.direction]].filter(Boolean).join(' ') : '',
+            trailSlug: list.trail && list.trail.slug ? list.trail.slug : '',
             ogImage: `${config.get('deployUrl')}/og/r/${id}.png?v=${listImageVersion(listCard(library, list, user.username, user.avatar_url))}`,
             baseWeight: formatWeightMg(list.totalBaseWeight, 'lb'),
             weightClass: (WEIGHT_CLASSES.find((c) => c.id === weightClassFor(list.totalBaseWeight)) || {}).label,

@@ -13,6 +13,7 @@
 @import "components/share-overrides";
 @import "components/profile";
 @import "components/journal";
+@import "components/trails";
 @import "components/lightbox";
 @import "_print";
 @import "_sprite";
@@ -63,6 +64,106 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+}
+
+// Phone menu for the public pages. A <details>, so it works before (and
+// without) any script.
+.wgShareMenuPhone {
+    display: none;
+    position: relative;
+
+    summary {
+        align-items: center;
+        border-radius: 10px;
+        color: var(--lp-text);
+        cursor: pointer;
+        display: flex;
+        height: 44px;
+        justify-content: center;
+        list-style: none;
+        width: 44px;
+
+        &::-webkit-details-marker {
+            display: none;
+        }
+    }
+
+    &[open] summary {
+        background: var(--lp-row-hover);
+    }
+
+    nav {
+        background: var(--lp-surface);
+        border: 1px solid var(--lp-border);
+        border-radius: 14px;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+        display: flex;
+        flex-direction: column;
+        min-width: 220px;
+        padding: 6px;
+        position: absolute;
+        right: 0;
+        top: calc(100% + 6px);
+        z-index: 50;
+    }
+
+    a {
+        border-radius: 9px;
+        color: var(--lp-text);
+        font-size: 17px;
+        padding: 12px;
+        text-decoration: none;
+
+        &:hover {
+            background: var(--lp-row-hover);
+        }
+    }
+}
+
+@media (max-width: 720px) {
+    .wgShareBar {
+        flex-wrap: nowrap;
+        gap: 6px;
+        padding: 6px max(12px, env(safe-area-inset-right, 0px)) 6px max(16px, env(safe-area-inset-left, 0px));
+        position: sticky;
+        top: 0;
+        z-index: 40;
+    }
+
+    .wgShareBrand {
+        flex: 0 1 auto;
+        margin-right: auto;
+        min-width: 0;
+    }
+
+    // Width only, so the logo keeps its ratio (outranks `.lp .wgLogo`).
+    .lp .wgShareBrand .wgLogo {
+        aspect-ratio: 843 / 127;
+        height: auto;
+        max-width: 100%;
+        object-fit: contain;
+        width: 140px;
+    }
+
+    .wgShareActions {
+        flex: none;
+        flex-wrap: nowrap;
+
+        .wgBtnGhost {
+            display: none;
+        }
+
+        .wgBtn {
+            min-height: 40px;
+            padding: 8px 12px;
+            white-space: nowrap;
+        }
+    }
+
+    .wgShareMenuPhone {
+        display: block;
+        flex: none;
+    }
 }
 
 .wgShareTitle {

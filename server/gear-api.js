@@ -65,6 +65,7 @@ function listSummary(library, list) {
         published: Boolean(list.published),
         shareUrl: list.published && list.externalId ? `/r/${list.externalId}` : null,
         tripType: list.tripType || null,
+        trail: list.trail ? { name: list.trail.name, slug: list.trail.slug || null, year: list.trail.year || null, direction: list.trail.direction || null } : null,
         baseWeight: weight(list.totalBaseWeight, unit),
         totalWeight: weight(list.totalWeight, unit),
         wornWeight: weight(list.totalWornWeight, unit),

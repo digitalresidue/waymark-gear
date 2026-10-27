@@ -75,6 +75,13 @@ your username; you can edit or delete yours, and moderators can hide reviews
 that break the rules. Deleting your account deletes your trips; your reviews
 are deleted too.
 
+### Trail tags
+
+If you tag a list with a trail (and a year and direction), that tag is shown
+with the list when you publish it, and the list counts toward that trail's
+page. Trail names you type that aren't in our list yet are visible to the
+site owner, with how many people used them (not who), so they can be added.
+
 ### Wishlist, price alerts and buy links
 
 Gear you add to your wishlist is stored with the rest of your closet. If a

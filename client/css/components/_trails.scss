@@ -1,0 +1,588 @@
+// The Trails page (templates/trails.mustache, t_trailBody.mustache).
+
+.wgTrails {
+    margin: 0 auto;
+    max-width: 1120px;
+    padding: 28px max(16px, env(safe-area-inset-right, 0px)) 56px max(16px, env(safe-area-inset-left, 0px));
+}
+
+.wgTrailKicker {
+    color: var(--lp-accent-orange, #C4571F);
+    font: 700 12px/1 $font-mono;
+    letter-spacing: 0.14em;
+    margin: 0 0 6px;
+    text-transform: uppercase;
+}
+
+.wgTrailTitle {
+    font-family: $font-display;
+    font-size: clamp(28px, 6vw, 40px);
+    font-stretch: 112%;
+    font-weight: 800;
+    line-height: 1.08;
+    margin: 0 0 6px;
+    text-wrap: balance;
+}
+
+.wgTrailLede {
+    color: var(--lp-text-secondary);
+    font-size: 16px;
+    margin: 0 0 18px;
+    max-width: 680px;
+}
+
+// Picker: the most-packed trails as chips, then a search for the rest.
+.wgTrailPicker {
+    align-items: center;
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    margin-bottom: 22px;
+    padding: 8px;
+}
+
+.wgTrailChips {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: 0;
+}
+
+.wgTrailChip {
+    align-items: center;
+    border-radius: 10px;
+    color: var(--lp-text);
+    display: inline-flex;
+    font-size: 15px;
+    gap: 8px;
+    padding: 9px 12px;
+    text-decoration: none;
+    white-space: nowrap;
+
+    span {
+        background: var(--lp-surface-sunken);
+        border-radius: 99px;
+        color: var(--lp-text-secondary);
+        font: 12px $font-mono;
+        padding: 1px 7px;
+    }
+
+    &:hover {
+        background: var(--lp-row-hover);
+    }
+
+    &[aria-current="true"] {
+        background: var(--lp-primary);
+        color: #fff;
+
+        span {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+    }
+}
+
+.wgTrailChipMine b::before {
+    content: "★ ";
+    font-weight: 400;
+}
+
+.wgTrailSearch {
+    flex: 0 1 300px;
+    min-width: 220px;
+    position: relative;
+
+    .wgInput {
+        min-height: 42px;
+    }
+}
+
+.wgTrailSearchWide {
+    margin: 0 0 18px;
+    max-width: 480px;
+}
+
+.wgTrailResults {
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: 12px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+    left: 0;
+    list-style: none;
+    margin: 6px 0 0;
+    max-height: 360px;
+    overflow-y: auto;
+    padding: 6px;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    z-index: 30;
+
+    li {
+        border-radius: 8px;
+        cursor: pointer;
+        display: grid;
+        gap: 0 8px;
+        grid-template-columns: 1fr auto;
+        padding: 8px 10px;
+
+        &[aria-selected="true"],
+        &:hover {
+            background: var(--lp-row-hover);
+        }
+    }
+
+    .wgTrailCount {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+    }
+}
+
+.wgTrailResultMeta {
+    color: var(--lp-text-secondary);
+    font-size: 13px;
+}
+
+.wgTrailCount {
+    align-self: center;
+    background: var(--lp-surface-sunken);
+    border-radius: 99px;
+    color: var(--lp-text-secondary);
+    font: 12px $font-mono;
+    justify-self: end;
+    padding: 1px 8px;
+}
+
+#wgTrailBody[aria-busy="true"] {
+    opacity: 0.55;
+    transition: opacity 0.15s;
+}
+
+.wgTrailHero {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: 1.2fr 1fr;
+    margin-bottom: 22px;
+}
+
+.wgTrailFacts,
+.wgTrailStats {
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: 16px;
+    margin: 0;
+    padding: 18px 20px;
+}
+
+.wgTrailName {
+    font-family: $font-display;
+    font-size: 26px;
+    font-weight: 800;
+    margin: 0;
+}
+
+.wgTrailMeta {
+    color: var(--lp-text-secondary);
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 14px;
+    gap: 4px 16px;
+    margin: 6px 0 12px;
+
+    b {
+        color: var(--lp-text);
+    }
+}
+
+.wgTrailLabel {
+    color: var(--lp-text-secondary);
+    display: block;
+    font-size: 12px;
+    font-weight: 650;
+    letter-spacing: 0.06em;
+    margin: 0 0 4px;
+    text-transform: uppercase;
+}
+
+.wgTrailNotes {
+    margin: 0 0 8px;
+    padding-left: 18px;
+
+    li {
+        margin: 4px 0;
+    }
+}
+
+.wgTrailSections {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    margin: 0;
+}
+
+.wgTrailStats {
+    align-content: center;
+    display: grid;
+    gap: 18px 14px;
+    grid-template-columns: repeat(3, 1fr);
+
+    dt {
+        color: var(--lp-text-secondary);
+        font-size: 12px;
+        font-weight: 650;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    dd {
+        font: 600 24px $font-mono;
+        margin: 2px 0 0;
+    }
+}
+
+.wgTrailHead {
+    align-items: baseline;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    justify-content: space-between;
+    margin: 6px 0 12px;
+
+    h2 {
+        font-family: $font-display;
+        font-size: 22px;
+        font-weight: 800;
+        margin: 0;
+    }
+}
+
+.wgTrailCarried {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(5, 1fr);
+    list-style: none;
+    margin: 0 0 24px;
+    padding: 0;
+
+    > li {
+        background: var(--lp-surface);
+        border: 1px solid var(--lp-border);
+        border-radius: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 12px 14px;
+    }
+
+    ol {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    ol li {
+        align-items: flex-start;
+        display: flex;
+        gap: 8px;
+    }
+
+    ol li + li {
+        border-top: 1px solid var(--lp-border);
+        padding-top: 8px;
+    }
+
+    a {
+        font-weight: 700;
+    }
+
+    ol li:not(:first-child) a {
+        font-weight: 600;
+    }
+}
+
+.wgTrailCarriedHint {
+    color: var(--lp-text-secondary);
+    font-size: 12px;
+    margin-top: -4px;
+}
+
+.wgTrailRank {
+    background: var(--lp-row-hover);
+    border-radius: 99px;
+    color: var(--lp-text-secondary);
+    flex: none;
+    font-size: 12px;
+    font-weight: 700;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    width: 20px;
+}
+
+.wgTrailCarried ol li:first-child .wgTrailRank {
+    background: var(--lp-primary);
+    color: #fff;
+}
+
+.wgTrailCarriedItem {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.wgTrailSorts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    a {
+        background: var(--lp-surface);
+        border: 1px solid var(--lp-border);
+        border-radius: 99px;
+        color: var(--lp-text);
+        font-size: 13px;
+        padding: 5px 12px;
+        text-decoration: none;
+        white-space: nowrap;
+
+        &[aria-current="true"] {
+            background: var(--lp-text);
+            border-color: var(--lp-text);
+            color: var(--lp-surface);
+        }
+    }
+}
+
+.wgTrailCards {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(3, 1fr);
+    list-style: none;
+    margin: 0 0 28px;
+    padding: 0;
+}
+
+.wgTrailCard a {
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: 14px;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    height: 100%;
+    padding: 14px 16px;
+    text-decoration: none;
+
+    &:hover {
+        border-color: var(--lp-primary);
+    }
+}
+
+.wgTrailCardTop {
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+
+    strong {
+        font-size: 16px;
+    }
+
+    .wgMono {
+        font-size: 17px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+}
+
+.wgTrailCardBy,
+.wgTrailCardFoot {
+    color: var(--lp-text-secondary);
+    font-size: 13px;
+}
+
+.wgTrailCardFoot {
+    display: flex;
+    justify-content: space-between;
+    margin-top: auto;
+}
+
+.wgTrailShakedown {
+    color: var(--lp-accent-orange, #C4571F);
+    font-weight: 650;
+}
+
+.wgTrailBar {
+    display: flex;
+    gap: 2px;
+    height: 6px;
+
+    span {
+        border-radius: 2px;
+    }
+}
+
+.wgBar0 { background: #1D3B30; }
+.wgBar1 { background: #4E7A5E; }
+.wgBar2 { background: #9DB8A4; }
+.wgBar3 { background: #C4571F; }
+.wgBar4 { background: #DCC6A0; }
+.wgBar5 { background: #6B6F6C; }
+
+.wgTrailEmpty {
+    background: var(--lp-surface);
+    border: 1px dashed var(--lp-border-strong);
+    border-radius: 14px;
+    margin: 0 0 28px;
+    padding: 18px;
+}
+
+.wgTrailCompareWrap {
+    overflow-x: auto;
+}
+
+.wgTrailCompare {
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-collapse: collapse;
+    border-radius: 14px;
+    min-width: 420px;
+    width: 100%;
+
+    th,
+    td {
+        border-top: 1px solid var(--lp-border);
+        font-size: 14px;
+        padding: 10px 14px;
+        text-align: left;
+    }
+
+    thead th {
+        background: var(--lp-surface-sunken);
+        border-top: 0;
+    }
+
+    td {
+        font-family: $font-mono;
+    }
+
+    .wgOn {
+        background: var(--lp-active-bg);
+        font-weight: 700;
+    }
+}
+
+.wgTrailFoot {
+    color: var(--lp-text-secondary);
+    font-size: 13px;
+    margin-top: 24px;
+}
+
+// Directory.
+.wgTrailGroup {
+    font-size: 15px;
+    letter-spacing: 0.06em;
+    margin: 22px 0 6px;
+    text-transform: uppercase;
+}
+
+.wgTrailDirectory {
+    columns: 2;
+    column-gap: 28px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    li {
+        align-items: baseline;
+        border-bottom: 1px solid var(--lp-border);
+        break-inside: avoid;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px 8px;
+        padding: 8px 0;
+    }
+
+    .wgMuted {
+        font-size: 13px;
+    }
+
+    .wgTrailCount {
+        margin-left: auto;
+    }
+}
+
+@media (max-width: 1100px) {
+    .wgTrailCarried {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 860px) {
+    .wgTrailCarried {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .wgTrailCards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+// On a phone the chips scroll sideways in one row and the search sits
+// under them; everything else stacks.
+@media (max-width: 640px) {
+    .wgTrails {
+        padding-top: 18px;
+    }
+
+    .wgTrailCarried {
+        grid-template-columns: 1fr;
+    }
+
+    // Single line: in a wrapping column the chips' unwrapped width would
+    // set the line's width and push the page sideways.
+    .wgTrailPicker {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        align-items: stretch;
+        padding: 8px;
+    }
+
+    .wgTrailChips {
+        flex-wrap: nowrap;
+        margin: 0 -8px;
+        overflow-x: auto;
+        padding: 0 8px 2px;
+        scrollbar-width: none;
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
+    }
+
+    .wgTrailSearch {
+        flex-basis: auto;
+        min-width: 0;
+    }
+
+    .wgTrailHero,
+    .wgTrailCards {
+        grid-template-columns: 1fr;
+    }
+
+    .wgTrailStats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .wgTrailDirectory {
+        columns: 1;
+    }
+}

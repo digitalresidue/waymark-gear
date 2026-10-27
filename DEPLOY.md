@@ -259,6 +259,14 @@ the gear page instead.
 To give someone Supporter for free (a contributor, a reviewer): Owner →
 Revenue → Supporters.
 
+## Trails
+
+The trail list starts with about 40 well-known long trails. **Owner → Trails**
+edits them, adds more, and shows the names hikers typed that match nothing
+yet: add one as a trail, merge it into an existing trail (it becomes a
+nickname), or ignore it. Trail pages are at `/trails/<slug>` and in the
+sitemap.
+
 ## AI assistants (MCP) and the API
 
 Nothing to set up: `/mcp` and `/api/v1` run on every install. People connect

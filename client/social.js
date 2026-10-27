@@ -169,7 +169,155 @@ function initCompare() {
     });
 }
 
+// The phone menu is a <details>; close it on an outside tap or Escape.
+function initPhoneMenu() {
+    const menus = document.querySelectorAll('.wgShareMenuPhone');
+    if (!menus.length) return;
+    document.addEventListener('click', (e) => {
+        menus.forEach((m) => { if (m.open && !m.contains(e.target)) m.open = false; });
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') menus.forEach((m) => { m.open = false; });
+    });
+}
+
+// The Trails page: switch trails (and sorts) in place, search every trail,
+// and put the trails you've tagged your own lists with first.
+function initTrails() {
+    const picker = document.getElementById('wgTrailPicker');
+    if (!picker) return;
+    const chips = picker.querySelector('.wgTrailChips');
+    const input = document.getElementById('wgTrailQ');
+    const results = document.getElementById('wgTrailResults');
+    let loading = null;
+
+    const mark = (slug) => {
+        chips.querySelectorAll('[data-trail]').forEach((a) => {
+            if (a.dataset.trail === slug) a.setAttribute('aria-current', 'true');
+            else a.removeAttribute('aria-current');
+        });
+    };
+
+    async function load(slug, sort, { push = true, label } = {}) {
+        const url = `/trails/${encodeURIComponent(slug)}${sort && sort !== 'top' ? `?sort=${encodeURIComponent(sort)}` : ''}`;
+        const body = document.getElementById('wgTrailBody');
+        if (loading) loading.abort();
+        loading = new AbortController();
+        body.setAttribute('aria-busy', 'true');
+        try {
+            const res = await fetch(`${url}${url.includes('?') ? '&' : '?'}partial=1`, { signal: loading.signal, credentials: 'same-origin' });
+            if (!res.ok) throw new Error(String(res.status));
+            const html = await res.text();
+            const holder = document.createElement('div');
+            holder.innerHTML = html;
+            const fresh = holder.firstElementChild;
+            body.replaceWith(fresh);
+            if (!chips.querySelector(`[data-trail="${CSS.escape(slug)}"]`)) {
+                const a = document.createElement('a');
+                a.href = `/trails/${slug}`;
+                a.dataset.trail = slug;
+                a.className = 'wgTrailChip';
+                a.dataset.testid = `trail-chip-${slug}`;
+                a.innerHTML = `<b>${esc(label || slug)}</b>`;
+                chips.prepend(a);
+            }
+            mark(slug);
+            const name = fresh.querySelector('[data-testid="trail-name"]');
+            const title = document.getElementById('wgTrailTitleName');
+            const short = chips.querySelector(`[data-trail="${CSS.escape(slug)}"] b`);
+            if (title) title.textContent = short ? short.textContent : (name ? name.textContent : slug);
+            document.title = `${fresh.dataset.title} — Waymark Gear`;
+            if (push) history.pushState({ slug, sort }, '', url);
+        } catch (err) {
+            if (err.name !== 'AbortError') window.location.href = url;
+        }
+    }
+
+    document.addEventListener('click', (e) => {
+        const a = e.target.closest('a[data-trail]');
+        if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+        e.preventDefault();
+        load(a.dataset.trail, a.dataset.sort, { label: a.textContent.trim() });
+    });
+    window.addEventListener('popstate', (e) => {
+        const slug = (e.state && e.state.slug) || window.location.pathname.split('/').pop();
+        const sort = (e.state && e.state.sort) || new URLSearchParams(window.location.search).get('sort');
+        load(slug, sort, { push: false });
+    });
+    history.replaceState({ slug: window.location.pathname.split('/').pop(), sort: new URLSearchParams(window.location.search).get('sort') }, '');
+
+    // Search: every trail, most-packed first.
+    let timer = null;
+    let items = [];
+    let active = -1;
+    const close = () => { results.hidden = true; active = -1; };
+    const render = () => {
+        results.innerHTML = items.map((t, i) => `<li role="option" id="wgTrailOpt${i}" aria-selected="${i === active}" data-i="${i}" data-testid="trail-result">
+            <span><b>${esc(t.name)}</b>${t.short ? ` <span class="wgMuted">${esc(t.short)}</span>` : ''}</span>
+            <span class="wgTrailResultMeta">${esc(t.region)}${t.lengthMi ? ` · ${t.lengthMi.toLocaleString()} mi` : ''}</span>
+            <span class="wgTrailCount">${t.count}</span></li>`).join('') || '<li class="wgMuted">No trails match. Try another name or a place.</li>';
+        results.hidden = false;
+        input.setAttribute('aria-activedescendant', active >= 0 ? `wgTrailOpt${active}` : '');
+    };
+    const pick = (t) => {
+        close();
+        input.value = '';
+        input.blur();
+        load(t.slug, null, { label: t.short || t.name });
+    };
+    input.setAttribute('role', 'combobox');
+    input.setAttribute('aria-controls', 'wgTrailResults');
+    input.setAttribute('aria-expanded', 'false');
+    input.addEventListener('input', () => {
+        clearTimeout(timer);
+        timer = setTimeout(async () => {
+            const q = input.value.trim();
+            const res = await fetch(`/api/trails/search?limit=10&q=${encodeURIComponent(q)}`).then((r) => r.json()).catch(() => ({ trails: [] }));
+            items = res.trails || [];
+            active = items.length ? 0 : -1;
+            render();
+            input.setAttribute('aria-expanded', 'true');
+        }, 150);
+    });
+    input.addEventListener('focus', () => { if (!input.value) input.dispatchEvent(new Event('input')); });
+    input.addEventListener('keydown', (e) => {
+        if (results.hidden) return;
+        if (e.key === 'ArrowDown') { e.preventDefault(); active = Math.min(active + 1, items.length - 1); render(); }
+        if (e.key === 'ArrowUp') { e.preventDefault(); active = Math.max(active - 1, 0); render(); }
+        if (e.key === 'Enter' && items[active]) { e.preventDefault(); pick(items[active]); }
+        if (e.key === 'Escape') close();
+    });
+    results.addEventListener('mousedown', (e) => {
+        const li = e.target.closest('[data-i]');
+        if (li) { e.preventDefault(); pick(items[Number(li.dataset.i)]); }
+    });
+    input.addEventListener('blur', () => setTimeout(close, 150));
+
+    // Your trails first.
+    fetch('/api/trails/mine', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+        .then((r) => (r.ok ? r.json() : { trails: [] }))
+        .then(({ trails }) => {
+            for (const t of [...trails].reverse()) {
+                let a = chips.querySelector(`[data-trail="${CSS.escape(t.slug)}"]`);
+                if (!a) {
+                    a = document.createElement('a');
+                    a.href = `/trails/${t.slug}`;
+                    a.dataset.trail = t.slug;
+                    a.className = 'wgTrailChip';
+                    a.innerHTML = `<b>${esc(t.short || t.name)}</b>`;
+                }
+                a.classList.add('wgTrailChipMine');
+                a.title = 'One of your trails';
+                a.dataset.testid = `trail-chip-${t.slug}`;
+                chips.prepend(a);
+            }
+        })
+        .catch(() => {});
+}
+
 export function initSocial() {
+    initTrails();
+    initPhoneMenu();
     initCompare();
     initVotes();
     initFollow();

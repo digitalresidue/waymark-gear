@@ -9,6 +9,7 @@
         <list-description v-if="list.optionalFields['listDescription']" :list="list" />
 
         <trip-type-picker v-if="!isListNew" :list="list" />
+        <trail-tag v-if="!isListNew" :list="list" />
 
         <trip-planner v-if="!isListNew" :list="list" />
         <gear-insights v-if="!isListNew" :list="list" />
@@ -39,6 +40,7 @@ import listDescription from './list-description.vue';
 import tripPlanner from './trip-planner.vue';
 import gearInsights from './gear-insights.vue';
 import tripTypePicker from './trip-type-picker.vue';
+import trailTag from './trail-tag.vue';
 import groupGear from './group-gear.vue';
 import listSummary from './list-summary.vue';
 import listSummaryMobile from './list-summary-mobile.vue';
@@ -56,6 +58,7 @@ export default {
         listSummaryMobile,
         listDescription,
         tripPlanner,
+        trailTag,
         gearInsights,
         tripTypePicker,
         groupGear,

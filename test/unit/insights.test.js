@@ -72,3 +72,29 @@ describe('gearKind', async () => {
         assert.equal(gearKind('BV450 bear canister'), 'bear-container');
     });
 });
+
+describe('clothingLayer', async () => {
+    const { clothingLayer } = await import('../../client/utils/insights.js');
+    test('sorts warmth layers into insulation', () => {
+        assert.equal(clothingLayer('Nano Puff Hoody', 'Synthetic insulated hoody'), 'insulation');
+        assert.equal(clothingLayer('Ghost Whisperer/2 Hoody', '800 fill down jacket'), 'insulation');
+        assert.equal(clothingLayer('Alpha 90 hoodie'), 'insulation');
+        assert.equal(clothingLayer('Grid fleece'), 'insulation');
+        assert.equal(clothingLayer('Merino beanie'), 'insulation');
+    });
+    test('sorts rain, snow and wind layers into shells', () => {
+        assert.equal(clothingLayer('Helium Rain Jacket', '2.5-layer waterproof shell'), 'shell');
+        assert.equal(clothingLayer('Ultra-Lite 2 rain jacket', 'Cheap, light, not durable'), 'shell');
+        assert.equal(clothingLayer('Houdini wind jacket'), 'shell');
+        assert.equal(clothingLayer('Rain pants'), 'shell');
+        assert.equal(clothingLayer('Poncho tarp'), 'shell');
+    });
+    test('keeps an insulated jacket with a weatherproof face as insulation', () => {
+        assert.equal(clothingLayer('Down hoody', 'Pertex shell fabric, water resistant'), 'insulation');
+    });
+    test('leaves everything else out', () => {
+        assert.equal(clothingLayer('Echo sun hoody', 'UPF 15 sun shirt with hood'), null);
+        assert.equal(clothingLayer('Hiker micro crew socks', 'Merino, lifetime guarantee'), null);
+        assert.equal(clothingLayer('Running shorts'), null);
+    });
+});

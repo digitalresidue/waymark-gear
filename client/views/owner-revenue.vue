@@ -187,6 +187,32 @@ export default {
         width: auto;
     }
 
+    // On a phone each rule stacks: domain, parameter, value, remove.
+    @media (max-width: 720px) {
+        [data-testid="affiliate-rules"] .wgDevTable {
+            thead {
+                display: none;
+            }
+
+            tr {
+                border-top: 1px solid var(--lp-border);
+                display: grid;
+                gap: 6px;
+                grid-template-columns: 1fr 1fr;
+                padding: 8px 0;
+            }
+
+            td {
+                border: 0;
+                padding: 0;
+            }
+
+            td:first-child {
+                grid-column: 1 / -1;
+            }
+        }
+    }
+
     .wgDevTable th {
         color: var(--lp-text-secondary);
         font-size: 12px;

@@ -209,7 +209,7 @@ const cons = { consumable: true };
 const LISTS = {
     sunny_strides: [
         {
-            name: 'PCT 2025: the whole thing', tripType: 'thru', published: true, featured: true,
+            name: 'PCT 2025: the whole thing', tripType: 'thru', trail: { name: 'Pacific Crest Trail', year: 2025, direction: 'nobo' },  published: true, featured: true,
             description: 'What I carried from Campo to Manning Park, April 14 to September 22. Bear can only for the Sierra (Kennedy Meadows to Sonora Pass); microspikes from KM to Tuolumne. Umbrella the whole desert.',
             trip: { days: 6, foodPerDayMg: 793787, waterLiters: 4, distanceKm: 4265, elevationM: 149000, terrain: 'trail', tempLowC: -4, tempHighC: 35, bodyKg: 61 },
             items: [
@@ -225,7 +225,7 @@ const LISTS = {
             ],
         },
         {
-            name: 'AT 2023 (summer, warm)', tripType: 'thru', published: true,
+            name: 'AT 2023 (summer, warm)', tripType: 'thru', trail: { name: 'AT', year: 2023, direction: 'nobo' },  published: true,
             description: 'NOBO, March to August. Lighter quilt after Damascus, Frogg Toggs because everything gets wet anyway.',
             trip: { days: 5, foodPerDayMg: 793787, waterLiters: 2, distanceKm: 3530, elevationM: 140000, terrain: 'trail', tempLowC: 4, tempHighC: 30, bodyKg: 61 },
             items: [
@@ -243,7 +243,7 @@ const LISTS = {
     ],
     patchwork: [
         {
-            name: 'AT NOBO 2026, first draft', tripType: 'thru', published: true, shakedown: true, featured: true,
+            name: 'AT NOBO 2026, first draft', tripType: 'thru', trail: { name: 'Appalachian Trail', year: 2026, direction: 'nobo' },  published: true, shakedown: true, featured: true,
             description: 'Leaving Springer March 12. Base weight feels high but I\'d rather be warm in the Smokies. What would you cut?',
             trip: { days: 4, foodPerDayMg: 907185, waterLiters: 2, distanceKm: 3530, elevationM: 140000, terrain: 'trail', tempLowC: -6, tempHighC: 18, bodyKg: 82 },
             items: [
@@ -261,7 +261,7 @@ const LISTS = {
     ],
     elkwhisperer: [
         {
-            name: 'CDT 2025: Glacier to Crazy Cook', tripType: 'thru', published: true, featured: true,
+            name: 'CDT 2025: Glacier to Crazy Cook', tripType: 'thru', trail: { name: 'CDT', year: 2025, direction: 'sobo' },  published: true, featured: true,
             description: 'SOBO, June 18 to October 30. Ice axe for Glacier, snow in the San Juans in September, 4+ liters through the Great Basin. The inReach got used for real once.',
             trip: { days: 6, foodPerDayMg: 907185, waterLiters: 5, distanceKm: 4900, elevationM: 140000, terrain: 'offtrail', tempLowC: -10, tempHighC: 32, bodyKg: 68 },
             items: [
@@ -279,7 +279,7 @@ const LISTS = {
             ],
         },
         {
-            name: 'Wind River High Route (7 days)', tripType: 'backpacking', published: true,
+            name: 'Wind River High Route (7 days)', tripType: 'backpacking', trail: { name: 'Wind River High Route', year: 2025 },  published: true,
             description: 'Mostly off trail, Class 3 in spots. Tested what I\'ll carry on the next CDT alternates.',
             trip: { days: 7, foodPerDayMg: 793787, waterLiters: 1, distanceKm: 150, elevationM: 9000, terrain: 'offtrail', tempLowC: -2, tempHighC: 20, bodyKg: 68 },
             items: [
@@ -296,7 +296,7 @@ const LISTS = {
     ],
     slowpoke: [
         {
-            name: 'AT sections, fall', tripType: 'section', published: true,
+            name: 'AT sections, fall', tripType: 'section', trail: { name: 'A.T.', year: 2026, direction: 'section' },  published: true,
             description: 'A week at a time. I bring the chair. I bring the good coffee. I am in no hurry.',
             trip: { days: 7, foodPerDayMg: 1020580, waterLiters: 2, distanceKm: 130, elevationM: 6000, terrain: 'trail', tempLowC: 2, tempHighC: 20, bodyKg: 95 },
             items: [
@@ -314,7 +314,7 @@ const LISTS = {
     ],
     kestrel: [
         {
-            name: 'PCT SOBO 2025', tripType: 'thru', published: true,
+            name: 'PCT SOBO 2025', tripType: 'thru', trail: { name: 'PCT', year: 2025, direction: 'sobo' },  published: true,
             description: 'Rainy Pass to Campo, July 2 to November 9. Washington was wet, the Sierra was cold and empty, SoCal was hot in October.',
             trip: { days: 5, foodPerDayMg: 793787, waterLiters: 3, distanceKm: 4265, elevationM: 149000, terrain: 'trail', tempLowC: -6, tempHighC: 33, bodyKg: 57 },
             items: [
@@ -332,7 +332,7 @@ const LISTS = {
     ],
     two_socks: [
         {
-            name: 'Colorado weekend', tripType: 'backpacking', published: true,
+            name: 'Colorado weekend', tripType: 'backpacking', trail: { name: 'Indian Peaks Loop' },  published: true,
             description: 'Two nights in the Indian Peaks. Heavy, I know. Slowly replacing things.',
             trip: { days: 2, foodPerDayMg: 680389, waterLiters: 2, distanceKm: 30, elevationM: 1500, terrain: 'trail', tempLowC: 2, tempHighC: 22, bodyKg: 78 },
             items: [
@@ -348,7 +348,7 @@ const LISTS = {
     ],
     bramble: [
         {
-            name: 'AT flip-flop 2026 (hammock)', tripType: 'thru', published: true, shakedown: true,
+            name: 'AT flip-flop 2026 (hammock)', tripType: 'thru', trail: { name: 'Appalachian Trail', year: 2026, direction: 'flip' },  published: true, shakedown: true,
             description: 'Harpers Ferry north to Katahdin, then back to Springer. Hammock the whole way. Underquilt question: do I need one in Maine in August?',
             trip: { days: 4, foodPerDayMg: 793787, waterLiters: 2, distanceKm: 3530, elevationM: 140000, terrain: 'trail', tempLowC: 0, tempHighC: 28, bodyKg: 60 },
             items: [
@@ -365,7 +365,7 @@ const LISTS = {
     ],
     ridgerunner: [
         {
-            name: 'CDT 2026 NOBO plan', tripType: 'thru', published: true, shakedown: true,
+            name: 'CDT 2026 NOBO plan', tripType: 'thru', trail: { name: 'Continental Divide Trail', year: 2026, direction: 'nobo' },  published: true, shakedown: true,
             description: 'Crazy Cook April 20. Coming from 50 lb rucks, so this already feels light. Is the ice axe overkill for a normal snow year?',
             trip: { days: 6, foodPerDayMg: 1020580, waterLiters: 6, distanceKm: 4900, elevationM: 140000, terrain: 'offtrail', tempLowC: -8, tempHighC: 34, bodyKg: 88 },
             items: [
@@ -419,6 +419,7 @@ function buildLibrary(lists, catalogByName) {
         if (spec.tripType) list.tripType = spec.tripType;
         if (spec.trip) list.trip = spec.trip;
         if (spec.shakedown) list.shakedown = true;
+        if (spec.trail) list.trail = spec.trail;
         for (const [catName, ...rows] of spec.items) {
             const category = lib.newCategory({ list });
             category.name = catName;

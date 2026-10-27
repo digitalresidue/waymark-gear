@@ -215,6 +215,11 @@ const store = createStore({
         importSharedList(state, shared) {
             state.library.importSharedList(shared);
         },
+        setListTrail(state, { list, trail }) {
+            const target = state.library.getListById(list.id);
+            if (trail && trail.name) target.trail = { ...trail };
+            else delete target.trail;
+        },
         setListNotNeeded(state, { list, notNeeded }) {
             const target = state.library.getListById(list.id);
             if (notNeeded.length) target.notNeeded = [...notNeeded];

@@ -9,6 +9,9 @@
                 <router-link to="/owner/kits" :class="{ wgActive: active === 'kits' }">
                     Featured kits
                 </router-link>
+                <router-link to="/owner/trails" :class="{ wgActive: active === 'trails' }" data-testid="owner-nav-trails">
+                    Trails
+                </router-link>
                 <router-link to="/owner/revenue" :class="{ wgActive: active === 'revenue' }" data-testid="owner-nav-revenue">
                     Revenue
                 </router-link>
