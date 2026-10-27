@@ -1,11 +1,12 @@
-# Caddy gets and renews the HTTPS certificate automatically once DNS for
-# both names points at this server.
+# Caddy serves the site over HTTPS and renews its certificate automatically.
+# The domain comes from SITE_DOMAIN in /opt/waymark/.env; both it and
+# www.<domain> need to point at this server (see INSTALL.md, step 4).
+# www.<domain> redirects to the plain domain.
 
-waymarkgear.com {
+{$SITE_DOMAIN}, www.{$SITE_DOMAIN} {
+	@www host www.{$SITE_DOMAIN}
+	redir @www https://{$SITE_DOMAIN}{uri} permanent
+
 	encode zstd gzip
 	reverse_proxy app:3000
-}
-
-www.waymarkgear.com {
-	redir https://waymarkgear.com{uri} permanent
 }
