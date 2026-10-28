@@ -1,18 +1,20 @@
 # Waymark Gear roadmap
 
 Living document. Each phase gets a dated entry in the changelog when it ships;
-the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 5: a way in to writing gear reviews; part 4: chart styles; part 3: the editor's rail, tools and account menu).
+the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 5: writing gear reviews, tidier list rows, optional Google Analytics; part 4: chart styles; part 3: the editor's rail, tools and account menu).
 
 ---
 
 ## Changelog
 
-### Phase 8, part 5 — Writing gear reviews · 2026-10-28 · branch `reviews-writing`
+### Phase 8, part 5 — Writing gear reviews, list rows, Analytics · 2026-10-28 · branch `reviews-writing`
 - **A way in**: reviews are written on each gear page, but nothing led there. Now reviewers (owners, moderators, the `reviewers` setting, or everyone with `openReviews`) get a **Write a review** panel at the top of `/reviews`: search the catalog, or pick from **suggestions** — the most-carried published gear you haven't reviewed yet. Members and visitors don't see it.
 - Also reachable from **Owner ▾ → Write a review**, and a **Review** button on each published item in the owner's gear catalog.
 - Every route lands on the gear page at `#write-review` with the review form **open and focused**.
 - `/api/viewer` now says whether you can review; new `GET /api/reviews/suggestions`.
 - The empty state on `/reviews` says where reviews are written.
+- **List rows**: with Item images on, every row used to reserve a 90px photo column, photo or not. Now photos are a **25px clickable thumbnail**, and the column only exists when the category has a photo (shared lists too). Name and description share the room evenly, and the drag handle and remove ✕ sit inside the category card again.
+- **Optional Google Analytics**: set `GA_MEASUREMENT_ID` in `waymark settings` (INSTALL.md, "Optional: Google Analytics"). Off unless set. Google's script loads after the page has finished, when the browser is idle; visitors sending Global Privacy Control or Do Not Track are skipped, and embeds never load it. The security policy allows Google only when it's on, and the privacy page switches to wording that says Analytics is used.
 - This branch also carries part 4 (chart styles), which had merged into `list-drawer` after that branch was already in `main`.
 
 ### Phase 8, part 4 — Chart styles · 2026-10-28 · branch `chart-styles`
