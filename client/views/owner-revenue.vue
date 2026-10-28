@@ -112,17 +112,19 @@
                 <p><strong>Owner access only.</strong></p>
             </div>
         </main>
+        <siteFooter site />
     </div>
 </template>
 
 <script>
 import siteHeader from '../components/site-header.vue';
+import siteFooter from '../components/site-footer.vue';
 import ownerNav from '../components/owner-nav.vue';
 import { api } from '../utils/format.js';
 
 export default {
     name: 'OwnerRevenue',
-    components: { siteHeader, ownerNav },
+    components: { siteHeader, siteFooter, ownerNav },
     data() {
         return { settings: { enabled: true, rules: [] }, clicks: null, supporters: [], planAvailable: false, saved: false, grantName: '', grantMonths: 12, error: '' };
     },

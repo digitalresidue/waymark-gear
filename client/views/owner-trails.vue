@@ -113,11 +113,13 @@
                 <p><strong>Owner access only.</strong></p>
             </div>
         </main>
+        <siteFooter site />
     </div>
 </template>
 
 <script>
 import siteHeader from '../components/site-header.vue';
+import siteFooter from '../components/site-footer.vue';
 import ownerNav from '../components/owner-nav.vue';
 import modal from '../components/modal.vue';
 import { api } from '../utils/format.js';
@@ -126,7 +128,7 @@ const blank = () => ({ id: null, name: '', short: '', slug: '', aliases: '', reg
 
 export default {
     name: 'OwnerTrails',
-    components: { siteHeader, ownerNav, modal },
+    components: { siteHeader, siteFooter, ownerNav, modal },
     data() {
         return { trails: [], suggestions: [], filter: '', editorOpen: false, form: blank(), error: '', notice: '' };
     },

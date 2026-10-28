@@ -3,9 +3,9 @@
         <div class="lpSidebarSticky">
             <!-- The site header carries the logo and these links on the
                  desktop; in the phone drawer they live here. -->
-            <div class="wgDrawerBrand">
+            <router-link to="/welcome" class="wgDrawerBrand" aria-label="Waymark Gear home" data-testid="drawer-home">
                 <brandLogo />
-            </div>
+            </router-link>
             <nav v-if="isMobile" class="wgDrawerNav" aria-label="Site">
                 <router-link to="/explore">
                     Explore kits

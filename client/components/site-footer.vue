@@ -109,51 +109,6 @@ export default {
     }
 }
 
-.wgSiteFooter {
-    background: #14211B;
-    color: #C9D6CD;
-    font-size: 14px;
-
-    a {
-        color: #C9D6CD;
-
-        &:hover {
-            color: #fff;
-        }
-    }
-
-    p {
-        margin: 6px 0 0;
-    }
-}
-
-.wgSiteFooterInner {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 24px;
-    justify-content: space-between;
-    padding-bottom: 40px;
-    padding-top: 40px;
-}
-
-.lp .wgSiteFooter .wgSiteFooterMark {
-    color: #fff;
-    font-family: $font-display;
-    font-size: 18px;
-    font-stretch: 125%;
-    font-weight: 850;
-    letter-spacing: 0.02em;
-    margin: 0;
-
-    span {
-        font-weight: 400;
-    }
-}
-
-.wgSiteFooterLinks {
-    align-items: center;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-}
+// .wgSiteFooter (the full site footer) lives in css/components/_site-chrome.scss,
+// shared with the server-rendered pages.
 </style>

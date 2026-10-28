@@ -47,3 +47,36 @@ describe('Stripe webhooks and the plan', () => {
         assert.equal(isSupporter(null), false);
     });
 });
+
+describe('catalog: product link and affiliate link', async () => {
+    const { validateEntry, templateCsv } = await import('../../server/catalog.js');
+    const base = { name: 'Duplex', category: 'Shelter', weight: '19', unit: 'oz' };
+
+    test('an affiliate link needs the normal product link beside it', () => {
+        const { errors } = validateEntry({ ...base, affiliate_url: 'https://www.avantlink.com/click.php?tt=cl&mi=1&pw=2' });
+        assert.ok(errors.some((e) => /product link/.test(e)), errors.join('; '));
+    });
+
+    test('both links together are fine, and kept apart', () => {
+        const { value, errors } = validateEntry({ ...base, url: 'https://zpacks.com/products/duplex-tent', affiliate_url: 'https://zpacks.sjv.io/c/123/456/789' });
+        assert.deepEqual(errors, []);
+        assert.equal(value.url, 'https://zpacks.com/products/duplex-tent');
+        assert.equal(value.affiliate_url, 'https://zpacks.sjv.io/c/123/456/789');
+    });
+
+    test('Supporters get the product link; others the affiliate link; no affiliate link means the product link', () => {
+        const settings = { enabled: true, rules: [] };
+        const row = { url: 'https://zpacks.com/products/duplex-tent', affiliate_url: 'https://zpacks.sjv.io/c/123/456/789' };
+        assert.deepEqual(destination(row, settings, true), { url: row.url, affiliate: false });
+        assert.deepEqual(destination(row, settings, false), { url: row.affiliate_url, affiliate: true });
+        assert.deepEqual(destination({ ...row, affiliate_url: '' }, settings, false), { url: row.url, affiliate: false });
+    });
+
+    test('the CSV template shows both columns in use', () => {
+        const [head, example] = templateCsv().trim().split('\n');
+        assert.match(head, /,url,/);
+        assert.match(head, /affiliate_url$/);
+        assert.match(example, /https:\/\/example\.com\/tent/);
+        assert.match(example, /avantlink\.com/);
+    });
+});

@@ -108,17 +108,19 @@
                 </p>
             </div>
         </main>
+        <siteFooter site />
     </div>
 </template>
 
 <script>
 import siteHeader from '../components/site-header.vue';
+import siteFooter from '../components/site-footer.vue';
 import ownerNav from '../components/owner-nav.vue';
 import { api, formatWeightMg, siteConfig } from '../utils/format.js';
 
 export default {
     name: 'OwnerKits',
-    components: { siteHeader, ownerNav },
+    components: { siteHeader, siteFooter, ownerNav },
     data() {
         return { kits: [], total: 0, loaded: false, activeClass: '', query: '', weightClasses: [], timer: null };
     },
