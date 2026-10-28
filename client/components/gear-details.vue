@@ -74,7 +74,7 @@
                     <span v-if="item.catalogId && item.catalogSync" class="wgMuted wgProfileHint">From the Waymark catalog. Changing it makes this item your own copy.</span>
                 </label>
 
-                <label class="wgField">Review video (YouTube)
+                <label class="wgField">YouTube video
                     <input v-model.trim="form.videoUrl" class="wgInput" type="url" inputmode="url" placeholder="https://www.youtube.com/watch?v=…" data-testid="gear-video-link" :aria-invalid="String(Boolean(form.videoUrl && !videoOk))">
                     <span v-if="form.videoUrl && !videoOk" class="wgThreadError">That isn't a YouTube video link.</span>
                     <button v-else-if="form.videoUrl" type="button" class="wgBtn wgBtnGhost wgBtnSmall wgGearPreview" @click="preview">▶ Preview</button>
@@ -166,7 +166,7 @@ export default {
             openPhotos([...this.form.photos.slice(i), ...this.form.photos.slice(0, i)], this.item.name || 'Gear');
         },
         preview() {
-            openVideo(this.form.videoUrl, `${this.item.name || 'Gear'}: review`);
+            openVideo(this.form.videoUrl, `${this.item.name || 'Gear'}: video`);
         },
         async upload(evt) {
             const file = evt.target.files && evt.target.files[0];

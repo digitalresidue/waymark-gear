@@ -146,7 +146,7 @@ test.describe('Phase 4', () => {
         await asker.context.close();
     });
 
-    test('gear details: closet category, photos and a review video, shown as links in a lightbox', async ({ browser }) => {
+    test('gear details: closet category, photos and a YouTube video, shown as links in a lightbox', async ({ browser }) => {
         const u = await newUser(browser, 'p4gear');
         const { page } = u;
         await nameListWithItem(page, 'Media kit', 'Puffy jacket');
@@ -178,6 +178,8 @@ test.describe('Phase 4', () => {
         await expect(page.getByTestId('lightbox')).toHaveCount(0);
         await page.getByTestId('item-video').click();
         await expect(page.getByTestId('lightbox-video')).toHaveAttribute('src', /youtube-nocookie\.com\/embed\/dQw4w9WgXcQ/);
+        // A fallback for videos whose owners don't allow embedding.
+        await expect(page.getByTestId('lightbox-watch')).toHaveAttribute('href', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
         await expect(page.getByTestId('lightbox')).toContainText(/\d+ views? on Waymark Gear/);
         const csp = (await page.request.get(link)).headers()['content-security-policy'];
         expect(csp).toContain('frame-src https://www.youtube-nocookie.com');

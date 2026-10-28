@@ -40,7 +40,7 @@ export function securityHeaders({ enforceCsp }) {
                     imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
                     fontSrc: ["'self'"],
                     connectSrc: ["'self'", ...ga.connectSrc],
-                    // Gear review videos play in a lightbox, from YouTube's
+                    // Gear videos play in a lightbox, from YouTube's
                     // privacy-enhanced domain only.
                     frameSrc: ['https://www.youtube-nocookie.com'],
                     upgradeInsecureRequests: config.get('environment') === 'production' ? [] : null,
