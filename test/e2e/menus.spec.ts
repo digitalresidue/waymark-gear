@@ -75,7 +75,7 @@ test.describe('Site menu', () => {
         // Bell and account menu, top right; My lists is inside it.
         await expect(o.page.getByTestId('header-lists')).toBeHidden();
         await expect(o.page.getByTestId('notification-bell')).toBeVisible();
-        await expect(o.page.locator('[data-viewer-initial]')).toHaveText(o.username.charAt(0).toUpperCase());
+        await expect(o.page.locator('[data-viewer-initial]')).toHaveText(new RegExp(`^${o.username.charAt(0)}$`, 'i'));
         await o.page.getByTestId('account-menu').click();
         await expect(o.page.getByTestId('menu-lists')).toHaveAttribute('href', '/');
         await o.page.keyboard.press('Escape');
@@ -125,7 +125,7 @@ test.describe('Account menu everywhere', () => {
         await expect(page.getByTestId('item-row').first()).toBeVisible();
         await page.goto(url('/explore'));
         const header = page.locator('.wgSiteHeader');
-        await expect(header.locator('.lpAvatar')).toHaveText(u.username.charAt(0).toUpperCase());
+        await expect(header.locator('.lpAvatar')).toHaveText(new RegExp(`^${u.username.charAt(0)}$`, 'i'));
         await expect(header.getByText('Open my lists')).toHaveCount(0);
         // Account Settings opens here, away from the list editor.
         await header.locator('#accountPopover').hover();

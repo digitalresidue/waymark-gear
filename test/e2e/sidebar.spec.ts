@@ -132,6 +132,7 @@ test.describe('Editor alignment', () => {
         // And the same column as another page.
         const editorLeft = (await edges()).left;
         await page.goto(new URL('/explore', page.url()).toString());
+        await expect(page.locator('.wgSiteHeaderInner')).toBeVisible();
         const exploreLeft = await page.evaluate(() => {
             const inner = document.querySelector('.wgSiteHeaderInner')!;
             return Math.round(inner.getBoundingClientRect().left + parseFloat(getComputedStyle(inner).paddingLeft));
