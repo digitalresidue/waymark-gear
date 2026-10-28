@@ -13,6 +13,7 @@ import { destination, getSettings } from './affiliate.js';
 import { isSupporter } from './billing.js';
 import { isUuid } from './catalog.js';
 import { logWithRequest } from './log.js';
+import { copyRemoteImage, isLocalImage, RemoteImageError } from './remote-image.js';
 
 const router = express.Router();
 
@@ -29,13 +30,13 @@ const httpUrl = (v) => {
     }
 };
 
-// Uploaded logos live under /userimages; pasted ones must be https.
+// Uploaded logos live under /userimages; pasted links are copied there on
+// save (server/remote-image.js).
 const logoUrl = (v) => {
     const s = String(v || '').trim();
     if (!s) return '';
     if (/^\/userimages\/[\w/.-]+$/.test(s)) return s;
-    const u = httpUrl(s);
-    return u && u.startsWith('https:') ? u : null;
+    return httpUrl(s);
 };
 
 export function slugify(name) {
@@ -56,7 +57,7 @@ export function cleanBrand(input = {}) {
     if (affiliateUrl === null) return { error: 'The affiliate link must be an http(s) link.' };
     if (affiliateUrl && !url) return { error: 'Add the brand\'s own website too: Supporters, and anyone when affiliate links are off, go there.' };
     const logo = logoUrl(input.logoUrl);
-    if (logo === null) return { error: 'The logo must be uploaded, or an https link to an image.' };
+    if (logo === null) return { error: 'The logo must be uploaded, or a link to an image.' };
     const types = [...new Set((Array.isArray(input.gearTypes) ? input.gearTypes : []).map(String))];
     const unknown = types.find((t) => !GEAR_TYPE_IDS.has(t));
     if (unknown) return { error: `Unknown gear type: ${unknown}.` };
@@ -132,9 +133,24 @@ router.get('/api/admin/brands', admin(async (req, res) => {
     res.json({ brands: rows.map((r) => ({ ...brandEntry(r), clicks30: byId.get(r.id) || 0 })) });
 }));
 
+// A pasted logo link is copied here before saving, so the directory never
+// loads it from the brand's own site.
+async function localizeLogo(row) {
+    if (!row.logo_url || isLocalImage(row.logo_url)) return null;
+    try {
+        row.logo_url = (await copyRemoteImage(row.logo_url, 'site')).imageUrl;
+        return null;
+    } catch (err) {
+        if (err instanceof RemoteImageError) return `Couldn't copy the logo: ${err.message}`;
+        throw err;
+    }
+}
+
 router.post('/api/admin/brands', admin(async (req, res) => {
     const { row, error } = cleanBrand(req.body);
     if (error) return res.status(400).json({ message: error });
+    const logoError = await localizeLogo(row);
+    if (logoError) return res.status(400).json({ message: logoError });
     const dupe = await knex('brands').whereRaw('lower(name) = lower(?)', [row.name]).first('id');
     if (dupe) return res.status(409).json({ message: `${row.name} is already in the directory.` });
     const [created] = await knex('brands').insert({ ...row, slug: await uniqueSlug(row.name) }).returning('*');
@@ -146,6 +162,8 @@ router.put('/api/admin/brands/:id', admin(async (req, res) => {
     if (!isUuid(id)) return res.status(404).json({ message: 'No such brand.' });
     const { row, error } = cleanBrand(req.body);
     if (error) return res.status(400).json({ message: error });
+    const logoError = await localizeLogo(row);
+    if (logoError) return res.status(400).json({ message: logoError });
     const dupe = await knex('brands').whereRaw('lower(name) = lower(?)', [row.name]).whereNot({ id }).first('id');
     if (dupe) return res.status(409).json({ message: `${row.name} is already in the directory.` });
     const [updated] = await knex('brands').where({ id })

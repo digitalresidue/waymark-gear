@@ -29,7 +29,7 @@ describe('Brands', () => {
         assert.match(cleanBrand({}).error, /name/);
         assert.match(cleanBrand({ name: 'X', url: 'javascript:alert(1)' }).error, /http/);
         assert.match(cleanBrand({ name: 'X', affiliateUrl: 'https://aff.example/1' }).error, /own website/);
-        assert.match(cleanBrand({ name: 'X', logoUrl: 'http://insecure.example/logo.png' }).error, /logo/);
+        assert.match(cleanBrand({ name: 'X', logoUrl: 'ftp://files.example/logo.png' }).error, /logo/);
         assert.match(cleanBrand({ name: 'X', gearTypes: ['spaceships'] }).error, /Unknown gear type/);
         assert.equal(cleanBrand({ name: 'X', status: 'whatever' }).row.status, 'draft');
     });

@@ -44,7 +44,10 @@ test.describe('Brands', () => {
 
         // Two more over the API: a big brand, and a draft.
         const add = async (data: object) => expect((await o.page.request.post(url('/api/admin/brands'), { data })).status()).toBe(201);
-        await add({ name: `Summit Supply ${tag}`, description: 'Sleeping bags and pads.', url: 'https://summit.example/', gearTypes: ['sleep'], status: 'published' });
+        // A pasted logo link is copied here, not hotlinked.
+        const linked = await o.page.request.post(url('/api/admin/brands'), { data: { name: `Summit Supply ${tag}`, description: 'Sleeping bags and pads.', url: 'https://summit.example/', gearTypes: ['sleep'], status: 'published', logoUrl: url('/images/icon-512.png') } });
+        expect(linked.status()).toBe(201);
+        expect((await linked.json()).brand.logoUrl).toMatch(/^\/userimages\/.+\.webp$/);
         await add({ name: `Secret ${tag}`, url: 'https://secret.example/', status: 'draft' });
         // The same name twice is refused.
         expect((await o.page.request.post(url('/api/admin/brands'), { data: { name: `summit supply ${tag}` } })).status()).toBe(409);

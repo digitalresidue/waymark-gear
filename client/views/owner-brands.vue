@@ -78,9 +78,9 @@
                                 {{ uploading ? 'Uploading…' : 'Upload' }}
                                 <input type="file" accept="image/png,image/jpeg,image/webp" class="wgVisuallyHidden" data-testid="brand-form-logo-file" @change="upload">
                             </label>
-                            <input v-model.trim="form.logoUrl" class="wgInput" placeholder="or paste an https image link" aria-label="Logo image link" data-testid="brand-form-logo-url">
+                            <input v-model.trim="form.logoUrl" class="wgInput" placeholder="or paste an image link" aria-label="Logo image link" data-testid="brand-form-logo-url">
                         </div>
-                        <span class="wgMuted">Square-ish works best; it's shown at 56px on a white tile. PNG with a transparent background is ideal.</span>
+                        <span class="wgMuted">Square-ish works best; it's shown at 56px on a white tile. PNG with a transparent background is ideal. A pasted link is copied here when you save, so their site isn't hotlinked.</span>
                     </div>
 
                     <label class="wgField wgSpan2">Short description <span class="wgMuted">({{ 300 - form.description.length }} left)</span>
