@@ -1106,7 +1106,7 @@ const renderItem = function (item, args) {
         out.sponsored = true;
     }
 
-    // Photos and review videos open in a lightbox (client/utils/lightbox.js).
+    // Photos and videos open in a lightbox (client/utils/lightbox.js).
     const photos = Array.isArray(item.photos) ? item.photos.filter((p) => /^\/userimages\//.test(p)) : [];
     out.photoCount = photos.length;
     out.photosJson = photos.length ? JSON.stringify(photos) : '';
