@@ -14,6 +14,7 @@ import mcp from './server/mcp.js';
 import oauth from './server/oauth.js';
 import billing, { webhookHandler as stripeWebhook } from './server/billing.js';
 import affiliate from './server/affiliate.js';
+import headTags, { injectHeadTags, loadHeadTags } from './server/head-tags.js';
 import googleAuth from './server/google.js';
 import views, { hasBuiltAssets } from './server/views.js';
 import { authRateLimit, cspNonce, securityHeaders } from './server/security.js';
@@ -110,6 +111,10 @@ app.use(authRateLimit());
 
 app.use(express.static(`${import.meta.dirname}/public/`, { maxAge: oneDay }));
 
+// The owner's verification <meta> tags (Owner → Revenue), in every page.
+await loadHeadTags();
+app.use(injectHeadTags);
+
 const server = http.createServer(app);
 
 // Dev without a build: run Vite in-process so its modules and HMR socket share
@@ -130,6 +135,7 @@ app.use('/', mcp);
 app.use('/', oauth);
 app.use('/', billing);
 app.use('/', affiliate);
+app.use('/', headTags);
 app.use('/', endpoints);
 app.use('/', moderationEndpoints);
 app.use('/', apiEndpoints);
