@@ -10,6 +10,11 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 ### Phase 8, part 6 — Header tags · 2026-10-28 · branch `head-tags`
 - **Owner → Revenue → Header tags**: paste up to 10 `<meta>` verification tags (Impact, Google Search Console, Pinterest...), one per line; they go into the `<head>` of every page the server sends, at once, no restart. Only `name`/`property`/`itemprop` with `content`/`value` are accepted (no scripts, no `http-equiv`); each tag is rebuilt and escaped, not echoed as pasted. Stored in `site_settings`.
 
+### Phase 8, part 7 — Brands directory · 2026-10-28 · branch `brands`
+- **`/brands`** (Explore ▾ → Brands): gear makers as cards with logo (or a monogram), a short description, a Cottage badge, country, and what they make. Search by name, **Cottage makers only**, and gear-type filters (shelters, sleep, packs, insulation, shells, clothing, footwear, cooking, water, electronics, poles, navigation, accessories). Filters apply in place and keep the URL in step; the same URL works without JavaScript. In the sitemap.
+- **Visit** goes through `/go/brand/:id`, like catalog Buy buttons: the brand's affiliate link when it has one (or a matching affiliate rule), its website for Supporters and when affiliate links are off. Visits are counted per day (no personal data).
+- **Owner → Brands**: add, edit and delete brands, upload a logo (or paste an https link), draft or published, with visits over the last 30 days. Saying who gets which link in words, as the catalog editor does.
+
 ### Phase 8, part 5 — Writing gear reviews, list rows, Analytics · 2026-10-28 · branch `reviews-writing`
 - **A way in**: reviews are written on each gear page, but nothing led there. Now reviewers (owners, moderators, the `reviewers` setting, or everyone with `openReviews`) get a **Write a review** panel at the top of `/reviews`: search the catalog, or pick from **suggestions** — the most-carried published gear you haven't reviewed yet. Members and visitors don't see it.
 - Also reachable from **Owner ▾ → Write a review**, and a **Review** button on each published item in the owner's gear catalog.

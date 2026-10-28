@@ -26,6 +26,8 @@ import { reviewsFor, latestReviews } from './reviews.js';
 import { getById as catalogItem, isUuid, search as catalogSearch } from './catalog.js';
 import { priceHistory } from './prices.js';
 import * as trails from './trails.js';
+import { publishedBrands, matchesBrand } from './brands.js';
+import { GEAR_TYPES, GEAR_TYPE_IDS, gearTypeLabel } from '../client/brand-types.js';
 import { PACK_FEATURES, DIRECTIONS } from '../client/utils/trails.js';
 import { ratingsFor } from './reviews.js';
 import { renderPage } from './site-chrome.js';
@@ -68,6 +70,7 @@ const vueRoutes = [ /* TODO - get this from same data source as Vue */
     { path: '/supporter' },
     { path: '/owner/revenue' },
     { path: '/owner/trails' },
+    { path: '/owner/brands' },
 ];
 
 let index = fs.readFileSync(path.join(import.meta.dirname, '../_index.html'), 'utf8');
@@ -263,6 +266,7 @@ router.get('/sitemap.xml', async (req, res) => {
                     url(`${base}/welcome`),
                     url(`${base}/explore`),
                     url(`${base}/trails/all`),
+                    url(`${base}/brands`),
                     ...trailSlugs.map((slug) => url(`${base}/trails/${slug}`)),
                     ...kits.map((k) => url(`${base}/r/${k.external_id}`, k.updated_at)),
                     ...people.map((p) => url(`${base}/@${p.username}`, p.updated_at)),
@@ -447,6 +451,7 @@ const tripTemplate = fs.readFileSync(path.join(import.meta.dirname, '../template
 const gearTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/gear-item.mustache'), 'utf8');
 const compareTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/compare.mustache'), 'utf8');
 const trailsTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/trails.mustache'), 'utf8');
+const brandsTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/brands.mustache'), 'utf8');
 const VISIBILITY_LABELS = { followers: 'Followers only', private: 'Only you' };
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -722,6 +727,49 @@ function trailBodyModel(data, comparison) {
         })),
     };
 }
+
+// The Brands directory. Every published brand is in the page (there are
+// dozens, not thousands), with the ones the filters rule out hidden, so the
+// browser can filter in place and the URL still works without JavaScript.
+router.get('/brands', async (req, res) => {
+    try {
+        const type = GEAR_TYPE_IDS.has(String(req.query.type)) ? String(req.query.type) : '';
+        const filters = { q: String(req.query.q || '').trim().slice(0, 80), cottage: req.query.cottage === '1', type };
+        const rows = await publishedBrands();
+        const brands = rows.map((b) => ({
+            id: b.id,
+            name: b.name,
+            initial: b.name.charAt(0).toUpperCase(),
+            description: b.description,
+            logoUrl: b.logo_url,
+            url: b.url,
+            cottage: b.cottage,
+            country: b.country,
+            hasMeta: Boolean(b.cottage || b.country),
+            typeIds: (b.gear_types || []).join(' '),
+            typeLabels: (b.gear_types || []).map(gearTypeLabel),
+            shown: matchesBrand(b, filters),
+        }));
+        const shown = brands.filter((b) => b.shown).length;
+        const model = {
+            ...shareHead(),
+            cspNonce: NONCE_PLACEHOLDER,
+            path: '/brands',
+            pageTitle: 'Gear brands',
+            metaDescription: 'Backpacking gear makers, from big brands to cottage shops: search by name or by what they make.',
+            filters,
+            types: GEAR_TYPES.map((t) => ({ ...t, on: t.id === type })),
+            brands,
+            total: brands.length,
+            anyShown: shown > 0,
+            countLabel: shown === brands.length ? `${brands.length} ${brands.length === 1 ? 'brand' : 'brands'}` : `${shown} of ${brands.length} brands`,
+        };
+        sendFresh(res, renderPage(brandsTemplate, model, {}, req.path));
+    } catch (err) {
+        logWithRequest(req, { message: 'error rendering brands', err });
+        res.status(500).send('An error occurred.');
+    }
+});
 
 router.get('/trails', async (req, res) => {
     if (req.query.t) return res.redirect(301, `/trails/${encodeURIComponent(String(req.query.t))}`);
