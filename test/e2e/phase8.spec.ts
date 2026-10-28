@@ -74,6 +74,7 @@ test.describe('Phase 8: trails', () => {
         await expect(page.getByTestId('trail-name')).toHaveText('Pacific Crest Trail');
         await expect(page.getByTestId('trail-pack').filter({ hasText: listName })).toContainText('2026 NOBO');
         await page.getByTestId('trail-sort-year').click();
+        await expect(page).toHaveURL(/\/trails\/pct\?sort=year$/);
         await expect(page.getByTestId('trail-pack').filter({ hasText: listName })).toBeVisible();
 
         // And it's yours: a starred chip.
