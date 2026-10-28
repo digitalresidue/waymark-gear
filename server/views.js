@@ -27,6 +27,7 @@ import { priceHistory } from './prices.js';
 import * as trails from './trails.js';
 import { PACK_FEATURES, DIRECTIONS } from '../client/utils/trails.js';
 import { ratingsFor } from './reviews.js';
+import { renderPage } from './site-chrome.js';
 
 const router = express.Router();
 
@@ -425,7 +426,7 @@ router.get('/@:username', async (req, res) => {
             })),
             metaDescription: `${name} on Waymark Gear: ${kits.length} published ${kits.length === 1 ? 'list' : 'lists'}${lightest ? `, lightest base weight ${lightest}` : ''}.`,
         };
-        const html = Mustache.render(profileTemplate, model, { kitCard: templates.t_kitCard || '' });
+        const html = renderPage(profileTemplate, model, { kitCard: templates.t_kitCard || '' }, req.path);
         if (tripsView) return sendFresh(res, html);
         return sendCachedPage(req, res, storePage(cacheKey, html, found.userId));
     } catch (err) {
@@ -520,7 +521,7 @@ router.get('/t/:id', async (req, res) => {
             })),
             metaDescription: `${trip.title}: a trip journal by ${authorName}${tripDateRange(trip.startDate, trip.endDate) ? `, ${tripDateRange(trip.startDate, trip.endDate)}` : ''}. ${plain(trip.summary).slice(0, 140)}`.trim(),
         };
-        sendFresh(res, Mustache.render(tripTemplate, model));
+        sendFresh(res, renderPage(tripTemplate, model, {}, req.path));
     } catch (err) {
         logWithRequest(req, { message: 'error rendering trip', err });
         res.status(500).send('An error occurred.');
@@ -575,7 +576,7 @@ router.get('/g/:id', async (req, res) => {
                 prices: priceModel(history),
             },
         };
-        sendFresh(res, Mustache.render(gearTemplate, model, { reviewCard: templates.t_reviewCard || '' }));
+        sendFresh(res, renderPage(gearTemplate, model, { reviewCard: templates.t_reviewCard || '' }, req.path));
     } catch (err) {
         logWithRequest(req, { message: 'error rendering gear page', err });
         res.status(500).send('An error occurred.');
@@ -649,7 +650,7 @@ router.get('/compare', async (req, res) => {
                 };
             }),
         };
-        sendFresh(res, Mustache.render(compareTemplate, model));
+        sendFresh(res, renderPage(compareTemplate, model, {}, req.path));
     } catch (err) {
         logWithRequest(req, { message: 'error rendering comparison', err });
         res.status(500).send('An error occurred.');
@@ -742,7 +743,7 @@ router.get('/trails/all', async (req, res) => {
             metaDescription: 'Every trail on Waymark Gear, with the pack lists hikers have published for each.',
             directory: { q, count: list.length, groups: [...groups].map(([label, ts]) => ({ label, trails: ts })) },
         };
-        sendFresh(res, Mustache.render(trailsTemplate, model, { trailBody: templates.t_trailBody || '' }));
+        sendFresh(res, renderPage(trailsTemplate, model, { trailBody: templates.t_trailBody || '' }, req.path));
     } catch (err) {
         logWithRequest(req, { message: 'error rendering trail directory', err });
         res.status(500).send('An error occurred.');
@@ -771,7 +772,7 @@ router.get('/trails/:slug', async (req, res) => {
             trailView: true,
             chips: chips.map((t) => ({ slug: t.slug, label: t.short || t.name, count: t.count || 0, on: t.slug === data.trail.slug })),
         };
-        sendFresh(res, Mustache.render(trailsTemplate, model, { trailBody: templates.t_trailBody || '' }));
+        sendFresh(res, renderPage(trailsTemplate, model, { trailBody: templates.t_trailBody || '' }, req.path));
     } catch (err) {
         logWithRequest(req, { message: 'error rendering trail', err });
         res.status(500).send('An error occurred.');
@@ -789,7 +790,7 @@ router.get('/reviews', async (req, res) => {
             metaDescription: 'Long-term backpacking gear reviews from the Waymark Gear team.',
             latest: { reviews: reviews.map(reviewModel), openReviews: config.has('openReviews') && config.get('openReviews') },
         };
-        sendFresh(res, Mustache.render(gearTemplate, model, { reviewCard: templates.t_reviewCard || '' }));
+        sendFresh(res, renderPage(gearTemplate, model, { reviewCard: templates.t_reviewCard || '' }, req.path));
     } catch (err) {
         logWithRequest(req, { message: 'error rendering reviews', err });
         res.status(500).send('An error occurred.');
@@ -880,7 +881,7 @@ async function renderListView(req, res) {
 
         Object.assign(model, templates);
         model.cspNonce = NONCE_PLACEHOLDER;
-        return sendCachedPage(req, res, storePage(cacheKey, Mustache.render(shareTemplate, model), user.user_id));
+        return sendCachedPage(req, res, storePage(cacheKey, renderPage(shareTemplate, model, {}, req.path), user.user_id));
     } catch (err) {
         logWithRequest(req, {message: 'error rendering list', err});
         return res.status(500).send('An error occurred.');

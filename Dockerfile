@@ -23,8 +23,13 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends webp tini \
     && rm -rf /var/lib/apt/lists/*
 
+# The footer on server-rendered pages shows these too (client/brand.js).
+ARG VITE_CONTACT_EMAIL=""
+ARG VITE_SOURCE_URL=""
 ENV NODE_ENV=production \
-    PORT=3000
+    PORT=3000 \
+    VITE_CONTACT_EMAIL=$VITE_CONTACT_EMAIL \
+    VITE_SOURCE_URL=$VITE_SOURCE_URL
 
 WORKDIR /app
 COPY --from=build --chown=node:node /app/package.json /app/app.js ./

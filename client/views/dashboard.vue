@@ -203,11 +203,15 @@ export default {
         // "Import from LighterPack" on the homepage: same, an account-less
         // library to import into if there isn't one yet.
         const importing = this.$route.query.import === 'lighterpack';
+        // "Start a list" in the header of a server-rendered page.
+        const starting = this.$route.query.start === '1';
         // "Copy to my lists" from a shared page works without an account:
         // a visitor with no library gets an account-less one to copy into.
-        if (!this.$store.state.library && (copyId || importing)) {
+        // Only ever when there's no library, so nothing is replaced.
+        if (!this.$store.state.library && (copyId || importing || starting)) {
             this.$store.dispatch('startLocalLibrary');
         }
+        if (starting) this.$router.replace({ query: {} });
         if (!this.$store.state.library) {
             this.$router.push('/welcome');
         } else {

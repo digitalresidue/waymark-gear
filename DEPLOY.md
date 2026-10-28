@@ -230,14 +230,28 @@ Supporter plan ($5 a month or $48 a year), whose members get plain links and a
 profile badge. Both are off until you set them up.
 
 **Affiliate links.** Join the programs you want (Amazon Associates, AvantLink
-for REI and many outdoor brands, a brand's own program). Then either:
+for REI and many outdoor brands, Impact, a brand's own program). Every
+catalog item keeps two links:
 
-- **Owner → Revenue → Affiliate rules**: one rule per shop, e.g. domain
-  `amazon.com`, parameter `tag`, value `yourtag-20`. Every catalog product link
-  on that shop gets your code; or
-- set an item's own **Affiliate link** in the catalog editor (or the
-  `affiliate_url` CSV column) for programs that use a tracking URL instead of a
-  parameter. An item's own link wins over the rules.
+- **Product link** (`url` in the CSV): the normal store page. Supporters
+  always get this one, and it's the one people can read.
+- **Affiliate link** (`affiliate_url`, optional): the tracking link the
+  network gives you. AvantLink and Impact links don't look like the product
+  (`https://www.avantlink.com/click.php?...`, `https://brand.sjv.io/c/...`),
+  which is why they go in their own column rather than replacing the
+  product link. An item with an affiliate link must have a product link too.
+
+Who gets what when they click Buy:
+
+| Reader | Item has an affiliate link | No affiliate link |
+| --- | --- | --- |
+| Supporter | Product link | Product link |
+| Everyone else | Affiliate link | Product link, with your shop rule's code added if one matches its site |
+
+Shop rules (**Owner → Revenue → Affiliate rules**) cover programs that work
+by adding a parameter, e.g. domain `amazon.com`, parameter `tag`, value
+`yourtag-20`, so you don't need an affiliate link per Amazon item. The
+catalog editor says, for each item, which link its Buy button will use.
 
 Buy buttons go through `/go/<item>`, which picks the link per reader and counts
 clicks (Owner → Revenue). Every page with Buy buttons carries a short

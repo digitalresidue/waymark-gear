@@ -13,7 +13,7 @@ import path from 'node:path';
 
 import express from 'express';
 import config from 'config';
-import Mustache from 'mustache';
+import { renderPage } from './site-chrome.js';
 import rateLimit from 'express-rate-limit';
 
 import knex from './db.js';
@@ -139,7 +139,7 @@ router.get('/oauth/authorize', async (req, res) => {
         const user = await optionalUser(req);
         if (!user) return res.redirect(303, `/signin?next=${encodeURIComponent(req.originalUrl)}`);
         const fields = Object.fromEntries(PARAMS.map((p) => [p, String(q[p] || '')]));
-        const html = Mustache.render(consentTemplate, {
+        const html = renderPage(consentTemplate, {
             ...shareAssets(),
             cspNonce: NONCE_PLACEHOLDER,
             clientName: check.client.name,

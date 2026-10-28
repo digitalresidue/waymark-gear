@@ -2,6 +2,7 @@
 // @profiles): voting, following, and the photo/video lightbox.
 
 import { bindLightboxLinks } from './utils/lightbox.js';
+import { canSee } from './nav.js';
 
 async function call(url, options = {}) {
     const res = await fetch(url, {
@@ -170,15 +171,89 @@ function initCompare() {
 }
 
 // The phone menu is a <details>; close it on an outside tap or Escape.
-function initPhoneMenu() {
-    const menus = document.querySelectorAll('.wgShareMenuPhone');
-    if (!menus.length) return;
+// The site header on server pages (templates/t_siteHeader.mustache): the
+// phone menu, the dropdowns, and the parts that depend on who's looking.
+// The page is cached and shared, so it arrives with signed-in-only entries
+// hidden; /api/viewer says which to show.
+function initSiteHeader() {
+    const header = document.querySelector('[data-site-header]');
+    if (!header) return;
+    const nav = header.querySelector('.wgSiteNav');
+    const menuBtn = header.querySelector('.wgSiteMenuBtn');
+    const groups = [...header.querySelectorAll('.wgNavGroup')];
+
+    const closeGroups = (except) => groups.forEach((g) => {
+        if (g === except) return;
+        g.classList.remove('wgNavGroupOpen');
+        g.querySelector('.wgNavGroupBtn').setAttribute('aria-expanded', 'false');
+    });
+    const setMenu = (open) => {
+        nav.classList.toggle('wgSiteNavOpen', open);
+        menuBtn.setAttribute('aria-expanded', String(open));
+    };
+    menuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setMenu(!nav.classList.contains('wgSiteNavOpen'));
+    });
+    groups.forEach((g) => {
+        const btn = g.querySelector('.wgNavGroupBtn');
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const open = !g.classList.contains('wgNavGroupOpen');
+            closeGroups(g);
+            g.classList.toggle('wgNavGroupOpen', open);
+            btn.setAttribute('aria-expanded', String(open));
+        });
+    });
     document.addEventListener('click', (e) => {
-        menus.forEach((m) => { if (m.open && !m.contains(e.target)) m.open = false; });
+        if (!header.contains(e.target)) {
+            closeGroups();
+            setMenu(false);
+        }
     });
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') menus.forEach((m) => { m.open = false; });
+        if (e.key === 'Escape') {
+            closeGroups();
+            setMenu(false);
+        }
     });
+    nav.addEventListener('click', (e) => {
+        if (e.target.closest('a')) setMenu(false);
+    });
+
+    let hasLibrary = false;
+    try {
+        hasLibrary = Boolean(localStorage.getItem('library'));
+    } catch {
+        // Storage blocked: treat as no local lists.
+    }
+    const apply = (viewer) => {
+        header.querySelectorAll('[data-show]').forEach((el) => {
+            el.hidden = !canSee({ show: el.dataset.show }, viewer);
+        });
+        groups.forEach((g) => {
+            if (!g.hidden && !g.querySelector('.wgNavDropItem:not([hidden])')) g.hidden = true;
+        });
+        const cta = header.querySelector('[data-lists-button]');
+        if (viewer.signedIn || viewer.hasLibrary) {
+            cta.href = '/';
+            cta.querySelector('.wgLong').textContent = viewer.signedIn ? 'Open my lists' : 'My lists';
+            cta.querySelector('.wgShort').textContent = 'My lists';
+        }
+        const name = header.querySelector('[data-viewer-name]');
+        if (viewer.signedIn) {
+            name.textContent = viewer.username;
+            name.hidden = false;
+        }
+        header.dataset.viewer = viewer.signedIn ? 'signed-in' : 'guest';
+    };
+    apply({ signedIn: false, hasLibrary });
+    fetch('/api/viewer', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((v) => {
+            if (v) apply({ signedIn: Boolean(v.username), username: v.username, hasLibrary: hasLibrary || Boolean(v.username), isAdmin: v.isAdmin, isModerator: v.isModerator });
+        })
+        .catch(() => {});
 }
 
 // The Trails page: switch trails (and sorts) in place, search every trail,
@@ -317,7 +392,7 @@ function initTrails() {
 
 export function initSocial() {
     initTrails();
-    initPhoneMenu();
+    initSiteHeader();
     initCompare();
     initVotes();
     initFollow();
