@@ -18,7 +18,7 @@ export async function api(url, options = {}) {
         ...options,
         headers: { Accept: 'application/json', ...(options.body ? { 'Content-Type': 'application/json' } : {}), ...(options.headers || {}) },
     });
-    let body = null;
+    let body;
     try {
         body = await response.json();
     } catch {

@@ -344,8 +344,8 @@ List.prototype.calculateTotals = function () {
     let totalWornWeight = 0;
     let totalConsumableWeight = 0;
     let totalConsumablePrice = 0;
-    let totalBaseWeight = 0;
-    let totalPackWeight = 0;
+    let totalBaseWeight;
+    let totalPackWeight;
     let totalQty = 0;
     const out = { categories: [] };
 
