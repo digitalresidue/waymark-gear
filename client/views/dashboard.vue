@@ -315,6 +315,12 @@ export default {
     .lpHasSidebar & {
         background: var(--lp-sidebar-bg);
     }
+
+    // On the desktop the icon rail stays when the panel is put away, so the
+    // filler keeps the sidebar's surface either way.
+    @media only screen and (width > $mobile) {
+        background: var(--lp-sidebar-bg);
+    }
 }
 
 .lpFrameFillRight {

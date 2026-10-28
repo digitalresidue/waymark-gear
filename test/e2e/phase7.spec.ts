@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 import { test, expect, Page, Browser, APIRequestContext } from '@playwright/test';
 
 import { registerUser, generateTestUser } from './auth-utils';
-import { createCategoryWithItem, addItem } from './test-helpers';
+import { createCategoryWithItem, addItem, showCloset } from './test-helpers';
 import { testRoot } from './utils';
 
 // Phase 7: gear check, wishlist, comparisons, price history, affiliate
@@ -109,6 +109,7 @@ test.describe('Phase 7: gear check, wishlist, compare, prices', () => {
         await page.getByTestId('gear-filter-wishlist').click();
         await expect(page.getByTestId('gear-row')).toHaveCount(1);
         done = saved(page);
+        await showCloset(page);
         await page.getByTestId('closet-got-it').click();
         await done;
         await expect(page.getByTestId('gear-filter-wishlist')).toHaveCount(0);

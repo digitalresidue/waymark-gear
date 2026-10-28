@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 import { registerUser, generateTestUser } from './auth-utils';
-import { openSidebar, createCategoryWithItem } from './test-helpers';
+import { openSidebar, createCategoryWithItem, showLists } from './test-helpers';
 
 /**
  * Shared-item bubble + "Edit a copy instead" (forkItem).
@@ -37,6 +37,7 @@ test.describe('Shared item bubble', () => {
     await createCategoryWithItem(page, 'Shelter', 'Shared Tent');
 
     // Copying a list shares the underlying item records.
+    await showLists(page);
     await page.getByTestId('new-list').hover();
     await page.getByText('Copy a list', { exact: true }).click();
     const listToCopy = page.locator('#listToCopy');
@@ -69,6 +70,7 @@ test.describe('Shared item bubble', () => {
     await forkedRow.getByPlaceholder('Name', { exact: true }).fill('Forked Tent');
     await forkedRow.getByPlaceholder('Name', { exact: true }).blur();
 
+    await showLists(page);
     await page.locator('#lists').getByText('Original List', { exact: true }).click();
     const originalRow = page.getByTestId('category').last().getByTestId('item-row').nth(1);
     await expect(originalRow.getByPlaceholder('Name', { exact: true })).toHaveValue('Shared Tent');
@@ -91,11 +93,13 @@ test.describe('Shared item bubble', () => {
     // Adding a category + item marks them _isNew (focus-on-create).
     await createCategoryWithItem(page, 'Gear', 'Widget');
 
+    await showLists(page);
     await page.getByTestId('new-list').click();
     await listNameInput.fill('Focus B');
     await listNameInput.blur();
 
     // Switching back must not restore focus to the last-added row.
+    await showLists(page);
     await page.locator('#lists').getByText('Focus A', { exact: true }).click();
     await expect(page.getByTestId('category').last().getByTestId('item-row').nth(1).getByPlaceholder('Name', { exact: true })).toHaveValue('Widget');
     const focusInRow = await page.evaluate(() => Boolean(document.activeElement && document.activeElement.closest('.lpItem, .lpItemsHeader')));
@@ -114,6 +118,7 @@ test.describe('Shared item bubble', () => {
 
     await createCategoryWithItem(page, 'Cooking', 'Stove');
 
+    await showLists(page);
     await page.getByTestId('new-list').hover();
     await page.getByText('Copy a list', { exact: true }).click();
     const listToCopy = page.locator('#listToCopy');
@@ -126,6 +131,7 @@ test.describe('Shared item bubble', () => {
     await itemRow.getByPlaceholder('Name', { exact: true }).fill('Stove XL');
     await itemRow.getByPlaceholder('Name', { exact: true }).blur();
 
+    await showLists(page);
     await page.locator('#lists').getByText('List A', { exact: true }).click();
     const originalRow = page.getByTestId('category').last().getByTestId('item-row').nth(1);
     await expect(originalRow.getByPlaceholder('Name', { exact: true })).toHaveValue('Stove XL');
@@ -143,6 +149,7 @@ test.describe('Shared item bubble', () => {
 
     await createCategoryWithItem(page, 'Shelter', 'Shared Tarp');
 
+    await showLists(page);
     await page.getByTestId('new-list').hover();
     await page.getByText('Copy a list', { exact: true }).click();
     const listToCopy = page.locator('#listToCopy');

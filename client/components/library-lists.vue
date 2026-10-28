@@ -104,6 +104,7 @@ export default {
         PopoverHover,
     },
     inject: ['openCopyList', 'openImportCSV', 'openImportLighterPack', 'initSpeedbump'],
+    emits: ['chosen'],
     data() {
         return { query: '', sharedWithMe: [] };
     },
@@ -170,6 +171,8 @@ export default {
         },
         setDefaultList(list) {
             this.$store.commit('setDefaultList', list);
+            // The sidebar closes the lists into its rail on a choice.
+            this.$emit('chosen', list);
         },
         togglePin(list) {
             this.$store.commit('togglePinList', list);
@@ -187,6 +190,8 @@ export default {
         newList() {
             this.query = '';
             this.$store.commit('newList');
+            // A new list wants gear: the sidebar shows the closet.
+            this.$emit('chosen', this.library.getListById(this.library.defaultListId));
             // Frictionless naming: drop the cursor straight into the title.
             this.$nextTick(() => {
                 const title = document.getElementById('lpListName');

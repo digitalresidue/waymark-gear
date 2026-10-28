@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 import { registerUser, loginUser, logoutUser, generateTestUser } from './auth-utils';
-import { createCategory, addItem, enableSetting, disableSetting, getCategoryNames, openSidebar, setDensity } from './test-helpers';
+import { createCategory, addItem, enableSetting, disableSetting, getCategoryNames, openSidebar, setDensity, showLists } from './test-helpers';
 
 test.describe('Settings Persistence After Reload', () => {
   test('should persist item prices setting after reload', async ({ page }) => {
@@ -329,6 +329,7 @@ test.describe('Per-list settings', () => {
     await expect(page.getByTestId('item-price').first()).toBeVisible();
 
     // A new list inherits the active list's settings…
+    await showLists(page);
     await page.getByTestId('new-list').click();
     await listNameInput.fill('List B');
     await listNameInput.blur();
@@ -340,6 +341,7 @@ test.describe('Per-list settings', () => {
     await disableSetting(page, 'Item prices');
     await expect(page.getByTestId('item-price')).toHaveCount(0);
 
+    await showLists(page);
     await page.locator('#lists').getByText('List A', { exact: true }).click();
     await expect(page.getByTestId('item-price').first()).toBeVisible();
 
@@ -352,6 +354,7 @@ test.describe('Per-list settings', () => {
     await expect(page.getByTestId('item-price').first()).toBeVisible();
 
     await openSidebar(page);
+    await showLists(page);
     await page.locator('#lists').getByText('List B', { exact: true }).click();
     await expect(page.getByTestId('item-price')).toHaveCount(0);
   });

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 import { registerUser, generateTestUser, loginUser, logoutUser } from './auth-utils';
-import { openSidebar, createCategoryWithItem } from './test-helpers';
+import { openSidebar, createCategoryWithItem, showLists } from './test-helpers';
 
 test.describe('Account Settings', () => {
   test.beforeEach(async ({ page }) => {
@@ -171,6 +171,7 @@ test.describe('Shared item bubble preference', () => {
     await createCategoryWithItem(page, 'Shelter', 'Shared Tent');
 
     // Copying the list shares the item, which makes the bubble appear.
+    await showLists(page);
     await page.getByTestId('new-list').hover();
     await page.getByText('Copy a list', { exact: true }).click();
     const listToCopy = page.locator('#listToCopy');

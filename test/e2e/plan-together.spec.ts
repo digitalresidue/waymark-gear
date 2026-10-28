@@ -1,7 +1,7 @@
 import { test, expect, Page, Browser } from '@playwright/test';
 
 import { registerUser, generateTestUser } from './auth-utils';
-import { addItem } from './test-helpers';
+import { addItem, showLists } from './test-helpers';
 import { testRoot } from './utils';
 
 // Phase 5: planning a list together, live.
@@ -53,6 +53,7 @@ test.describe('Planning together', () => {
 
         // The partner finds it under "Shared with you" and opens it.
         await partner.page.reload();
+        await showLists(partner.page);
         await partner.page.getByTestId('shared-list').filter({ hasText: 'Group trip' }).click();
         await expect(partner.page.getByTestId('plan-sidebar')).toBeVisible();
         await expect(partner.page.locator('#lpListName')).toHaveValue('Group trip');
@@ -120,7 +121,9 @@ test.describe('Planning together', () => {
         await done;
         const lib = await state();
         const sharedId = lib.defaultListId;
+        await showLists(owner.page);
         await owner.page.getByTestId('new-list').hover();
+        await showLists(owner.page);
         await owner.page.getByTestId('new-list-blank').click();
         const done2 = saved(owner.page);
         await owner.page.getByTestId('item-row').first().getByPlaceholder('Name', { exact: true }).fill('Secret quilt');

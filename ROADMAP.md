@@ -1,11 +1,17 @@
 # Waymark Gear roadmap
 
 Living document. Each phase gets a dated entry in the changelog when it ships;
-the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 2: one menu everywhere, clearer affiliate links).
+the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 3: the list editor's sidebar becomes a rail with one panel).
 
 ---
 
 ## Changelog
+
+### Phase 8, part 3 — A calmer list editor · 2026-10-28 · branch `list-drawer`
+- **Icon rail + one panel** on the desktop: the left column no longer stacks your lists over your closet. A slim rail (Lists, Closet, Pack, and a collapse button) sits beside one panel. Choosing a list (or making a new one) puts the lists away and gives the **closet the whole column**, headed by the list you're adding to; "Switch" opens the lists again in the same spot, so the two toggle without the pointer landing on anything else.
+- Clicking the open panel's icon, or the collapse button, **puts the panel away and keeps the rail**, so the list gets the room and one click brings it back. Which panel was showing is remembered per browser; open or put away follows the account.
+- Phones keep the existing drawer and closet page.
+- Fix: putting the sidebar away never stuck after a reload (a saved `false` was read as "not set").
 
 ### Phase 8, part 2 — One menu everywhere, clearer links · 2026-10-28 · branch `nav-affiliate`
 - **A shorter main menu**: My lists · Explore ▾ (Kits, Trails, Leaderboards, Gear reviews) · Trips · Owner ▾ (Gear catalog, Featured kits, Trails, Revenue, Users, Tickets). Dropdowns open on hover, click or keyboard; on a phone they become labelled sections of the menu sheet. Defined once (`client/nav.js`) for every page.

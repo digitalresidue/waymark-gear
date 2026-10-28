@@ -27,6 +27,24 @@ export const closeSidebar = async (page: Page): Promise<void> => {
 };
 
 /**
+ * Desktop sidebar: an icon rail and one panel beside it, either the lists or
+ * the closet. These open the one a test needs (and the panel, if it was put
+ * away). On a phone they do nothing: the drawer holds the lists and the
+ * closet has its own page.
+ */
+const showPanel = async (page: Page, panel: 'lists' | 'closet'): Promise<void> => {
+  const rail = page.getByTestId(`rail-${panel}`);
+  if (!(await rail.count())) return;
+  if (await page.getByTestId(`panel-${panel}`).isVisible() && (await page.locator('#main').getAttribute('class') || '').includes('lpHasSidebar')) return;
+  await rail.click();
+  await expect(page.getByTestId(`panel-${panel}`)).toBeVisible();
+  await expect(page.locator('#main')).toHaveClass(/lpHasSidebar/);
+};
+
+export const showLists = (page: Page): Promise<void> => showPanel(page, 'lists');
+export const showCloset = (page: Page): Promise<void> => showPanel(page, 'closet');
+
+/**
  * Drags an element by its handle to a target position.
  * @param page - Playwright page
  * @param handle - The drag handle element

@@ -852,7 +852,8 @@ Library.prototype.load = function (serializedLibrary) {
         this.idMap[temp.id] = temp;
     }
 
-    if (serializedLibrary.showSidebar) this.showSidebar = serializedLibrary.showSidebar;
+    // `false` is a real choice (the sidebar put away), so test for presence.
+    if (serializedLibrary.showSidebar !== undefined) this.showSidebar = Boolean(serializedLibrary.showSidebar);
     if (serializedLibrary.totalUnit) this.totalUnit = serializedLibrary.totalUnit;
     if (serializedLibrary.itemUnit) this.itemUnit = serializedLibrary.itemUnit;
     if (serializedLibrary.currencySymbol) this.currencySymbol = serializedLibrary.currencySymbol;
