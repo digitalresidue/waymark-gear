@@ -704,7 +704,7 @@ function trailBodyModel(data, comparison) {
             label,
             cells: comparison.map((c, i) => {
                 const st = c.stats;
-                let value = '—';
+                let value;
                 if (key === 'packs') value = String(st.packs);
                 else if (!st.packs) value = '—';
                 else if (key === 'median') value = lbLabel(st.medianMg);
@@ -1159,8 +1159,8 @@ const renderListTotals = function (list, totalsTemplate, unitSelectTemplate, uni
     let totalWeight = 0;
     let totalWornWeight = 0;
     let totalConsumableWeight = 0;
-    let totalBaseWeight = 0;
-    let totalPackWeight = 0;
+    let totalBaseWeight;
+    let totalPackWeight;
     let totalQty = 0;
     let totalPrice = 0;
     let totalConsumablePrice = 0;

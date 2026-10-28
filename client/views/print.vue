@@ -67,7 +67,7 @@ const PREFS_KEY = 'wgPrintPrefs';
 export default {
     name: 'PrintList',
     data() {
-        let saved = {};
+        let saved;
         try {
             saved = JSON.parse(localStorage.getItem(PREFS_KEY)) || {};
         } catch {
