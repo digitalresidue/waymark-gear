@@ -14,9 +14,17 @@ GPL-2.0 license — you can read every line of the code that handles your data a
 ## The short version
 
 We collect the minimum needed to run the site: a username, an email address, and
-whatever you choose to put in your gear lists. We don't run ads, we don't use
-analytics or tracking cookies, we don't have third-party trackers of any kind,
-and we have never sold or shared your data with anyone for marketing purposes.
+whatever you choose to put in your gear lists.
+<!-- if analytics -->
+We don't run ads. We use Google Analytics to count visits and see which pages
+are used (see [Analytics](#analytics)); it's skipped entirely if your browser
+sends Global Privacy Control or Do Not Track. We have never sold or shared your
+data with anyone for marketing purposes.
+<!-- else -->
+We don't run ads, we don't use analytics or tracking cookies, we don't have
+third-party trackers of any kind, and we have never sold or shared your data
+with anyone for marketing purposes.
+<!-- end if -->
 You can delete your account yourself at any time.
 
 The rest of this document is the detail.
@@ -136,14 +144,45 @@ Waymark Gear sets two cookies, both functional:
 | `lp` | Your session token — this is what keeps you signed in. Not readable by JavaScript. | 90 days |
 | `lp_loggedin` | A flag that tells the page you're signed in so it can render the right navigation. Contains no personal data. | 90 days |
 
+<!-- if analytics -->
+**We set no advertising cookies.** Google Analytics sets its own cookies
+(`_ga`, `_ga_*`), described under [Analytics](#analytics).
+
+<h3 id="analytics">Analytics</h3>
+
+We use Google Analytics to understand how the site is used: which pages are
+visited, roughly where from, on what kind of device, and how people arrived.
+Google receives this from your browser along with your IP address (which
+Google Analytics doesn't store), and sets the `_ga` and `_ga_*` cookies (up to
+2 years) to tell repeat visits apart. It never receives your username, email
+address, or what's in your lists. Google's script loads only after the page
+has finished, and **not at all if your browser sends Global Privacy Control or
+Do Not Track**. Shared lists embedded on other websites never load it.
+
+**In the EU/EEA, the UK and Switzerland, Analytics is off until you agree**: a
+banner asks first, with "Reject all" as easy as "Accept all", and nothing from
+Google loads unless you say yes. We guess where you are from your browser's
+time zone; if we can't tell, we ask. Everywhere else it's on unless you turn it
+off. Either way you can change your mind at any time under **Cookie settings**
+at the bottom of every page; turning it off removes Google's cookies. Your
+choice is kept in a `wg_consent` cookie for a year. Ad features and Google
+signals are always off; we don't show ads. You can also block Analytics with
+Google's [opt-out add-on](https://tools.google.com/dlpage/gaoptout).
+<!-- else -->
 **We set no advertising, analytics, or tracking cookies**, and no third party
 sets cookies through our site.
+<!-- end if -->
 
 ## What we don't do
 
 - We don't run ads.
+<!-- if analytics -->
+- We don't use any analytics service other than Google Analytics, described above.
+- We don't embed advertising trackers, pixels, or social widgets.
+<!-- else -->
 - We don't use Google Analytics or any other analytics service.
 - We don't embed third-party trackers, pixels, or social widgets.
+<!-- end if -->
 - We don't sell, rent, or trade your personal information.
 
 ## Who else handles your data
@@ -154,6 +193,11 @@ sets cookies through our site.
   send. Your email address is passed to Mailgun when we send transactional emails.
 - **Stripe** — takes payments for the Supporter plan, if you subscribe. Stripe
   receives your email address and payment details directly.
+<!-- if analytics -->
+- **Google** — runs Google Analytics, which receives the visit details described
+  under [Analytics](#analytics).
+<!-- else -->
+<!-- end if -->
 
 Uploaded images are stored on our own servers.
 No one else receives your data, except where required by law.

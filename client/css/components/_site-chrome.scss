@@ -549,3 +549,118 @@
     margin: 0;
     padding: 8px 12px 6px;
 }
+
+// ---- Cookie choices (client/utils/analytics.js) ----
+// Only when the site uses Google Analytics.
+
+.wgCookieSettings {
+    display: none;
+
+    .wgHasAnalytics & {
+        display: inline;
+    }
+}
+
+button.wgCookieSettings,
+.wgCookieSettings button {
+    background: none;
+    border: 0;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    padding: 0;
+    text-decoration: underline;
+}
+
+.wgConsent {
+    align-items: center;
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border-strong);
+    border-radius: 14px;
+    bottom: 16px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+    color: var(--lp-text);
+    display: grid;
+    font-size: 14px;
+    gap: 12px 20px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    left: 50%;
+    max-width: min(920px, calc(100vw - 32px));
+    padding: 16px 18px;
+    position: fixed;
+    transform: translateX(-50%);
+    width: 100%;
+    z-index: 1000;
+
+    p {
+        margin: 0 0 4px;
+    }
+
+    a {
+        color: var(--lp-primary);
+    }
+}
+
+.wgConsentTitle {
+    font-weight: 700;
+}
+
+.wgConsentChoices {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    label {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    span {
+        color: var(--lp-text-secondary);
+        font-size: 12.5px;
+    }
+}
+
+// The three answers carry the same weight: saying no is as easy as yes.
+.wgConsentButtons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+}
+
+// Doubled class: page-wide button rules otherwise win on the text color.
+.wgConsentBtn.wgConsentBtn {
+    background: var(--lp-primary);
+    border: 0;
+    border-radius: 10px;
+    color: var(--lp-primary-ink);
+    cursor: pointer;
+    flex: 0 1 150px;
+    font: inherit;
+    font-weight: 700;
+    min-height: 40px;
+    padding: 8px 14px;
+
+    &:hover {
+        background: color-mix(in srgb, var(--lp-primary) 88%, #000);
+    }
+
+    &:focus-visible {
+        outline: 3px solid var(--lp-accent-green);
+        outline-offset: 2px;
+    }
+}
+
+@media (width <= 640px) {
+    .wgConsent {
+        grid-template-columns: 1fr;
+    }
+
+    .wgConsentBtn {
+        flex: 1 1 0;
+    }
+}

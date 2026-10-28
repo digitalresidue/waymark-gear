@@ -22,6 +22,9 @@
                 <a href="/report" data-testid="footer-report">Report a problem</a>
                 <a href="/privacy">Privacy</a>
                 <a href="/terms">Terms</a>
+                <button type="button" class="wgCookieSettings" data-cookie-settings>
+                    Cookie settings
+                </button>
                 <a :href="sourceUrl" target="_blank" rel="noopener noreferrer">Source</a>
                 <a v-if="contactEmail" :href="`mailto:${contactEmail}`">Contact</a>
             </nav>
@@ -43,6 +46,10 @@
             <a class="lpHref" href="/privacy">Privacy</a>
             -
             <a class="lpHref" href="/terms">Terms</a>
+            <span class="wgCookieSettings">
+                -
+                <button type="button" class="lpHref" data-cookie-settings>Cookie settings</button>
+            </span>
         </div>
     </div>
 </template>

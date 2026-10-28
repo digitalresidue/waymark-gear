@@ -2,8 +2,9 @@ import '@fontsource-variable/archivo/wdth.css';
 import '@fontsource-variable/geist';
 import '@fontsource-variable/geist-mono';
 import './css/share.scss';
-import pies from './pies.js';
+import { makeChart, chartStyle, rememberStyle, rememberedStyle } from './charts.js';
 import { initSocial } from './social.js';
+import { initAnalytics } from './utils/analytics.js';
 import weightUtils from './utils/weight.js';
 import {
     initTheme, toggleTheme, chartLineColor, chartHoverColor, onThemeChange,
@@ -27,6 +28,7 @@ function safely(fn) {
 }
 
 safely(initTheme);
+initAnalytics();
 
 // Server-rendered numbers on this page come from MgToDisplayWeight, so the
 // reader flipping a unit picker has to land on the same digits -- this defers
@@ -212,24 +214,52 @@ function init() {
     initShareMenu();
     initThemeToggle();
 
-    const chartContainer = document.querySelector('.lpChart');
-    if (typeof chartData !== 'undefined' && chartContainer) {
-        const parsed = JSON.parse(unescape(chartData));
-        addParents(parsed, false);
-        const chart = pies({
+    initChart();
+}
+
+// The chart, in the viewer's style: what they picked in this browser, or
+// (signed in, on a new device) what their account says. Picking here
+// remembers it in this browser.
+function initChart() {
+    const stage = document.querySelector('.lpChartStage');
+    if (typeof chartData === 'undefined' || !stage) return;
+    const parsed = JSON.parse(unescape(chartData));
+    addParents(parsed, false);
+    let chart = null;
+    const buttons = [...document.querySelectorAll('[data-chart-styles] .wgChartStyle')];
+    const draw = (style) => {
+        if (chart && chart.style === chartStyle(style)) return;
+        if (chart) chart.destroy();
+        chart = makeChart(style, {
             processedData: parsed,
-            container: chartContainer,
+            stage,
             hoverCallback: chartHover,
             lineColor: chartLineColor(),
             hoverColor: chartHoverColor(),
         });
-        // Fires for both sources of a theme change here: the toggle above and
-        // the OS flipping underneath. Nothing on this page unmounts, so the
-        // subscription is never dropped.
-        onThemeChange(() => {
-            chart.update({ lineColor: chartLineColor(), hoverColor: chartHoverColor() });
-        });
+        stage.dataset.style = chart.style;
+        buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.style === chart.style)));
+    };
+    const local = rememberedStyle();
+    draw(local || 'donut');
+    buttons.forEach((b) => b.addEventListener('click', () => {
+        rememberStyle(b.dataset.style);
+        draw(b.dataset.style);
+    }));
+    if (!local) {
+        fetch('/api/viewer', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((v) => {
+                if (v && v.chartStyle && !rememberedStyle()) draw(v.chartStyle);
+            })
+            .catch(() => {});
     }
+    // Fires for both sources of a theme change here: the toggle above and
+    // the OS flipping underneath. Nothing on this page unmounts, so the
+    // subscription is never dropped.
+    onThemeChange(() => {
+        if (chart) chart.update({ lineColor: chartLineColor(), hoverColor: chartHoverColor() });
+    });
 }
 
 // Comments only exist on published lists, and only some readers scroll that

@@ -1,16 +1,34 @@
 # Waymark Gear roadmap
 
 Living document. Each phase gets a dated entry in the changelog when it ships;
-the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 3: the list editor's sidebar becomes a rail with one panel).
+the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 5: writing gear reviews, tidier list rows, optional Google Analytics; part 4: chart styles; part 3: the editor's rail, tools and account menu).
 
 ---
 
 ## Changelog
 
+### Phase 8, part 5 — Writing gear reviews, list rows, Analytics · 2026-10-28 · branch `reviews-writing`
+- **A way in**: reviews are written on each gear page, but nothing led there. Now reviewers (owners, moderators, the `reviewers` setting, or everyone with `openReviews`) get a **Write a review** panel at the top of `/reviews`: search the catalog, or pick from **suggestions** — the most-carried published gear you haven't reviewed yet. Members and visitors don't see it.
+- Also reachable from **Owner ▾ → Write a review**, and a **Review** button on each published item in the owner's gear catalog.
+- Every route lands on the gear page at `#write-review` with the review form **open and focused**.
+- `/api/viewer` now says whether you can review; new `GET /api/reviews/suggestions`.
+- The empty state on `/reviews` says where reviews are written.
+- **List rows**: with Item images on, every row used to reserve a 90px photo column, photo or not. Now photos are a **25px clickable thumbnail**, and the column only exists when the category has a photo (shared lists too). Name and description share the room evenly, and the drag handle and remove ✕ sit inside the category card again.
+- **Optional Google Analytics**: set `GA_MEASUREMENT_ID` in `waymark settings` (INSTALL.md, "Optional: Google Analytics"). Off unless set. Google's script loads after the page has finished, when the browser is idle; visitors sending Global Privacy Control or Do Not Track are skipped, and embeds never load it. The security policy allows Google only when it's on, and the privacy page switches to wording that says Analytics is used.
+- **Cookie consent where the law asks for it**: in the EU/EEA, UK and Switzerland (guessed from the browser's time zone; unknown zones are asked) a banner asks first. Analytics starts unticked, and "Reject all", "Save choices" and "Accept all" are identical buttons. Nothing from Google loads before a yes (Consent Mode v2: ads always denied, `analytics_storage` follows the choice). Everyone can change it under **Cookie settings** in the footer; withdrawing clears Google's cookies. US state laws are opt-out, and Global Privacy Control already switches Analytics off.
+- This branch also carries part 4 (chart styles), which had merged into `list-drawer` after that branch was already in `main`.
+
+### Phase 8, part 4 — Chart styles · 2026-10-28 · branch `chart-styles`
+- **Donut, Bars or Treemap** for the weight chart, picked under it. Bars sort categories largest first; the treemap sizes blocks by weight, with labels in whichever ink reads on each color. Like the donut, both highlight the category in the totals on hover and open a category into its items on click (with a way back).
+- **It sticks**: saved with the account (library preferences) and remembered in the browser, so **other people's shared lists draw in your style** too; on a new device, a shared list asks the account. Visitors who haven't chosen see the donut. The phone summary panel has the same choice.
+
 ### Phase 8, part 3 — A calmer list editor · 2026-10-28 · branch `list-drawer`
 - **Icon rail + one panel** on the desktop: the left column no longer stacks your lists over your closet. A slim rail (Lists, Closet, Pack, and a collapse button) sits beside one panel. Choosing a list (or making a new one) puts the lists away and gives the **closet the whole column**, headed by the list you're adding to; "Switch" opens the lists again in the same spot, so the two toggle without the pointer landing on anything else.
 - Clicking the open panel's icon, or the collapse button, **puts the panel away and keeps the rail**, so the list gets the room and one click brings it back. Which panel was showing is remembered per browser; open or put away follows the account.
 - Phones keep the existing drawer and closet page.
+- **All the list tools in the rail**: Pack, Print, Team, Share and Settings sit under Lists and Closet (Share and Settings open beside it), so the editor's header is just the list's title (long names fit) and who's here.
+- **Bell and account menu in the site header on every page** (also the server-rendered ones), in place of the username and "Open my lists"; **My lists** is the first thing in the account menu. Account Settings and Help open from anywhere.
+- **The editor lines up with every page**: it sits in the site's 1200px column, the rail under the logo and the list ending at the header's right edge, with the panel open or put away.
 - Fix: putting the sidebar away never stuck after a reload (a saved `false` was read as "not set").
 
 ### Phase 8, part 2 — One menu everywhere, clearer links · 2026-10-28 · branch `nav-affiliate`

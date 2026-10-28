@@ -3,6 +3,7 @@ import '@fontsource-variable/geist';
 import '@fontsource-variable/geist-mono';
 import './css/lighterpack.scss';
 import { initTheme } from './utils/theme.js';
+import { initAnalytics } from './utils/analytics.js';
 import { createApp } from 'vue';
 import { createRouter, createWebHistory, RouterView } from 'vue-router';
 
@@ -15,6 +16,7 @@ import { selectOnFocus, focusOnCreate, emptyIfZero, clickOutside } from './utils
 import './utils/utils.js';
 
 initTheme();
+initAnalytics();
 
 const router = createRouter({
     history: createWebHistory(),

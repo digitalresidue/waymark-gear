@@ -3,6 +3,7 @@ import fs from 'fs';
 import express from 'express';
 import Mustache from 'mustache';
 import { Marked } from 'marked';
+import { analyticsMeta, applyAnalyticsBlocks } from './analytics.js';
 import { thumbnailUrl } from './images.js';
 import config from 'config';
 import { logWithRequest, logger } from './log.js';
@@ -141,6 +142,11 @@ if (hasBuiltAssets) {
         + '<script type="module" src="/client/css/doc.scss"></script>';
 }
 
+// Google Analytics ID, if the owner set one, for the app and the public
+// pages (never embeds, which live on other people's sites).
+appScriptsHtml += analyticsMeta();
+shareScriptsHtml += analyticsMeta();
+
 index = index.replace('{{styles}}', appStylesHtml);
 index = index.replace('{{scripts}}', appScriptsHtml);
 // Social previews need an absolute image URL.
@@ -172,7 +178,7 @@ const docPages = [
 const docTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/doc.mustache'), 'utf8');
 
 function renderDocPage(doc, sibling) {
-    const source = fs.readFileSync(path.join(import.meta.dirname, '..', doc.file), 'utf8');
+    const source = applyAnalyticsBlocks(fs.readFileSync(path.join(import.meta.dirname, '..', doc.file), 'utf8'));
     // Wide tables must scroll inside their own box rather than widening the
     // page on a phone; marked has no hook for wrapping a block-level token.
     const content = docMarked.parse(source)

@@ -101,7 +101,7 @@ describe('Library.load upgrade03to04', () => {
     test('initializes preferences to defaults', () => {
         const library = new Library();
         library.load(serialized03());
-        assert.deepEqual(library.preferences, { sharedItemBubble: true, wornQtyHint: true, density: 'comfortable' });
+        assert.deepEqual(library.preferences, { sharedItemBubble: true, wornQtyHint: true, density: 'comfortable', chartStyle: 'donut' });
     });
 
     test('keeps a valid sequence but repairs one behind the max id', () => {
@@ -485,5 +485,43 @@ describe('Library.load: the sidebar preference', () => {
         saved.showSidebar = true;
         loaded.load(saved);
         assert.equal(loaded.showSidebar, true);
+    });
+});
+
+describe('chart styles', async () => {
+    const { squarify, chartStyle } = await import('../../client/charts.js');
+
+    test('unknown or missing styles fall back to the donut', () => {
+        assert.equal(chartStyle('bars'), 'bars');
+        assert.equal(chartStyle('treemap'), 'treemap');
+        assert.equal(chartStyle('pie-chart-3d'), 'donut');
+        assert.equal(chartStyle(undefined), 'donut');
+    });
+
+    test('the treemap fills its box exactly, one tile per weight, areas in proportion', () => {
+        const values = [600, 300, 200, 100, 50, 25];
+        const total = values.reduce((a, b) => a + b, 0);
+        const box = { x: 0, y: 0, w: 260, h: 200 };
+        const tiles = squarify(values.map((v) => ({ v, area: (v / total) * box.w * box.h })), box);
+        assert.equal(tiles.length, values.length);
+        const covered = tiles.reduce((n, t) => n + t.w * t.h, 0);
+        assert.ok(Math.abs(covered - box.w * box.h) < 1e-6);
+        for (const t of tiles) {
+            assert.ok(Math.abs(t.w * t.h - (t.v / total) * box.w * box.h) < 1e-6);
+            assert.ok(t.x >= -1e-9 && t.y >= -1e-9 && t.x + t.w <= box.w + 1e-6 && t.y + t.h <= box.h + 1e-6);
+        }
+    });
+
+    test('zero weights get no tile', () => {
+        assert.equal(squarify([{ area: 10 }, { area: 0 }], { x: 0, y: 0, w: 10, h: 1 }).length, 1);
+    });
+});
+
+describe('chart tile ink', async () => {
+    const { inkFor } = await import('../../client/charts.js');
+    test('dark tiles get white text, light tiles dark text', () => {
+        assert.equal(inkFor('rgb(31,58,46)'), '#fff');
+        assert.equal(inkFor('rgb(220,180,110)'), '#15211b');
+        assert.equal(inkFor('rgb(240,230,210)'), '#15211b');
     });
 });

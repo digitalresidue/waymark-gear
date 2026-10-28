@@ -145,6 +145,7 @@
                                     <span class="wgBadge" :class="{ wgBadgeWarn: item.status === 'draft' }">{{ item.status === 'draft' ? 'Draft' : 'Published' }}</span>
                                 </td>
                                 <td class="wgNum">
+                                    <a v-if="item.status === 'published'" class="wgBtn wgBtnSmall wgReviewLink" :href="`/g/${encodeURIComponent(item.id)}#write-review`" :aria-label="`Review ${item.name}`" data-testid="catalog-review">Review</a>
                                     <button type="button" class="wgBtn wgBtnSmall" :aria-label="`Edit ${item.name}`" @click="openEditor(item)">
                                         Edit
                                     </button>
@@ -445,6 +446,10 @@ export default {
 
 <style lang="scss">
 @import "../css/_globals";
+
+.wgReviewLink {
+    margin-right: 6px;
+}
 
 .wgOwner {
     padding-bottom: 72px;

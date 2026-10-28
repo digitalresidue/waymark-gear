@@ -78,6 +78,59 @@ const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 
 // The review form on /g/:id pages, for people allowed to write reviews, and
 // hide/restore buttons for moderators.
+// Gear reviews page: a way in for reviewers. Find any catalog item (or pick
+// from the most-carried gear they haven't reviewed) and go write it up on
+// its page, with the form open.
+function initReviewWriter(viewer) {
+    const box = document.getElementById('wgReviewWriter');
+    if (!box || !viewer || !viewer.canReview) return;
+    box.hidden = false;
+    const input = box.querySelector('[data-testid="review-find"]');
+    if (window.location.hash === '#write') {
+        box.scrollIntoView({ block: 'start' });
+        input.focus({ preventScroll: true });
+    }
+    const results = box.querySelector('.wgReviewFindResults');
+    const write = (id) => `/g/${encodeURIComponent(id)}#write-review`;
+    const row = (item, extra) => `<li><a href="${write(item.id)}" data-testid="review-pick"><strong>${esc(item.name)}</strong> <span class="wgMuted">${esc(item.category || '')}${extra ? ` · ${esc(extra)}` : ''}</span></a></li>`;
+    let timer = null;
+    input.addEventListener('input', () => {
+        clearTimeout(timer);
+        timer = setTimeout(async () => {
+            const q = input.value.trim();
+            if (!q) {
+                results.hidden = true;
+                input.setAttribute('aria-expanded', 'false');
+                return;
+            }
+            try {
+                const data = await call(`/api/catalog?limit=8&q=${encodeURIComponent(q)}`);
+                const items = (data.items || []).map((i) => ({ id: i.id, name: [i.brand, i.name].filter(Boolean).join(' '), category: i.category }));
+                results.innerHTML = items.length ? items.map((i) => row(i)).join('') : `<li class="wgMuted">Nothing in the catalog matches “${esc(q)}”.</li>`;
+            } catch {
+                results.innerHTML = '<li class="wgMuted">Search isn\'t working right now.</li>';
+            }
+            results.hidden = false;
+            input.setAttribute('aria-expanded', 'true');
+        }, 150);
+    });
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const first = results.querySelector('a');
+            if (first) window.location.href = first.href;
+        }
+    });
+    call('/api/reviews/suggestions?limit=6').then((data) => {
+        if (!data.items || !data.items.length) return;
+        const wrap = box.querySelector('.wgReviewSuggest');
+        wrap.querySelector('ul').innerHTML = data.items.map((i) => row(i, [
+            i.uses && `in ${i.uses} ${i.uses === 1 ? 'kit' : 'kits'}`,
+            i.reviews ? `${i.reviews} ${i.reviews === 1 ? 'review' : 'reviews'}` : 'no reviews yet',
+        ].filter(Boolean).join(', '))).join('');
+        wrap.hidden = false;
+    }).catch(() => {});
+}
+
 function initReviews() {
     const box = document.getElementById('wgReviewForm');
     if (!box) return;
@@ -104,6 +157,13 @@ function initReviews() {
                 </form>
             </details>`;
         const form = box.querySelector('form');
+        // Arriving from "Write a review": open the form and put the cursor in it.
+        if (window.location.hash === '#write-review') {
+            box.querySelector('details').open = true;
+            box.scrollIntoView({ block: 'start' });
+            const first = form.querySelector('input[name="rating"]');
+            if (first) first.focus({ preventScroll: true });
+        }
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const f = new FormData(form);
@@ -283,7 +343,9 @@ function initSiteHeader() {
     fetch('/api/viewer', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
         .then((r) => (r.ok ? r.json() : null))
         .then((v) => {
-            if (v) apply({ signedIn: Boolean(v.username), username: v.username, hasLibrary: hasLibrary || Boolean(v.username), isAdmin: v.isAdmin, isModerator: v.isModerator });
+            if (!v) return;
+            apply({ signedIn: Boolean(v.username), username: v.username, hasLibrary: hasLibrary || Boolean(v.username), isAdmin: v.isAdmin, isModerator: v.isModerator });
+            initReviewWriter(v);
         })
         .catch(() => {});
 }

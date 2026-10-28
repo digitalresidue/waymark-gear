@@ -498,3 +498,61 @@
     font-size: 12px;
     margin: 8px 0 0;
 }
+
+// /reviews, reviewers only: find the gear to write about.
+.wgReviewWriter {
+    margin: 0 0 20px;
+    padding: 16px;
+
+    h2 {
+        font-size: 1.1rem;
+        margin: 0 0 4px;
+    }
+
+    h3 {
+        font-size: 0.9rem;
+        margin: 16px 0 6px;
+    }
+
+    p {
+        margin: 0 0 10px;
+    }
+
+    .wgInput {
+        width: 100%;
+    }
+}
+
+.wgReviewFindResults,
+.wgReviewSuggestList {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+
+    li {
+        margin: 0;
+    }
+
+    li.wgMuted {
+        padding: 8px 10px;
+    }
+
+    a {
+        border-radius: 8px;
+        color: inherit;
+        display: block;
+        padding: 8px 10px;
+        text-decoration: none;
+
+        &:hover,
+        &:focus-visible {
+            background: var(--lp-hover-bg);
+        }
+    }
+}
+
+.wgReviewFindResults {
+    border: 1px solid var(--lp-border);
+    border-radius: 10px;
+    padding: 4px;
+}

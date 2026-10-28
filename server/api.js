@@ -176,9 +176,11 @@ const publicJson = (handler) => pub(async (req, res) => {
 router.get('/api/viewer', publicJson(async (req, res) => {
     res.set('Cache-Control', 'private, no-store');
     const user = await optionalUser(req);
-    res.json(user
-        ? { username: user.username, isAdmin: isAdmin(user.username), isModerator: isModerator(user.username) }
-        : { username: null, isAdmin: false, isModerator: false });
+    if (!user) return res.json({ username: null, isAdmin: false, isModerator: false });
+    // Their chart style, so shared lists draw the way they chose in the app.
+    const settings = await knex('library_settings').where({ user_id: user.user_id }).first('preferences').catch(() => null);
+    const prefs = settings && settings.preferences ? (typeof settings.preferences === 'string' ? JSON.parse(settings.preferences) : settings.preferences) : {};
+    res.json({ username: user.username, isAdmin: isAdmin(user.username), isModerator: isModerator(user.username), canReview: reviews.canReview(user), chartStyle: prefs.chartStyle || null });
 }));
 
 router.get('/api/users/:username/follow', publicJson(async (req, res) => {
@@ -382,6 +384,12 @@ router.get('/api/reviews', pub(async (req, res) => {
 router.get('/api/reviews/ratings', pub(async (req, res) => {
     res.set('Cache-Control', 'public, max-age=60');
     res.json(await reviews.ratingsFor(String(req.query.ids || '').split(',').slice(0, 200)));
+}));
+
+// What to review next (reviewers only): most-carried gear they haven't reviewed.
+router.get('/api/reviews/suggestions', signedIn(async (req, res, user) => {
+    res.set('Cache-Control', 'no-store');
+    res.json({ items: await reviews.reviewSuggestions(user, req.query.limit) });
 }));
 
 router.get('/api/catalog/:id/reviews', pub(async (req, res) => {

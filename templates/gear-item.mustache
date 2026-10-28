@@ -74,10 +74,24 @@
                 <h1>What's worth carrying</h1>
                 <p class="wgShareByline">Long-term reviews from the Waymark team{{#openReviews}} and members{{/openReviews}}, tied to the gear catalog.</p>
             </header>
+            <!-- Reviewers only (shown by client/social.js once /api/viewer
+                 says so; this page is cached and shared). -->
+            <section class="wgCard wgReviewWriter" id="wgReviewWriter" hidden data-testid="review-writer">
+                <h2>Write a review</h2>
+                <p class="wgMuted">Find the gear in the catalog, then write it up on its page.</p>
+                <div class="wgReviewFind">
+                    <input type="search" class="wgInput" placeholder="Search the gear catalog, e.g. Duplex" autocomplete="off" aria-label="Search the gear catalog" role="combobox" aria-expanded="false" aria-controls="wgReviewFindResults" data-testid="review-find">
+                    <ul id="wgReviewFindResults" class="wgReviewFindResults" role="listbox" hidden></ul>
+                </div>
+                <div class="wgReviewSuggest" hidden>
+                    <h3>Suggestions: most carried, not reviewed by you yet</h3>
+                    <ul class="wgReviewSuggestList" data-testid="review-suggestions"></ul>
+                </div>
+            </section>
             <ol class="wgReviewList" data-testid="latest-reviews">
                 {{#reviews}}{{> reviewCard}}{{/reviews}}
             </ol>
-            {{^reviews.length}}<p class="wgProfileEmpty">No reviews yet.</p>{{/reviews.length}}
+            {{^reviews.length}}<p class="wgProfileEmpty">No reviews yet. Reviews are written on each item's gear page{{#openReviews}} by the Waymark team and members{{/openReviews}}{{^openReviews}} by the Waymark team{{/openReviews}}.</p>{{/reviews.length}}
             {{/latest}}
         </main>
         {{{scripts}}}

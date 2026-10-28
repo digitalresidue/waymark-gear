@@ -57,6 +57,7 @@
         "__name": "OPEN_REVIEWS",
         "__format": "boolean"
     },
+    "googleAnalyticsId": "GA_MEASUREMENT_ID",
     "stripe": {
         "secretKey": "STRIPE_SECRET_KEY",
         "webhookSecret": "STRIPE_WEBHOOK_SECRET",

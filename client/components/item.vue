@@ -4,7 +4,7 @@
             <div class="lpItemHandle lpHandle" title="Reorder this item" />
         </span>
         <span v-if="optionalFields['images']" class="lpImageCell">
-            <img v-if="thumbnailImage" class="lpItemImage" :src="thumbnailImage" @click="viewItemImage()">
+            <img v-if="thumbnailImage" class="lpItemImage" :src="thumbnailImage" :alt="`Photo of ${item.name || 'this item'}`" title="View photo" data-testid="item-thumb" @click="viewItemImage()">
         </span>
         <!-- !! matters: the directive treats undefined as "focus", and _isNew
              is undefined on rows loaded from a save. -->
@@ -126,11 +126,18 @@ export default {
         min-width: 0;
     }
 
+    // A small clickable thumbnail; the full photo opens in the viewer.
     .lpImageCell {
+        height: 25px;
+        width: 25px;
+
         .lpItemImage {
-            cursor: pointer;
+            border-radius: 5px;
+            cursor: zoom-in;
             display: block;
-            max-width: 90px;
+            height: 25px;
+            object-fit: cover;
+            width: 25px;
         }
     }
 

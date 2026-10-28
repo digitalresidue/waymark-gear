@@ -1,0 +1,166 @@
+// The weight chart's styles other than the donut (client/charts.js), and
+// the picker under it. Shared by the list editor and shared lists.
+
+.lpChartContainer {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+}
+
+.lpChartStage {
+    aspect-ratio: 1;
+    max-width: 100%;
+    position: relative;
+    width: 260px;
+}
+
+.wgChart {
+    font-size: 13px;
+    height: var(--wg-chart-size, 260px);
+    width: var(--wg-chart-size, 260px);
+}
+
+.wgChartPart {
+    background: none;
+    border: 0;
+    color: inherit;
+    font: inherit;
+    padding: 0;
+    text-align: left;
+}
+
+button.wgChartPart {
+    cursor: pointer;
+}
+
+.wgChartBack {
+    align-items: center;
+    background: none;
+    border: 0;
+    border-radius: 8px;
+    color: var(--lp-text);
+    cursor: pointer;
+    display: flex;
+    font: inherit;
+    font-weight: 650;
+    gap: 6px;
+    height: 28px;
+    margin: 0 0 6px;
+    padding: 0 6px;
+
+    &:hover {
+        background: var(--lp-row-hover);
+    }
+}
+
+// Bars: one row per category (or item), longest first.
+.wgChartBars {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 100%;
+    overflow-y: auto;
+}
+
+.wgChartBar {
+    align-items: center;
+    border-radius: 7px;
+    display: grid;
+    gap: 8px;
+    grid-template-columns: 78px 1fr 34px;
+    padding: 3px 4px;
+
+    &.wgChartHover,
+    &:focus-visible {
+        background: var(--lp-row-hover);
+    }
+}
+
+.wgChartBarName {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wgChartBarTrack {
+    background: var(--lp-row-hover);
+    border-radius: 4px;
+    height: 14px;
+    overflow: hidden;
+}
+
+.wgChartBarFill {
+    background: var(--wg-part);
+    border-radius: 4px;
+    display: block;
+    height: 100%;
+}
+
+.wgChartBarPct {
+    color: var(--lp-text-secondary);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+// Treemap: area by weight.
+.wgChartTreemap {
+    position: relative;
+    width: 100%;
+}
+
+.wgChartTile {
+    background: var(--wg-part);
+    border: 1px solid var(--lp-content-bg, #fff);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow: hidden;
+    padding: 5px 7px;
+    position: absolute;
+
+    &.wgChartHover,
+    &:focus-visible {
+        box-shadow: inset 0 0 0 2px var(--lp-text);
+    }
+}
+
+.wgChartTileName {
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wgChartTilePct {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+// The picker under the chart.
+.wgChartStyles {
+    background: var(--lp-row-hover);
+    border-radius: 99px;
+    display: inline-flex;
+    gap: 2px;
+    margin-top: 10px;
+    padding: 3px;
+}
+
+.wgChartStyle {
+    background: none;
+    border: 0;
+    border-radius: 99px;
+    color: var(--lp-text-secondary);
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 650;
+    padding: 4px 11px;
+
+    &[aria-pressed="true"] {
+        background: var(--lp-surface);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+        color: var(--lp-text);
+    }
+}
