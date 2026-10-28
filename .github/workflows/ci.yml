@@ -60,10 +60,19 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Install cwebp (photo uploads)
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends webp
+        # Ubuntu's mirrors occasionally fail a fetch; retry rather than fail the run.
+        run: |
+          for i in 1 2 3; do
+            sudo apt-get update -o Acquire::Retries=3 && sudo apt-get install -y --no-install-recommends -o Acquire::Retries=3 webp && exit 0
+            echo "apt failed (attempt $i); retrying in 20s"; sleep 20
+          done
+          exit 1
       - run: npx playwright install --with-deps ${{ matrix.browser }}
       - run: npx playwright test --project=${{ matrix.browser }}
-      - uses: actions/upload-artifact@v5
+      - name: Why tests failed
+        if: failure()
+        run: node scripts/ci-failures.mjs test-results/results.json
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report-${{ matrix.browser }}
@@ -81,5 +90,11 @@ jobs:
         with:
           context: .
           push: false
+          load: true
+          tags: waymark-gear:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      # INSTALL.md's server steps, run for real on this build: install.sh,
+      # HTTPS through Caddy, the owner account, and every waymark command.
+      - name: Install guide works (test/install/run.sh)
+        run: sudo --preserve-env=GITHUB_ACTIONS bash test/install/run.sh waymark-gear:test

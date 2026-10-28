@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html class="lp" lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>{{name}} (@{{username}}) — Waymark Gear</title>
+        <meta name="description" content="{{metaDescription}}">
+        <link rel="canonical" href="{{deployUrl}}/@{{username}}">
+        <meta property="og:type" content="profile">
+        <meta property="og:site_name" content="Waymark Gear">
+        <meta property="og:title" content="{{name}} (@{{username}}) on Waymark Gear">
+        <meta property="og:description" content="{{metaDescription}}">
+        <meta property="og:url" content="{{deployUrl}}/@{{username}}">
+        <meta property="og:image" content="{{{ogImage}}}">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:image" content="{{{ogImage}}}">
+        {{{styles}}}
+        <link rel="icon" href="/favicon.png" />
+        <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script nonce="{{{cspNonce}}}">
+            (function () {
+                try {
+                    var t = localStorage.getItem('lpTheme');
+                    if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+                } catch (e) { /* storage blocked; the media query decides */ }
+            }());
+        </script>
+    </head>
+    <body class="wgProfilePage">
+        <header class="wgShareBar">
+            <a href="/welcome" class="wgShareBrand" aria-label="Waymark Gear home">
+                <img class="wgLogo wgLogoOnLight" src="/images/waymark-logo.png" alt="Waymark Gear" width="843" height="127">
+                <img class="wgLogo wgLogoOnDark" src="/images/waymark-logo-light.png" alt="Waymark Gear" width="843" height="127">
+            </a>
+            <nav class="wgShareActions" aria-label="Site">
+                <a href="/explore" class="wgBtn wgBtnGhost">Explore kits</a>
+                <a href="/" class="wgBtn wgBtnPrimary">Build your own</a>
+            </nav>
+            <details class="wgShareMenuPhone">
+                <summary aria-label="Menu" data-testid="share-menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg></summary>
+                <nav aria-label="Site">
+                    <a href="/">My lists</a>
+                    <a href="/explore">Explore kits</a>
+                    <a href="/trails">Trails</a>
+                    <a href="/leaderboard">Leaderboards</a>
+                    <a href="/reviews">Gear reviews</a>
+                    <a href="/supporter">Support Waymark</a>
+                    <a href="/signin">Sign in</a>
+                </nav>
+            </details>
+        </header>
+
+        <main class="wgProfile" data-testid="profile">
+            <div class="wgProfileBanner{{^bannerUrl}} wgProfileBannerPlain{{/bannerUrl}}">
+                {{#bannerUrl}}<img src="{{bannerUrl}}" alt="" width="1500" height="500">{{/bannerUrl}}
+            </div>
+
+            <section class="wgProfileHead">
+                <div class="wgProfileAvatar">
+                    {{#avatarUrl}}<img src="{{avatarUrl}}" alt="{{name}}" width="256" height="256" data-testid="profile-avatar">{{/avatarUrl}}
+                    {{^avatarUrl}}<span aria-hidden="true">{{initial}}</span>{{/avatarUrl}}
+                </div>
+                <div class="wgProfileWho">
+                    <h1 data-testid="profile-name">{{name}}</h1>
+                    <p class="wgProfileHandle">
+                        <span>@{{username}}</span>
+                        {{#supporter}}<span class="wgSupporterBadge" data-testid="supporter-badge" title="Supports Waymark Gear">Supporter</span>{{/supporter}}
+                        {{#trailName}}<span class="wgProfileTrail" data-testid="profile-trail">Trail name “{{trailName}}”</span>{{/trailName}}
+                    </p>
+                    {{#tags.length}}
+                    <ul class="wgProfileTags" aria-label="Tags" data-testid="profile-tags">
+                        {{#tags}}<li>{{.}}</li>{{/tags}}
+                    </ul>
+                    {{/tags.length}}
+                    <div class="wgFollow wgProfileFollow" data-follow-user="{{username}}"></div>
+                    {{#hasLinks}}
+                    <ul class="wgProfileLinks" aria-label="Elsewhere">
+                        {{#links}}
+                        <li><a href="{{url}}" rel="me nofollow noopener ugc" target="_blank" data-testid="profile-link-{{network}}">{{label}}</a></li>
+                        {{/links}}
+                    </ul>
+                    {{/hasLinks}}
+                </div>
+                <dl class="wgProfileStats">
+                    <div><dt>Lists</dt><dd>{{kitCount}}</dd></div>
+                    {{#lightest}}<div><dt>Lightest base</dt><dd class="wgMono">{{lightest}}</dd></div>{{/lightest}}
+                    <div><dt>Gear</dt><dd>{{gearCount}}</dd></div>
+                </dl>
+            </section>
+
+            {{#bioHtml}}
+            <section class="wgProfileBio lpListDescription" data-testid="profile-bio">
+                {{{bioHtml}}}
+            </section>
+            {{/bioHtml}}
+
+            <nav class="wgProfileTabs" aria-label="Profile">
+                <a href="/@{{username}}" {{#listsView}}aria-current="page"{{/listsView}} data-testid="profile-tab-lists">Lists</a>
+                <a href="/@{{username}}?view=gear" {{#gearView}}aria-current="page"{{/gearView}} data-testid="profile-tab-gear">Gear</a>
+                <a href="/@{{username}}?view=trips" {{#tripsView}}aria-current="page"{{/tripsView}} data-testid="profile-tab-trips">Trips</a>
+            </nav>
+
+            {{#listsView}}
+                {{#hasFeatured}}
+                <h2 class="wgProfileSection">Flagship lists</h2>
+                <ul class="wgProfileKits wgProfileFeatured" data-testid="profile-featured">
+                    {{#featured}}{{> kitCard}}{{/featured}}
+                </ul>
+                {{/hasFeatured}}
+                {{#hasOthers}}
+                <h2 class="wgProfileSection">{{#hasFeatured}}More lists{{/hasFeatured}}{{^hasFeatured}}Lists{{/hasFeatured}}</h2>
+                <ul class="wgProfileKits" data-testid="profile-kits">
+                    {{#others}}{{> kitCard}}{{/others}}
+                </ul>
+                {{/hasOthers}}
+                {{^kitCount}}
+                <p class="wgProfileEmpty">@{{username}} hasn't published any lists yet.</p>
+                {{/kitCount}}
+            {{/listsView}}
+
+            {{#tripsView}}
+                {{#hasTrips}}
+                <ul class="wgTripCards" data-testid="profile-trips">
+                    {{#trips}}
+                    <li class="wgTripCard">
+                        <a href="/t/{{id}}" data-testid="profile-trip">
+                            {{#coverUrl}}<img src="{{coverUrl}}" alt="" loading="lazy" width="512" height="512">{{/coverUrl}}
+                            <span class="wgTripCardBody">
+                                <strong>{{title}}</strong>
+                                <span class="wgMuted">{{#dateRange}}{{dateRange}} · {{/dateRange}}{{entryLabel}}{{#visibilityLabel}} · {{visibilityLabel}}{{/visibilityLabel}}</span>
+                                {{#excerpt}}<span>{{excerpt}}</span>{{/excerpt}}
+                            </span>
+                        </a>
+                    </li>
+                    {{/trips}}
+                </ul>
+                {{/hasTrips}}
+                {{^hasTrips}}
+                <p class="wgProfileEmpty">No trip journals to show yet.</p>
+                {{/hasTrips}}
+            {{/tripsView}}
+
+            {{#gearView}}
+                {{#gearCount}}
+                <ul class="wgGearGrid" data-testid="profile-gear">
+                    {{#gear}}
+                    <li class="wgGearCard">
+                        <div class="wgGearThumb">
+                            {{#thumbUrl}}<img src="{{thumbUrl}}" alt="" loading="lazy" width="180" height="180">{{/thumbUrl}}
+                            {{^thumbUrl}}<span aria-hidden="true">{{initial}}</span>{{/thumbUrl}}
+                        </div>
+                        <p class="wgGearName">{{#url}}<a href="{{url}}" rel="nofollow noopener ugc" target="_blank">{{name}}</a>{{/url}}{{^url}}{{name}}{{/url}}</p>
+                        <p class="wgGearMeta"><span class="wgMono">{{weight}}</span>{{#category}} · {{category}}{{/category}}</p>
+                        {{#photoCount}}<p class="wgGearMedia"><a href="#" class="wgMediaLink" data-photos="{{photosJson}}" data-title="{{name}}">Photos ({{photoCount}})</a>{{#videoUrl}} <a href="{{videoUrl}}" class="wgMediaLink" data-video="{{videoUrl}}" data-title="{{name}}">▶ Review</a>{{/videoUrl}}</p>{{/photoCount}}{{^photoCount}}{{#videoUrl}}<p class="wgGearMedia"><a href="{{videoUrl}}" class="wgMediaLink" data-video="{{videoUrl}}" data-title="{{name}}">▶ Review</a></p>{{/videoUrl}}{{/photoCount}}
+                    </li>
+                    {{/gear}}
+                </ul>
+                {{/gearCount}}
+                {{^gearCount}}
+                <p class="wgProfileEmpty">No gear to show yet.</p>
+                {{/gearCount}}
+            {{/gearView}}
+        </main>
+        {{{scripts}}}
+        <footer class="wgProfileFoot">
+            <a href="/welcome">Waymark Gear</a> · Build it. Share it. Go.
+        </footer>
+    </body>
+</html>

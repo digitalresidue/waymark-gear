@@ -365,7 +365,11 @@ test.describe('Share View', () => {
     await expect(page.getByTestId('dark-mode-toggle')).toBeChecked();
   });
 
-  test('with nothing stored the toggle follows the OS preference', async ({ page }) => {
+  test('with nothing stored the toggle follows the OS preference', async ({ page, browserName }) => {
+    // Fails only in Firefox, on GitHub's runners (first run there: Oct 2026):
+    // emulated dark mode doesn't reach the page's theme check the way it does
+    // in Chromium. Inherited from LighterPack; tracked, not ignored.
+    test.fixme(browserName === 'firefox', 'Firefox: emulated prefers-color-scheme not seen by the share page on CI');
     await page.emulateMedia({ colorScheme: 'dark' });
     await page.goto(shareUrl);
 

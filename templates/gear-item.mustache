@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html class="lp" lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>{{pageTitle}} — Waymark Gear</title>
+        <meta name="description" content="{{metaDescription}}">
+        <link rel="canonical" href="{{deployUrl}}{{path}}">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="Waymark Gear">
+        <meta property="og:title" content="{{pageTitle}}">
+        <meta property="og:description" content="{{metaDescription}}">
+        <meta property="og:url" content="{{deployUrl}}{{path}}">
+        {{#item.imageUrl}}<meta property="og:image" content="{{item.imageUrl}}">{{/item.imageUrl}}
+        {{{styles}}}
+        <link rel="icon" href="/favicon.png" />
+        <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script nonce="{{{cspNonce}}}">
+            (function () {
+                try {
+                    var t = localStorage.getItem('lpTheme');
+                    if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+                } catch (e) { /* storage blocked; the media query decides */ }
+            }());
+        </script>
+    </head>
+    <body class="wgProfilePage wgGearPage">
+        <header class="wgShareBar">
+            <a href="/welcome" class="wgShareBrand" aria-label="Waymark Gear home">
+                <img class="wgLogo wgLogoOnLight" src="/images/waymark-logo.png" alt="Waymark Gear" width="843" height="127">
+                <img class="wgLogo wgLogoOnDark" src="/images/waymark-logo-light.png" alt="Waymark Gear" width="843" height="127">
+            </a>
+            <nav class="wgShareActions" aria-label="Site">
+                <a href="/reviews" class="wgBtn wgBtnGhost">Gear reviews</a>
+                <a href="/explore" class="wgBtn wgBtnGhost">Explore kits</a>
+                <a href="/" class="wgBtn wgBtnPrimary">Build your own</a>
+            </nav>
+            <details class="wgShareMenuPhone">
+                <summary aria-label="Menu" data-testid="share-menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg></summary>
+                <nav aria-label="Site">
+                    <a href="/">My lists</a>
+                    <a href="/explore">Explore kits</a>
+                    <a href="/trails">Trails</a>
+                    <a href="/leaderboard">Leaderboards</a>
+                    <a href="/reviews">Gear reviews</a>
+                    <a href="/supporter">Support Waymark</a>
+                    <a href="/signin">Sign in</a>
+                </nav>
+            </details>
+        </header>
+
+        <main class="wgJournal">
+            {{#item}}
+            <section class="wgGearHero" data-testid="gear-page">
+                <div class="wgGearHeroImg">
+                    {{#imageUrl}}<img src="{{imageUrl}}" alt="{{name}}" width="240" height="240">{{/imageUrl}}
+                    {{^imageUrl}}<span aria-hidden="true">{{initial}}</span>{{/imageUrl}}
+                </div>
+                <div>
+                    <p class="wgJournalKicker">{{brand}}{{#category}} · {{category}}{{/category}}</p>
+                    <h1 data-testid="gear-name">{{name}}</h1>
+                    <p class="wgGearHeroWeight"><span class="wgMono">{{weight}}</span>{{#price}} · {{price}}{{/price}}</p>
+                    <p class="wgGearRating" data-testid="gear-rating">
+                        {{#average}}<span class="wgStars" aria-hidden="true">{{stars}}</span> <strong>{{average}}</strong> / 5 from {{countLabel}}{{/average}}
+                        {{^average}}<span class="wgMuted">No reviews yet.</span>{{/average}}
+                    </p>
+                    {{#description}}<p>{{description}}</p>{{/description}}
+                    {{#prices}}
+                    <figure class="wgPriceHistory" data-testid="price-history">
+                        <svg viewBox="0 0 240 48" width="240" height="48" aria-hidden="true"><polyline points="{{points}}" fill="none" stroke="currentColor" stroke-width="2" /></svg>
+                        <figcaption>Lowest seen <strong data-testid="price-lowest">{{lowest}}</strong> · {{#changes}}<span>{{price}} <span class="wgMuted">{{when}}</span></span> {{/changes}}</figcaption>
+                    </figure>
+                    {{/prices}}
+                    <p class="wgGearHeroLinks">
+                        <a href="/gear?wish={{id}}" class="wgBtn wgBtnPrimary wgBtnSmall" data-testid="gear-wish">Add to wishlist</a>
+                        <a href="/compare?ids={{id}}" class="wgBtn wgBtnGhost wgBtnSmall" data-testid="gear-compare">Compare</a>
+                        {{#url}}<a href="/go/{{id}}?from=gear" rel="sponsored nofollow noopener" target="_blank" class="wgBtn wgBtnGhost wgBtnSmall" data-testid="gear-buy">Buy</a>{{/url}}
+                        {{#kitCount}}<a href="/explore?q={{searchName}}">In {{kitCountLabel}}</a>{{/kitCount}}
+                    </p>
+                    {{#url}}<p class="wgDisclosure">Buy links may earn Waymark Gear a commission; it never changes what we suggest. <a href="/supporter">Supporters</a> get plain links.</p>{{/url}}
+                </div>
+            </section>
+
+            <section class="wgReviews">
+                <h2 class="wgProfileSection">Reviews</h2>
+                <div id="wgReviewForm" data-catalog-id="{{id}}"></div>
+                <ol class="wgReviewList" data-testid="review-list">
+                    {{#reviews}}{{> reviewCard}}{{/reviews}}
+                </ol>
+            </section>
+            {{/item}}
+
+            {{#latest}}
+            <header class="wgJournalHead">
+                <p class="wgJournalKicker">Gear reviews</p>
+                <h1>What's worth carrying</h1>
+                <p class="wgShareByline">Long-term reviews from the Waymark team{{#openReviews}} and members{{/openReviews}}, tied to the gear catalog.</p>
+            </header>
+            <ol class="wgReviewList" data-testid="latest-reviews">
+                {{#reviews}}{{> reviewCard}}{{/reviews}}
+            </ol>
+            {{^reviews.length}}<p class="wgProfileEmpty">No reviews yet.</p>{{/reviews.length}}
+            {{/latest}}
+        </main>
+        {{{scripts}}}
+        <footer class="wgProfileFoot">
+            <a href="/welcome">Waymark Gear</a> · Build it. Share it. Go.
+        </footer>
+    </body>
+</html>

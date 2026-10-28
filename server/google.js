@@ -17,6 +17,7 @@ import express from 'express';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 import knex from './db.js';
+import { replaceLibrary } from './library-store.js';
 import { logWithRequest } from './log.js';
 import { hashSessionToken, startSession } from './auth.js';
 import { Library } from '../client/dataTypes.js';
@@ -207,18 +208,21 @@ router.get('/auth/google/callback', async (req, res) => {
             if (clash) return fail('email belongs to a password account', '/signin?error=google-email-exists');
 
             const username = await pickUsername(email, claims.name);
-            [user] = await knex('users').insert({
-                username,
-                email,
-                email_verified: true,
-                google_sub: sub,
-                password: null,
-                token: hashSessionToken(crypto.randomBytes(48).toString('hex')),
-                library: new Library().save(),
-                sync_token: 0,
-                registered: new Date(),
-                last_seen: new Date(),
-            }).returning('*');
+            [user] = await knex.transaction(async (trx) => {
+                const created = await trx('users').insert({
+                    username,
+                    email,
+                    email_verified: true,
+                    google_sub: sub,
+                    password: null,
+                    token: hashSessionToken(crypto.randomBytes(48).toString('hex')),
+                    sync_token: 0,
+                    registered: new Date(),
+                    last_seen: new Date(),
+                }).returning('*');
+                await replaceLibrary(created[0].user_id, new Library().save(), trx);
+                return created;
+            });
             isNew = true;
             logWithRequest(req, { message: 'registered via google', username });
         }

@@ -17,14 +17,28 @@
     "rateLimit": {
         "enabled": true,
         "authWindowMinutes": 15,
-        "authMaxPerWindow": 30
+        "authMaxPerWindow": 30,
+        "importWindowMinutes": 10,
+        "importMaxPerWindow": 20
     },
+    "lighterpackUrl": "https://lighterpack.com",
     "mailgunDomain": "",
     "mailgunAPIKey": "",
     "mailFrom": "",
     "mailReplyTo": "",
     "moderators": [],
     "admins": [],
+    "reviewers": [],
+    "openReviews": false,
+    "stripe": {
+        "secretKey": "",
+        "webhookSecret": "",
+        "priceMonthly": "",
+        "priceYearly": "",
+        "monthlyLabel": "$5",
+        "yearlyLabel": "$48",
+        "apiBase": "https://api.stripe.com"
+    },
     "google": {
         "clientId": "",
         "clientSecret": ""

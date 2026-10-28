@@ -63,6 +63,20 @@ Item.prototype.save = function () {
         out.catalogId = this.catalogId;
         out.catalogSync = !!this.catalogSync;
     }
+    // Retired gear is hidden from the closet but stays in lists that use it.
+    if (this.retired) out.retired = true;
+    // Closet organization and media (Phase 4).
+    if (this.closetCategory) out.closetCategory = this.closetCategory;
+    if (this.photos && this.photos.length) out.photos = [...this.photos];
+    if (this.videoUrl) out.videoUrl = this.videoUrl;
+    // How many you own (Phase 5): lists warn when they use more.
+    if (Number.isInteger(this.qtyOwned)) out.qtyOwned = this.qtyOwned;
+    // Lifecycle (Phase 6).
+    if (this.purchasedOn) out.purchasedOn = this.purchasedOn;
+    if (this.condition) out.condition = this.condition;
+    if (Number.isFinite(this.lifeYears)) out.lifeYears = this.lifeYears;
+    // Wanted, not owned yet (Phase 7).
+    if (this.wishlist) out.wishlist = true;
     return out;
 };
 
@@ -164,13 +178,21 @@ Category.prototype.save = function () {
     const out = {
         id: this.id,
         name: this.name,
-        categoryItems: this.categoryItems.map((categoryItem) => ({
-            qty: categoryItem.qty,
-            worn: categoryItem.worn,
-            consumable: categoryItem.consumable,
-            star: categoryItem.star,
-            itemId: categoryItem.itemId,
-        })),
+        categoryItems: this.categoryItems.map((categoryItem) => {
+            const out = {
+                qty: categoryItem.qty,
+                worn: categoryItem.worn,
+                consumable: categoryItem.consumable,
+                star: categoryItem.star,
+                itemId: categoryItem.itemId,
+            };
+            // Checked off in Pack mode. Only written when set.
+            if (categoryItem.packed) out.packed = true;
+            // Group trips: who carries it. After a trip: wasn't used.
+            if (categoryItem.carrier) out.carrier = categoryItem.carrier;
+            if (categoryItem.unused) out.unused = true;
+            return out;
+        }),
     };
     if (typeof this.color !== 'undefined') {
         out.color = this.color;
@@ -374,9 +396,19 @@ List.prototype.save = function () {
     // Only written when set, so libraries that never use them keep the shape
     // older clients wrote.
     if (this.pinned) out.pinned = true;
+    // Trip planner settings (client/utils/trip.js), when the user has set them.
+    if (this.trip) out.trip = { ...this.trip };
     // Published lists appear on the public Explore page and homepage; the
     // server mirrors them into public_kits on every save.
     if (this.published) out.published = true;
+    // The owner is asking for a shakedown: suggestions in the comments.
+    if (this.shakedown) out.shakedown = true;
+    if (this.tripType) out.tripType = this.tripType;
+    // Essentials the owner says this list doesn't need (client/utils/insights.js).
+    if (this.notNeeded && this.notNeeded.length) out.notNeeded = [...this.notNeeded];
+    // The trail this list is for (Phase 8): { name, year, direction }; the
+    // server adds the matched trail's id, slug and short name.
+    if (this.trail && this.trail.name) out.trail = { ...this.trail };
     return out;
 };
 
@@ -399,6 +431,7 @@ const Library = function () {
     this.itemUnit = 'oz';
     this.showSidebar = true;
     this.preferences = assignIn({}, defaultPreferences);
+    this.kits = [];
     this.currencySymbol = '$';
     this.firstRun();
     return this;
@@ -407,6 +440,7 @@ const Library = function () {
 
 Library.prototype.firstRun = function () {
     const firstList = this.newList();
+    this.defaultListId = firstList.id;
     const firstCategory = this.newCategory({ list: firstList });
     this.newItem({ category: firstCategory });
 };
@@ -464,6 +498,50 @@ Library.prototype.importSharedList = function (shared) {
     return list;
 };
 
+// Add a list read from a LighterPack link or a CSV file
+// (client/utils/lighterpack-import.js). Gear already in the closet with the
+// same name and weight is reused rather than duplicated, so importing a
+// second list from the same closet doesn't double it.
+Library.prototype.importGearList = function (parsed) {
+    const key = (name, weight) => `${String(name).trim().toLowerCase()}|${Math.round(weight)}`;
+    const closet = new Map();
+    for (const item of this.items) {
+        if (!item.retired && item.name) closet.set(key(item.name, item.weight), item);
+    }
+    const list = this.newList();
+    list.name = parsed.name || 'Imported list';
+    list.description = parsed.description || '';
+    let reused = 0;
+    for (const source of parsed.categories || []) {
+        const category = this.newCategory({ list });
+        category.name = source.name || '';
+        for (const s of source.items || []) {
+            const weight = Math.max(0, Number(s.weightMg) || 0);
+            let item = closet.get(key(s.name, weight));
+            if (item && !category.getCategoryItemById(item.id)) {
+                category.addItem({ itemId: item.id, _isNew: false });
+                reused++;
+            } else {
+                item = this.newItem({ category, _isNew: false });
+                item.name = s.name || '';
+                item.description = s.description || '';
+                item.weight = weight;
+                item.authorUnit = ['g', 'kg', 'oz', 'lb'].includes(s.unit) ? s.unit : this.itemUnit;
+                item.price = Number(s.price) || 0;
+                item.url = s.url || '';
+                closet.set(key(item.name, item.weight), item);
+            }
+            const ci = category.getCategoryItemById(item.id);
+            ci.qty = Number.isFinite(Number(s.qty)) ? Number(s.qty) : 1;
+            ci.worn = s.worn ? 1 : 0;
+            ci.consumable = Boolean(s.consumable);
+        }
+    }
+    list.calculateTotals();
+    this.defaultListId = list.id;
+    return { list, reused };
+};
+
 // Add a gear-catalog entry to a category as a new, catalog-linked item.
 // `entry` is the shape /api/catalog returns.
 Library.prototype.newItemFromCatalog = function ({ category, entry }) {
@@ -477,6 +555,8 @@ Library.prototype.newItemFromCatalog = function ({ category, entry }) {
     item.imageUrl = entry.imageUrl || '';
     item.catalogId = entry.id;
     item.catalogSync = true;
+    // No category: straight into the closet (or the wishlist).
+    if (!category) return item;
     const categoryItem = category.getCategoryItemById(item.id);
     if (entry.wornDefault) categoryItem.worn = 1;
     if (entry.consumableDefault) categoryItem.consumable = true;
@@ -671,8 +751,27 @@ Library.prototype.findListWithCategoryById = function (id) {
     }
 };
 
+// New ids are random rather than the next number in sequence: two tabs or
+// devices adding things to the same library at once would otherwise hand out
+// the same id and overwrite each other's work when both save. Random 53-bit
+// ids collide with negligible probability and stay above the small sequential
+// ids older libraries already use. `sequence` still counts, for libraries and
+// tools that read it.
+const ID_FLOOR = 2 ** 32;
+function randomId() {
+    const span = Number.MAX_SAFE_INTEGER - ID_FLOOR;
+    if (globalThis.crypto && globalThis.crypto.getRandomValues) {
+        const [hi, lo] = globalThis.crypto.getRandomValues(new Uint32Array(2));
+        return ID_FLOOR + (((hi & 0x1fffff) * 2 ** 32 + lo) % span);
+    }
+    return ID_FLOOR + Math.floor(Math.random() * span);
+}
+
 Library.prototype.nextSequence = function () {
-    return ++this.sequence;
+    this.sequence += 1;
+    let id = randomId();
+    while (this.idMap[id]) id = randomId();
+    return id;
 };
 
 Library.prototype.save = function () {
@@ -686,6 +785,7 @@ Library.prototype.save = function () {
     out.showSidebar = this.showSidebar;
     out.preferences = assignIn({}, this.preferences);
     out.currencySymbol = this.currencySymbol;
+    if (this.kits && this.kits.length) out.kits = this.kits.map((k) => ({ id: k.id, name: k.name, items: k.items.map((i) => ({ itemId: i.itemId, qty: i.qty })) }));
 
     out.items = [];
     for (const i in this.items) {
@@ -727,6 +827,7 @@ Library.prototype.load = function (serializedLibrary) {
     this.items = [];
 
     this.preferences = assignIn({}, defaultPreferences, serializedLibrary.preferences);
+    this.kits = Array.isArray(serializedLibrary.kits) ? serializedLibrary.kits.map((k) => ({ ...k, items: [...(k.items || [])] })) : [];
 
     for (const i in serializedLibrary.items) {
         const temp = new Item({ id: serializedLibrary.items[i].id });

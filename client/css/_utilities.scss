@@ -127,7 +127,8 @@
         width: 100%;
 
         &:focus {
-            border-color: $orange1;
+            border-color: var(--lp-link-blue);
+            box-shadow: var(--lp-focus-ring);
             outline: none;
         }
     }
@@ -148,47 +149,34 @@
     }
 }
 
-// Primary button
+// Primary button (inherited markup, Waymark styling: flat forest green).
 .lp .lpButton {
-    background-image: linear-gradient(165deg, $orange1 50%, $orange2 100%);
-    background-position: 100% 100%;
-    background-size: 200%;
-    border: none;
-    border-radius: 4px;
-    box-shadow: rgba(255, 255, 255, 0.32) 0px 1px 0px inset, rgba(0, 0, 0, 0.12) 0px -1px 0px inset;
-    color: #fff;
+    background: var(--lp-primary);
+    border: 1px solid var(--lp-primary);
+    border-radius: 10px;
+    color: var(--lp-primary-ink);
     cursor: pointer;
     display: inline-block;
-    font-size: 16px;
+    font-family: $font-body;
+    font-size: 15px;
     font-weight: 600;
-    line-height: 23px;
-    padding: 8px 20px;
+    line-height: 22px;
+    min-height: 44px;
+    padding: 10px 18px;
     position: relative;
     text-align: center;
     text-decoration: none;
-    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.15);
-    transition: all 0.2s;
+    transition: background-color 0.15s, border-color 0.15s;
     width: auto;
 
     &.lpSmall {
         font-size: 13px;
+        min-height: 32px;
         padding: 5px 10px;
     }
 
-    &:hover:not(:disabled),
-    &:active {
-        background-position: 0 0;
-        box-shadow: 0 0 1px rgba(255, 255, 255, 0.5) inset, 0 1px 3px color.adjust($orange2, $lightness: -25%);
-    }
-
-    &:focus,
-    &:active {
-        outline: none;
-    }
-
-    &:focus:not(:active) {
-        box-shadow: 0 0 0 1px color.adjust($orange2, $lightness: -15%) inset, 0 1px 3px color.adjust($orange2, $lightness: -25%);
-        outline: none;
+    &:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--lp-primary) 88%, #000);
     }
 
     &::-moz-focus-inner {

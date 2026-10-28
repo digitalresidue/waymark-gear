@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html class="lp" lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>{{title}} — {{authorName}} on Waymark Gear</title>
+        <meta name="description" content="{{metaDescription}}">
+        {{^isPublic}}<meta name="robots" content="noindex">{{/isPublic}}
+        <link rel="canonical" href="{{deployUrl}}/t/{{id}}">
+        <meta property="og:type" content="article">
+        <meta property="og:site_name" content="Waymark Gear">
+        <meta property="og:title" content="{{title}} — a trip journal by {{authorName}}">
+        <meta property="og:description" content="{{metaDescription}}">
+        <meta property="og:url" content="{{deployUrl}}/t/{{id}}">
+        {{#ogImage}}<meta property="og:image" content="{{ogImage}}">
+        <meta name="twitter:card" content="summary_large_image">{{/ogImage}}
+        {{{styles}}}
+        <link rel="icon" href="/favicon.png" />
+        <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script nonce="{{{cspNonce}}}">
+            (function () {
+                try {
+                    var t = localStorage.getItem('lpTheme');
+                    if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+                } catch (e) { /* storage blocked; the media query decides */ }
+            }());
+        </script>
+    </head>
+    <body class="wgProfilePage wgTripPage">
+        <header class="wgShareBar">
+            <a href="/welcome" class="wgShareBrand" aria-label="Waymark Gear home">
+                <img class="wgLogo wgLogoOnLight" src="/images/waymark-logo.png" alt="Waymark Gear" width="843" height="127">
+                <img class="wgLogo wgLogoOnDark" src="/images/waymark-logo-light.png" alt="Waymark Gear" width="843" height="127">
+            </a>
+            <nav class="wgShareActions" aria-label="Site">
+                {{#mine}}<a href="/trips/{{id}}" class="wgBtn wgBtnGhost" data-testid="trip-edit-link">Edit this trip</a>{{/mine}}
+                <a href="/explore" class="wgBtn wgBtnGhost">Explore kits</a>
+                <a href="/" class="wgBtn wgBtnPrimary">Build your own</a>
+            </nav>
+            <details class="wgShareMenuPhone">
+                <summary aria-label="Menu" data-testid="share-menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg></summary>
+                <nav aria-label="Site">
+                    <a href="/">My lists</a>
+                    <a href="/explore">Explore kits</a>
+                    <a href="/trails">Trails</a>
+                    <a href="/leaderboard">Leaderboards</a>
+                    <a href="/reviews">Gear reviews</a>
+                    <a href="/supporter">Support Waymark</a>
+                    <a href="/signin">Sign in</a>
+                </nav>
+            </details>
+        </header>
+
+        <main class="wgJournal" data-testid="trip-page">
+            {{#coverUrl}}<div class="wgJournalCover"><img src="{{coverUrl}}" alt="" width="512" height="512"></div>{{/coverUrl}}
+            <header class="wgJournalHead">
+                <p class="wgJournalKicker">
+                    Trip journal{{#visibilityLabel}} · <span class="wgJournalVis" data-testid="trip-visibility">{{visibilityLabel}}</span>{{/visibilityLabel}}
+                </p>
+                <h1 data-testid="trip-title">{{title}}</h1>
+                <p class="wgShareByline">
+                    By <a href="/@{{username}}"><strong>{{authorName}}</strong></a>
+                    {{#dateRange}} · {{dateRange}}{{/dateRange}}
+                </p>
+                <div class="wgFollow" data-follow-user="{{username}}"></div>
+                <dl class="wgJournalStats">
+                    {{#days}}<div><dt>Days</dt><dd>{{days}}</dd></div>{{/days}}
+                    <div><dt>Entries</dt><dd data-testid="trip-entry-count">{{entryCount}}</dd></div>
+                    {{#distance}}<div><dt>Distance</dt><dd class="wgMono" data-testid="trip-distance-total">{{distance}}</dd></div>{{/distance}}
+                    {{#list}}<div><dt>Base weight</dt><dd class="wgMono">{{baseWeight}}</dd></div>{{/list}}
+                </dl>
+            </header>
+
+            {{#summaryHtml}}
+            <section class="wgJournalSummary lpListDescription">{{{summaryHtml}}}</section>
+            {{/summaryHtml}}
+
+            {{#list}}
+            <aside class="wgJournalList" data-testid="trip-list">
+                <span class="wgMuted">Packed with</span>
+                {{#href}}<a href="{{href}}">{{name}}</a>{{/href}}{{^href}}<strong>{{name}}</strong>{{/href}}
+                <span class="wgMono">{{baseWeight}} base</span>
+            </aside>
+            {{/list}}
+
+            <ol class="wgJournalEntries">
+                {{#entries}}
+                <li class="wgJournalEntry" id="day-{{id}}" data-testid="trip-entry">
+                    <header>
+                        <p class="wgJournalDay">{{#day}}Day {{day}}{{/day}}{{#date}} · {{date}}{{/date}}{{#distance}} · <span class="wgMono">{{distance}}</span>{{/distance}}</p>
+                        {{#title}}<h2>{{title}}</h2>{{/title}}
+                    </header>
+                    {{#bodyHtml}}<div class="lpListDescription">{{{bodyHtml}}}</div>{{/bodyHtml}}
+                    {{#photos.length}}
+                    <ul class="wgJournalPhotos">
+                        {{#photos}}<li><a href="{{url}}" data-photos="{{set}}" data-title="{{alt}}"><img src="{{url}}" alt="{{alt}}" loading="lazy" width="160" height="160"></a></li>{{/photos}}
+                    </ul>
+                    {{/photos.length}}
+                </li>
+                {{/entries}}
+            </ol>
+            {{^entryCount}}<p class="wgProfileEmpty">No entries yet.</p>{{/entryCount}}
+        </main>
+        {{{scripts}}}
+        <footer class="wgProfileFoot">
+            <a href="/welcome">Waymark Gear</a> · Build it. Share it. Go.
+        </footer>
+    </body>
+</html>

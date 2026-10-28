@@ -15,8 +15,36 @@ export function generateTestUser(prefix = 'test') {
     return { username, email, password };
 }
 
+/**
+ * Open a page of the app and wait for its HTML, not the browser's full
+ * "load" event: the forms the tests use are ready long before. In CI,
+ * Firefox now and then held "load" open for 30s+ on /register. If even the
+ * HTML doesn't arrive, the error lists the requests still in flight, so the
+ * cause shows up in the CI annotation.
+ */
+export async function openPage(page, path) {
+    const pending = new Map();
+    const started = (r) => pending.set(r, Date.now());
+    const done = (r) => pending.delete(r);
+    page.on('request', started);
+    page.on('requestfinished', done);
+    page.on('requestfailed', done);
+    try {
+        await page.goto(`${testRoot}${path}`, { waitUntil: 'domcontentloaded', timeout: 20000 });
+    } catch (err) {
+        const now = Date.now();
+        const list = [...pending].map(([r, t]) => `${r.method()} ${r.url()} (${now - t}ms)`).join('\n  ');
+        err.message += `\nRequests still in flight:\n  ${list || '(none)'}`;
+        throw err;
+    } finally {
+        page.off('request', started);
+        page.off('requestfinished', done);
+        page.off('requestfailed', done);
+    }
+}
+
 export async function registerUser(page, username, password, email) {
-    await page.goto(`${testRoot}register`);
+    await openPage(page, 'register');
 
     const registerForm = page.getByTestId('register-form');
     await registerForm.getByPlaceholder('Username', { exact: true }).fill(username);
@@ -27,7 +55,7 @@ export async function registerUser(page, username, password, email) {
 }
 
 export async function loginUser(page, username, password) {
-    await page.goto(`${testRoot}signin`);
+    await openPage(page, 'signin');
 
     const signinForm = page.getByTestId('signin-form');
     await signinForm.getByPlaceholder('Username', { exact: true }).fill(username);

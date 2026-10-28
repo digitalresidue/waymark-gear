@@ -5,6 +5,10 @@
 import knex from './db.js';
 import { Library } from '../client/dataTypes.js';
 import { isUuid } from './catalog.js';
+import { TRIP_TYPES } from '../client/utils/gear-meta.js';
+import { notifyFollowersOfNewKits } from './follows.js';
+import { packFeatures, normalizeTrailTag } from '../client/utils/trails.js';
+import { ensureTrails, resolveTrail } from './trails-index.js';
 
 const LB = 453592; // mg
 
@@ -31,6 +35,7 @@ export function publishedKits(serializedLibrary) {
         const catalogIds = new Set();
         let itemCount = 0;
         const categories = [];
+        const rows = [];
         for (const categoryId of list.categoryIds) {
             const category = library.getCategoryById(categoryId);
             if (!category) continue;
@@ -39,6 +44,7 @@ export function publishedKits(serializedLibrary) {
                 if (!item) continue;
                 itemCount += 1;
                 if (item.catalogId && isUuid(item.catalogId)) catalogIds.add(item.catalogId);
+                rows.push({ name: item.name, description: item.description });
             }
             categories.push({
                 name: category.name || 'Untitled',
@@ -56,6 +62,10 @@ export function publishedKits(serializedLibrary) {
             itemCount,
             categories,
             catalogIds: [...catalogIds],
+            shakedown: Boolean(list.shakedown),
+            tripType: TRIP_TYPES.includes(list.tripType) ? list.tripType : '',
+            trail: normalizeTrailTag(list.trail),
+            features: packFeatures(rows),
         });
     }
     return kits;
@@ -64,6 +74,7 @@ export function publishedKits(serializedLibrary) {
 // Bring public_kits in line with what this user has published. Featured
 // flags set by the site owner survive republishing.
 export async function syncPublishedKits(user, serializedLibrary, db = knex) {
+    await ensureTrails();
     const kits = publishedKits(serializedLibrary);
     const owned = kits.length
         ? new Set((await db('list').where({ user_id: user.user_id })
@@ -72,6 +83,7 @@ export async function syncPublishedKits(user, serializedLibrary, db = knex) {
     // A list can only be published under a share id this user owns.
     const valid = kits.filter((k) => owned.has(k.externalId));
 
+    const before = new Set(await db('public_kits').where({ user_id: user.user_id }).pluck('external_id'));
     await db.transaction(async (trx) => {
         const keep = valid.map((k) => k.externalId);
         const stale = trx('public_kits').where({ user_id: user.user_id });
@@ -93,16 +105,34 @@ export async function syncPublishedKits(user, serializedLibrary, db = knex) {
                 weight_class: weightClassFor(k.baseWeightMg),
                 categories: JSON.stringify(k.categories),
                 catalog_ids: k.catalogIds,
+                shakedown: k.shakedown,
+                trip_type: k.tripType,
+                trail_id: k.trail ? resolveTrail(k.trail.name) : null,
+                trail_year: k.trail && k.trail.year ? k.trail.year : null,
+                trail_direction: k.trail && k.trail.direction ? k.trail.direction : '',
+                features: k.features,
                 updated_at: trx.fn.now(),
             };
-            await trx('public_kits').insert(row).onConflict('external_id')
-                .merge(Object.keys(row).filter((key) => key !== 'external_id'));
+            // When the shakedown was asked for: kept while it stays on, so
+            // re-saving the list doesn't make an old request look new.
+            const merge = Object.fromEntries(Object.keys(row).filter((key) => key !== 'external_id').map((key) => [key, row[key]]));
+            merge.shakedown_at = trx.raw(
+                'case when ? then coalesce(public_kits.shakedown_at, now()) else null end',
+                [Boolean(k.shakedown)],
+            );
+            await trx('public_kits').insert({ ...row, shakedown_at: k.shakedown ? trx.fn.now() : null })
+                .onConflict('external_id').merge(merge);
         }
     });
+    // Lists published for the first time: tell followers (fire and forget).
+    const fresh = valid.filter((k) => !before.has(k.externalId));
+    if (fresh.length) {
+        notifyFollowersOfNewKits(user, fresh).catch(() => {});
+    }
     return valid.length;
 }
 
-function kitToApi(row) {
+export function kitToApi(row) {
     return {
         externalId: row.external_id,
         username: row.username,
@@ -117,6 +147,14 @@ function kitToApi(row) {
         categories: row.categories,
         featured: row.featured,
         featuredRank: row.featured_rank,
+        shakedown: Boolean(row.shakedown),
+        tripType: row.trip_type || '',
+        trailId: row.trail_id ?? null,
+        trailYear: row.trail_year ?? null,
+        trailDirection: row.trail_direction || '',
+        shakedownAt: row.shakedown_at || null,
+        score: row.score === undefined ? undefined : Number(row.score),
+        commentCount: row.comment_count === undefined ? undefined : Number(row.comment_count),
         updatedAt: row.updated_at,
     };
 }
@@ -131,10 +169,41 @@ export async function featuredKits({ weightClass, limit = 6 }) {
     return rows.map(kitToApi);
 }
 
-export async function listKits({ weightClass, q = '', featuredOnly = false, limit = 24, offset = 0 } = {}) {
+// One person's published kits, newest first (their profile page).
+export async function kitsForUser(userId, db = knex) {
+    const rows = await db('public_kits').where({ user_id: userId }).orderBy('updated_at', 'desc').limit(100);
+    return rows.map(kitToApi);
+}
+
+// Votes count for 30 days, so rankings follow what people like now rather
+// than what was popular once.
+export const VOTE_WINDOW = "interval '30 days'";
+const scoreSql = `(select coalesce(sum(v.value), 0) from list_votes v
+    where v.external_id = public_kits.external_id and v.created_at > now() - ${VOTE_WINDOW})`;
+const commentsSql = `(select count(*) from comments c
+    where c.external_id = public_kits.external_id and c.deleted_at is null and c.hidden_at is null)`;
+
+const SORTS = {
+    featured: [{ column: 'featured', order: 'desc' }, { column: 'updated_at', order: 'desc' }],
+    new: [{ column: 'updated_at', order: 'desc' }],
+    top: [{ column: 'score', order: 'desc' }, { column: 'updated_at', order: 'desc' }],
+    light: [{ column: 'base_weight_mg', order: 'asc' }],
+    // Shakedown board: the lists with the fewest suggestions so far first.
+    needsHelp: [{ column: 'comment_count', order: 'asc' }, { column: 'updated_at', order: 'desc' }],
+};
+
+export async function listKits({
+    weightClass, tripType, q = '', featuredOnly = false, shakedownOnly = false, followerId = null,
+    sort = 'featured', limit = 24, offset = 0, trailIds = null, trailYear = null,
+} = {}) {
     const query = knex('public_kits');
+    if (trailIds) query.whereIn('trail_id', trailIds.length ? trailIds : [0]);
+    if (trailYear) query.where({ trail_year: trailYear });
     if (weightClass) query.where({ weight_class: weightClass });
+    if (tripType) query.where({ trip_type: tripType });
     if (featuredOnly) query.where({ featured: true });
+    if (shakedownOnly) query.where({ shakedown: true });
+    if (followerId) query.whereIn('user_id', knex('follows').select('followee_id').where({ follower_id: followerId }));
     const term = String(q).trim();
     if (term) {
         const like = `%${term.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
@@ -142,9 +211,41 @@ export async function listKits({ weightClass, q = '', featuredOnly = false, limi
     }
     const [{ count }] = await query.clone().count({ count: '*' });
     const rows = await query
-        .orderBy([{ column: 'featured', order: 'desc' }, { column: 'updated_at', order: 'desc' }])
+        .select('public_kits.*', knex.raw(`${scoreSql} as score`), knex.raw(`${commentsSql} as comment_count`))
+        .orderBy(SORTS[sort] || SORTS.featured)
         .limit(Math.min(Number(limit) || 24, 100)).offset(Math.max(Number(offset) || 0, 0));
     return { total: Number(count), kits: rows.map(kitToApi) };
+}
+
+// ---- votes ----------------------------------------------------------------------
+
+export async function voteSummary(externalId, userId = null) {
+    const [{ score }] = await knex('list_votes').where({ external_id: externalId })
+        .whereRaw(`created_at > now() - ${VOTE_WINDOW}`).sum({ score: 'value' });
+    let mine = 0;
+    if (userId) {
+        const row = await knex('list_votes').where({ external_id: externalId, user_id: userId })
+            .whereRaw(`created_at > now() - ${VOTE_WINDOW}`).first();
+        mine = row ? row.value : 0;
+    }
+    return { score: Number(score) || 0, mine };
+}
+
+// value: 1, -1, or 0 to take a vote back. Voting again restarts its 30 days.
+export async function castVote(user, externalId, value) {
+    const kit = await knex('public_kits').where({ external_id: String(externalId) }).first();
+    if (!kit) return { error: 'Only published lists can be voted on.', status: 404 };
+    if (kit.user_id === user.user_id) return { error: "You can't vote on your own list.", status: 400 };
+    const v = Number(value);
+    if (v === 0) {
+        await knex('list_votes').where({ external_id: kit.external_id, user_id: user.user_id }).del();
+    } else if (v === 1 || v === -1) {
+        await knex('list_votes').insert({ external_id: kit.external_id, user_id: user.user_id, value: v })
+            .onConflict(['external_id', 'user_id']).merge({ value: v, created_at: knex.fn.now() });
+    } else {
+        return { error: 'Vote with 1, -1 or 0.', status: 400 };
+    }
+    return voteSummary(kit.external_id, user.user_id);
 }
 
 // The catalog gear that shows up in the most published kits.
