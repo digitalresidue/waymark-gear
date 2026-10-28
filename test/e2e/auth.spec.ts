@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 import { testRoot } from './utils';
 
-import { registerUser, loginUser, logoutUser, generateTestUser } from './auth-utils';
+import { registerUser, loginUser, logoutUser, generateTestUser, openPage } from './auth-utils';
 
 test.describe('Cookie security', () => {
   let username: string;
@@ -188,7 +188,7 @@ test.describe('User Authentication Tests', () => {
   });
 
   test('should show validation errors when registering with missing fields', async ({ page }) => {
-    await page.goto(`${testRoot}register`);
+    await openPage(page, 'register');
 
     const registerForm = page.getByTestId('register-form');
     await registerForm.getByRole('button', { name: 'Register' }).click();
@@ -200,7 +200,7 @@ test.describe('User Authentication Tests', () => {
   });
 
   test('should show password mismatch error on registration', async ({ page }) => {
-    await page.goto(`${testRoot}register`);
+    await openPage(page, 'register');
 
     const registerForm = page.getByTestId('register-form');
     await registerForm.getByPlaceholder('Username', { exact: true }).fill('mismatchUser');
@@ -219,7 +219,7 @@ test.describe('User Authentication Tests', () => {
     await registerUser(page, username, password, email);
     await logoutUser(page);
 
-    await page.goto(`${testRoot}register`);
+    await openPage(page, 'register');
     const registerForm = page.getByTestId('register-form');
     await registerForm.getByPlaceholder('Username', { exact: true }).fill(username);
     await registerForm.getByPlaceholder('Email', { exact: true }).fill(`alt+${email}`);
@@ -258,7 +258,7 @@ test.describe('User Authentication Tests', () => {
   });
 
   test('should preserve local data when registering', async ({ page }) => {
-    await page.goto(`${testRoot}register`);
+    await openPage(page, 'register');
 
     await page.getByText('Try it without an account', { exact: true }).click();
     await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
@@ -276,7 +276,7 @@ test.describe('User Authentication Tests', () => {
       localStorage.library = JSON.stringify(store.state.library.save());
     });
 
-    await page.goto(`${testRoot}register`);
+    await openPage(page, 'register');
 
     const { username, password, email } = generateTestUser('local');
     const registerForm = page.getByTestId('register-form');

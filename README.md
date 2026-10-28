@@ -27,6 +27,9 @@ by Galen Maly and is licensed under the GPL-2.0 (see [LICENSE](LICENSE)).
 
 **Stack:** Node.js 24 · Express 5 · Vue 3 · Vite · PostgreSQL · Playwright
 
+**Run your own:** [INSTALL.md](INSTALL.md) takes you from nothing to a live
+site on DigitalOcean in about 30 minutes, with no server experience needed.
+
 ---
 
 ## Quick start with Docker
@@ -111,9 +114,14 @@ request, end-to-end on Chromium and Firefox, and checks the Docker image builds.
 
 ## Deploying
 
-**See [DEPLOY.md](DEPLOY.md)** for the full guide: required services, GitHub
-setup, server, DNS, Google sign-in, email, HTTPS, backups and updates. The
-production stack is in [`deploy/`](deploy/).
+- **[INSTALL.md](INSTALL.md)**: step-by-step install on DigitalOcean for
+  anyone, no server experience assumed. One script sets up the server, and the
+  `waymark` command looks after it (status, update, backup, restore). CI runs
+  the guide's commands on every pull request.
+- **[DEPLOY.md](DEPLOY.md)**: the reference for everything else: publishing
+  your own image, Google sign-in, Stripe, Cloudflare, other hosts, scaling.
+
+The production stack is in [`deploy/`](deploy/).
 
 Before launch: finish `PRIVACY.md` and `TERMS.md` (drafts with `[bracketed]`
 placeholders), set `VITE_CONTACT_EMAIL` and `VITE_SOURCE_URL`, and replace the

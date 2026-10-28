@@ -1,5 +1,10 @@
 # Deploying Waymark Gear to waymarkgear.com
 
+> **New to servers?** Start with [INSTALL.md](INSTALL.md): a step-by-step
+> DigitalOcean install that a setup script does most of. This file is the
+> reference behind it: running your own image, Google sign-in, payments,
+> Cloudflare and other hosts.
+
 This guide takes you from this repository to a live, HTTPS site with Google
 sign-in, email, and nightly backups. Plan on an afternoon the first time.
 
@@ -99,26 +104,40 @@ can get its certificate; see "Optional: Cloudflare" below for proxying.
 
 ## 6. Start the site
 
+The quickest way is the setup script ([INSTALL.md, step 5](INSTALL.md#step-5-run-the-setup)).
+It does step 2's hardening and this step, and installs the `waymark`
+command. To use your own image, set it first:
+
 ```sh
-ssh root@SERVER_IP
+curl -fsSL https://get.docker.com | sh
+docker login ghcr.io -u YOUR-USER          # only if the image is private
+docker run --rm ghcr.io/your-user/waymark-gear:latest cat deploy/install.sh > install.sh
+WAYMARK_IMAGE=ghcr.io/your-user/waymark-gear:latest bash install.sh
+```
+
+By hand instead:
+
+```sh
 mkdir -p /opt/waymark && cd /opt/waymark
-# copy these three files from the repo's deploy/ folder:
+# copy from the repo's deploy/ folder:
 #   docker-compose.prod.yml, Caddyfile, .env.production.example
 cp .env.production.example .env && chmod 600 .env
-nano .env        # fill in APP_IMAGE, POSTGRES_PASSWORD, Google, Mailgun
+nano .env        # SITE_DOMAIN, APP_IMAGE, POSTGRES_PASSWORD (openssl rand -hex 24), ADMINS
 docker compose -f docker-compose.prod.yml up -d
 docker compose -f docker-compose.prod.yml logs -f app   # watch it start
 ```
 
-Open `https://waymarkgear.com` — Caddy fetches the certificate on the first
-request, which can take a few seconds.
+`SITE_DOMAIN` drives both Caddy (the certificate, and redirecting `www.` to
+the bare domain) and the app's public URL, so it's the only place the domain
+goes. Open `https://your-domain` — Caddy fetches the certificate on the
+first request, which can take a few seconds.
 
 ## 7. Make yourself the owner and load the catalog
 
-1. Register your account on the site (or sign in with Google).
-2. Put your username in `.env`: `ADMINS=["yourusername"]`, then
-   `docker compose -f docker-compose.prod.yml up -d` to apply it.
-3. Sign in again. **Owner → Gear catalog → Download CSV template**, fill it in
+1. The setup script creates your owner account. By hand: register on the
+   site, put your username in `.env` as `ADMINS=["yourusername"]`, then
+   `docker compose -f docker-compose.prod.yml up -d`.
+2. Sign in. **Owner → Gear catalog → Download CSV template**, fill it in
    (one row per product; weight with a unit of `g`, `kg`, `oz` or `lb`), then
    **Import CSV**. Review what will be added or changed, and **Apply**.
 4. Before launch, finish `PRIVACY.md` and `TERMS.md` (replace every
@@ -128,33 +147,22 @@ request, which can take a few seconds.
 
 ## 8. Backups
 
-```sh
-cd /opt/waymark
-curl -fsSLo backup.sh https://raw.githubusercontent.com/YOUR-USER/waymark-gear/main/deploy/backup.sh
-chmod 700 backup.sh
-apt-get install -y rclone && rclone config   # add a remote named "offsite"
-./backup.sh                                   # run once to check
-crontab -e   # add:  15 3 * * * /opt/waymark/backup.sh >> /var/log/waymark-backup.log 2>&1
-```
-
-Each night this saves a compressed database dump and the uploaded photos,
-keeps 14 days on the server, and copies them off-site. **Test a restore**
-once (instructions at the top of `backup.sh`) — a backup you haven't
-restored is a guess.
+The setup script schedules `backup.sh` every night (`/etc/cron.d/waymark`):
+a compressed database dump and the uploaded photos, kept 14 days in
+`/opt/waymark/backups`. `waymark offsite` adds an rclone copy off the server,
+and `waymark restore <date>` puts one back ([INSTALL.md, "Backups"](INSTALL.md#backups)).
+**Test a restore** once: a backup you haven't restored is a guess.
 
 ## 9. Shipping updates
 
 1. Push to `main`. CI runs; on success a new image is published.
-2. On the server:
-   ```sh
-   cd /opt/waymark
-   docker compose -f docker-compose.prod.yml pull app
-   docker compose -f docker-compose.prod.yml up -d app
-   ```
-   Database migrations run automatically on start. The app shuts down
-   gracefully, so in-flight saves finish first.
-3. Roll back by setting `APP_IMAGE` to a previous commit's tag
-   (`ghcr.io/your-user/waymark-gear:<sha>`) and running `up -d` again.
+2. On the server: `waymark update`. It backs up, pulls the image, refreshes
+   the `deploy/` files from it (adding any new settings to `.env` as
+   comments), restarts, and rolls back to the previous image if the new one
+   doesn't come up healthy. Database migrations run automatically on start,
+   and the app shuts down gracefully, so in-flight saves finish first.
+3. To pin or roll back by hand, set `APP_IMAGE` to a commit's tag
+   (`ghcr.io/your-user/waymark-gear:<sha>`) with `waymark settings`.
 
 Dependabot opens weekly pull requests for dependency updates; merging them
 after CI passes keeps security patches current.
@@ -252,7 +260,10 @@ the gear page instead.
    signing secret in `STRIPE_WEBHOOK_SECRET`.
 4. **Settings → Billing → Customer portal**: turn on cancelling and switching
    between the two prices.
-5. `docker compose -f docker-compose.prod.yml up -d`. The Subscribe buttons
+5. If you charge other amounts, set `SUPPORTER_MONTHLY_LABEL` and
+   `SUPPORTER_YEARLY_LABEL` to the prices as people should read them (e.g.
+   `€5`); they're only labels, Stripe's prices are what's charged.
+6. `docker compose -f docker-compose.prod.yml up -d`. The Subscribe buttons
    appear at `/supporter`. Try it first with test-mode keys and Stripe's test
    card 4242 4242 4242 4242.
 

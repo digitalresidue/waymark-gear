@@ -1,0 +1,47 @@
+name: Install guide review
+
+# DigitalOcean (and domain companies, Mailgun...) change their screens
+# without telling us, and INSTALL.md is for people who can't work around a
+# missing button. Every three months, open an issue to walk through it again.
+# The commands themselves are tested on every pull request (CI, "Docker
+# image builds").
+
+on:
+  schedule:
+    - cron: '17 14 2 1,4,7,10 *'   # 2 Jan/Apr/Jul/Oct, 14:17 UTC
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  open-issue:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Open a review issue (unless one is already open)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="Re-check INSTALL.md against today's screens"
+          if gh issue list --state open --search "in:title \"$title\"" --json number --jq 'length' | grep -qv '^0$'; then
+            echo "Already open."; exit 0
+          fi
+          checked=$(grep -oE 'screens last checked[[:space:]>]*[0-9-]{10}' INSTALL.md | grep -oE '[0-9-]{10}' || echo unknown)
+          gh issue create --title "$title" --body "$(cat <<BODY
+          INSTALL.md's DigitalOcean screens were last checked **$checked**.
+
+          Walk through it as a newcomer would, on a real (throwaway) droplet if you can:
+
+          - [ ] Step 1–2: sign-up and **Create → Droplets**: region, Ubuntu 24.04, Basic/Regular \$12 plan, backups, password, monitoring. Prices in the cost table still right?
+          - [ ] Step 3: the **Console** button name and where it is.
+          - [ ] Step 4: DNS notes for Namecheap, GoDaddy, Cloudflare, Porkbun, Squarespace.
+          - [ ] Step 5: the three commands, start to finish (\`bash install.sh\`).
+          - [ ] Email: Mailgun's menus and free plan.
+          - [ ] Backups: Spaces keys and \`waymark offsite\` (rclone's questions).
+          - [ ] Update **"screens last checked"** at the top of INSTALL.md.
+
+          Destroy the droplet afterwards.
+          BODY
+          )"
