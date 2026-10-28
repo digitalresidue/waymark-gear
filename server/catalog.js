@@ -112,6 +112,10 @@ export function validateEntry(input) {
     const rawAffiliate = get('affiliateUrl', 'affiliate_url');
     const affiliateUrl = rawAffiliate === undefined ? undefined : str(rawAffiliate, 2000);
     if (affiliateUrl && !/^https:\/\/[^\s]+$/i.test(affiliateUrl)) errors.push('affiliate_url must start with https://');
+    // Affiliate networks (AvantLink, Impact...) hand out tracking links that
+    // say nothing about the product. The normal product link has to be there
+    // too: Supporters always get it, and it's what the gear page shows.
+    if (affiliateUrl && !url) errors.push('add the normal product link (url) too: Supporters get that one, never the affiliate link');
     const imageUrl = str(get('imageUrl', 'image_url'), 2000);
     if (!isSafeUrl(imageUrl)) errors.push('image_url must start with http:// or https://');
 
@@ -260,7 +264,10 @@ export function templateCsv() {
     return stringify([
         CSV_COLUMNS,
         ['WG-0001', 'Example tent, 1 person', 'Example Brand', 'Shelter', 'Single wall, trekking-pole pitched',
-            '28', 'oz', '399.00', 'USD', 'https://example.com/tent', '', 'false', 'false', 'tent;1p', 'draft', ''],
+            '28', 'oz', '399.00', 'USD', 'https://example.com/tent', '', 'false', 'false', 'tent;1p', 'draft',
+            // affiliate_url: the tracking link from your affiliate network,
+            // optional. url above stays the normal product page.
+            'https://www.avantlink.com/click.php?tt=cl&mi=12345&pw=67890&url=https%3A%2F%2Fexample.com%2Ftent'],
     ]);
 }
 

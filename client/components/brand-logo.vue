@@ -13,34 +13,5 @@ export default {
 };
 </script>
 
-<style lang="scss">
-.wgBrandLogo {
-    display: inline-flex;
-
-    .wgLogoOnDark {
-        display: none;
-    }
-}
-
-@mixin wg-logo-dark {
-    .wgBrandLogo {
-        .wgLogoOnLight {
-            display: none;
-        }
-
-        .wgLogoOnDark {
-            display: block;
-        }
-    }
-}
-
-@media (prefers-color-scheme: dark) {
-    .lp:not([data-theme="light"]) {
-        @include wg-logo-dark;
-    }
-}
-
-.lp[data-theme="dark"] {
-    @include wg-logo-dark;
-}
-</style>
+<!-- Styles (light/dark swap) live in css/components/_site-chrome.scss, shared
+     with the server-rendered pages. -->

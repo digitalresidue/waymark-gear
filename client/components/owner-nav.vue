@@ -15,7 +15,7 @@
                 <router-link to="/owner/revenue" :class="{ wgActive: active === 'revenue' }" data-testid="owner-nav-revenue">
                     Revenue
                 </router-link>
-                <router-link v-if="isModerator" to="/moderation">
+                <router-link v-if="isModerator" to="/moderation" :class="{ wgActive: active === 'users' }" data-testid="owner-nav-users">
                     Users
                 </router-link>
             </nav>
@@ -31,7 +31,8 @@ export default {
     },
     computed: {
         isModerator() {
-            return Boolean(this.$store.state.account && this.$store.state.account.isModerator);
+            const a = this.$store.state.account;
+            return Boolean(a && (a.isModerator || a.isAdmin));
         },
     },
 };

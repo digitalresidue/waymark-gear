@@ -122,7 +122,7 @@
                             <tr v-for="item in items" :key="item.id" data-testid="catalog-row">
                                 <td>
                                     <p class="wgCellTitle">
-                                        {{ item.name }}
+                                        {{ item.name }}<span v-if="item.affiliateUrl" class="wgBadge wgAffBadge" title="Has an affiliate link" data-testid="catalog-affiliate-badge">Affiliate</span>
                                     </p>
                                     <p class="wgMuted wgCellSub">
                                         {{ [item.brand, item.sku && `SKU ${item.sku}`].filter(Boolean).join(' · ') }}
@@ -214,12 +214,15 @@
                         <label class="wgField wgSpan2">Description
                             <textarea v-model="form.description" class="wgTextarea" rows="2" maxlength="1000" />
                         </label>
-                        <label class="wgField wgSpan2">Product link
-                            <input v-model="form.url" class="wgInput" type="url" placeholder="https://">
+                        <label class="wgField wgSpan2">Product link <span class="wgMuted">(the normal store page; Supporters always get this one)</span>
+                            <input v-model="form.url" class="wgInput" type="url" placeholder="https://store.example.com/the-product" data-testid="catalog-url">
                         </label>
-                        <label class="wgField wgSpan2">Affiliate link <span class="wgMuted">(optional; used for Buy buttons, never shown to Supporters)</span>
+                        <label class="wgField wgSpan2">Affiliate link <span class="wgMuted">(optional; the tracking link from AvantLink, Impact, Amazon...)</span>
                             <input v-model="form.affiliateUrl" class="wgInput" type="url" placeholder="https://" data-testid="catalog-affiliate-url">
                         </label>
+                        <p class="wgSpan2 wgBuyRoute" data-testid="catalog-buy-route">
+                            {{ buyRoute }}
+                        </p>
                         <label class="wgField wgSpan2">Photo URL
                             <input v-model="form.imageUrl" class="wgInput" type="url" placeholder="https://">
                         </label>
@@ -257,11 +260,13 @@
                 </p>
             </div>
         </main>
+        <siteFooter site />
     </div>
 </template>
 
 <script>
 import siteHeader from '../components/site-header.vue';
+import siteFooter from '../components/site-footer.vue';
 import ownerNav from '../components/owner-nav.vue';
 import modal from '../components/modal.vue';
 import { api } from '../utils/format.js';
@@ -274,7 +279,7 @@ const emptyForm = () => ({
 
 export default {
     name: 'OwnerCatalog',
-    components: { siteHeader, ownerNav, modal },
+    components: { siteHeader, siteFooter, ownerNav, modal },
     data() {
         return {
             items: [],
@@ -299,6 +304,15 @@ export default {
         };
     },
     computed: {
+        // What Buy buttons will do for this item, in plain words.
+        buyRoute() {
+            const url = (this.form.url || '').trim();
+            const aff = (this.form.affiliateUrl || '').trim();
+            if (aff && !url) return 'Add the product link too: Supporters get that one, never the affiliate link.';
+            if (aff) return 'Buy buttons: everyone gets the affiliate link, except Supporters, who get the product link.';
+            if (url) return 'Buy buttons: the product link (with your shop rule\'s code added, if one matches its site). Supporters get it plain.';
+            return 'No Buy button until there\'s a product link.';
+        },
         isAdmin() {
             return Boolean(this.$store.state.account && this.$store.state.account.isAdmin);
         },
@@ -654,5 +668,20 @@ export default {
 
 .lp .wgDangerBtn {
     color: var(--lp-danger);
+}
+
+.wgBuyRoute {
+    background: var(--lp-row-hover);
+    border-radius: 8px;
+    color: var(--lp-text-secondary);
+    font-size: 13px;
+    margin: -4px 0 0;
+    padding: 8px 10px;
+}
+
+.wgAffBadge {
+    font-size: 11px;
+    margin-left: 6px;
+    vertical-align: 1px;
 }
 </style>

@@ -175,6 +175,7 @@ test.describe('Phase 8: phone menus', () => {
         await expect(page.getByTestId('header-signin')).toBeHidden();
         await expect(page.getByTestId('nav-leaderboard')).toBeHidden();
         await page.getByTestId('site-menu').click();
+        // On a phone the dropdowns open out as labelled sections.
         await expect(page.getByTestId('nav-leaderboard')).toBeVisible();
         await expect(page.getByTestId('menu-signin')).toBeVisible();
         await page.keyboard.press('Escape');
@@ -184,14 +185,16 @@ test.describe('Phase 8: phone menus', () => {
         await expect(page).toHaveURL(/\/leaderboard$/);
         await expect(page.getByTestId('nav-leaderboard')).toBeHidden();
 
+        // The server-rendered Trails page has the same header and menu.
         await page.goto(url('/trails/pct'));
-        const bar = await page.locator('.wgShareBar').boundingBox();
+        const bar = await page.locator('.wgSiteHeader').boundingBox();
         expect(bar!.height).toBeLessThan(70);
-        expect(await ratio('.wgShareBrand .wgLogo')).toBeCloseTo(843 / 127, 1);
-        await page.getByTestId('share-menu').click();
-        await expect(page.locator('.wgShareMenuPhone nav')).toBeVisible();
+        expect(await ratio('.wgSiteHeader .wgLogo')).toBeCloseTo(843 / 127, 1);
+        await page.getByTestId('site-menu').click();
+        await expect(page.getByTestId('nav-kits')).toBeVisible();
+        await expect(page.getByTestId('menu-signin')).toBeVisible();
         await page.mouse.click(200, 760);
-        await expect(page.locator('.wgShareMenuPhone nav')).toBeHidden();
+        await expect(page.getByTestId('nav-kits')).toBeHidden();
         // Against the 390px screen, not window.innerWidth: Chromium's phone
         // emulation zooms out to fit wide content, which would hide overflow.
         expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);

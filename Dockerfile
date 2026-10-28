@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---- build: install everything, compile the frontend, then drop dev deps ----
-FROM node:24-bookworm-slim AS build
+FROM node:26-bookworm-slim AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -15,7 +15,7 @@ ARG VITE_SOURCE_URL=""
 RUN npm run build && npm prune --omit=dev
 
 # ---- runtime: production deps, built assets, no compilers ----
-FROM node:24-bookworm-slim
+FROM node:26-bookworm-slim
 
 # webp provides cwebp, used to convert uploaded photos (server/images.js).
 # tini forwards SIGTERM so the app can shut down gracefully.
@@ -23,8 +23,13 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends webp tini \
     && rm -rf /var/lib/apt/lists/*
 
+# The footer on server-rendered pages shows these too (client/brand.js).
+ARG VITE_CONTACT_EMAIL=""
+ARG VITE_SOURCE_URL=""
 ENV NODE_ENV=production \
-    PORT=3000
+    PORT=3000 \
+    VITE_CONTACT_EMAIL=$VITE_CONTACT_EMAIL \
+    VITE_SOURCE_URL=$VITE_SOURCE_URL
 
 WORKDIR /app
 COPY --from=build --chown=node:node /app/package.json /app/app.js ./

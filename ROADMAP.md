@@ -1,11 +1,18 @@
 # Waymark Gear roadmap
 
 Living document. Each phase gets a dated entry in the changelog when it ships;
-the plan below it is what comes next. Last updated **2026-10-26** (Phase 8 started: Trails and the phone web).
+the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 2: one menu everywhere, clearer affiliate links).
 
 ---
 
 ## Changelog
+
+### Phase 8, part 2 — One menu everywhere, clearer links · 2026-10-28 · branch `nav-affiliate`
+- **A shorter main menu**: My lists · Explore ▾ (Kits, Trails, Leaderboards, Gear reviews) · Trips · Owner ▾ (Gear catalog, Featured kits, Trails, Revenue, Users, Tickets). Dropdowns open on hover, click or keyboard; on a phone they become labelled sections of the menu sheet. Defined once (`client/nav.js`) for every page.
+- **Every page has the site header and footer**, including the server-rendered ones (Trails, shared lists, profiles, gear pages, trips, compare), which used to have a bare bar. They're cached and shared, so the signed-in parts (Trips, Owner, your name, "Open my lists") fill in from a small `/api/viewer` call.
+- **The homepage is reachable when signed in**: the logo always goes to it (and in the editor's phone drawer), with My lists in the menu.
+- **Owner → Users** (moderation) uses the owner layout: header, owner tabs, cards, footer; the search handles `+` in emails. All owner pages now have the footer.
+- **Product link and affiliate link**: catalog items keep the normal store page and, optionally, the network's tracking link (AvantLink and Impact links don't look like the product). Supporters always get the product link; everyone else the affiliate link when there is one, otherwise the product link (with a shop rule's code if one matches). An affiliate link now needs a product link beside it; the editor says what Buy will do for each item, the catalog marks items with an affiliate link, and the CSV template shows both columns.
 
 ### Phase 8, part 1 — Trails, and the phone web · 2026-10-26 · branch `phase8`
 - **Trails page** (`/trails/pct`): what people carry on a trail. The trail's facts and what it asks of your pack; packs, median and lightest base weight; how many use quilts, trail runners, bear canisters, ice axes, satellite messengers; the three most carried shelters, sleep systems, packs, insulation layers and shell layers (rain, snow, wind), ranked; every pack, sorted by top, lightest, newest, shakedown requests or this year's class; and the trail against the two most-packed others.

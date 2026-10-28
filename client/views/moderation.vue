@@ -1,73 +1,117 @@
 <template>
-    <div id="lp-moderation">
-        <h1>Admin panel</h1>
-        <reportedComments />
-
-        <form @submit.prevent="searchUsers">
-            <input v-model="searchQuery" type="text" placeholder="Search for a user...">
-            <button>Search</button>
-        </form>
-        <ul v-if="resultsLoaded" class="lp-moderation-search-results">
-            <li v-for="result in searchResults" :key="result.username" @click="setUser(result)">
-                <lp-user-identity :user="result" :query="matchedQuery" />
-            </li>
-        </ul>
-
-        <div v-if="userToInspect" class="lp-moderation-user-to-inspect">
-            <h2>{{ userToInspect.username }}</h2>
-            <dl class="lp-moderation-facts">
-                <div>
-                    <dt>Last seen</dt>
-                    <dd :title="absolute(userToInspect.lastSeen)">
-                        {{ relative(userToInspect.lastSeen) }}
-                    </dd>
-                </div>
-                <div>
-                    <dt>Registered</dt>
-                    <dd :title="absolute(userToInspect.registered)">
-                        {{ relative(userToInspect.registered) }}
-                    </dd>
-                </div>
-                <div>
-                    <dt>Lists</dt>
-                    <dd>{{ userToInspect.lists }}</dd>
-                </div>
-                <div>
-                    <dt>Saves</dt>
-                    <dd title="sync_token — increments on every save">
-                        {{ userToInspect.syncToken }}
-                    </dd>
-                </div>
-            </dl>
-            <section>
-                <button @click="clearSession(userToInspect)">
-                    Clear session
-                </button>
-                <button @click="resetPassword(userToInspect)">
-                    Create password reset link
-                </button>
-                <template v-if="resetUrl">
-                    <p class="lp-moderation-reset-url">
-                        <strong>Reset link:</strong> <code>{{ resetUrl }}</code>
-                        <br>
-                        Send this to the user. It expires in one hour, works once, and
-                        leaves their current password working until they use it.
-                    </p>
-                </template>
-            </section>
-            <section>
-                <p class="lp-moderation-editing">
-                    Editing the library of
-                    <lp-user-identity :user="userToInspect" :query="matchedQuery" />
+    <div class="wgHome">
+        <siteHeader active="owner" />
+        <template v-if="isModerator">
+            <ownerNav active="users" />
+            <main id="lp-moderation" class="wgPage wgOwner wgModeration">
+                <h1 class="wgH2">
+                    Users
+                </h1>
+                <p class="wgLede">
+                    Look someone up to help with their account, and review comments people have reported.
                 </p>
-                <textarea id="lp-moderation-user-library-json" v-model="editableLibrary" />
-            </section>
-        </div>
+
+                <section class="wgCard wgDevCard">
+                    <h2 class="wgProfileEditH">
+                        Find a user
+                    </h2>
+                    <form class="wgModSearch" @submit.prevent="searchUsers">
+                        <input v-model="searchQuery" type="search" class="wgInput" placeholder="Search for a user..." aria-label="Username or email" data-testid="moderation-search">
+                        <button type="submit" class="wgBtn wgBtnPrimary">
+                            Search
+                        </button>
+                    </form>
+                    <p v-if="resultsLoaded && !searchResults.length" class="wgMuted">
+                        Nobody matches “{{ matchedQuery }}”.
+                    </p>
+                    <div class="wgModGrid">
+                        <ul v-if="resultsLoaded && searchResults.length" class="lp-moderation-search-results">
+                            <li
+                                v-for="result in searchResults"
+                                :key="result.username"
+                                :class="{ wgActive: userToInspect && userToInspect.username === result.username }"
+                                @click="setUser(result)"
+                            >
+                                <lp-user-identity :user="result" :query="matchedQuery" />
+                            </li>
+                        </ul>
+
+                        <div v-if="userToInspect" class="lp-moderation-user-to-inspect">
+                            <h3 class="wgModUserName">
+                                <a :href="`/@${userToInspect.username}`" target="_blank" rel="noopener">@{{ userToInspect.username }}</a>
+                            </h3>
+                            <dl class="lp-moderation-facts">
+                                <div>
+                                    <dt>Last seen</dt>
+                                    <dd :title="absolute(userToInspect.lastSeen)">
+                                        {{ relative(userToInspect.lastSeen) }}
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt>Registered</dt>
+                                    <dd :title="absolute(userToInspect.registered)">
+                                        {{ relative(userToInspect.registered) }}
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt>Lists</dt>
+                                    <dd>{{ userToInspect.lists }}</dd>
+                                </div>
+                                <div>
+                                    <dt>Saves</dt>
+                                    <dd title="sync_token — increments on every save">
+                                        {{ userToInspect.syncToken }}
+                                    </dd>
+                                </div>
+                            </dl>
+                            <div class="wgModActions">
+                                <button type="button" class="wgBtn wgBtnGhost" @click="clearSession(userToInspect)">
+                                    Clear session
+                                </button>
+                                <button type="button" class="wgBtn wgBtnGhost" @click="resetPassword(userToInspect)">
+                                    Create password reset link
+                                </button>
+                            </div>
+                            <p v-if="sessionCleared" class="wgMuted" role="status">
+                                Signed out everywhere.
+                            </p>
+                            <p v-if="resetUrl" class="lp-moderation-reset-url">
+                                <strong>Reset link:</strong> <code>{{ resetUrl }}</code>
+                                <br>
+                                Send this to the user. It expires in one hour, works once, and
+                                leaves their current password working until they use it.
+                            </p>
+                            <details class="wgModLibrary">
+                                <summary>
+                                    Their library (JSON, read-only)
+                                </summary>
+                                <p class="lp-moderation-editing">
+                                    Library of
+                                    <lp-user-identity :user="userToInspect" :query="matchedQuery" />
+                                </p>
+                                <textarea id="lp-moderation-user-library-json" v-model="editableLibrary" class="wgTextarea" readonly />
+                            </details>
+                        </div>
+                    </div>
+                </section>
+
+                <reportedComments />
+            </main>
+        </template>
+        <main v-else class="wgPage wgOwner">
+            <div class="wgEmpty">
+                <p><strong>Moderators only.</strong></p>
+            </div>
+        </main>
+        <siteFooter site />
     </div>
 </template>
 
 <script>
 import reportedComments from '../components/reported-comments.vue';
+import siteHeader from '../components/site-header.vue';
+import siteFooter from '../components/site-footer.vue';
+import ownerNav from '../components/owner-nav.vue';
 import { h } from 'vue';
 import { fetchJson } from '../utils/utils.js';
 
@@ -112,6 +156,9 @@ export default {
     components: {
         reportedComments,
         LpUserIdentity,
+        siteHeader,
+        siteFooter,
+        ownerNav,
     },
     data() {
         return {
@@ -121,18 +168,20 @@ export default {
             userToInspect: null,
             editableLibrary: null,
             resetUrl: null,
+            sessionCleared: false,
         };
     },
     computed: {
         resultsLoaded() {
             return !!this.searchResults;
-        }
+        },
+        isModerator() {
+            const a = this.$store.state.account;
+            return Boolean(a && (a.isModerator || a.isAdmin));
+        },
     },
-    beforeMount() {
-        // eslint-disable-next-line no-constant-condition
-        if (false) {
-            this.$router.push('/welcome');
-        }
+    mounted() {
+        document.title = 'Users — Waymark Gear';
     },
     methods: {
         // Intl rather than a date library — this is the only place that needs it.
@@ -156,7 +205,7 @@ export default {
             // The term the results were fetched with, not the live input, so
             // typing a new search doesn't re-mark the results on screen.
             const query = this.searchQuery.trim();
-            fetchJson(`/moderation/search?q=${this.searchQuery}`, {
+            fetchJson(`/moderation/search?q=${encodeURIComponent(query)}`, {
                 method: 'GET',
                 credentials: 'same-origin',
             })
@@ -170,8 +219,9 @@ export default {
         },
         setUser(user) {
             this.userToInspect = user;
-            this.editableLibrary = JSON.stringify(this.userToInspect.library);
+            this.editableLibrary = JSON.stringify(this.userToInspect.library, null, 2);
             this.resetUrl = null;
+            this.sessionCleared = false;
         },
         clearSession(user) {
             fetchJson(`/moderation/clear-session`, {
@@ -183,7 +233,7 @@ export default {
                 body: JSON.stringify({username: user.username}),
             })
                 .then((_response) => {
-                    console.log("clear session success");
+                    this.sessionCleared = true;
                 })
                 .catch((err) => {
                     console.log(err);
@@ -214,31 +264,76 @@ export default {
 
 
 #lp-moderation {
-    display: grid;
-    grid-template-columns: 20em auto;
-    padding: 0 2em;
+    max-width: 1000px;
 
-    h1, & > form {
-        grid-column: 1 / 3;
+    .wgDevCard {
+        margin: 0 0 16px;
+        padding: 16px 18px;
+    }
+
+    .wgModSearch {
+        display: flex;
+        gap: 8px;
+        margin: 4px 0 12px;
+        max-width: 480px;
+
+        .wgInput {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+    }
+
+    .wgModGrid {
+        display: grid;
+        gap: 16px 24px;
+        grid-template-columns: minmax(200px, 280px) 1fr;
+
+        @media (max-width: $mobile) {
+            grid-template-columns: 1fr;
+        }
     }
 
     .lp-moderation-search-results {
-        grid-column: 1;
+        border: 1px solid var(--lp-border);
+        border-radius: 10px;
         list-style: none;
-        padding: 0;
+        margin: 0;
+        max-height: 420px;
+        overflow-y: auto;
+        padding: 4px;
 
         li {
+            border-radius: 6px;
             cursor: pointer;
-            padding: 0.3em 0.4em;
+            padding: 7px 9px;
 
-            &:hover {
+            &:hover,
+            &.wgActive {
                 background: var(--lp-row-hover);
             }
         }
     }
 
-    .lp-moderation-user-to-inspect {
-        grid-column: 2;
+    .wgModUserName {
+        font-size: 18px;
+        margin: 0 0 8px;
+    }
+
+    .wgModActions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 0 0 10px;
+    }
+
+    .lp-moderation-reset-url code {
+        overflow-wrap: anywhere;
+    }
+
+    .wgModLibrary summary {
+        color: var(--lp-text-secondary);
+        cursor: pointer;
+        margin: 10px 0 6px;
     }
 
     .lp-moderation-username,
@@ -289,6 +384,7 @@ export default {
 }
 
 #lp-moderation-user-library-json {
+    font: 12px/1.45 $font-mono;
     height: 20em;
     width: 100%;
 }

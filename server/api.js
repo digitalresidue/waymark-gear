@@ -13,7 +13,7 @@ import * as kits from './kits.js';
 import config from 'config';
 import rateLimit from 'express-rate-limit';
 import {
-    authenticateAdmin, authenticateUser, authenticateModerator, optionalUser,
+    authenticateAdmin, authenticateUser, authenticateModerator, optionalUser, isAdmin, isModerator,
 } from './auth.js';
 import * as comments from './comments.js';
 import * as follows from './follows.js';
@@ -170,6 +170,16 @@ const publicJson = (handler) => pub(async (req, res) => {
         throw err;
     }
 });
+
+// Who's looking, for the header on cached server pages (client/social.js).
+// Never cached: the pages are shared, this answer isn't.
+router.get('/api/viewer', publicJson(async (req, res) => {
+    res.set('Cache-Control', 'private, no-store');
+    const user = await optionalUser(req);
+    res.json(user
+        ? { username: user.username, isAdmin: isAdmin(user.username), isModerator: isModerator(user.username) }
+        : { username: null, isAdmin: false, isModerator: false });
+}));
 
 router.get('/api/users/:username/follow', publicJson(async (req, res) => {
     res.set('Cache-Control', 'no-store');

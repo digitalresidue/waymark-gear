@@ -8,9 +8,14 @@
 
 export const siteName = 'Waymark Gear';
 
-export const contactEmail = import.meta.env?.VITE_CONTACT_EMAIL || '';
+// The server reads the same names from its environment (the Dockerfile
+// passes the build values through), for the pages it renders itself.
+// (Vite only fills in import.meta.env.VITE_* written out in full.)
+const serverEnv = (name) => (typeof process !== 'undefined' && process.env ? process.env[name] : '') || '';
 
-export const sourceUrl = import.meta.env?.VITE_SOURCE_URL || 'https://github.com/galenmaly/lighterpack';
+export const contactEmail = import.meta.env?.VITE_CONTACT_EMAIL || serverEnv('VITE_CONTACT_EMAIL');
+
+export const sourceUrl = import.meta.env?.VITE_SOURCE_URL || serverEnv('VITE_SOURCE_URL') || 'https://github.com/digitalresidue/waymark-gear';
 
 // Waymark Gear began as a fork of LighterPack (GPL-2.0). Keep this credit.
 export const upstream = {

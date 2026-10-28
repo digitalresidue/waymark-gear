@@ -1,0 +1,42 @@
+<header class="wgSiteHeader" data-site-header>
+    <div class="wgSiteHeaderInner wgPage">
+        <a href="/welcome" class="wgSiteHeaderLogo" aria-label="Waymark Gear home" data-testid="site-logo">
+            <span class="wgBrandLogo">
+                <img class="wgLogo wgLogoOnLight" src="/images/waymark-logo.png" alt="Waymark Gear" width="843" height="127">
+                <img class="wgLogo wgLogoOnDark" src="/images/waymark-logo-light.png" alt="Waymark Gear" width="843" height="127">
+            </span>
+        </a>
+        <nav id="wgSiteNav" class="wgSiteNav" aria-label="Main">
+            {{#chrome.menu}}
+            {{#isGroup}}
+            <div class="wgNavGroup" data-show="{{show}}" {{#gated}}hidden{{/gated}}>
+                <button type="button" class="wgSiteNavLink wgNavGroupBtn{{#active}} wgActive{{/active}}" aria-expanded="false" aria-controls="wgNavDrop-{{id}}" data-testid="nav-{{id}}">{{label}}<svg class="wgNavCaret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></button>
+                <div id="wgNavDrop-{{id}}" class="wgNavDrop" role="group" aria-label="{{label}}">
+                    <span class="wgNavDropLabel">{{label}}</span>
+                    {{#items}}
+                    <a href="{{href}}" class="wgNavDropItem" data-show="{{show}}" {{#gated}}hidden{{/gated}} data-testid="nav-{{id}}"><span class="wgNavDropTitle">{{label}}</span>{{#note}}<span class="wgNavDropNote">{{note}}</span>{{/note}}</a>
+                    {{/items}}
+                </div>
+            </div>
+            {{/isGroup}}
+            {{^isGroup}}
+            <a href="{{href}}" class="wgSiteNavLink{{#active}} wgActive{{/active}}" data-show="{{show}}" {{#gated}}hidden{{/gated}} data-testid="nav-{{id}}">{{label}}</a>
+            {{/isGroup}}
+            {{/chrome.menu}}
+            <div class="wgSiteNavPhoneGroup">
+                {{#chrome.extras}}
+                <a href="{{href}}" class="wgSiteNavLink wgSiteNavPhone" data-show="{{show}}" {{#gated}}hidden{{/gated}} data-testid="{{testid}}">{{label}}</a>
+                {{/chrome.extras}}
+            </div>
+        </nav>
+        <div class="wgSiteHeaderActions">
+            <a href="/signin" class="wgBtn wgBtnGhost wgHideOnPhone" data-show="guest" data-testid="header-signin">Sign in</a>
+            <span class="wgMuted wgSiteHeaderUser" data-viewer-name hidden></span>
+            <a href="/?start=1" class="wgBtn wgBtnPrimary" data-testid="header-lists" data-lists-button><span class="wgLong">{{chrome.cta}}</span><span class="wgShort">{{chrome.ctaShort}}</span></a>
+        </div>
+        <button type="button" class="wgSiteMenuBtn" aria-expanded="false" aria-controls="wgSiteNav" aria-label="Menu" data-testid="site-menu">
+            <svg class="wgMenuIconOpen" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+            <svg class="wgMenuIconClose" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+        </button>
+    </div>
+</header>
