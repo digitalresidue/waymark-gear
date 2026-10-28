@@ -290,6 +290,8 @@ export default {
                 this.form.tags.custom = this.customTags.split(',').map((t) => t.trim()).filter(Boolean).slice(0, 5);
                 const profile = await api('/api/profile', { method: 'PUT', body: JSON.stringify(this.form) });
                 this.setProfile(profile);
+                // The header picture follows straight away.
+                if (this.$store.state.account) this.$store.commit('setAccount', { ...this.$store.state.account, avatarUrl: profile.avatarUrl || '' });
                 this.saved = true;
             } catch (err) {
                 this.error = err.message || 'Your profile could not be saved.';

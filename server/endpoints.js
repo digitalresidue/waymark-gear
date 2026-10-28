@@ -172,6 +172,8 @@ function accountInfo(user) {
         isAdmin: isAdmin(user.username),
         isModerator: isModerator(user.username),
         supporter: isSupporter(user),
+        // The header shows it in place of the initial (Your profile → picture).
+        avatarUrl: user.avatar_url || '',
     };
 }
 
