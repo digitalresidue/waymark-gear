@@ -326,6 +326,14 @@ Also in `waymark settings`, each a list of usernames in the same
 - `REVIEWERS=` can write gear reviews on catalog items. Set
   `OPEN_REVIEWS=true` instead to let every member review.
 
+### Optional: verification tags (Impact, Search Console...)
+
+Affiliate networks and search engines often ask you to prove the site is
+yours by adding a `<meta ...>` tag. You don't need the server for this: sign
+in as an owner, open **Owner → Revenue → Header tags**, paste each tag on its
+own line (up to 10), and click **Save tags**. They're on every page straight
+away. Only `<meta>` tags are accepted.
+
 ### Optional: Google Analytics
 
 To see visitor numbers in Google Analytics:

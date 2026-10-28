@@ -1,11 +1,14 @@
 # Waymark Gear roadmap
 
 Living document. Each phase gets a dated entry in the changelog when it ships;
-the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 5: writing gear reviews, tidier list rows, optional Google Analytics; part 4: chart styles; part 3: the editor's rail, tools and account menu).
+the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 6: header tags; part 5: writing gear reviews, tidier list rows, optional Google Analytics; part 4: chart styles; part 3: the editor's rail, tools and account menu).
 
 ---
 
 ## Changelog
+
+### Phase 8, part 6 — Header tags · 2026-10-28 · branch `head-tags`
+- **Owner → Revenue → Header tags**: paste up to 10 `<meta>` verification tags (Impact, Google Search Console, Pinterest...), one per line; they go into the `<head>` of every page the server sends, at once, no restart. Only `name`/`property`/`itemprop` with `content`/`value` are accepted (no scripts, no `http-equiv`); each tag is rebuilt and escaped, not echoed as pasted. Stored in `site_settings`.
 
 ### Phase 8, part 5 — Writing gear reviews, list rows, Analytics · 2026-10-28 · branch `reviews-writing`
 - **A way in**: reviews are written on each gear page, but nothing led there. Now reviewers (owners, moderators, the `reviewers` setting, or everyone with `openReviews`) get a **Write a review** panel at the top of `/reviews`: search the catalog, or pick from **suggestions** — the most-carried published gear you haven't reviewed yet. Members and visitors don't see it.

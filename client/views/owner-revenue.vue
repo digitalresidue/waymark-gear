@@ -47,6 +47,31 @@
                     </div>
                 </section>
 
+                <section class="wgCard wgDevCard" data-testid="head-tags">
+                    <h2 class="wgProfileEditH">
+                        Header tags
+                    </h2>
+                    <p class="wgMuted wgProfileHint">
+                        Verification tags from affiliate networks and search engines (Impact, Google Search Console, Pinterest...). Paste each <code>&lt;meta&gt;</code> tag on its own line, up to {{ headTagsMax }}. They're added to the top of every page. Only meta tags are accepted, never scripts.
+                    </p>
+                    <textarea
+                        v-model="headTags"
+                        class="wgInput wgHeadTags"
+                        rows="6"
+                        spellcheck="false"
+                        aria-label="Header tags, one meta tag per line"
+                        placeholder="<meta name='impact-site-verification' value='your-code-here'>"
+                        data-testid="head-tags-input"
+                    />
+                    <div class="wgProfileActions">
+                        <button type="button" class="wgBtn wgBtnPrimary" data-testid="head-tags-save" @click="saveHeadTags">
+                            Save tags
+                        </button>
+                        <span v-if="headTagsSaved" class="wgMuted" role="status" data-testid="head-tags-saved">Saved. {{ headTagsCount }} {{ headTagsCount === 1 ? 'tag is' : 'tags are' }} on every page.</span>
+                        <span v-if="headTagsError" class="wgDanger" role="alert" data-testid="head-tags-error">{{ headTagsError }}</span>
+                    </div>
+                </section>
+
                 <section class="wgCard wgDevCard" data-testid="click-report">
                     <h2 class="wgProfileEditH">
                         Buy clicks, last 30 days
@@ -126,7 +151,7 @@ export default {
     name: 'OwnerRevenue',
     components: { siteHeader, siteFooter, ownerNav },
     data() {
-        return { settings: { enabled: true, rules: [] }, clicks: null, supporters: [], planAvailable: false, saved: false, grantName: '', grantMonths: 12, error: '' };
+        return { settings: { enabled: true, rules: [] }, clicks: null, supporters: [], planAvailable: false, saved: false, headTags: '', headTagsMax: 10, headTagsSaved: false, headTagsCount: 0, headTagsError: '', grantName: '', grantMonths: 12, error: '' };
     },
     computed: {
         isAdmin() {
@@ -136,7 +161,7 @@ export default {
     async mounted() {
         document.title = 'Revenue — Waymark Gear';
         if (!this.isAdmin) return;
-        await Promise.all([this.loadAffiliate(), this.loadSupporters()]);
+        await Promise.all([this.loadAffiliate(), this.loadSupporters(), this.loadHeadTags()]);
         const plan = await api('/api/plan').catch(() => ({}));
         this.planAvailable = Boolean(plan.available);
     },
@@ -148,6 +173,23 @@ export default {
             const r = await api('/api/admin/affiliate');
             this.settings = r.settings;
             this.clicks = r.clicks;
+        },
+        async loadHeadTags() {
+            const r = await api('/api/admin/head-tags');
+            this.headTags = r.text;
+            this.headTagsMax = r.max;
+        },
+        async saveHeadTags() {
+            this.headTagsSaved = false;
+            this.headTagsError = '';
+            try {
+                const r = await api('/api/admin/head-tags', { method: 'PUT', body: JSON.stringify({ text: this.headTags }) });
+                this.headTags = r.text;
+                this.headTagsCount = r.count;
+                this.headTagsSaved = true;
+            } catch (err) {
+                this.headTagsError = err.message;
+            }
         },
         async loadSupporters() {
             this.supporters = (await api('/api/admin/supporters')).supporters;
@@ -177,6 +219,15 @@ export default {
 </script>
 
 <style lang="scss">
+@import "../css/_globals";
+
+.wgHeadTags {
+    font-family: $font-mono;
+    font-size: 12.5px;
+    margin: 4px 0 10px;
+    width: 100%;
+}
+
 .wgRevenue {
     max-width: 900px;
 
