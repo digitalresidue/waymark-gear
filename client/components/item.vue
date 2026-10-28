@@ -17,7 +17,7 @@
                 type="button"
                 class="wgItemDetails"
                 :class="{ wgHasMedia: hasMedia }"
-                :title="hasMedia ? 'Photos and review video, closet category' : 'Gear details: photos, review video, closet category'"
+                :title="hasMedia ? 'Photos and video, closet category' : 'Gear details: photos, video, closet category'"
                 :aria-label="`Gear details for ${item.name || 'this item'}`"
                 data-testid="item-details"
                 @click="openGearDetails(item)"
@@ -230,7 +230,7 @@ export default {
             }
         }
 
-        // Gear details: photos, review video, closet category. Hidden until
+        // Gear details: photos, YouTube video, closet category. Hidden until
         // the row is hovered, like the icons; always shown when it has media.
         .wgItemDetails {
             align-items: center;

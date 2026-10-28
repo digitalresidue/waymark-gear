@@ -1,4 +1,4 @@
-// A small lightbox for gear photos and review videos, shared by the Vue app
+// A small lightbox for gear photos and YouTube videos, shared by the Vue app
 // and the server-rendered pages (share pages, profiles). Photos and videos
 // never sit inline in a list: they open here, at a sensible size, on click.
 
@@ -84,7 +84,7 @@ export function openPhotos(photos, title = 'Photos') {
     show();
 }
 
-export function openVideo(link, title = 'Review video') {
+export function openVideo(link, title = 'Video') {
     const id = youTubeId(link);
     if (!id) return;
     onArrow = null;
@@ -100,10 +100,22 @@ export function openVideo(link, title = 'Review video') {
     iframe.dataset.testid = 'lightbox-video';
     body.appendChild(iframe);
     const foot = box.querySelector('.wgLightboxFoot');
+    // Some videos can't be embedded (the creator turned embedding off, or
+    // they're age- or region-restricted): YouTube's player then shows only
+    // "An error occurred". This link always works, on YouTube itself.
+    const watch = document.createElement('a');
+    watch.className = 'wgLightboxWatch';
+    watch.href = `https://www.youtube.com/watch?v=${id}`;
+    watch.target = '_blank';
+    watch.rel = 'noopener noreferrer';
+    watch.textContent = 'Watch on YouTube';
+    watch.dataset.testid = 'lightbox-watch';
+    const views = document.createElement('span');
+    foot.append(watch, views);
     fetch(`/api/videos/${id}/view`, { method: 'POST', credentials: 'same-origin' })
         .then((r) => (r.ok ? r.json() : null))
         .then((d) => {
-            if (d && overlay === box) foot.textContent = `${d.views} ${d.views === 1 ? 'view' : 'views'} on Waymark Gear`;
+            if (d && overlay === box) views.textContent = ` · ${d.views} ${d.views === 1 ? 'view' : 'views'} on Waymark Gear`;
         })
         .catch(() => {});
 }
@@ -116,7 +128,7 @@ export function bindLightboxLinks(root = document) {
         if (!el) return;
         e.preventDefault();
         const title = el.dataset.title || 'Gear';
-        if (el.dataset.video) openVideo(el.dataset.video, `${title}: review`);
+        if (el.dataset.video) openVideo(el.dataset.video, `${title}: video`);
         else {
             try {
                 openPhotos(JSON.parse(el.dataset.photos), title);

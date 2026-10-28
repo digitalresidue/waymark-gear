@@ -18,7 +18,7 @@ export default {
         openItemImage: { default: () => () => {} },
         openItemViewImage: { default: () => () => {} },
         openItemLink: { default: () => () => {} },
-        // Gear details dialog (photos, review video, closet category).
+        // Gear details dialog (photos, YouTube video, closet category).
         openGearDetails: { default: () => () => {} },
     },
     props: ['category', 'itemContainer'],
