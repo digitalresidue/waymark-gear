@@ -22,6 +22,7 @@ import developers from './views/developers.vue';
 import supporter from './views/supporter.vue';
 import ownerRevenue from './views/owner-revenue.vue';
 import ownerTrails from './views/owner-trails.vue';
+import ownerBrands from './views/owner-brands.vue';
 
 export default [
     { path: '/', component: dashboard },
@@ -51,5 +52,6 @@ export default [
     { path: '/supporter', component: supporter },
     { path: '/owner/revenue', component: ownerRevenue },
     { path: '/owner/trails', component: ownerTrails },
+    { path: '/owner/brands', component: ownerBrands },
     { path: '/:pathMatch(.*)*', component: dashboard },
 ];

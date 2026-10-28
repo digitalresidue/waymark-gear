@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html class="lp" lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>{{pageTitle}} — Waymark Gear</title>
+        <meta name="description" content="{{metaDescription}}">
+        <link rel="canonical" href="{{deployUrl}}/brands">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="Waymark Gear">
+        <meta property="og:title" content="{{pageTitle}}">
+        <meta property="og:description" content="{{metaDescription}}">
+        <meta property="og:url" content="{{deployUrl}}/brands">
+        {{{styles}}}
+        <link rel="icon" href="/favicon.png" />
+        <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script nonce="{{{cspNonce}}}">
+            (function () {
+                try {
+                    var t = localStorage.getItem('lpTheme');
+                    if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+                } catch (e) { /* storage blocked; the media query decides */ }
+            }());
+        </script>
+    </head>
+    <body class="wgProfilePage wgBrandsPage">
+        {{> siteHeader}}
+
+        <main class="wgPage wgBrands">
+            <p class="wgTrailKicker">Brands</p>
+            <h1 class="wgTrailTitle" data-testid="brands-heading">Find the right gear maker</h1>
+            <p class="wgTrailLede">Big names and one-person cottage shops. Search by name, or narrow it to what you need.</p>
+
+            <!-- Works without JavaScript (a plain GET form); client/social.js
+                 filters in place as you type or click. -->
+            <form class="wgBrandFilters" id="wgBrandFilters" action="/brands" method="get" role="search" data-testid="brand-filters">
+                <label for="wgBrandQ" class="wgVisuallyHidden">Search brands by name</label>
+                <input id="wgBrandQ" name="q" type="search" class="wgInput" value="{{filters.q}}" placeholder="Search brands, e.g. Zpacks" autocomplete="off" data-testid="brand-search">
+                <label class="wgBrandToggle"><input type="checkbox" name="cottage" value="1" {{#filters.cottage}}checked{{/filters.cottage}} data-testid="brand-cottage"> Cottage makers only</label>
+                <div class="wgBrandTypes" role="group" aria-label="What they make">
+                    <button type="submit" name="type" value="" class="wgBrandType" {{^filters.type}}aria-pressed="true"{{/filters.type}}{{#filters.type}}aria-pressed="false"{{/filters.type}} data-type="" data-testid="brand-type-all">All gear</button>
+                    {{#types}}<button type="submit" name="type" value="{{id}}" class="wgBrandType" aria-pressed="{{#on}}true{{/on}}{{^on}}false{{/on}}" data-type="{{id}}" data-testid="brand-type-{{id}}">{{label}}</button>{{/types}}
+                </div>
+                <noscript><button type="submit" class="wgBtn wgBtnPrimary wgBtnSmall">Search</button></noscript>
+            </form>
+
+            <p class="wgBrandCount" aria-live="polite" data-testid="brand-count">{{countLabel}}</p>
+
+            <ul class="wgBrandGrid" data-testid="brand-grid">
+                {{#brands}}
+                <li class="wgCard wgBrandCard" data-testid="brand-card" data-name="{{name}}" data-cottage="{{#cottage}}1{{/cottage}}" data-types="{{typeIds}}" {{^shown}}hidden{{/shown}}>
+                    <div class="wgBrandTop">
+                        {{#logoUrl}}<img class="wgMakerLogo" src="{{logoUrl}}" alt="{{name}} logo" loading="lazy" width="56" height="56">{{/logoUrl}}
+                        {{^logoUrl}}<span class="wgMakerLogo wgMakerMonogram" aria-hidden="true">{{initial}}</span>{{/logoUrl}}
+                        <div>
+                            <h2 class="wgBrandName">{{name}}</h2>
+                            {{#hasMeta}}<p class="wgBrandMeta">{{#cottage}}<span class="wgBadge wgBrandCottage">Cottage</span>{{/cottage}}{{#country}}<span class="wgMuted">{{country}}</span>{{/country}}</p>{{/hasMeta}}
+                        </div>
+                    </div>
+                    {{#description}}<p class="wgBrandDesc">{{description}}</p>{{/description}}
+                    {{#typeLabels.length}}<p class="wgBrandTags">{{#typeLabels}}<span>{{.}}</span>{{/typeLabels}}</p>{{/typeLabels.length}}
+                    {{#url}}<a class="wgBtn wgBtnPrimary wgBtnSmall wgBrandVisit" href="/go/brand/{{id}}" rel="sponsored nofollow noopener" target="_blank" data-testid="brand-visit">Visit {{name}}<span class="wgVisuallyHidden"> (opens in a new tab)</span></a>{{/url}}
+                </li>
+                {{/brands}}
+            </ul>
+            <p class="wgProfileEmpty" data-testid="brand-empty" {{#anyShown}}hidden{{/anyShown}}>{{#total}}No brands match. Try fewer filters.{{/total}}{{^total}}No brands yet.{{/total}}</p>
+
+            {{#total}}<p class="wgDisclosure">Brand links may earn Waymark Gear a commission, which pays for the site; it never changes who's listed or in what order. <a href="/supporter">Supporters</a> get plain links.</p>{{/total}}
+        </main>
+        {{{scripts}}}
+        {{> siteFooter}}
+    </body>
+</html>

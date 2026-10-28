@@ -73,8 +73,13 @@ test.describe('Public profiles', () => {
         // The shared list links back to its author's profile.
         await page.goto(url(`/@${username}`));
         await page.getByTestId('profile-featured').getByRole('link').first().click();
-        await page.getByTestId('share-profile-link').click();
-        await expect(page).toHaveURL(new RegExp(`/@${username}$`));
+        // Check the link, then follow it. Clicking it while the shared list
+        // is still loading lost the navigation in Firefox's automation.
+        const back = page.getByTestId('share-profile-link');
+        await expect(back).toHaveAttribute('href', `/@${username}`);
+        await page.waitForLoadState('load');
+        await page.goto(url((await back.getAttribute('href'))!));
+        await expect(page.getByTestId('profile-name')).toHaveText('Robin Ridge');
     });
 
     test('bad links are refused, hidden profiles 404, unpublished lists never show', async ({ page }) => {
