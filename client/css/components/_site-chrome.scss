@@ -438,3 +438,114 @@
     flex-wrap: wrap;
     gap: 20px;
 }
+
+// ---- Account: bell + avatar menu, top right on every page ----
+
+.wgSiteHeaderActions {
+    .lpAccount {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+    }
+
+    .lpAvatar {
+        margin-top: 0;
+    }
+}
+
+// Server-rendered pages draw the same thing without Vue (client/social.js).
+.wgHeaderBell {
+    align-items: center;
+    border-radius: 10px;
+    color: var(--lp-text);
+    display: inline-flex;
+    height: 40px;
+    justify-content: center;
+    position: relative;
+    width: 40px;
+
+    &:hover {
+        background: var(--lp-row-hover);
+    }
+}
+
+.wgHeaderBellCount {
+    background: var(--lp-accent-orange, #C4571F);
+    border-radius: 99px;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 16px;
+    min-width: 16px;
+    padding: 0 4px;
+    position: absolute;
+    right: 3px;
+    text-align: center;
+    top: 3px;
+}
+
+.wgAvatarMenu {
+    position: relative;
+
+    .lpAvatar {
+        align-items: center;
+        background: var(--lp-primary);
+        border: 0;
+        border-radius: 50%;
+        color: var(--lp-primary-ink, #fff);
+        cursor: pointer;
+        display: flex;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 700;
+        height: 36px;
+        justify-content: center;
+        width: 36px;
+    }
+}
+
+.wgAvatarMenuList {
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: 14px;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.14);
+    display: flex;
+    flex-direction: column;
+    min-width: 220px;
+    padding: 6px;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    z-index: 60;
+
+    a,
+    .wgAvatarSignout {
+        background: none;
+        border: 0;
+        border-radius: 9px;
+        color: var(--lp-text);
+        cursor: pointer;
+        font: inherit;
+        font-size: 15px;
+        padding: 9px 12px;
+        text-align: left;
+        text-decoration: none;
+
+        &:hover {
+            background: var(--lp-row-hover);
+        }
+    }
+
+    .wgAvatarSignout {
+        border-top: 1px solid var(--lp-border);
+        border-radius: 0 0 9px 9px;
+        margin-top: 4px;
+    }
+}
+
+.wgAvatarMenuUser {
+    color: var(--lp-text-secondary);
+    font-size: 13px;
+    margin: 0;
+    padding: 8px 12px 6px;
+}

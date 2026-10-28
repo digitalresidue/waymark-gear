@@ -79,9 +79,9 @@ test.describe('Sidebar rail', () => {
         await expect(page.getByTestId('panel-lists')).toBeVisible();
 
         // The collapse button at the top of the rail does the same.
-        await page.getByTestId('rail-collapse').click();
+        await page.getByTestId('toggle-sidebar').click();
         await expect(main).not.toHaveClass(/lpHasSidebar/);
-        await page.getByTestId('rail-collapse').click();
+        await page.getByTestId('toggle-sidebar').click();
         await expect(main).toHaveClass(/lpHasSidebar/);
     });
 
@@ -92,5 +92,51 @@ test.describe('Sidebar rail', () => {
         await page.reload();
         await expect(page.getByTestId('panel-lists')).toBeVisible();
         await expect(page.getByTestId('panel-closet')).toBeHidden();
+    });
+});
+
+test.describe('Editor alignment', () => {
+    test('the editor sits in the same column as the site header, open or put away', async ({ page }) => {
+        await page.setViewportSize({ width: 1440, height: 900 });
+        const u = generateTestUser('align');
+        await registerUser(page, u.username, u.password, u.email);
+        await expect(page.getByTestId('item-row').first()).toBeVisible();
+        const edges = () => page.evaluate(() => {
+            const inner = document.querySelector('.wgSiteHeaderInner')!;
+            const cs = getComputedStyle(inner);
+            const ib = inner.getBoundingClientRect();
+            const box = (s: string) => document.querySelector(s)!.getBoundingClientRect();
+            return {
+                left: Math.round(ib.left + parseFloat(cs.paddingLeft)),
+                right: Math.round(ib.right - parseFloat(cs.paddingRight)),
+                logo: Math.round(box('.wgSiteHeaderLogo').left),
+                rail: Math.round(box('#sidebar').left),
+                list: Math.round(box('.lpContentCol').right),
+                card: Math.round(box('[data-testid=category]').right),
+                sideways: document.documentElement.scrollWidth - window.innerWidth,
+            };
+        });
+        for (const state of ['open', 'put away']) {
+            const e = await edges();
+            expect(e.logo, state).toBe(e.left);
+            expect(e.rail, state).toBe(e.left);
+            expect(e.list, state).toBe(e.right);
+            expect(e.card, state).toBe(e.right);
+            expect(e.sideways, state).toBe(0);
+            if (state === 'open') {
+                await page.getByTestId('toggle-sidebar').click();
+                await expect(page.locator('#main')).not.toHaveClass(/lpHasSidebar/);
+                await expect.poll(async () => (await edges()).rail).toBe(e.left);
+            }
+        }
+        // And the same column as another page.
+        const editorLeft = (await edges()).left;
+        await page.goto(new URL('/explore', page.url()).toString());
+        await expect(page.locator('.wgSiteHeaderInner')).toBeVisible();
+        const exploreLeft = await page.evaluate(() => {
+            const inner = document.querySelector('.wgSiteHeaderInner')!;
+            return Math.round(inner.getBoundingClientRect().left + parseFloat(getComputedStyle(inner).paddingLeft));
+        });
+        expect(exploreLeft).toBe(editorLeft);
     });
 });

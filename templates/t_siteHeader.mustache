@@ -31,8 +31,25 @@
         </nav>
         <div class="wgSiteHeaderActions">
             <a href="/signin" class="wgBtn wgBtnGhost wgHideOnPhone" data-show="guest" data-testid="header-signin">Sign in</a>
-            <span class="wgMuted wgSiteHeaderUser" data-viewer-name hidden></span>
-            <a href="/?start=1" class="wgBtn wgBtnPrimary" data-testid="header-lists" data-lists-button><span class="wgLong">{{chrome.cta}}</span><span class="wgShort">{{chrome.ctaShort}}</span></a>
+            <a href="/?start=1" class="wgBtn wgBtnPrimary" data-show="guest" data-testid="header-lists" data-lists-button><span class="wgLong">{{chrome.cta}}</span><span class="wgShort">{{chrome.ctaShort}}</span></a>
+            <!-- Signed in: notifications and the account menu, as in the app. -->
+            <a href="/notifications" class="wgHeaderBell" data-show="signedIn" hidden aria-label="Notifications" data-testid="notification-bell">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0" /></svg>
+                <span class="wgHeaderBellCount" data-bell-count hidden></span>
+            </a>
+            <div class="wgHeaderAccount wgAvatarMenu" data-show="signedIn" hidden>
+                <button type="button" class="lpAvatar" aria-haspopup="true" aria-expanded="false" data-testid="account-menu" data-viewer-initial></button>
+                <nav class="wgAvatarMenuList" aria-label="Account" hidden>
+                    <p class="wgAvatarMenuUser">Signed in as <strong data-viewer-name></strong></p>
+                    <a href="/" data-testid="menu-lists">My lists</a>
+                    <a href="/profile">Your profile</a>
+                    <a href="/trips">Trip journals</a>
+                    <a href="/notifications">Notifications</a>
+                    <a href="/developers">AI assistants and API</a>
+                    <a href="/supporter">Support Waymark</a>
+                    <button type="button" class="wgAvatarSignout" data-signout>Sign out</button>
+                </nav>
+            </div>
         </div>
         <button type="button" class="wgSiteMenuBtn" aria-expanded="false" aria-controls="wgSiteNav" aria-label="Menu" data-testid="site-menu">
             <svg class="wgMenuIconOpen" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>

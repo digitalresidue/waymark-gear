@@ -92,11 +92,20 @@ test.describe('Phase 8: trails', () => {
         // Mark the page: a full reload would lose it.
         await page.evaluate(() => { (window as any).stayed = true; });
 
-        await page.getByTestId('trail-chip-at').click();
+        // A chip switches in place (whichever trails are the top eight).
+        const chip = page.locator('[data-testid^="trail-chip-"]:not([aria-current])').first();
+        const slug = await chip.getAttribute('data-trail');
+        await chip.click();
+        await expect(page).toHaveURL(new RegExp(`/trails/${slug}$`));
+        await expect(page.getByTestId(`trail-chip-${slug}`)).toHaveAttribute('aria-current', 'true');
+        expect(await page.evaluate(() => (window as any).stayed)).toBe(true);
+
+        // Search reaches any trail, in place too.
+        await page.getByTestId('trail-search').fill('appalachian');
+        await page.getByTestId('trail-result').filter({ hasText: 'Appalachian Trail' }).click();
         await expect(page).toHaveURL(/\/trails\/at$/);
         await expect(page.getByTestId('trail-name')).toHaveText('Appalachian Trail');
         await expect(page.getByTestId('trails-heading')).toContainText('AT');
-        await expect(page.getByTestId('trail-chip-at')).toHaveAttribute('aria-current', 'true');
         expect(await page.evaluate(() => (window as any).stayed)).toBe(true);
 
         // Search by a place, not just a name.
