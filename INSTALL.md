@@ -347,9 +347,14 @@ things to know:
 - Visitors whose browser asks not to be tracked (Global Privacy Control or Do
   Not Track) aren't counted, and lists embedded on other websites never load it.
 - Your privacy page updates itself to say you use Google Analytics.
-- Google Analytics sets cookies. If many of your visitors are in the EU or UK,
-  the law there may require asking them first; Waymark doesn't show a cookie
-  banner.
+- **Visitors in the EU/EEA, the UK and Switzerland are asked first**, with a
+  cookie banner where "Reject all" is as easy as "Accept all". Nothing from
+  Google loads for them unless they say yes. Waymark guesses the region from
+  the browser's time zone, and asks if it can't tell.
+- Everyone else is counted unless they turn it off. Anyone can change their
+  choice under **Cookie settings** at the bottom of every page.
+- Ad features and Google signals stay off. You don't need to set anything up
+  for consent in Google Analytics itself.
 
 To turn it off, clear the line again (`GA_MEASUREMENT_ID=`).
 

@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 import { applyAnalyticsBlocks, analyticsId, analyticsMeta, analyticsCsp } from '../../server/analytics.js';
-import { optedOut } from '../../client/utils/analytics.js';
+import { optedOut, needsConsent, readChoice } from '../../client/utils/analytics.js';
 
 const privacy = fs.readFileSync(new URL('../../PRIVACY.md', import.meta.url), 'utf8');
 
@@ -38,5 +38,21 @@ describe('Google Analytics', () => {
         assert.equal(optedOut({}, { doNotTrack: '1' }), true);
         assert.equal(optedOut({ doNotTrack: '0' }, {}), false);
         assert.equal(optedOut({}, {}), false);
+    });
+
+    test('opt-in regions are asked first; a zone we cannot place is asked too', () => {
+        for (const z of ['Europe/Berlin', 'Europe/London', 'Europe/Zurich', 'Atlantic/Canary', 'Asia/Nicosia', 'Indian/Reunion', 'UTC', 'Etc/UTC', '']) {
+            assert.equal(needsConsent(z), true, z);
+        }
+        for (const z of ['America/New_York', 'America/Los_Angeles', 'America/Denver', 'Australia/Sydney', 'Asia/Tokyo']) {
+            assert.equal(needsConsent(z), false, z);
+        }
+    });
+
+    test('the saved choice is read from its cookie', () => {
+        assert.equal(readChoice(''), null);
+        assert.equal(readChoice('lp_loggedin=1; wg_consent=granted'), 'granted');
+        assert.equal(readChoice('wg_consent=denied; other=1'), 'denied');
+        assert.equal(readChoice('wg_consent=maybe'), null);
     });
 });

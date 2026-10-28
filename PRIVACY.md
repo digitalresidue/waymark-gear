@@ -157,9 +157,17 @@ Google Analytics doesn't store), and sets the `_ga` and `_ga_*` cookies (up to
 2 years) to tell repeat visits apart. It never receives your username, email
 address, or what's in your lists. Google's script loads only after the page
 has finished, and **not at all if your browser sends Global Privacy Control or
-Do Not Track**. Shared lists embedded on other websites never load it. You can
-also block it with Google's
-[opt-out add-on](https://tools.google.com/dlpage/gaoptout).
+Do Not Track**. Shared lists embedded on other websites never load it.
+
+**In the EU/EEA, the UK and Switzerland, Analytics is off until you agree**: a
+banner asks first, with "Reject all" as easy as "Accept all", and nothing from
+Google loads unless you say yes. We guess where you are from your browser's
+time zone; if we can't tell, we ask. Everywhere else it's on unless you turn it
+off. Either way you can change your mind at any time under **Cookie settings**
+at the bottom of every page; turning it off removes Google's cookies. Your
+choice is kept in a `wg_consent` cookie for a year. Ad features and Google
+signals are always off; we don't show ads. You can also block Analytics with
+Google's [opt-out add-on](https://tools.google.com/dlpage/gaoptout).
 <!-- else -->
 **We set no advertising, analytics, or tracking cookies**, and no third party
 sets cookies through our site.
