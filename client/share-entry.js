@@ -4,6 +4,7 @@ import '@fontsource-variable/geist-mono';
 import './css/share.scss';
 import { makeChart, chartStyle, rememberStyle, rememberedStyle } from './charts.js';
 import { initSocial } from './social.js';
+import { initAnalytics } from './utils/analytics.js';
 import weightUtils from './utils/weight.js';
 import {
     initTheme, toggleTheme, chartLineColor, chartHoverColor, onThemeChange,
@@ -27,6 +28,7 @@ function safely(fn) {
 }
 
 safely(initTheme);
+initAnalytics();
 
 // Server-rendered numbers on this page come from MgToDisplayWeight, so the
 // reader flipping a unit picker has to land on the same digits -- this defers

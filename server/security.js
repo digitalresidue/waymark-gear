@@ -4,6 +4,7 @@ import config from 'config';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 
+import { analyticsCsp } from './analytics.js';
 import { logWithRequest } from './log.js';
 
 // Per-request nonce for the few inline <script> blocks the server-rendered
@@ -19,6 +20,8 @@ export function cspNonce(req, res, next) {
 // that buys nothing. CI and the e2e suite run against a build, so they
 // exercise the policy as production sees it.
 export function securityHeaders({ enforceCsp }) {
+    // Google Analytics, when the owner turned it on (server/analytics.js).
+    const ga = analyticsCsp();
     return helmet({
         contentSecurityPolicy: enforceCsp
             ? {
@@ -29,14 +32,14 @@ export function securityHeaders({ enforceCsp }) {
                     objectSrc: ["'none'"],
                     formAction: ["'self'"],
                     frameAncestors: ["'self'"],
-                    scriptSrc: ["'self'", (_req, res) => `'nonce-${res.locals.cspNonce}'`],
+                    scriptSrc: ["'self'", (_req, res) => `'nonce-${res.locals.cspNonce}'`, ...ga.scriptSrc],
                     // Category swatches and legend colors are user-chosen and
                     // rendered as style attributes.
                     styleSrc: ["'self'", "'unsafe-inline'"],
                     // Item photos can be any https URL the user pastes in.
                     imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
                     fontSrc: ["'self'"],
-                    connectSrc: ["'self'"],
+                    connectSrc: ["'self'", ...ga.connectSrc],
                     // Gear review videos play in a lightbox, from YouTube's
                     // privacy-enhanced domain only.
                     frameSrc: ['https://www.youtube-nocookie.com'],

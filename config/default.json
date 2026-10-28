@@ -30,6 +30,7 @@
     "admins": [],
     "reviewers": [],
     "openReviews": false,
+    "googleAnalyticsId": "",
     "stripe": {
         "secretKey": "",
         "webhookSecret": "",

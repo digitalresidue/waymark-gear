@@ -326,6 +326,33 @@ Also in `waymark settings`, each a list of usernames in the same
 - `REVIEWERS=` can write gear reviews on catalog items. Set
   `OPEN_REVIEWS=true` instead to let every member review.
 
+### Optional: Google Analytics
+
+To see visitor numbers in Google Analytics:
+
+1. In [Google Analytics](https://analytics.google.com), open **Admin** (the
+   gear icon, bottom left) → **Data streams**, and click your website's stream.
+   If you don't have one yet, click **Add stream** → **Web** and enter your
+   domain.
+2. Copy the **Measurement ID**. It starts with `G-`, for example `G-ABC123XYZ9`.
+3. Type `waymark settings`, find the `GA_MEASUREMENT_ID=` line, and paste it
+   after the `=`, with no spaces: `GA_MEASUREMENT_ID=G-ABC123XYZ9`.
+4. Save and close (**Ctrl+O**, **Enter**, **Ctrl+X**). Waymark restarts with it.
+
+Visits show up under **Reports → Realtime** within a minute or two. A few
+things to know:
+
+- Google's script loads **after** each page has finished, when the browser is
+  idle, so it doesn't slow the site down.
+- Visitors whose browser asks not to be tracked (Global Privacy Control or Do
+  Not Track) aren't counted, and lists embedded on other websites never load it.
+- Your privacy page updates itself to say you use Google Analytics.
+- Google Analytics sets cookies. If many of your visitors are in the EU or UK,
+  the law there may require asking them first; Waymark doesn't show a cookie
+  banner.
+
+To turn it off, clear the line again (`GA_MEASUREMENT_ID=`).
+
 ---
 
 ## Everyday use
@@ -336,7 +363,7 @@ Open the Console (step 3) and type any of these:
 | --- | --- |
 | `waymark status` | Checks everything is running and the site is reachable. Start here if anything seems wrong. |
 | `waymark update` | Gets the newest version of Waymark. Backs up first, and goes back to the previous version by itself if the new one won't start. |
-| `waymark settings` | Changes settings (email, Google, payments, owners), then applies them. |
+| `waymark settings` | Changes settings (email, Google sign-in and Analytics, payments, owners), then applies them. |
 | `waymark logs` | Shows what the site is doing, live. Press **Ctrl+C** to stop watching. |
 | `waymark restart` | Restarts everything. Safe to do any time. |
 | `waymark backup` | Backs up now. (Also happens every night at 03:15.) |
