@@ -1,5 +1,6 @@
 import express from 'express';
 import knex from './db.js';
+import { loadLibrary } from './library-store.js';
 import { logWithRequest } from './log.js';
 import { authenticateModerator, issueResetToken, resetPasswordUrl } from './auth.js';
 
@@ -33,10 +34,13 @@ async function search(req, res) {
 
         // Explicit field list, never select('*'): the row carries the password
         // hash and the session token.
+        // Libraries are assembled per user, so cap how many come back.
+        userResults = userResults.slice(0, 50);
+        const libraries = await Promise.all(userResults.map((user) => loadLibrary(user.user_id)));
         const bridgeUserResults = userResults
-            .map((user) => ({
+            .map((user, i) => ({
                 username: user.username,
-                library: user.library,
+                library: libraries[i],
                 email: user.email,
                 registered: user.registered,
                 lastSeen: user.last_seen,

@@ -15,7 +15,7 @@ permissions:
 jobs:
   checks:
     name: Lint, unit tests, build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -30,7 +30,7 @@ jobs:
 
   e2e:
     name: End-to-end (${{ matrix.browser }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: checks
     strategy:
       fail-fast: false
@@ -60,10 +60,19 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Install cwebp (photo uploads)
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends webp
+        # Ubuntu's mirrors occasionally fail a fetch; retry rather than fail the run.
+        run: |
+          for i in 1 2 3; do
+            sudo apt-get update -o Acquire::Retries=3 && sudo apt-get install -y --no-install-recommends -o Acquire::Retries=3 webp && exit 0
+            echo "apt failed (attempt $i); retrying in 20s"; sleep 20
+          done
+          exit 1
       - run: npx playwright install --with-deps ${{ matrix.browser }}
       - run: npx playwright test --project=${{ matrix.browser }}
-      - uses: actions/upload-artifact@v4
+      - name: Why tests failed
+        if: failure()
+        run: node scripts/ci-failures.mjs test-results/results.json
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report-${{ matrix.browser }}
@@ -72,7 +81,7 @@ jobs:
 
   docker:
     name: Docker image builds
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: checks
     steps:
       - uses: actions/checkout@v5

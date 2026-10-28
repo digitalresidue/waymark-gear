@@ -44,7 +44,7 @@ except that we can't retrieve copies other people have already made.
 
 Don't use Waymark Gear to:
 
-- post spam
+- post spam, including in comments and profile links
 - upload images or text you don't have the rights to
 - post anything illegal, or anything that harasses or targets another person
 - impersonate someone else
@@ -57,6 +57,10 @@ This isn't a complete list.
 ## Moderation
 
 We can remove content and suspend or delete accounts that break these rules.
+Anyone can report a comment; moderators review reports and can hide
+comments. List owners can delete comments on their own lists. Shakedown
+suggestions are other hikers' opinions, not safety advice: check anything
+that matters before you rely on it in the backcountry.
 If you think we've made a mistake, email [CONTACT EMAIL] and we'll take
 another look. You can delete your own account at any time from **Account →
 Delete account**.
@@ -76,6 +80,37 @@ and no support obligation.
 
 Don't let Waymark Gear be the only copy of anything you'd be upset to lose
 — you can export any list to CSV at any time.
+
+## Affiliate links {#affiliate}
+
+Waymark Gear is paid for partly by affiliate links. When you follow a **Buy**
+link to a shop from a gear page, a comparison or a shared list and then buy
+something, we may earn a commission from that shop. You pay the same price.
+As an Amazon Associate, [OPERATOR NAME] earns from qualifying purchases.
+
+Commissions never decide what we suggest: lighter options, popular gear and
+comparisons are ranked by weight, price and how many hikers use an item, and
+gear without an affiliate deal is treated the same way. Supporters get plain
+shop links with no affiliate code.
+
+## The Supporter plan
+
+Supporter is an optional subscription ([PRICE] a month or [PRICE] a year)
+that removes affiliate codes from the links you follow and adds a badge to
+your profile. Everything else on Waymark Gear stays free. Payments are taken
+and stored by Stripe; we never see your card. The plan renews until you
+cancel, which you can do at any time from the Supporter page; you keep it
+until the end of the period you've paid for. [REFUND POLICY, e.g. "If you
+cancel within 14 days of a payment, email us for a refund."] We may change the
+price for future periods with at least 30 days' notice by email.
+
+## AI assistants and the API
+
+You can connect an AI assistant (through our MCP server) or your own software
+(through the API) to your account. It acts for you, with the access you chose
+when you connected it, and these terms apply to what it does. Don't use the API
+to scrape other people's content or to put a load on the service it can't
+take; we may limit or revoke tokens that do.
 
 ## Liability
 

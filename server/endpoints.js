@@ -5,41 +5,24 @@ import express from 'express';
 import { customAlphabet } from 'nanoid';
 import { promisify } from 'util';
 import formidable from 'formidable';
-import config from 'config';
 import knex from './db.js';
 import { logWithRequest } from './log.js';
 import { applyCatalog } from './catalog.js';
 import { syncPublishedKits } from './kits.js';
+import { applyChanges, LibraryError, loadLibrary, normalizeLibrary, replaceLibrary } from './library-store.js';
 import { authenticateUser, isAdmin, isModerator, verifyPassword, generateSession, startSession, hashSessionToken, sessionCookieOptions, issueResetToken, hashResetToken, resetPasswordUrl, RESET_TOKEN_TTL_MS } from './auth.js';
-import { sniffImage, storeImage } from './images.js';
+import { sniffImage, storeImage, storeProfileImage, storeGearPhoto } from './images.js';
 import { deleteUserAccount } from './accounts.js';
 import { Library } from '../client/dataTypes.js';
+
+import { mailIdentity, sendMail } from './mail.js';
+import { forgetUserPages } from './page-cache.js';
+import { isSupporter } from './billing.js';
+import { announceLibraryChange } from './shared-lists.js';
 
 const router = express.Router();
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-// Sender identity for password-reset and forgot-username email. Falls back to
-// an address on the Mailgun sending domain, which Mailgun will always accept.
-function mailIdentity() {
-    const from = (config.has('mailFrom') && config.get('mailFrom'))
-        || `Waymark Gear <noreply@${config.get('mailgunDomain')}>`;
-    const replyTo = (config.has('mailReplyTo') && config.get('mailReplyTo')) || from;
-    return { from, replyTo };
-}
-
-async function sendMail({ from, to, replyTo, subject, text }) {
-    const apiKey = config.get('mailgunAPIKey');
-    const domain = config.get('mailgunDomain');
-    const body = new URLSearchParams({ from, to, subject, text, 'h:Reply-To': replyTo });
-    const response = await fetch(`https://api.mailgun.net/v3/${domain}/messages`, {
-        method: 'POST',
-        headers: { Authorization: `Basic ${Buffer.from(`api:${apiKey}`).toString('base64')}` },
-        body,
-    });
-    if (!response.ok) throw new Error(`Mailgun error: ${response.status} ${await response.text()}`);
-    return response.json();
-}
 
 const randomBytesAsync = promisify(crypto.randomBytes);
 
@@ -110,16 +93,14 @@ async function register(req, res) {
         const tokenBuffer = await randomBytesAsync(48);
         const token = tokenBuffer.toString('hex');
 
+        // A library built before registering (saved in the browser) moves
+        // into the new account; otherwise the account starts with a blank one.
         let library;
-        if (req.body.library) {
-            try {
-                library = JSON.parse(req.body.library);
-            } catch (err) {
-                logWithRequest(req, { message: 'Library parsing issue', username, err, libInput: req.body.library });
-                return res.status(400).json({ errors: [{ message: 'Unable to parse your library. Contact support.' }] });
-            }
-        } else {
-            library = new Library().save();
+        try {
+            library = normalizeLibrary(req.body.library || new Library().save());
+        } catch (err) {
+            logWithRequest(req, { message: 'Library parsing issue', username, err });
+            return res.status(400).json({ errors: [{ message: 'Unable to parse your library. Contact support.' }] });
         }
 
         const newSyncToken = 0;
@@ -129,7 +110,6 @@ async function register(req, res) {
             password: hash,
             email,
             token: hashSessionToken(token),
-            library,
             sync_token: newSyncToken,
             registered: new Date(),
             last_seen: new Date()
@@ -138,8 +118,11 @@ async function register(req, res) {
         logWithRequest(req, { message: 'Saving new user', username });
 
         try {
-            await knex('users').insert(newUser);
-            const out = { username, library: JSON.stringify(newUser.library), sync_token: newSyncToken, account: accountInfo(newUser) };
+            await knex.transaction(async (trx) => {
+                const [created] = await trx('users').insert(newUser).returning('user_id');
+                await replaceLibrary(created.user_id, library, trx);
+            });
+            const out = { username, library: JSON.stringify(library), sync_token: newSyncToken, account: accountInfo(newUser) };
             const opts = sessionCookieOptions();
             res.cookie('lp', token, opts);
             res.cookie('lp_loggedin', '1', { ...opts, httpOnly: false });
@@ -170,7 +153,7 @@ async function signin(req, res, user) {
         .update({
             last_seen: new Date()
         });
-    const library = await applyCatalog(user.library);
+    const library = await applyCatalog(await loadLibrary(user.user_id) || new Library().save());
     return res.json({
         username: user.username,
         library: JSON.stringify(library),
@@ -184,9 +167,11 @@ function accountInfo(user) {
     return {
         email: user.email,
         hasPassword: Boolean(user.password),
+        themePref: ['light', 'dark'].includes(user.theme_pref) ? user.theme_pref : 'system',
         googleLinked: Boolean(user.google_sub),
         isAdmin: isAdmin(user.username),
         isModerator: isModerator(user.username),
+        supporter: isSupporter(user),
     };
 }
 
@@ -194,12 +179,19 @@ router.post('/saveLibrary', (req, res) => {
     authenticateUser(req, res, saveLibrary);
 });
 
+// Two ways to save:
+//   { changes }  what changed since this browser last saved (see
+//                client/utils/library-diff.js). Merges with other tabs and
+//                devices, so it doesn't need an up-to-date sync_token.
+//   { data }     the whole library, replacing everything. Only accepted when
+//                sync_token matches, so a stale tab can't wipe newer work.
+// Either way the response carries the new sync_token, the library's version.
 async function saveLibrary(req, res, user) {
     if (typeof req.body.sync_token === 'undefined') {
         logWithRequest(req, { message: 'Missing syncToken', username: user.username });
         return res.status(400).send('Please refresh this page to upgrade to the latest version of Waymark Gear.');
     }
-    if (!req.body.username || !req.body.data) {
+    if (!req.body.username || (!req.body.data && !req.body.changes)) {
         logWithRequest(req, { message: 'bad save: missing username or data', username: user.username });
         return res.status(400).json({ message: 'An error occurred while saving your data. Please refresh your browser and try again.' });
     }
@@ -209,52 +201,67 @@ async function saveLibrary(req, res, user) {
         return res.status(401).json({ message: 'An error occurred while saving your data. Please refresh your browser and login again.' });
     }
 
-    if (req.body.sync_token != user.sync_token) {
+    const incremental = Boolean(req.body.changes);
+    if (!incremental && req.body.sync_token != user.sync_token) {
         logWithRequest(req, { message: 'out of date syncToken', username: user.username });
         return res.status(400).json({ message: 'Your list is out of date - please refresh your browser.' });
     }
 
-    let library;
-    try {
-        library = JSON.parse(req.body.data);
-    } catch (e) {
-        logWithRequest(req, { message: 'Library parsing issue', username: user.username, err: e });
-        return res.status(400).json({ errors: [{ message: 'An error occurred while saving your data - unable to parse library.' }] });
+    let library = null;
+    if (!incremental) {
+        try {
+            library = normalizeLibrary(req.body.data);
+        } catch (e) {
+            logWithRequest(req, { message: 'Library parsing issue', username: user.username, err: e });
+            return res.status(400).json({ errors: [{ message: 'An error occurred while saving your data - unable to parse library.' }] });
+        }
     }
 
-    const newSyncToken = user.sync_token + 1;
-
+    let newSyncToken;
     try {
-        // Guard against a lost update from a concurrent save (e.g. two tabs):
-        // only write if the stored sync_token still matches what we read.
-        const updated = await knex('users')
-            .where({ user_id: user.user_id, sync_token: user.sync_token })
-            .update({
-                library: library,
-                sync_token: newSyncToken,
-                last_seen: new Date()
-            });
-
-        if (!updated) {
-            logWithRequest(req, { message: 'out of date syncToken (concurrent save)', username: user.username });
-            return res.status(400).json({ message: 'Your list is out of date - please refresh your browser.' });
-        }
-
-        logWithRequest(req, { message: 'saved library', username: user.username });
-
-        // Keep the public copies of published lists current. The save itself
-        // has succeeded either way, so a failure here is logged, not returned.
-        try {
-            await syncPublishedKits(user, library);
-        } catch (err) {
-            logWithRequest(req, { message: 'published kit sync failed', username: user.username, err });
-        }
-
-        return res.status(200).json({ message: 'success', sync_token: newSyncToken });
+        newSyncToken = await knex.transaction(async (trx) => {
+            if (incremental) {
+                await applyChanges(user.user_id, req.body.changes, trx);
+                const [row] = await trx('users').where({ user_id: user.user_id })
+                    .update({ sync_token: trx.raw('sync_token + 1'), last_seen: new Date() }).returning('sync_token');
+                return row.sync_token;
+            }
+            // Guard against a lost update from a concurrent full save: only
+            // write if the stored sync_token still matches what we read.
+            const updated = await trx('users')
+                .where({ user_id: user.user_id, sync_token: user.sync_token })
+                .update({ sync_token: user.sync_token + 1, last_seen: new Date() });
+            if (!updated) return null;
+            await replaceLibrary(user.user_id, library, trx);
+            return user.sync_token + 1;
+        });
     } catch (err) {
+        if (err instanceof LibraryError) {
+            logWithRequest(req, { message: 'Library rejected', username: user.username, err: err.message });
+            return res.status(400).json({ errors: [{ message: `An error occurred while saving your data: ${err.message}` }] });
+        }
         logWithRequest(req, { message: 'Library saving error', username: user.username, err });
         return res.status(500).json({ errors: [{ message: 'An error occurred while saving your data.' }] });
     }
+
+    if (newSyncToken === null) {
+        logWithRequest(req, { message: 'out of date syncToken (concurrent save)', username: user.username });
+        return res.status(400).json({ message: 'Your list is out of date - please refresh your browser.' });
+    }
+
+    logWithRequest(req, { message: incremental ? 'saved library changes' : 'saved library', username: user.username });
+
+    // Keep the public copies of published lists current. The save itself
+    // has succeeded either way, so a failure here is logged, not returned.
+    try {
+        await syncPublishedKits(user, await loadLibrary(user.user_id));
+    } catch (err) {
+        logWithRequest(req, { message: 'published kit sync failed', username: user.username, err });
+    }
+    forgetUserPages(user.user_id);
+    announceLibraryChange(user.user_id, user.username, user.username).catch(() => {});
+
+    return res.status(200).json({ message: 'success', sync_token: newSyncToken });
 }
 
 router.post('/externalId', (req, res) => {
@@ -614,6 +621,39 @@ router.post('/imageUpload', (req, res) => {
 });
 
 const maxImageUploadBytes = 5 * 1024 * 1024;
+
+// Profile picture or banner: ?kind=avatar|banner. Returns the URL; the
+// profile form saves it with everything else.
+router.post('/api/profile/image', (req, res) => {
+    const kind = String(req.query.kind || '');
+    if (!['avatar', 'banner', 'photo'].includes(kind)) return res.status(400).json({ message: 'Unknown image kind.' });
+    authenticateUser(req, res, async (req, res, user) => {
+        let files;
+        try {
+            [, files] = await formidable({ maxFileSize: maxImageUploadBytes }).parse(req);
+        } catch (err) {
+            if (err.httpCode === 413) return res.status(413).json({ message: 'Image is too large (5MB max).' });
+            logWithRequest(req, { message: 'form parse error', err });
+            return res.status(500).json({ message: 'An error occurred' });
+        }
+        const upload = files?.image?.[0];
+        if (!upload) return res.status(400).json({ message: 'No image provided.' });
+        try {
+            const buf = fs.readFileSync(upload.filepath);
+            const sniffed = sniffImage(buf);
+            if (!sniffed) return res.status(400).json({ message: 'Please upload a JPEG, PNG, or WebP image.' });
+            const { imageUrl } = kind === 'photo'
+                ? await storeGearPhoto(upload.filepath, buf, sniffed, user.user_id)
+                : await storeProfileImage(upload.filepath, buf, sniffed, user.user_id, kind);
+            return res.json({ imageUrl });
+        } catch (err) {
+            logWithRequest(req, { message: 'profile image conversion failed', err: { message: err.message } });
+            return res.status(500).json({ message: 'An error occurred while processing the image.' });
+        } finally {
+            fs.rmSync(upload.filepath, { force: true });
+        }
+    });
+});
 
 async function imageUpload(req, res, user) {
     let files;

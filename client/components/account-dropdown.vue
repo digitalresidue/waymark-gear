@@ -1,5 +1,6 @@
 <template>
     <div class="lpAccount headerItem">
+        <notificationBell v-if="isSignedIn" />
         <PopoverHover v-if="isSignedIn" id="accountPopover" data-testid="account-menu">
             <template #target>
                 <span class="lpAvatar" :title="username">{{ initial }}</span>
@@ -10,6 +11,18 @@
                         Signed in as <span class="username">{{ username }}</span>
                     </div>
                     <hr>
+                    <router-link to="/profile" class="lpHref" data-testid="menu-profile" @click="hide()">
+                        Your profile
+                    </router-link><br>
+                    <router-link to="/trips" class="lpHref" data-testid="menu-trips" @click="hide()">
+                        Trip journals
+                    </router-link><br>
+                    <router-link to="/developers" class="lpHref" data-testid="menu-developers" @click="hide()">
+                        AI assistants and API
+                    </router-link><br>
+                    <router-link to="/supporter" class="lpHref" data-testid="menu-supporter" @click="hide()">
+                        {{ $store.state.account && $store.state.account.supporter ? 'Supporter ✓' : 'Become a Supporter' }}
+                    </router-link><br>
                     <a class="lpHref accountSettings" @click="hide(); showAccount()">Account Settings</a><br>
                     <a class="lpHref" @click="hide(); showHelp()">Help</a>
                     <hr>
@@ -23,6 +36,9 @@
                     >
                         Dark mode
                     </toggle>
+                    <button v-if="themePref !== 'system'" type="button" class="lpHref wgMatchDevice" data-testid="theme-system" @click="matchDevice">
+                        Match my device
+                    </button>
                     <hr>
                     <a class="lpHref signout" @click="hide(); signout()">Sign Out</a>
                 </div>
@@ -42,12 +58,15 @@
 
 <script>
 import PopoverHover from './popover-hover.vue';
+import notificationBell from './notification-bell.vue';
 import toggle from './toggle.vue';
-import { toggleTheme } from '../utils/theme.js';
+import { toggleTheme, themePreference, setThemePreference } from '../utils/theme.js';
+import { api } from '../utils/format.js';
 
 export default {
     name: 'AccountDropdown',
     components: {
+        notificationBell,
         PopoverHover,
         toggle,
     },
@@ -55,6 +74,7 @@ export default {
     data() {
         return {
             isDark: document.documentElement.getAttribute('data-theme') === 'dark',
+            themePref: themePreference(),
         };
     },
     computed: {
@@ -80,6 +100,20 @@ export default {
         },
         toggleDarkMode() {
             this.isDark = toggleTheme() === 'dark';
+            this.saveTheme(this.isDark ? 'dark' : 'light');
+        },
+        matchDevice() {
+            setThemePreference('system');
+            this.isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            this.saveTheme('system');
+        },
+        // Signed in: the choice follows you to every device.
+        saveTheme(pref) {
+            this.themePref = pref;
+            this.$store.commit('setThemePref', pref);
+            if (this.isSignedIn && this.$store.state.saveType === 'remote') {
+                api('/api/preferences', { method: 'PUT', body: JSON.stringify({ theme: pref }) }).catch(() => {});
+            }
         },
         async signout() {
             await this.$store.dispatch('signout');
@@ -98,6 +132,7 @@ export default {
 .lpAccount {
     align-items: center;
     display: flex;
+    gap: 4px;
 }
 
 .lpAvatar {
@@ -194,5 +229,14 @@ export default {
     .lpAccountSep {
         color: var(--lp-text-secondary);
     }
+}
+
+.wgMatchDevice {
+    background: none;
+    border: 0;
+    cursor: pointer;
+    font: inherit;
+    font-size: 12.5px;
+    padding: 2px 0 0;
 }
 </style>

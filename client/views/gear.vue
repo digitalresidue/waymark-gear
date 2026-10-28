@@ -8,15 +8,15 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7" /></svg>
             </a>
             <h1 class="lpGearTitle">
-                Gear
+                Closet
             </h1>
-            <span class="lpGearCount">{{ library.items.length }}</span>
+            <span class="lpGearCount">{{ activeCount }}</span>
         </div>
 
         <div class="lpGearSearchRow">
             <label class="lpGearSearch">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
-                <input v-model="searchText" type="text" placeholder="Search your gear" data-testid="gear-search">
+                <input v-model="searchText" type="text" placeholder="Search your closet" data-testid="gear-search">
             </label>
         </div>
 
@@ -39,11 +39,23 @@
                             {{ entry.item.name || 'Unnamed gear' }}
                         </div>
                         <div class="lpGearMeta">
-                            {{ metaLine(entry.item) }}
+                            {{ metaLine(entry.item) }}<template v-if="entry.item.closetCategory">
+                                · {{ entry.item.closetCategory }}
+                            </template>
+                            <span v-if="needsReplacing(entry.item)" class="wgReplaceTag">Replace soon</span>
                         </div>
+                        <button type="button" class="wgClosetDetails lpGearDetails" data-testid="closet-details" @click="detailsItem = entry.item">
+                            Details{{ (entry.item.photos && entry.item.photos.length) || entry.item.videoUrl ? ' · media' : '' }}
+                        </button>
                     </div>
 
-                    <span v-if="entry.inList" class="lpGearInList" data-testid="gear-in-list">✓ In list</span>
+                    <button v-if="entry.item.retired" type="button" class="lpGearRestore" data-testid="closet-restore" @click="restore(entry.item)">
+                        Restore
+                    </button>
+                    <button v-else-if="entry.item.wishlist" type="button" class="lpGearRestore" data-testid="closet-got-it" title="Bought it: move it into your closet" @click="gotIt(entry.item)">
+                        Got it
+                    </button>
+                    <span v-else-if="entry.inList" class="lpGearInList" data-testid="gear-in-list">✓ In list</span>
                     <a
                         v-else
                         class="lpGearAdd"
@@ -53,7 +65,7 @@
                         @click="togglePicker(entry.item.id)"
                     >+</a>
 
-                    <a class="lpGearRemove" data-testid="gear-remove" title="Delete this item permanently" @click="removeItem(entry.item)">
+                    <a v-if="!entry.item.retired" class="lpGearRemove" data-testid="gear-remove" title="Remove from your closet" @click="removeItem(entry.item)">
                         <i class="lpSprite lpSpriteRemove" />
                     </a>
                 </div>
@@ -91,6 +103,7 @@
             :speedbump-options="speedbumpOptions"
             @hide="showSpeedbump = false"
         />
+        <gearDetails :shown="Boolean(detailsItem)" :item="detailsItem" @hide="detailsItem = null" />
         <globalAlerts />
     </div>
 </template>
@@ -98,14 +111,19 @@
 <script>
 import globalAlerts from '../components/global-alerts.vue';
 import speedbump from '../components/speedbump.vue';
+import gearDetails from '../components/gear-details.vue';
+import { replaceSoon } from '../utils/gear-meta.js';
+import { api } from '../utils/format.js';
 
 import utilsMixin from '../mixins/utils-mixin.js';
+import { confirmClosetRemoval, isPlaceholder, restoreClosetItem } from '../utils/closet.js';
 
 export default {
     name: 'Gear',
     components: {
         globalAlerts,
         speedbump,
+        gearDetails,
     },
     mixins: [utilsMixin],
     data() {
@@ -116,6 +134,7 @@ export default {
             pickerItemId: null,
             showSpeedbump: false,
             speedbumpCallback: null,
+            detailsItem: null,
             speedbumpOptions: null,
         };
     },
@@ -130,14 +149,31 @@ export default {
             return this.list.categoryIds.map(id => this.library.getCategoryById(id));
         },
         filterOptions() {
-            return [
-                { key: 'all', label: `All · ${this.library.items.length}` },
+            const options = [
+                { key: 'all', label: `All · ${this.activeCount}` },
                 { key: 'notInList', label: `Not in ${this.list.name || 'this list'}` },
-                // Items have no timestamp (see dataTypes.js), so "recently
-                // used" isn't available. Ids are handed out in creation order,
-                // which makes newest-first honest and free.
+                // The closet keeps gear in the order it was added, so newest
+                // first is that order reversed.
                 { key: 'newest', label: 'Newest' },
             ];
+            if (this.wishlistCount) options.push({ key: 'wishlist', label: `Wishlist · ${this.wishlistCount}` });
+            if (this.retiredCount) options.push({ key: 'retired', label: `Retired · ${this.retiredCount}` });
+            // The closet categories you've made (Insulation, Shelter...).
+            const cats = [...new Set(this.closetGear.map((i) => i.closetCategory).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+            for (const c of cats) options.push({ key: `cat:${c}`, label: c });
+            return options;
+        },
+        closetGear() {
+            return this.library.items.filter((item) => !isPlaceholder(item));
+        },
+        activeCount() {
+            return this.closetGear.filter((item) => !item.retired && !item.wishlist).length;
+        },
+        retiredCount() {
+            return this.closetGear.filter((item) => item.retired).length;
+        },
+        wishlistCount() {
+            return this.closetGear.filter((item) => item.wishlist && !item.retired).length;
         },
         itemsInList() {
             return this.library.getItemsInCurrentList();
@@ -145,20 +181,29 @@ export default {
         filteredItems() {
             const search = this.searchText.trim().toLowerCase();
 
-            let entries = this.library.items.map(item => ({
-                item,
-                inList: this.itemsInList.indexOf(item.id) > -1,
-            }));
+            let entries = this.closetGear
+                .filter((item) => {
+                    if (this.filter === 'retired') return item.retired;
+                    if (this.filter === 'wishlist') return item.wishlist && !item.retired;
+                    return !item.retired && !item.wishlist;
+                })
+                .map(item => ({
+                    item,
+                    inList: this.itemsInList.indexOf(item.id) > -1,
+                }));
 
             if (search) {
                 entries = entries.filter(({ item }) => item.name.toLowerCase().indexOf(search) > -1
                     || item.description.toLowerCase().indexOf(search) > -1);
             }
 
-            if (this.filter === 'notInList') {
+            if (this.filter.startsWith('cat:')) {
+                const cat = this.filter.slice(4);
+                entries = entries.filter(({ item }) => item.closetCategory === cat);
+            } else if (this.filter === 'notInList') {
                 entries = entries.filter(entry => !entry.inList);
             } else if (this.filter === 'newest') {
-                entries = entries.slice().sort((a, b) => b.item.id - a.item.id);
+                entries = entries.slice().reverse();
             }
 
             return entries;
@@ -170,7 +215,13 @@ export default {
             if (this.filter === 'notInList') {
                 return 'Every piece of gear you own is already in this list.';
             }
-            return 'Your gear library is empty. Items you add to a list show up here.';
+            if (this.filter === 'wishlist') {
+                return 'Nothing on your wishlist.';
+            }
+            if (this.filter === 'retired') {
+                return 'No retired gear.';
+            }
+            return 'Your closet is empty. Gear you add to a list shows up here.';
         },
     },
     beforeMount() {
@@ -178,9 +229,32 @@ export default {
             this.$router.push('/welcome');
         } else {
             this.isLoaded = true;
+            this.takeWish();
         }
     },
     methods: {
+        // /gear?wish=<catalog id>, from a gear page or a comparison: add it
+        // to the wishlist (once) and show the wishlist.
+        async takeWish() {
+            const id = String(this.$route.query.wish || '');
+            if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+            this.$router.replace('/gear');
+            if (!this.library.items.some((i) => i.catalogId === id && i.wishlist)) {
+                try {
+                    const { items } = await api(`/api/catalog?ids=${encodeURIComponent(id)}`);
+                    if (items && items[0]) this.$store.commit('addWishlistItem', { entry: items[0] });
+                } catch {
+                    return;
+                }
+            }
+            this.filter = 'wishlist';
+        },
+        gotIt(item) {
+            this.$store.commit('setItemWishlist', { itemId: item.id, wishlist: false });
+        },
+        needsReplacing(item) {
+            return replaceSoon(item);
+        },
         goBack() {
             this.$router.push('/');
         },
@@ -208,13 +282,17 @@ export default {
             this.pickerItemId = null;
         },
         removeItem(item) {
-            this.speedbumpCallback = () => {
-                this.$store.commit('removeItem', item);
-            };
-            this.speedbumpOptions = {
-                body: 'Are you sure you want to delete this item? This cannot be undone.',
-            };
-            this.showSpeedbump = true;
+            confirmClosetRemoval({
+                store: this.$store,
+                initSpeedbump: (callback, options) => {
+                    this.speedbumpCallback = callback;
+                    this.speedbumpOptions = options;
+                    this.showSpeedbump = true;
+                },
+            }, item);
+        },
+        restore(item) {
+            restoreClosetItem(this.$store, item);
         },
     },
 };
@@ -222,6 +300,20 @@ export default {
 
 <style lang="scss">
 @import "../css/_globals";
+
+.lpGearRestore {
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border-strong);
+    border-radius: 10px;
+    color: var(--lp-text);
+    cursor: pointer;
+    flex: none;
+    font-family: $font-body;
+    font-size: 14px;
+    font-weight: 600;
+    min-height: 40px;
+    padding: 0 14px;
+}
 
 // ============================================================
 // The gear library screen (#11g)
@@ -335,8 +427,9 @@ export default {
 }
 
 .lpGearChipActive {
-    background: var(--lp-sidebar-bg);
-    color: $grey-0;
+    // The sidebar is white since the redesign, which left white text on white.
+    background: var(--lp-primary);
+    color: #fff;
 }
 
 .lpGearList {
@@ -473,5 +566,10 @@ export default {
     list-style: none;
     padding: 28px 18px;
     text-align: center;
+}
+.lpGearDetails {
+    margin-top: 4px;
+    min-height: 32px;
+    padding: 0;
 }
 </style>

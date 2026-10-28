@@ -17,6 +17,8 @@ sign-in, email, and nightly backups. Plan on an afternoon the first time.
 | **Off-site storage** | Backups | Backblaze B2, AWS S3, or DigitalOcean Spaces | Step 8. |
 | **Uptime monitor** | Tells you if the site goes down | UptimeRobot or Better Stack (free tiers) | Monitor `https://waymarkgear.com/healthz`. |
 
+The server needs outbound HTTPS to `lighterpack.com` for "Import from LighterPack" links (CSV uploads work without it). It only ever requests that site's public `/csv/:id` and `/r/:id` pages, never follows redirects, and is rate limited per IP (`rateLimit.importMaxPerWindow`, default 20 per 10 minutes). `LIGHTERPACK_URL` overrides the address if you ever need to.
+
 Check each provider's current pricing; a small VPS, storage and a domain are
 the only recurring costs at launch.
 
@@ -168,12 +170,109 @@ after CI passes keeps security patches current.
 - [ ] Backups running and a restore tested.
 - [ ] Uptime monitor on `/healthz`.
 
-## Optional: Cloudflare in front
+## Traffic spikes and Cloudflare
 
-Proxying through Cloudflare (orange cloud) adds caching and absorbs traffic
-spikes, e.g. when a kit gets shared on a forum. Set SSL mode to **Full
-(strict)**, set `TRUST_PROXY: 2` in the compose file, and keep the origin
-firewall as above. Public API responses already send short cache headers.
+When a kit gets posted to a big forum or subreddit, thousands of people open
+the same page within minutes. The app handles that on its own:
+
+- Shared lists (`/r/…`) and profiles (`/@…`) are rendered at most about once
+  a minute per page and served from memory in between. An owner's own pages
+  are refreshed the moment they save or edit their profile.
+- Link-preview images (`/og/…`) are drawn once and cached; built assets under
+  `/dist/` are content-hashed and cached by browsers for a day.
+- Every response sends ETags, so repeat visitors get a cheap `304`.
+
+To go further, proxy through Cloudflare (orange cloud). Set SSL mode to
+**Full (strict)**, set `TRUST_PROXY: 2` in the compose file, and keep the
+origin firewall as above. Cloudflare doesn't cache HTML by default, so add a
+**Cache Rule**:
+
+- **When:** URI Path starts with `/r/`, or starts with `/@`, or starts with
+  `/og/`, or starts with `/dist/`, or starts with `/api/explore/` (the
+  homepage and Explore read their kits from there)
+- **Then:** Eligible for cache; Edge TTL: *Use cache-control header if
+  present*; Browser TTL: *Respect origin*.
+
+Pages send `s-maxage=60`, so the edge serves them for a minute and the
+origin sees about one request per page per minute per data center. Don't add
+`/`, `/api/`, `/profile` or anything signed-in: those are personal. After a
+deploy you can **Purge Everything** so no edge keeps a page that points at
+the previous build's assets for its last minute.
+
+If you ever run more than one app instance, each keeps its own page cache;
+another instance may show a page up to a minute old.
+
+## Live updates
+
+Planning a list together updates everyone's screen live over server-sent
+events (`/api/live`): one long-lived request per open tab, with a ping every
+25 seconds so proxies don't close it. Caddy streams these without extra
+settings, and Cloudflare passes them through (its 100-second idle timeout is
+covered by the ping). Leave `/api/` out of any cache rule.
+
+Live updates are in-memory in the app process. With a single app instance
+(the default compose stack) nothing else is needed. If you scale out to
+several instances, add a shared message bus between them (Postgres
+LISTEN/NOTIFY is the simplest) in `server/live.js`.
+
+## Supporter plan and affiliate links
+
+Waymark pays for itself two ways: affiliate links on catalog gear, and the
+Supporter plan ($5 a month or $48 a year), whose members get plain links and a
+profile badge. Both are off until you set them up.
+
+**Affiliate links.** Join the programs you want (Amazon Associates, AvantLink
+for REI and many outdoor brands, a brand's own program). Then either:
+
+- **Owner → Revenue → Affiliate rules**: one rule per shop, e.g. domain
+  `amazon.com`, parameter `tag`, value `yourtag-20`. Every catalog product link
+  on that shop gets your code; or
+- set an item's own **Affiliate link** in the catalog editor (or the
+  `affiliate_url` CSV column) for programs that use a tracking URL instead of a
+  parameter. An item's own link wins over the rules.
+
+Buy buttons go through `/go/<item>`, which picks the link per reader and counts
+clicks (Owner → Revenue). Every page with Buy buttons carries a short
+commission notice, and TERMS.md has the full disclosure; keep both. Amazon's
+rules also forbid its links in email, which is why price-drop emails link to
+the gear page instead.
+
+**Stripe.**
+
+1. Create a Stripe account. In **Product catalog**, add a product "Waymark
+   Supporter" with two recurring prices: $5 / month and $48 / year. Copy both
+   price ids (`price_…`) into `.env` as `STRIPE_PRICE_MONTHLY` and
+   `STRIPE_PRICE_YEARLY`.
+2. **Developers → API keys**: put the secret key in `STRIPE_SECRET_KEY`. (A
+   restricted key needs write access to Checkout Sessions and Customer portal
+   and read access to Subscriptions.)
+3. **Developers → Webhooks → Add endpoint**: `https://waymarkgear.com/stripe/webhook`,
+   events `checkout.session.completed`, `customer.subscription.created`,
+   `customer.subscription.updated`, `customer.subscription.deleted`. Put its
+   signing secret in `STRIPE_WEBHOOK_SECRET`.
+4. **Settings → Billing → Customer portal**: turn on cancelling and switching
+   between the two prices.
+5. `docker compose -f docker-compose.prod.yml up -d`. The Subscribe buttons
+   appear at `/supporter`. Try it first with test-mode keys and Stripe's test
+   card 4242 4242 4242 4242.
+
+To give someone Supporter for free (a contributor, a reviewer): Owner →
+Revenue → Supporters.
+
+## Trails
+
+The trail list starts with about 40 well-known long trails. **Owner → Trails**
+edits them, adds more, and shows the names hikers typed that match nothing
+yet: add one as a trail, merge it into an existing trail (it becomes a
+nickname), or ignore it. Trail pages are at `/trails/<slug>` and in the
+sitemap.
+
+## AI assistants (MCP) and the API
+
+Nothing to set up: `/mcp` and `/api/v1` run on every install. People connect
+Claude or ChatGPT at `/developers` (the assistant signs them in through
+`/oauth/authorize`) or make personal tokens there. The API is described in
+API.md.
 
 ## Running somewhere else
 

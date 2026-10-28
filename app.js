@@ -9,6 +9,11 @@ import { logger } from './server/log.js';
 import endpoints from './server/endpoints.js';
 import moderationEndpoints from './server/moderation-endpoints.js';
 import apiEndpoints from './server/api.js';
+import apiV1 from './server/api-v1.js';
+import mcp from './server/mcp.js';
+import oauth from './server/oauth.js';
+import billing, { webhookHandler as stripeWebhook } from './server/billing.js';
+import affiliate from './server/affiliate.js';
 import googleAuth from './server/google.js';
 import views, { hasBuiltAssets } from './server/views.js';
 import { authRateLimit, cspNonce, securityHeaders } from './server/security.js';
@@ -96,6 +101,8 @@ app.use((req, _res, next) => {
 // to stay generous; 10mb is far above any real library and far below the
 // 50mb this used to allow.
 const bodyLimit = config.get('jsonBodyLimit');
+// Stripe signs the exact bytes it sends, so this one reads the raw body.
+app.post('/stripe/webhook', express.raw({ type: 'application/json', limit: '1mb' }), stripeWebhook);
 app.use(express.json({ limit: bodyLimit }));
 app.use(express.urlencoded({ extended: true, limit: bodyLimit }));
 
@@ -118,6 +125,11 @@ if (!hasBuiltAssets && config.get('environment') !== 'production') {
     app.use(vite.middlewares);
 }
 
+app.use('/', apiV1);
+app.use('/', mcp);
+app.use('/', oauth);
+app.use('/', billing);
+app.use('/', affiliate);
 app.use('/', endpoints);
 app.use('/', moderationEndpoints);
 app.use('/', apiEndpoints);

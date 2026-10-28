@@ -12,7 +12,7 @@
                         <span class="lpCell">Weight</span>
                         <span class="lpCell">Unit</span>
                     </li>
-                    <li v-for="row in importData.data" :key="row.name" class="lpRow">
+                    <li v-for="(row, i) in importData.data" :key="i" class="lpRow">
                         <span class="lpCell">{{ row.name }}</span>
                         <span class="lpCell">{{ row.category }}</span>
                         <span class="lpCell">{{ row.description }}</span>
@@ -33,6 +33,8 @@
 
 <script>
 import modal from './modal.vue';
+import weightUtils from '../utils/weight.js';
+import { parseGearCsv } from '../utils/lighterpack-import.js';
 
 export default {
     name: 'ImportCsv',
@@ -44,9 +46,6 @@ export default {
             csvInput: false,
             listId: false,
             importData: {},
-            fullUnitToUnit: {
-                ounce: 'oz', ounces: 'oz', oz: 'oz', pound: 'lb', pounds: 'lb', lb: 'lb', lbs: 'lb', gram: 'g', grams: 'g', g: 'g', kilogram: 'kg', kilograms: 'kg', kg: 'kg', kgs: 'kg',
-            },
             shown: false,
         };
     },
@@ -86,68 +85,24 @@ export default {
 
             reader.readAsText(file);
         },
-        CSVToArray(strData) {
-            const strDelimiter = ',';
-            const arrData = [[]];
-            let arrMatches = null;
-
-
-            const objPattern = new RegExp(
-                (
-                    `(\\${strDelimiter}|\\r?\\n|\\r|^)`
-                    + '(?:"([^"]*(?:""[^"]*)*)"|'
-                    + `([^"\\${strDelimiter}\\r\\n]*))`
-                ), 'gi',
-            );
-
-            while ((arrMatches = objPattern.exec(strData))) {
-                const strMatchedDelimiter = arrMatches[1];
-                if (strMatchedDelimiter.length && (strMatchedDelimiter != strDelimiter)) {
-                    arrData.push([]);
-                }
-
-                let strMatchedValue;
-                if (arrMatches[2]) {
-                    strMatchedValue = arrMatches[2].replace(new RegExp('""', 'g'), '"');
-                } else {
-                    strMatchedValue = arrMatches[3];
-                }
-
-                arrData[arrData.length - 1].push(strMatchedValue);
-            }
-
-            return arrData;
-        },
         validateImport(input, name) {
-            const csv = this.CSVToArray(input);
-            this.importData = { data: [], name };
-
-            for (const i in csv) {
-                const row = csv[i];
-                if (row.length < 6) continue;
-                if (row[0].toLowerCase() == 'item name') continue;
-                if (isNaN(parseInt(row[3]))) continue;
-                if (isNaN(parseInt(row[4]))) continue;
-                if (typeof this.fullUnitToUnit[row[5]] === 'undefined') continue;
-
-                this.importData.data.push({
-                    name: row[0],
-                    category: row[1],
-                    description: row[2],
-                    qty: parseFloat(row[3]),
-                    weight: parseFloat(row[4]),
-                    unit: this.fullUnitToUnit[row[5]],
-                });
-            }
-
-            if (!this.importData.data.length) {
+            const parsed = parseGearCsv(input, { name });
+            if (!parsed.itemCount) {
                 alert('Unable to load spreadsheet - please verify the format.');
-            } else {
-                this.shown = true;
+                return;
             }
+            this.importData = {
+                parsed,
+                data: parsed.categories.flatMap((c) => c.items.map((item) => ({
+                    ...item,
+                    category: c.name,
+                    weight: weightUtils.MgToWeight(item.weightMg, item.unit),
+                }))),
+            };
+            this.shown = true;
         },
         importList() {
-            this.$store.commit('importCSV', this.importData);
+            this.$store.commit('importGearList', this.importData.parsed);
             this.shown = false;
         },
 

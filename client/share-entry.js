@@ -3,6 +3,7 @@ import '@fontsource-variable/geist';
 import '@fontsource-variable/geist-mono';
 import './css/share.scss';
 import pies from './pies.js';
+import { initSocial } from './social.js';
 import weightUtils from './utils/weight.js';
 import {
     initTheme, toggleTheme, chartLineColor, chartHoverColor, onThemeChange,
@@ -231,8 +232,37 @@ function init() {
     }
 }
 
+// Comments only exist on published lists, and only some readers scroll that
+// far: load that code when the section is close to the screen.
+function initComments() {
+    const section = document.getElementById('wgComments');
+    if (!section) return;
+    const load = () => import('./comments/mount.js').then((m) => m.default(section)).catch(() => {
+        section.insertAdjacentHTML('beforeend', '<p>Comments could not be loaded.</p>');
+    });
+    if (location.hash.startsWith('#comment-') || location.hash === '#wgComments' || !('IntersectionObserver' in window)) {
+        load();
+        return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+            observer.disconnect();
+            load();
+        }
+    }, { rootMargin: '600px' });
+    observer.observe(section);
+}
+
+// The same bundle runs on @profile pages, which have no list: each part
+// stands alone so one missing piece can't stop the rest.
+function start() {
+    safely(init);
+    safely(initComments);
+    safely(initSocial);
+}
+
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', start);
 } else {
-    init();
+    start();
 }
