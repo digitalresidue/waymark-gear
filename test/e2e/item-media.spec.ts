@@ -1,6 +1,11 @@
 import { test, expect } from '@playwright/test';
 
 import { registerUser, generateTestUser } from './auth-utils';
+import { testRoot } from './utils';
+
+// Pasted image links are copied to the site (server/remote-image.js); the
+// suite's server copies from itself.
+const LOCAL_IMAGE = () => new URL('/images/icon-512.png', testRoot).toString();
 
 const createCategoryAndItem = async (page, categoryName, itemName) => {
   await page.getByText('Add new category', { exact: true }).click();
@@ -59,14 +64,15 @@ test.describe('Item Media', () => {
     const modal = page.locator('#itemImageDialog');
     await expect(modal).toBeVisible();
 
-    await modal.locator('#itemImageUrl').fill('https://example.com/camera.jpg');
+    await modal.locator('#itemImageUrl').fill(LOCAL_IMAGE());
     await modal.locator('input[type="submit"]').click();
 
     await expect(modal).toBeHidden();
 
     const thumbnail = itemRow.locator('img.lpItemImage');
     await expect(thumbnail).toBeVisible();
-    await expect(thumbnail).toHaveAttribute('src', 'https://example.com/camera.jpg');
+    // Our own copy, not the original link.
+    await expect(thumbnail).toHaveAttribute('src', /^\/userimages\/.+_t\.webp$/);
 
     await thumbnail.click();
     await expect(page.locator('#lpImageDialog')).toBeVisible();
@@ -87,7 +93,7 @@ test.describe('Item Media', () => {
     const modal = page.locator('#itemImageDialog');
     await expect(modal).toBeVisible();
 
-    await modal.locator('#itemImageUrl').fill('https://example.com/photo.jpg');
+    await modal.locator('#itemImageUrl').fill(LOCAL_IMAGE());
     await modal.locator('input[type="submit"]').click();
     await expect(modal).toBeHidden();
 
