@@ -19,7 +19,7 @@ jobs:
   open-issue:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Open a review issue (unless one is already open)
         env:
           GH_TOKEN: ${{ github.token }}
