@@ -350,6 +350,50 @@ function initSiteHeader() {
         .catch(() => {});
 }
 
+// The Brands page: filter the cards in place as you type, tick or pick a
+// gear type, keeping the URL in step so the view can be shared. The server
+// applies the same rules (server/brands.js, matchesBrand) for the first load.
+function initBrands() {
+    const form = document.getElementById('wgBrandFilters');
+    if (!form) return;
+    const input = form.querySelector('[name="q"]');
+    const cottage = form.querySelector('[name="cottage"]');
+    const typeButtons = [...form.querySelectorAll('[data-type]')];
+    const cards = [...document.querySelectorAll('[data-testid="brand-card"]')];
+    const count = document.querySelector('[data-testid="brand-count"]');
+    const empty = document.querySelector('[data-testid="brand-empty"]');
+    let type = (typeButtons.find((b) => b.getAttribute('aria-pressed') === 'true') || { dataset: { type: '' } }).dataset.type;
+
+    const apply = () => {
+        const q = input.value.trim().toLowerCase();
+        let shown = 0;
+        cards.forEach((card) => {
+            const ok = (!cottage.checked || card.dataset.cottage === '1')
+                && (!type || card.dataset.types.split(' ').includes(type))
+                && (!q || card.dataset.name.toLowerCase().includes(q));
+            card.hidden = !ok;
+            if (ok) shown++;
+        });
+        typeButtons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.type === type)));
+        count.textContent = shown === cards.length ? `${cards.length} ${cards.length === 1 ? 'brand' : 'brands'}` : `${shown} of ${cards.length} brands`;
+        empty.hidden = shown > 0;
+        const params = new URLSearchParams();
+        if (input.value.trim()) params.set('q', input.value.trim());
+        if (cottage.checked) params.set('cottage', '1');
+        if (type) params.set('type', type);
+        const qs = params.toString();
+        history.replaceState(null, '', `/brands${qs ? `?${qs}` : ''}`);
+    };
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (e.submitter && e.submitter.dataset.type !== undefined) type = e.submitter.dataset.type;
+        apply();
+    });
+    input.addEventListener('input', apply);
+    cottage.addEventListener('change', apply);
+}
+
 // The Trails page: switch trails (and sorts) in place, search every trail,
 // and put the trails you've tagged your own lists with first.
 function initTrails() {
@@ -499,5 +543,6 @@ export function initSocial() {
     initVotes();
     initFollow();
     initReviews();
+    initBrands();
     bindLightboxLinks();
 }

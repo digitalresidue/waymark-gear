@@ -1,0 +1,177 @@
+@import "../globals";
+
+// The Brands directory (templates/brands.mustache).
+
+.wgBrands {
+    padding-bottom: 56px;
+    padding-top: 28px;
+}
+
+.wgBrandFilters {
+    align-items: center;
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: 14px;
+    display: grid;
+    gap: 12px 16px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    margin: 0 0 14px;
+    padding: 14px;
+
+    .wgInput {
+        width: 100%;
+    }
+}
+
+.wgBrandToggle {
+    align-items: center;
+    display: inline-flex;
+    font-weight: 600;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.wgBrandTypes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    grid-column: 1 / -1;
+}
+
+.wgBrandType {
+    background: transparent;
+    border: 1px solid var(--lp-border);
+    border-radius: 999px;
+    color: var(--lp-text);
+    cursor: pointer;
+    font: inherit;
+    font-size: 14px;
+    padding: 6px 12px;
+
+    &:hover {
+        background: var(--lp-row-hover);
+    }
+
+    &[aria-pressed="true"] {
+        background: var(--lp-primary);
+        border-color: var(--lp-primary);
+        color: var(--lp-primary-ink);
+    }
+}
+
+.wgBrandCount {
+    color: var(--lp-text-secondary);
+    font-size: 14px;
+    margin: 0 0 10px;
+}
+
+.wgBrandGrid {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    list-style: none;
+    margin: 0 0 20px;
+    padding: 0;
+}
+
+.wgBrandCard {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 16px;
+
+    &[hidden] {
+        display: none;
+    }
+}
+
+.wgBrandTop {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+}
+
+.wgMakerLogo {
+    background: #fff;
+    border: 1px solid var(--lp-border);
+    border-radius: 12px;
+    flex: 0 0 56px;
+    height: 56px;
+    object-fit: contain;
+    padding: 4px;
+    width: 56px;
+}
+
+.wgMakerMonogram {
+    align-items: center;
+    background: var(--lp-active-bg);
+    color: var(--lp-accent-green-deep);
+    display: inline-flex;
+    font: 800 24px/1 $font-display;
+    justify-content: center;
+}
+
+.wgBrandName {
+    font-family: $font-display;
+    font-size: 19px;
+    font-stretch: 108%;
+    margin: 0;
+}
+
+.wgBrandMeta {
+    align-items: center;
+    display: flex;
+    font-size: 13px;
+    gap: 8px;
+    margin: 4px 0 0;
+}
+
+.wgBrandDesc {
+    color: var(--lp-text-secondary);
+    font-size: 14.5px;
+    line-height: 1.45;
+    margin: 0;
+}
+
+.wgBrandTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0;
+
+    span {
+        background: var(--lp-surface-sunken);
+        border-radius: 999px;
+        color: var(--lp-text-secondary);
+        font-size: 12px;
+        padding: 3px 9px;
+    }
+}
+
+// Sits at the bottom of the card, whatever the description's length.
+.wgBrandVisit {
+    align-self: flex-start;
+    margin-top: auto;
+}
+
+@media (width <= 640px) {
+    .wgBrands {
+        padding-top: 18px;
+    }
+
+    .wgBrandFilters {
+        grid-template-columns: 1fr;
+    }
+
+    .wgBrandTypes {
+        flex-wrap: nowrap;
+        margin: 0 -14px;
+        overflow-x: auto;
+        padding: 0 14px 4px;
+    }
+
+    .wgBrandType {
+        white-space: nowrap;
+    }
+}

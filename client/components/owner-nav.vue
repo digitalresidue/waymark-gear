@@ -12,6 +12,9 @@
                 <router-link to="/owner/trails" :class="{ wgActive: active === 'trails' }" data-testid="owner-nav-trails">
                     Trails
                 </router-link>
+                <router-link to="/owner/brands" :class="{ wgActive: active === 'brands' }" data-testid="owner-nav-brands">
+                    Brands
+                </router-link>
                 <router-link to="/owner/revenue" :class="{ wgActive: active === 'revenue' }" data-testid="owner-nav-revenue">
                     Revenue
                 </router-link>
