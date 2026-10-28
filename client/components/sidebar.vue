@@ -1,38 +1,116 @@
 <template>
-    <div id="sidebar">
+    <div id="sidebar" :class="{ wgSidebarDesk: !isMobile }">
         <div class="lpSidebarSticky">
-            <!-- The site header carries the logo and these links on the
-                 desktop; in the phone drawer they live here. -->
-            <router-link to="/welcome" class="wgDrawerBrand" aria-label="Waymark Gear home" data-testid="drawer-home">
-                <brandLogo />
-            </router-link>
-            <nav v-if="isMobile" class="wgDrawerNav" aria-label="Site">
-                <router-link to="/explore">
-                    Explore kits
+            <!-- Phone: one drawer with the site links and the lists; the
+                 closet has its own page. -->
+            <template v-if="isMobile">
+                <router-link to="/welcome" class="wgDrawerBrand" aria-label="Waymark Gear home" data-testid="drawer-home">
+                    <brandLogo />
                 </router-link>
-                <router-link v-if="$store.state.loggedIn" to="/profile" data-testid="drawer-profile">
-                    Your profile
-                </router-link>
-                <router-link v-if="$store.state.loggedIn" to="/trips" data-testid="drawer-trips">
-                    Trip journals
-                </router-link>
-                <router-link v-if="isAdmin" to="/owner/catalog">
-                    Owner
-                </router-link>
-            </nav>
+                <nav class="wgDrawerNav" aria-label="Site">
+                    <router-link to="/explore">
+                        Explore kits
+                    </router-link>
+                    <router-link v-if="$store.state.loggedIn" to="/profile" data-testid="drawer-profile">
+                        Your profile
+                    </router-link>
+                    <router-link v-if="$store.state.loggedIn" to="/trips" data-testid="drawer-trips">
+                        Trip journals
+                    </router-link>
+                    <router-link v-if="isAdmin" to="/owner/catalog">
+                        Owner
+                    </router-link>
+                </nav>
 
-            <libraryLists />
-            <div class="lpSidebarDivider" />
-            <router-link v-if="isMobile" to="/pack" class="lpSidebarNav" data-testid="drawer-pack">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8" /><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" /></svg>
-                Pack this list
-            </router-link>
-            <router-link v-if="isMobile" to="/gear" class="lpSidebarNav" data-testid="drawer-gear">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
-                Closet
-                <span class="lpSidebarNavCount">{{ library.items.filter((i) => !i.retired && (i.name || i.weight || i.description)).length }}</span>
-            </router-link>
-            <libraryItems v-else />
+                <libraryLists />
+                <div class="lpSidebarDivider" />
+                <router-link to="/pack" class="lpSidebarNav" data-testid="drawer-pack">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8" /><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" /></svg>
+                    Pack this list
+                </router-link>
+                <router-link to="/gear" class="lpSidebarNav" data-testid="drawer-gear">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
+                    Closet
+                    <span class="lpSidebarNavCount">{{ closetCount }}</span>
+                </router-link>
+            </template>
+
+            <!-- Desktop: an icon rail, and one panel beside it, either your
+                 lists or your closet. Choosing a list puts the lists away and
+                 gives the closet the whole column. -->
+            <template v-else>
+                <nav class="wgRail" aria-label="Sidebar">
+                    <button
+                        type="button"
+                        class="wgRailBtn wgRailCollapse"
+                        :title="open ? 'Hide the panel' : 'Show the panel'"
+                        :aria-label="open ? 'Hide the panel' : 'Show the panel'"
+                        :aria-expanded="String(open)"
+                        aria-controls="wgSidebarPanel"
+                        data-testid="rail-collapse"
+                        @click="$store.commit('toggleSidebar')"
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path v-if="open" d="m15 6-6 6 6 6" /><path v-else d="m9 6 6 6-6 6" /></svg>
+                    </button>
+                    <button
+                        type="button"
+                        class="wgRailBtn"
+                        :class="{ wgOn: open && panel === 'lists' }"
+                        :aria-pressed="String(open && panel === 'lists')"
+                        aria-controls="wgSidebarPanel"
+                        title="Your lists"
+                        data-testid="rail-lists"
+                        @click="show('lists')"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13" /><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01" /></svg>
+                        <span class="wgRailLabel">Lists</span>
+                        <span class="wgRailCount">{{ library.lists.length }}</span>
+                    </button>
+                    <button
+                        type="button"
+                        class="wgRailBtn"
+                        :class="{ wgOn: open && panel === 'closet' }"
+                        :aria-pressed="String(open && panel === 'closet')"
+                        aria-controls="wgSidebarPanel"
+                        title="Your gear closet"
+                        data-testid="rail-closet"
+                        @click="show('closet')"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a2 2 0 0 1 2 2c0 .9-.6 1.4-1.2 1.9-.4.3-.8.6-.8 1.1v.6" /><path d="M12 9.6 3.5 15.4A1.6 1.6 0 0 0 4.4 18h15.2a1.6 1.6 0 0 0 .9-2.6L12 9.6z" /></svg>
+                        <span class="wgRailLabel">Closet</span>
+                        <span class="wgRailCount">{{ closetCount }}</span>
+                    </button>
+                    <router-link to="/pack" class="wgRailBtn" title="Pack this list" data-testid="rail-pack">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8" /><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" /></svg>
+                        <span class="wgRailLabel">Pack</span>
+                    </router-link>
+                </nav>
+                <div id="wgSidebarPanel" class="wgSidebarPanel" :inert="!open">
+                    <div v-show="panel === 'lists'" class="wgPanel wgPanelLists" data-testid="panel-lists">
+                        <!-- Same spot as "Switch" on the closet: the two toggle
+                             back and forth without the pointer landing on
+                             anything else. -->
+                        <button type="button" class="wgCurrentList" data-testid="back-to-closet" title="Back to your closet" @click="setPanel('closet')">
+                            <span class="wgCurrentListText">
+                                <span class="wgCurrentListLabel">Choose a list</span>
+                                <span class="wgCurrentListName">{{ library.lists.length }} {{ library.lists.length === 1 ? 'list' : 'lists' }}</span>
+                            </span>
+                            <span class="wgCurrentListSwitch">Closet</span>
+                        </button>
+                        <libraryLists @chosen="chosen" />
+                    </div>
+                    <div v-show="panel === 'closet'" class="wgPanel wgPanelCloset" data-testid="panel-closet">
+                        <button type="button" class="wgCurrentList" data-testid="current-list" title="Choose another list" @click="show('lists')">
+                            <span class="wgCurrentListText">
+                                <span class="wgCurrentListLabel">Adding to</span>
+                                <span class="wgCurrentListName">{{ currentListName }}</span>
+                            </span>
+                            <span class="wgCurrentListSwitch">Switch</span>
+                        </button>
+                        <libraryItems />
+                    </div>
+                </div>
+            </template>
         </div>
     </div>
 </template>
@@ -44,6 +122,18 @@ import brandLogo from './brand-logo.vue';
 
 import { isMobile } from '../utils/viewport.js';
 
+// Which panel the desktop sidebar shows. A per-browser convenience, so
+// localStorage (whether it's open at all is library.showSidebar, which
+// follows the account).
+const PANEL_KEY = 'wgSidebarPanel';
+const readPanel = () => {
+    try {
+        return localStorage.getItem(PANEL_KEY) === 'lists' ? 'lists' : 'closet';
+    } catch {
+        return 'closet';
+    }
+};
+
 export default {
     name: 'Sidebar',
     components: {
@@ -54,12 +144,50 @@ export default {
     setup() {
         return { isMobile };
     },
+    data() {
+        return { panel: readPanel() };
+    },
     computed: {
         library() {
             return this.$store.state.library;
         },
+        open() {
+            return Boolean(this.library.showSidebar);
+        },
         isAdmin() {
             return Boolean(this.$store.state.account && this.$store.state.account.isAdmin);
+        },
+        closetCount() {
+            return this.library.items.filter((i) => !i.retired && (i.name || i.weight || i.description)).length;
+        },
+        currentListName() {
+            const list = this.library.getListById(this.library.defaultListId);
+            return (list && list.name) || 'Untitled list';
+        },
+    },
+    methods: {
+        setPanel(panel) {
+            this.panel = panel;
+            try {
+                localStorage.setItem(PANEL_KEY, panel);
+            } catch {
+                // Storage blocked: it just won't be remembered.
+            }
+        },
+        // A rail button: show that panel, or put the sidebar away if it's
+        // the one already showing.
+        show(panel) {
+            if (this.open && this.panel === panel) {
+                this.$store.commit('toggleSidebar');
+                return;
+            }
+            this.setPanel(panel);
+            if (!this.open) this.$store.commit('toggleSidebar');
+        },
+        // A list was chosen: the lists go back into the rail and the closet
+        // takes the column, ready to add gear to it.
+        chosen() {
+            this.setPanel('closet');
         },
     },
 };
@@ -183,6 +311,214 @@ export default {
         background: rgba(255, 255, 255, 0.45);
         border-radius: 3px;
     }
+}
+
+// ============================================================
+// Desktop: icon rail + one panel (lists or closet)
+//
+// The rail always shows. library.showSidebar opens or closes the panel
+// beside it; the panel's content (lists or closet) is a per-browser choice.
+// ============================================================
+$railWidth: 60px;
+$panelWidth: 300px;
+
+#sidebar.wgSidebarDesk {
+    flex-basis: $railWidth + $panelWidth;
+
+    .lpSidebarSticky {
+        flex-direction: row;
+        padding-top: 0;
+        width: $railWidth + $panelWidth;
+    }
+}
+
+// Collapsed: the rail stays, the panel is clipped away with the column.
+#main:not(.lpHasSidebar) #sidebar.wgSidebarDesk {
+    background: var(--lp-sidebar-bg);
+    flex-basis: $railWidth;
+
+    .lpSidebarSticky {
+        opacity: 1;
+    }
+
+    .wgSidebarPanel {
+        opacity: 0;
+    }
+}
+
+.wgRail {
+    align-items: center;
+    border-right: 1px solid var(--lp-sidebar-border);
+    display: flex;
+    flex: 0 0 $railWidth;
+    flex-direction: column;
+    gap: 4px;
+    height: 100%;
+    padding: 12px 0;
+}
+
+.wgRailBtn {
+    align-items: center;
+    background: none;
+    border: 0;
+    border-radius: 11px;
+    color: var(--lp-sidebar-muted);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    font: inherit;
+    gap: 3px;
+    padding: 8px 0 6px;
+    position: relative;
+    text-decoration: none;
+    width: 50px;
+
+    &:hover {
+        background: var(--lp-sidebar-inset);
+        color: var(--lp-sidebar-text);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--lp-accent-green-deep);
+        outline-offset: 1px;
+    }
+
+    &.wgOn {
+        background: var(--lp-active-bg);
+        color: var(--lp-accent-green-deep);
+    }
+}
+
+.wgRailLabel {
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 1;
+}
+
+.wgRailCount {
+    background: var(--lp-sidebar-border);
+    border-radius: 99px;
+    color: var(--lp-sidebar-text);
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 16px;
+    min-width: 16px;
+    padding: 0 4px;
+    position: absolute;
+    right: 1px;
+    text-align: center;
+    top: 2px;
+}
+
+.wgRailBtn.wgOn .wgRailCount {
+    background: var(--lp-accent-green-deep);
+    color: #fff;
+}
+
+.wgRailCollapse {
+    border-bottom: 1px solid var(--lp-sidebar-border);
+    border-radius: 11px 11px 0 0;
+    margin-bottom: 4px;
+    padding: 8px 0 10px;
+}
+
+.wgSidebarPanel {
+    display: flex;
+    flex: 0 0 $panelWidth;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    min-width: 0;
+    padding-top: 12px;
+    transition: opacity $transitionDurationSlow;
+}
+
+.wgPanel {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    min-height: 0;
+}
+
+// On its own, the lists panel uses the whole height rather than the
+// shared-column caps.
+.wgPanelLists {
+    // The card above says it; no second "Lists · n" heading.
+    .listContainerHeader {
+        display: none;
+    }
+
+    #listContainer {
+        display: flex;
+        flex: 1 1 0;
+        flex-direction: column;
+        min-height: 0;
+        padding-top: 10px;
+    }
+
+    .lpSidebarListsRegion {
+        flex: 1 1 0;
+        min-height: 0;
+        overflow-y: auto;
+
+        #lists,
+        #pinnedLists {
+            max-height: none;
+            overflow: visible;
+        }
+    }
+}
+
+// Top of the closet: which list you're adding to, and the way back to
+// the others.
+.wgCurrentList {
+    align-items: center;
+    background: var(--lp-sidebar-inset);
+    border: 1px solid var(--lp-sidebar-border);
+    border-radius: 11px;
+    color: var(--lp-sidebar-text);
+    cursor: pointer;
+    display: flex;
+    flex: 0 0 auto;
+    font: inherit;
+    gap: 10px;
+    margin: 0 14px 2px;
+    padding: 8px 12px;
+    text-align: left;
+
+    &:hover {
+        border-color: var(--lp-accent-green-deep);
+    }
+}
+
+.wgCurrentListText {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.wgCurrentListLabel {
+    color: var(--lp-sidebar-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.wgCurrentListName {
+    font-size: 14px;
+    font-weight: 650;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wgCurrentListSwitch {
+    color: var(--lp-accent-green-deep);
+    flex: none;
+    font-size: 13px;
+    font-weight: 650;
 }
 
 // ============================================================

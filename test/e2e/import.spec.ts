@@ -1,7 +1,7 @@
 import { test, expect, Page } from '@playwright/test';
 
 import { registerUser, generateTestUser } from './auth-utils';
-import { createCategoryWithItem, addItem, markItemAsWorn } from './test-helpers';
+import { createCategoryWithItem, addItem, markItemAsWorn, showLists } from './test-helpers';
 import { testRoot } from './utils';
 
 // Phase 3.4: bring a list over from LighterPack by link or CSV. In the suite
@@ -11,7 +11,9 @@ import { testRoot } from './utils';
 const url = (p: string) => new URL(p, testRoot).toString();
 
 async function openImport(page: Page) {
+    await showLists(page);
     await page.getByTestId('new-list').hover();
+    await showLists(page);
     await page.getByTestId('new-list-import').click();
     await expect(page.getByTestId('import-link')).toBeVisible();
 }

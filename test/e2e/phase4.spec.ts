@@ -2,6 +2,7 @@ import { test, expect, Page, Browser } from '@playwright/test';
 
 import { registerUser, generateTestUser, loginUser } from './auth-utils';
 import { testRoot } from './utils';
+import { showCloset } from './test-helpers';
 
 // Phase 4: trip types, votes and leaderboards, follows and the notifications
 // page, the shakedown board, gear details (closet categories, photos, review
@@ -166,6 +167,7 @@ test.describe('Phase 4', () => {
         // The closet can be filtered by its categories.
         await expect(page.getByTestId('closet-filter-Insulation')).toBeVisible();
         await page.getByTestId('closet-filter-Insulation').click();
+        await showCloset(page);
         await expect(page.getByTestId('closet-item')).toHaveCount(1);
 
         const link = await publish(page);

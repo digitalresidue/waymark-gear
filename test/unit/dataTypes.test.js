@@ -473,3 +473,17 @@ describe('serialization safety', () => {
         }
     });
 });
+
+describe('Library.load: the sidebar preference', () => {
+    test('a saved "put away" (false) is kept, not reset to open', () => {
+        const lib = new Library();
+        const saved = lib.save();
+        saved.showSidebar = false;
+        const loaded = new Library();
+        loaded.load(saved);
+        assert.equal(loaded.showSidebar, false);
+        saved.showSidebar = true;
+        loaded.load(saved);
+        assert.equal(loaded.showSidebar, true);
+    });
+});

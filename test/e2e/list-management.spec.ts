@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 import { registerUser, generateTestUser } from './auth-utils';
-import { openSidebar, dragListItem, createCategoryWithItem } from './test-helpers';
+import { openSidebar, dragListItem, createCategoryWithItem, showLists } from './test-helpers';
 
 test.describe('List Management', () => {
   test('should create, rename, and switch between lists', async ({ page }) => {
@@ -14,17 +14,21 @@ test.describe('List Management', () => {
     await listNameInput.fill('Base List');
     await listNameInput.blur();
 
+    await showLists(page);
     await page.getByTestId('new-list').click();
     await listNameInput.fill('Trip List');
     await listNameInput.blur();
 
+    await showLists(page);
     const listItems = page.locator('#lists').getByRole('listitem');
     await expect(listItems.filter({ hasText: 'Base List' })).toHaveCount(1);
     await expect(listItems.filter({ hasText: 'Trip List' })).toHaveCount(1);
 
+    await showLists(page);
     await page.locator('#lists').getByText('Base List', { exact: true }).click();
     await expect(listNameInput).toHaveValue('Base List');
 
+    await showLists(page);
     await page.locator('#lists').getByText('Trip List', { exact: true }).click();
     await expect(listNameInput).toHaveValue('Trip List');
   });
@@ -39,14 +43,17 @@ test.describe('List Management', () => {
     await listNameInput.fill('List One');
     await listNameInput.blur();
 
+    await showLists(page);
     await page.getByTestId('new-list').click();
     await listNameInput.fill('List Two');
     await listNameInput.blur();
 
+    await showLists(page);
     const listItems = page.locator('#lists').getByRole('listitem');
     await expect(listItems).toHaveCount(2);
 
     // New lists go to the top, so List Two starts first.
+    await showLists(page);
     await expect(page.locator('#lists .lpListName')).toHaveText(['List Two', 'List One']);
 
     const firstList = listItems.nth(0);
@@ -54,6 +61,7 @@ test.describe('List Management', () => {
 
     await dragListItem(page, secondList, firstList);
 
+    await showLists(page);
     await expect(page.locator('#lists .lpListName').first()).toHaveText('List One');
   });
 
@@ -67,6 +75,7 @@ test.describe('List Management', () => {
     await listNameInput.fill('Original List');
     await listNameInput.blur();
 
+    await showLists(page);
     await page.getByTestId('new-list').hover();
     await page.getByText('Copy a list', { exact: true }).click();
 
@@ -76,6 +85,7 @@ test.describe('List Management', () => {
 
     await page.locator('#copyConfirm').click();
 
+    await showLists(page);
     await expect(page.locator('#lists').getByText('Copy of Original List', { exact: true })).toHaveCount(1);
     await expect(listNameInput).toHaveValue('Copy of Original List');
   });
@@ -92,6 +102,7 @@ test.describe('List Management', () => {
 
     await createCategoryWithItem(page, 'Shelter', 'Old Tent');
 
+    await showLists(page);
     await page.getByTestId('new-list').hover();
     await page.getByText('Copy a list', { exact: true }).click();
 
@@ -101,6 +112,7 @@ test.describe('List Management', () => {
     await page.locator('#copyConfirm').click();
 
     const copiedListName = 'Copy of Linked List';
+    await showLists(page);
     await expect(page.locator('#lists').getByText(copiedListName, { exact: true })).toHaveCount(1);
     await expect(listNameInput).toHaveValue(copiedListName);
 
@@ -109,6 +121,7 @@ test.describe('List Management', () => {
     await copiedItemName.fill('New Tent Name');
     await copiedItemName.blur();
 
+    await showLists(page);
     await page.locator('#lists').getByText('Linked List', { exact: true }).click();
     await expect(listNameInput).toHaveValue('Linked List');
 
@@ -128,6 +141,7 @@ test.describe('List Management', () => {
 
     await createCategoryWithItem(page, 'Shared Category', 'Shared Item');
 
+    await showLists(page);
     await page.getByTestId('new-list').hover();
     await page.getByText('Copy a list', { exact: true }).click();
 
@@ -160,6 +174,7 @@ test.describe('List Management', () => {
     await copiedItem.hover();
     await copiedItem.getByTitle('Remove this item').click();
 
+    await showLists(page);
     await page.locator('#lists').getByText('Linked Delete', { exact: true }).click();
     await expect(listNameInput).toHaveValue('Linked Delete');
 
@@ -191,17 +206,21 @@ test.describe('List Management', () => {
     await listNameInput.fill('Keep List');
     await listNameInput.blur();
 
+    await showLists(page);
     await page.getByTestId('new-list').click();
     await listNameInput.fill('Delete Me');
     await listNameInput.blur();
 
+    await showLists(page);
     await page.locator('#lists').getByText('Keep List', { exact: true }).click();
 
+    await showLists(page);
     const deleteListItem = page.locator('#lists').getByRole('listitem').filter({ hasText: 'Delete Me' });
     await deleteListItem.hover();
     await deleteListItem.getByTitle('Remove this list').click();
     await page.getByRole('button', { name: 'Yes' }).click();
 
+    await showLists(page);
     await expect(page.locator('#lists').getByText('Delete Me', { exact: true })).toHaveCount(0);
   });
 });

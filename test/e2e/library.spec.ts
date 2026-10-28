@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 import { registerUser, generateTestUser } from './auth-utils';
-import { openSidebar, createCategory, addItem } from './test-helpers';
+import { openSidebar, createCategory, addItem, showLists, showCloset } from './test-helpers';
 
 test.describe('Library Search', () => {
   test('should filter library items by search text', async ({ page }) => {
@@ -15,10 +15,13 @@ test.describe('Library Search', () => {
 
     await openSidebar(page);
 
+    await showCloset(page);
     const searchInput = page.locator('#librarySearch');
     await searchInput.fill('Spork Q9');
 
+    await showCloset(page);
     await expect(page.locator('#library').getByText('Titanium Spork Q9', { exact: true })).toBeVisible();
+    await showCloset(page);
     await expect(page.locator('#library').getByText('Solar Charger Z1', { exact: true })).toHaveCount(0);
   });
 
@@ -33,15 +36,18 @@ test.describe('Library Search', () => {
 
     await openSidebar(page);
 
+    await showCloset(page);
     const searchInput = page.locator('#librarySearch');
 
     // Search with lowercase for uppercase item
     await searchInput.fill('uppercase');
+    await showCloset(page);
     await expect(page.locator('#library').getByText('UPPERCASE Item', { exact: true })).toBeVisible();
 
     // Search with uppercase for lowercase item
     await searchInput.clear();
     await searchInput.fill('LOWERCASE');
+    await showCloset(page);
     await expect(page.locator('#library').getByText('lowercase item', { exact: true })).toBeVisible();
   });
 
@@ -56,10 +62,13 @@ test.describe('Library Search', () => {
 
     await openSidebar(page);
 
+    await showCloset(page);
     const searchInput = page.locator('#librarySearch');
     await searchInput.fill('Ultra');
 
+    await showCloset(page);
     await expect(page.locator('#library').getByText('Ultralight Tent Stakes', { exact: true })).toBeVisible();
+    await showCloset(page);
     await expect(page.locator('#library').getByText('Heavy Hammer', { exact: true })).toHaveCount(0);
   });
 
@@ -75,19 +84,25 @@ test.describe('Library Search', () => {
 
     await openSidebar(page);
 
+    await showCloset(page);
     const searchInput = page.locator('#librarySearch');
 
     // Filter to one item
     await searchInput.fill('Alpha');
+    await showCloset(page);
     await expect(page.locator('#library').getByText('Item Alpha', { exact: true })).toBeVisible();
+    await showCloset(page);
     await expect(page.locator('#library').getByText('Item Beta', { exact: true })).toHaveCount(0);
 
     // Clear search
     await searchInput.clear();
 
     // All items should be visible again
+    await showCloset(page);
     await expect(page.locator('#library').getByText('Item Alpha', { exact: true })).toBeVisible();
+    await showCloset(page);
     await expect(page.locator('#library').getByText('Item Beta', { exact: true })).toBeVisible();
+    await showCloset(page);
     await expect(page.locator('#library').getByText('Item Gamma', { exact: true })).toBeVisible();
   });
 
@@ -102,10 +117,13 @@ test.describe('Library Search', () => {
 
     await openSidebar(page);
 
+    await showCloset(page);
     const searchInput = page.locator('#librarySearch');
     await searchInput.fill('cuben');
 
+    await showCloset(page);
     await expect(page.locator('#library').getByText('Generic Bag', { exact: true })).toBeVisible();
+    await showCloset(page);
     await expect(page.locator('#library').getByText('Regular Pack', { exact: true })).toHaveCount(0);
   });
 
@@ -119,10 +137,12 @@ test.describe('Library Search', () => {
 
     await openSidebar(page);
 
+    await showCloset(page);
     const searchInput = page.locator('#librarySearch');
     await searchInput.fill('nonexistent12345');
 
     // The item should not be visible
+    await showCloset(page);
     await expect(page.locator('#library').getByText('Real Item', { exact: true })).toHaveCount(0);
   });
 });
@@ -138,6 +158,7 @@ test.describe('Library Item Management', () => {
 
     await openSidebar(page);
 
+    await showCloset(page);
     const libraryItem = page.locator('#library .lpLibraryItem').filter({ hasText: 'Delete Me Item' });
     await libraryItem.hover();
     await libraryItem.getByTitle('Remove from your closet').click();
@@ -145,6 +166,7 @@ test.describe('Library Item Management', () => {
     // It's in a list, so the dialog offers to retire it first.
     await expect(page.getByTestId('speedbump-alternate')).toHaveText('Retire it');
     await page.getByRole('button', { name: 'Delete everywhere' }).click();
+    await showCloset(page);
     await expect(page.locator('#library').getByText('Delete Me Item', { exact: true })).toHaveCount(0);
   });
 
@@ -158,6 +180,7 @@ test.describe('Library Item Management', () => {
 
     await openSidebar(page);
 
+    await showCloset(page);
     const libraryItem = page.locator('#library .lpLibraryItem').filter({ hasText: 'Keep This Item' });
     await libraryItem.hover();
     await libraryItem.getByTitle('Remove from your closet').click();
@@ -165,6 +188,7 @@ test.describe('Library Item Management', () => {
     await page.getByTestId('speedbump-cancel').click();
 
     // Item should still exist
+    await showCloset(page);
     await expect(page.locator('#library').getByText('Keep This Item', { exact: true })).toBeVisible();
   });
 
@@ -183,7 +207,9 @@ test.describe('Library Item Management', () => {
     await openSidebar(page);
 
     // Both items should appear in library
+    await showCloset(page);
     await expect(page.locator('#library').getByText('Tent from Shelter', { exact: true })).toBeVisible();
+    await showCloset(page);
     await expect(page.locator('#library').getByText('Bag from Sleep', { exact: true })).toBeVisible();
   });
 
@@ -198,6 +224,7 @@ test.describe('Library Item Management', () => {
     await openSidebar(page);
 
     // Verify original name in library
+    await showCloset(page);
     await expect(page.locator('#library').getByText('Original Name', { exact: true })).toBeVisible();
 
     // Edit item name in the category
@@ -205,7 +232,9 @@ test.describe('Library Item Management', () => {
     await itemRow.getByPlaceholder('Name', { exact: true }).blur();
 
     // Library should reflect the change
+    await showCloset(page);
     await expect(page.locator('#library').getByText('Updated Name', { exact: true })).toBeVisible();
+    await showCloset(page);
     await expect(page.locator('#library').getByText('Original Name', { exact: true })).toHaveCount(0);
   });
 });
@@ -218,6 +247,7 @@ test.describe('Closet', () => {
     await addItem(category, 'Old tent', { weight: '40' });
     await openSidebar(page);
 
+    await showCloset(page);
     const closetItem = page.locator('#library .lpLibraryItem').filter({ hasText: 'Old tent' });
     await closetItem.hover();
     await closetItem.getByTitle('Remove from your closet').click();
@@ -227,10 +257,12 @@ test.describe('Closet', () => {
     // Still in the list, weight and all.
     await expect(category.getByTestId('item-row').last().getByPlaceholder('Name', { exact: true })).toHaveValue('Old tent');
 
+    await showCloset(page);
     await page.getByTestId('closet-show-retired').click();
     await expect(closetItem).toContainText('Retired');
     await closetItem.getByTestId('closet-restore').click();
     await expect(closetItem).not.toContainText('Retired');
+    await showCloset(page);
     await expect(page.getByTestId('closet-show-retired')).toHaveCount(0);
   });
 
@@ -246,6 +278,7 @@ test.describe('Closet', () => {
     await addItem(first, 'Spoon', { weight: '1' });
 
     // A second list starts empty; fill it from the closet.
+    await showLists(page);
     await page.getByTestId('new-list').click();
     await title.fill('Trip two');
     await title.blur();

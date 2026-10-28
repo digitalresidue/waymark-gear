@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 import { registerUser, generateTestUser } from './auth-utils';
-import { openSidebar, dragHandleToTarget, getCategoryNames, getItemNames } from './test-helpers';
+import { openSidebar, dragHandleToTarget, getCategoryNames, getItemNames, showLists, showCloset } from './test-helpers';
 
 test.describe('Drag and Drop', () => {
   test('should reorder categories via drag handle', async ({ page }) => {
@@ -77,6 +77,7 @@ test.describe('Drag and Drop', () => {
     await listNameInput.fill('Base List');
     await listNameInput.blur();
 
+    await showLists(page);
     await page.getByTestId('new-list').click();
     await listNameInput.fill('Library Source');
     await listNameInput.blur();
@@ -85,6 +86,7 @@ test.describe('Drag and Drop', () => {
     await sourceItem.getByPlaceholder('Name', { exact: true }).fill('Library Item');
     await sourceItem.getByPlaceholder('Name', { exact: true }).blur();
 
+    await showLists(page);
     await page.locator('#lists').getByText('Base List', { exact: true }).click();
     await expect(listNameInput).toHaveValue('Base List');
 
@@ -93,6 +95,7 @@ test.describe('Drag and Drop', () => {
     await targetCategory.getByPlaceholder('Category Name', { exact: true }).fill('Target');
     await targetCategory.getByPlaceholder('Category Name', { exact: true }).blur();
 
+    await showCloset(page);
     const libraryItem = page.locator('#library .lpLibraryItem').filter({ hasText: 'Library Item' });
     await libraryItem.scrollIntoViewIfNeeded();
     const libraryHandle = libraryItem.getByTitle('Drag this item into your list');

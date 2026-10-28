@@ -2,6 +2,7 @@ import { test, expect, Page, APIRequestContext } from '@playwright/test';
 
 import { registerUser, generateTestUser } from './auth-utils';
 import { testRoot } from './utils';
+import { showLists } from './test-helpers';
 
 // Waymark Gear features: homepage, catalog (owner CSV + picker), drawers,
 // list switcher, publishing to Explore, copying a list, Google sign-in.
@@ -203,20 +204,29 @@ test.describe('List switcher', () => {
         await title.blur();
 
         for (const name of ['Second', 'Third', 'Fourth', 'Fifth']) {
+            await showLists(page);
             await page.getByTestId('new-list').click();
             await title.fill(name);
             await title.blur();
         }
+        await showLists(page);
         await expect(page.locator('#lists .lpListName').first()).toHaveText('Fifth');
+        await showLists(page);
         await expect(page.locator('#lists .lpListName').last()).toHaveText('First list');
 
+        await showLists(page);
         await page.getByTestId('list-search').fill('thi');
+        await showLists(page);
         await expect(page.locator('#lists .lpListName')).toHaveText(['Third']);
+        await showLists(page);
         await page.getByTestId('list-search').fill('');
 
+        await showLists(page);
         await page.locator('#lists li').filter({ hasText: 'First list' }).hover();
         await page.getByRole('button', { name: 'Pin First list' }).click();
+        await showLists(page);
         await expect(page.locator('#pinnedLists .lpListName')).toHaveText(['First list']);
+        await showLists(page);
         await expect(page.locator('#lists .lpListName')).toHaveCount(4);
     });
 });

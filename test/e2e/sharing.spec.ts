@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 import { testRoot } from './utils';
 import { registerUser, generateTestUser } from './auth-utils';
-import { getCategoryNames } from './test-helpers';
+import { getCategoryNames, showLists } from './test-helpers';
 
 test.describe('List Sharing', () => {
   test.beforeEach(async ({ page }) => {
@@ -154,6 +154,7 @@ test.describe('CSV Import', () => {
       await dialog.accept();
       return message;
     });
+    await showLists(page);
     await page.getByTestId('new-list').hover();
 
     const [fileChooser] = await Promise.all([
@@ -177,6 +178,7 @@ test.describe('CSV Import', () => {
       await dialog.accept();
       return message;
     });
+    await showLists(page);
     await page.getByTestId('new-list').hover();
 
     const invalidCsv = [
@@ -200,6 +202,7 @@ test.describe('CSV Import', () => {
   });
 
   test('should import a valid CSV and create categories/items', async ({ page }) => {
+    await showLists(page);
     await page.getByTestId('new-list').hover();
 
     const validCsv = [
@@ -239,6 +242,7 @@ test.describe('CSV Import', () => {
   });
 
   test('should import quantities and units correctly', async ({ page }) => {
+    await showLists(page);
     await page.getByTestId('new-list').hover();
 
     const validCsv = [
