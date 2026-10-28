@@ -25,7 +25,7 @@ Plan, weigh and share the gear you take on adventures — **waymarkgear.com**.
 Waymark Gear began as a fork of [LighterPack](https://github.com/galenmaly/lighterpack)
 by Galen Maly and is licensed under the GPL-2.0 (see [LICENSE](LICENSE)).
 
-**Stack:** Node.js 24 · Express 5 · Vue 3 · Vite · PostgreSQL · Playwright
+**Stack:** Node.js 26 · Express 5 · Vue 3 · Vite · PostgreSQL · Playwright
 
 ---
 
@@ -42,7 +42,7 @@ in a Docker volume.
 
 ## Local development
 
-You need Node.js 24 (`nvm use` reads `.nvmrc`), PostgreSQL 13 or newer, and
+You need Node.js 26 (`nvm use` reads `.nvmrc`; 24 still works), PostgreSQL 13 or newer, and
 `cwebp` for photo uploads (`brew install webp` / `apt install webp`).
 
 ```sh

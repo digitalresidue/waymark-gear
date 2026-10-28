@@ -1,6 +1,6 @@
 # Contributing to Waymark Gear
 
-1. Use Node.js 24 (`nvm use`) and follow the local development steps in the
+1. Use Node.js 26 (`nvm use`) and follow the local development steps in the
    [README](README.md).
 2. Keep `npm run lint`, `npm run test:unit` and the Playwright suite passing;
    CI runs all three on every pull request.
