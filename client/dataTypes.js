@@ -17,6 +17,9 @@ const defaultPreferences = {
     wornQtyHint: true,
     // Row height on the edit page: 'comfortable' | 'compact'.
     density: 'comfortable',
+    // How the weight chart is drawn, here and on shared lists: see
+    // client/charts.js ('donut' | 'bars' | 'treemap').
+    chartStyle: 'donut',
 };
 
 const Item = function ({ id, unit }) {
@@ -326,7 +329,7 @@ List.prototype.renderChart = function (type, linkParent) {
             }
             const percent = categoryTotal / total;
             const tempCategoryData = {
-                points, color: category.color, id: category.id, name: getTooltipText(category.name, categoryTotal, this.library.totalUnit), total: categoryTotal, percent, visiblePoints: false,
+                points, color: category.color, displayColor: category.displayColor, id: category.id, name: getTooltipText(category.name, categoryTotal, this.library.totalUnit), total: categoryTotal, percent, visiblePoints: false,
             };
             if (linkParent) tempCategoryData.parent = chartData;
             assignIn(tempCategory, tempCategoryData);
