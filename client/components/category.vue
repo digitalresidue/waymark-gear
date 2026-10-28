@@ -43,6 +43,7 @@
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
                             Add from catalog
                         </button>
+                        <kitMenu v-if="!planMode" :category="category" />
                     </span>
                 </li>
             </template>
@@ -51,6 +52,7 @@
 </template>
 
 <script>
+import kitMenu from './kit-menu.vue';
 import item from './item.vue';
 import itemMobile from './item-mobile.vue';
 
@@ -60,6 +62,7 @@ import { isMobile } from '../utils/viewport.js';
 export default {
     name: 'Category',
     components: {
+        kitMenu,
         item,
         itemMobile,
     },
@@ -70,6 +73,10 @@ export default {
         return { isMobile };
     },
     computed: {
+        // Kits are personal; not offered while planning someone else's list.
+        planMode() {
+            return this.$store.state.saveType === 'shared';
+        },
         // Display-vs-edit is a mode on a phone and no mode at all on the
         // desktop, so the row swaps components rather than reflowing. Both
         // share item-mixin.js, so only the markup differs.

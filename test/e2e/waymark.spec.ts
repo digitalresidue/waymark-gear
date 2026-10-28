@@ -91,7 +91,7 @@ test.describe('Gear catalog', () => {
 
         const csv = await (await page.request.get(url('/api/admin/catalog/export.csv'))).text();
         expect(csv).toContain(`Test tent ${tag}`);
-        expect(csv.split('\n')[0]).toBe('sku,name,brand,category,description,weight,unit,price,currency,url,image_url,worn_default,consumable_default,tags,status');
+        expect(csv.split('\n')[0]).toBe('sku,name,brand,category,description,weight,unit,price,currency,url,image_url,worn_default,consumable_default,tags,status,affiliate_url');
     });
 
     test('owner adds and edits an item by hand', async ({ page }, testInfo) => {
@@ -265,7 +265,9 @@ test.describe('Publishing and copying', () => {
         const title = page.getByPlaceholder('Name your list', { exact: true });
         await title.fill('Source kit');
         await title.blur();
+        const named = page.waitForResponse((r) => r.url().includes('saveLibrary') && r.status() === 200, { timeout: 20000 });
         await page.getByTestId('item-row').first().getByPlaceholder('Name', { exact: true }).fill('Original quilt');
+        await named;
         await page.getByText('Share', { exact: true }).hover();
         const shareInput = page.getByLabel('Share your list');
         await expect(shareInput).toHaveValue(/\/r\/[a-z0-9]+/, { timeout: 10000 });

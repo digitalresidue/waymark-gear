@@ -30,11 +30,15 @@ test.describe('delete-account script', () => {
     let knex: any;
     let userImageLocation: (id: string) => { dir: string };
 
+    let loadLibrary: any;
+    let replaceLibrary: any;
+
     test.beforeAll(async () => {
         const Knex = (await import('knex')).default;
         const { connectionConfig } = await import('../../server/db-config.js');
         knex = Knex({ client: 'pg', connection: connectionConfig() });
         ({ userImageLocation } = await import('../../server/images.js'));
+        ({ loadLibrary, replaceLibrary } = await import('../../server/library-store.js'));
     });
 
     test.afterAll(async () => {
@@ -53,11 +57,11 @@ test.describe('delete-account script', () => {
             email,
             token: `token-${name}`,
             password: 'not-a-real-hash',
-            library: JSON.stringify(LIBRARY),
             sync_token: 3,
             registered: new Date(),
             last_seen: new Date(),
         }).returning('*');
+        await replaceLibrary(row.user_id, LIBRARY, knex);
 
         for (let i = 0; i < (opts.shareLinks ?? 0); i++) {
             await knex('list').insert({ external_id: `${name}-ext-${i}`, user_id: row.user_id });
@@ -103,7 +107,7 @@ test.describe('delete-account script', () => {
 
     test.beforeEach(() => {
         stamp = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
-        email = `${PREFIX}${stamp}@lighterpack.com`;
+        email = `${PREFIX}${stamp}@example.com`;
     });
 
     // Scoped to this test's own stamp, not the whole prefix: spec files run in
@@ -210,7 +214,7 @@ test.describe('delete-account script', () => {
 
         const [restored] = await knex('users').where({ username: `${PREFIX}${stamp}a` });
         expect(restored.sync_token).toBe(3);
-        expect(restored.library.items).toHaveLength(2);
+        expect((await loadLibrary(restored.user_id, knex)).items).toHaveLength(2);
         const links = await knex('list').where({ user_id: restored.user_id });
         expect(links).toHaveLength(2);
 
@@ -233,7 +237,7 @@ test.describe('delete-account script', () => {
     test('an address with no account exits non-zero without touching anything', async () => {
         await makeUser(`${PREFIX}${stamp}a`, email);
 
-        const { code } = await runScript(['--email', `${PREFIX}nobody${stamp}@lighterpack.com`, '--live']);
+        const { code } = await runScript(['--email', `${PREFIX}nobody${stamp}@example.com`, '--live']);
 
         expect(code).toBe(1);
         expect(await usernames(email)).toEqual([`${PREFIX}${stamp}a`]);

@@ -262,7 +262,7 @@ export default {
 // ============================================================
 .lpSummaryMobile {
     background: var(--lp-sidebar-inset);
-    color: $grey-0;
+    color: var(--lp-sidebar-text);
 }
 
 .lpSummaryStrip {
@@ -300,14 +300,14 @@ export default {
 }
 
 .lpSummaryStatValue {
-    color: $grey-100;
+    color: var(--lp-sidebar-text);
     font-size: 13.5px;
     font-variant-numeric: tabular-nums;
     font-weight: 600;
 }
 
 .lpSummaryStatLead {
-    color: $grey-0;
+    color: var(--lp-sidebar-text);
     font-size: 15px;
     font-weight: 700;
 }
@@ -378,7 +378,7 @@ export default {
 }
 
 .lpSummaryLegendName {
-    color: $grey-100;
+    color: var(--lp-sidebar-text);
     flex: 1 1 auto;
     min-width: 0;
     overflow: hidden;
@@ -393,7 +393,7 @@ export default {
 
 .lpSummaryLegendWeight {
     align-items: baseline;
-    color: $grey-100;
+    color: var(--lp-sidebar-text);
     display: flex;
     flex: 0 0 auto;
     gap: 4px;
@@ -414,7 +414,7 @@ export default {
 
     .lpSummaryLegendName,
     .lpSummaryLegendWeight {
-        color: $grey-0;
+        color: var(--lp-sidebar-text);
     }
 
     .lpSummaryLegendPrice {
@@ -437,7 +437,7 @@ export default {
     border: none;
     border-bottom: 1px dotted var(--lp-sidebar-handle);
     border-radius: 0;
-    color: $grey-100;
+    color: var(--lp-sidebar-text);
     font-weight: 400;
     padding: 0 1px;
 
@@ -450,7 +450,7 @@ export default {
     &.lpHover {
         background: transparent;
         border-color: transparent;
-        border-bottom: 1px dotted $grey-100;
+        border-bottom: 1px dotted var(--lp-sidebar-muted);
     }
 }
 </style>

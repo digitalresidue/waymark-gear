@@ -25,6 +25,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import config from 'config';
 import knex from '../server/db.js';
+import { loadLibrary, replaceLibrary } from '../server/library-store.js';
 import { deleteUserAccount, closeAccountsDb } from '../server/accounts.js';
 import { userImageLocation } from '../server/images.js';
 
@@ -55,6 +56,7 @@ function day(value) {
 function describe(user, extras) {
     const items = Array.isArray(user.library?.items) ? user.library.items.length : '?';
     const lists = Array.isArray(user.library?.lists) ? user.library.lists.length : '?';
+    // user.library here is the assembled library (see main), not a column.
     return [
         `  ${user.username}  <${user.email}>`,
         `      registered ${day(user.registered)}`
@@ -91,8 +93,11 @@ async function restoreFromBackup(file) {
     }
 
     await knex.transaction(async (trx) => {
-        // The library column is json; knex wants it as text going in.
-        await trx('users').insert({ ...user, library: JSON.stringify(user.library) });
+        // The library lives in its own tables now (server/library-store.js);
+        // backups made before that carry it on the user row, which works too.
+        const { library, ...row } = user;
+        await trx('users').insert({ ...row, library: null });
+        if (library) await replaceLibrary(user.user_id, library, trx);
         if (lists.length) await trx('list').insert(lists);
     });
     console.log(`Restored ${user.username}.`);
@@ -141,6 +146,12 @@ async function main() {
     console.log(`\n${matches.length} account(s) matched${skipped ? `, ${skipped} excluded by --only` : ''}. To delete:\n`);
 
     const plans = [];
+    // Attach each account's library (assembled from its tables) so the
+    // summary can count it and the backup carries it.
+    for (const user of targets) {
+        user.library = await loadLibrary(user.user_id);
+    }
+
     for (const user of targets) {
         const shareLinks = Number((await knex('list').where({ user_id: user.user_id }).count({ n: '*' }))[0].n);
         const images = countImages(user.user_id);

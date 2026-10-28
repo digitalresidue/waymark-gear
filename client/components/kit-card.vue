@@ -1,10 +1,11 @@
 <template>
-    <a :href="`/r/${kit.externalId}`" class="wgKitCard" data-testid="kit-card">
+    <a :href="`/r/${kit.externalId}`" class="wgKitCard" :class="{ wgKitCardNew: newShakedown }" data-testid="kit-card">
+        <span v-if="newShakedown" class="wgNewRibbon wgNewRibbonLeft" title="Shakedown asked for in the last 8 hours" data-testid="shakedown-new">New</span>
         <div class="wgKitCardTop">
             <div class="wgKitCardTitle">
                 <h3>{{ kit.name }}</h3>
                 <p class="wgMuted">
-                    by @{{ kit.username }}<span v-if="kit.featured"> · <span class="wgKitFeatured">Featured</span></span>
+                    by @{{ kit.username }}<span v-if="kit.featured"> · <span class="wgKitFeatured">Featured</span></span><span v-if="kit.shakedown"> · <span class="wgKitShakedown" data-testid="kit-shakedown">Shakedown requested</span></span><span v-if="tripLabel"> · {{ tripLabel }}</span>
                 </p>
             </div>
             <span class="wgKitCardWeight wgMono">{{ baseWeight }}</span>
@@ -13,7 +14,7 @@
             <span v-for="(seg, i) in segments" :key="i" :class="`wgData${i + 1}`" :style="{ width: seg.pct + '%' }" />
         </div>
         <p class="wgKitCardMeta">
-            <span>{{ kit.itemCount }} {{ kit.itemCount === 1 ? 'item' : 'items' }}</span>
+            <span>{{ kit.itemCount }} {{ kit.itemCount === 1 ? 'item' : 'items' }}<template v-if="kit.score"> · <span data-testid="kit-score">{{ kit.score > 0 ? '▲' : '▼' }} {{ Math.abs(kit.score) }}</span></template><template v-if="kit.shakedown && kit.commentCount !== undefined"> · {{ kit.commentCount }} {{ kit.commentCount === 1 ? 'suggestion' : 'suggestions' }}</template></span>
             <span>{{ topCategories }}</span>
         </p>
     </a>
@@ -21,6 +22,7 @@
 
 <script>
 import { formatWeightMg } from '../utils/format.js';
+import { TRIP_TYPE_LABELS, isNewShakedown } from '../utils/gear-meta.js';
 
 export default {
     name: 'KitCard',
@@ -28,6 +30,12 @@ export default {
         kit: { type: Object, required: true },
     },
     computed: {
+        newShakedown() {
+            return isNewShakedown(this.kit);
+        },
+        tripLabel() {
+            return TRIP_TYPE_LABELS[this.kit.tripType] || '';
+        },
         baseWeight() {
             return formatWeightMg(this.kit.baseWeightMg, 'lb');
         },
@@ -54,6 +62,8 @@ export default {
 
 .wgKitCard {
     background: var(--lp-surface);
+    overflow: hidden;
+    position: relative;
     border: 1px solid var(--lp-border);
     border-radius: $radius-lg;
     color: var(--lp-text);
@@ -83,6 +93,10 @@ export default {
     }
 }
 
+.wgKitCardNew {
+    padding-top: 40px;
+}
+
 .wgKitCardTop {
     align-items: flex-start;
     display: flex;
@@ -96,6 +110,11 @@ export default {
     .wgMuted {
         font-size: 14px;
     }
+}
+
+.wgKitShakedown {
+    color: #9A4312;
+    font-weight: 600;
 }
 
 .wgKitFeatured {

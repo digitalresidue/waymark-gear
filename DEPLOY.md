@@ -1,5 +1,10 @@
 # Deploying Waymark Gear to waymarkgear.com
 
+> **New to servers?** Start with [INSTALL.md](INSTALL.md): a step-by-step
+> DigitalOcean install that a setup script does most of. This file is the
+> reference behind it: running your own image, Google sign-in, payments,
+> Cloudflare and other hosts.
+
 This guide takes you from this repository to a live, HTTPS site with Google
 sign-in, email, and nightly backups. Plan on an afternoon the first time.
 
@@ -16,6 +21,8 @@ sign-in, email, and nightly backups. Plan on an afternoon the first time.
 | **Email** | Password-reset and forgot-username emails | Mailgun | The code talks to Mailgun's API. Step 5. |
 | **Off-site storage** | Backups | Backblaze B2, AWS S3, or DigitalOcean Spaces | Step 8. |
 | **Uptime monitor** | Tells you if the site goes down | UptimeRobot or Better Stack (free tiers) | Monitor `https://waymarkgear.com/healthz`. |
+
+The server needs outbound HTTPS to `lighterpack.com` for "Import from LighterPack" links (CSV uploads work without it). It only ever requests that site's public `/csv/:id` and `/r/:id` pages, never follows redirects, and is rate limited per IP (`rateLimit.importMaxPerWindow`, default 20 per 10 minutes). `LIGHTERPACK_URL` overrides the address if you ever need to.
 
 Check each provider's current pricing; a small VPS, storage and a domain are
 the only recurring costs at launch.
@@ -97,26 +104,40 @@ can get its certificate; see "Optional: Cloudflare" below for proxying.
 
 ## 6. Start the site
 
+The quickest way is the setup script ([INSTALL.md, step 5](INSTALL.md#step-5-run-the-setup)).
+It does step 2's hardening and this step, and installs the `waymark`
+command. To use your own image, set it first:
+
 ```sh
-ssh root@SERVER_IP
+curl -fsSL https://get.docker.com | sh
+docker login ghcr.io -u YOUR-USER          # only if the image is private
+docker run --rm ghcr.io/your-user/waymark-gear:latest cat deploy/install.sh > install.sh
+WAYMARK_IMAGE=ghcr.io/your-user/waymark-gear:latest bash install.sh
+```
+
+By hand instead:
+
+```sh
 mkdir -p /opt/waymark && cd /opt/waymark
-# copy these three files from the repo's deploy/ folder:
+# copy from the repo's deploy/ folder:
 #   docker-compose.prod.yml, Caddyfile, .env.production.example
 cp .env.production.example .env && chmod 600 .env
-nano .env        # fill in APP_IMAGE, POSTGRES_PASSWORD, Google, Mailgun
+nano .env        # SITE_DOMAIN, APP_IMAGE, POSTGRES_PASSWORD (openssl rand -hex 24), ADMINS
 docker compose -f docker-compose.prod.yml up -d
 docker compose -f docker-compose.prod.yml logs -f app   # watch it start
 ```
 
-Open `https://waymarkgear.com` — Caddy fetches the certificate on the first
-request, which can take a few seconds.
+`SITE_DOMAIN` drives both Caddy (the certificate, and redirecting `www.` to
+the bare domain) and the app's public URL, so it's the only place the domain
+goes. Open `https://your-domain` — Caddy fetches the certificate on the
+first request, which can take a few seconds.
 
 ## 7. Make yourself the owner and load the catalog
 
-1. Register your account on the site (or sign in with Google).
-2. Put your username in `.env`: `ADMINS=["yourusername"]`, then
-   `docker compose -f docker-compose.prod.yml up -d` to apply it.
-3. Sign in again. **Owner → Gear catalog → Download CSV template**, fill it in
+1. The setup script creates your owner account. By hand: register on the
+   site, put your username in `.env` as `ADMINS=["yourusername"]`, then
+   `docker compose -f docker-compose.prod.yml up -d`.
+2. Sign in. **Owner → Gear catalog → Download CSV template**, fill it in
    (one row per product; weight with a unit of `g`, `kg`, `oz` or `lb`), then
    **Import CSV**. Review what will be added or changed, and **Apply**.
 4. Before launch, finish `PRIVACY.md` and `TERMS.md` (replace every
@@ -126,33 +147,22 @@ request, which can take a few seconds.
 
 ## 8. Backups
 
-```sh
-cd /opt/waymark
-curl -fsSLo backup.sh https://raw.githubusercontent.com/YOUR-USER/waymark-gear/main/deploy/backup.sh
-chmod 700 backup.sh
-apt-get install -y rclone && rclone config   # add a remote named "offsite"
-./backup.sh                                   # run once to check
-crontab -e   # add:  15 3 * * * /opt/waymark/backup.sh >> /var/log/waymark-backup.log 2>&1
-```
-
-Each night this saves a compressed database dump and the uploaded photos,
-keeps 14 days on the server, and copies them off-site. **Test a restore**
-once (instructions at the top of `backup.sh`) — a backup you haven't
-restored is a guess.
+The setup script schedules `backup.sh` every night (`/etc/cron.d/waymark`):
+a compressed database dump and the uploaded photos, kept 14 days in
+`/opt/waymark/backups`. `waymark offsite` adds an rclone copy off the server,
+and `waymark restore <date>` puts one back ([INSTALL.md, "Backups"](INSTALL.md#backups)).
+**Test a restore** once: a backup you haven't restored is a guess.
 
 ## 9. Shipping updates
 
 1. Push to `main`. CI runs; on success a new image is published.
-2. On the server:
-   ```sh
-   cd /opt/waymark
-   docker compose -f docker-compose.prod.yml pull app
-   docker compose -f docker-compose.prod.yml up -d app
-   ```
-   Database migrations run automatically on start. The app shuts down
-   gracefully, so in-flight saves finish first.
-3. Roll back by setting `APP_IMAGE` to a previous commit's tag
-   (`ghcr.io/your-user/waymark-gear:<sha>`) and running `up -d` again.
+2. On the server: `waymark update`. It backs up, pulls the image, refreshes
+   the `deploy/` files from it (adding any new settings to `.env` as
+   comments), restarts, and rolls back to the previous image if the new one
+   doesn't come up healthy. Database migrations run automatically on start,
+   and the app shuts down gracefully, so in-flight saves finish first.
+3. To pin or roll back by hand, set `APP_IMAGE` to a commit's tag
+   (`ghcr.io/your-user/waymark-gear:<sha>`) with `waymark settings`.
 
 Dependabot opens weekly pull requests for dependency updates; merging them
 after CI passes keeps security patches current.
@@ -168,12 +178,112 @@ after CI passes keeps security patches current.
 - [ ] Backups running and a restore tested.
 - [ ] Uptime monitor on `/healthz`.
 
-## Optional: Cloudflare in front
+## Traffic spikes and Cloudflare
 
-Proxying through Cloudflare (orange cloud) adds caching and absorbs traffic
-spikes, e.g. when a kit gets shared on a forum. Set SSL mode to **Full
-(strict)**, set `TRUST_PROXY: 2` in the compose file, and keep the origin
-firewall as above. Public API responses already send short cache headers.
+When a kit gets posted to a big forum or subreddit, thousands of people open
+the same page within minutes. The app handles that on its own:
+
+- Shared lists (`/r/…`) and profiles (`/@…`) are rendered at most about once
+  a minute per page and served from memory in between. An owner's own pages
+  are refreshed the moment they save or edit their profile.
+- Link-preview images (`/og/…`) are drawn once and cached; built assets under
+  `/dist/` are content-hashed and cached by browsers for a day.
+- Every response sends ETags, so repeat visitors get a cheap `304`.
+
+To go further, proxy through Cloudflare (orange cloud). Set SSL mode to
+**Full (strict)**, set `TRUST_PROXY: 2` in the compose file, and keep the
+origin firewall as above. Cloudflare doesn't cache HTML by default, so add a
+**Cache Rule**:
+
+- **When:** URI Path starts with `/r/`, or starts with `/@`, or starts with
+  `/og/`, or starts with `/dist/`, or starts with `/api/explore/` (the
+  homepage and Explore read their kits from there)
+- **Then:** Eligible for cache; Edge TTL: *Use cache-control header if
+  present*; Browser TTL: *Respect origin*.
+
+Pages send `s-maxage=60`, so the edge serves them for a minute and the
+origin sees about one request per page per minute per data center. Don't add
+`/`, `/api/`, `/profile` or anything signed-in: those are personal. After a
+deploy you can **Purge Everything** so no edge keeps a page that points at
+the previous build's assets for its last minute.
+
+If you ever run more than one app instance, each keeps its own page cache;
+another instance may show a page up to a minute old.
+
+## Live updates
+
+Planning a list together updates everyone's screen live over server-sent
+events (`/api/live`): one long-lived request per open tab, with a ping every
+25 seconds so proxies don't close it. Caddy streams these without extra
+settings, and Cloudflare passes them through (its 100-second idle timeout is
+covered by the ping). Leave `/api/` out of any cache rule.
+
+Live updates are in-memory in the app process. With a single app instance
+(the default compose stack) nothing else is needed. If you scale out to
+several instances, add a shared message bus between them (Postgres
+LISTEN/NOTIFY is the simplest) in `server/live.js`.
+
+## Supporter plan and affiliate links
+
+Waymark pays for itself two ways: affiliate links on catalog gear, and the
+Supporter plan ($5 a month or $48 a year), whose members get plain links and a
+profile badge. Both are off until you set them up.
+
+**Affiliate links.** Join the programs you want (Amazon Associates, AvantLink
+for REI and many outdoor brands, a brand's own program). Then either:
+
+- **Owner → Revenue → Affiliate rules**: one rule per shop, e.g. domain
+  `amazon.com`, parameter `tag`, value `yourtag-20`. Every catalog product link
+  on that shop gets your code; or
+- set an item's own **Affiliate link** in the catalog editor (or the
+  `affiliate_url` CSV column) for programs that use a tracking URL instead of a
+  parameter. An item's own link wins over the rules.
+
+Buy buttons go through `/go/<item>`, which picks the link per reader and counts
+clicks (Owner → Revenue). Every page with Buy buttons carries a short
+commission notice, and TERMS.md has the full disclosure; keep both. Amazon's
+rules also forbid its links in email, which is why price-drop emails link to
+the gear page instead.
+
+**Stripe.**
+
+1. Create a Stripe account. In **Product catalog**, add a product "Waymark
+   Supporter" with two recurring prices: $5 / month and $48 / year. Copy both
+   price ids (`price_…`) into `.env` as `STRIPE_PRICE_MONTHLY` and
+   `STRIPE_PRICE_YEARLY`.
+2. **Developers → API keys**: put the secret key in `STRIPE_SECRET_KEY`. (A
+   restricted key needs write access to Checkout Sessions and Customer portal
+   and read access to Subscriptions.)
+3. **Developers → Webhooks → Add endpoint**: `https://waymarkgear.com/stripe/webhook`,
+   events `checkout.session.completed`, `customer.subscription.created`,
+   `customer.subscription.updated`, `customer.subscription.deleted`. Put its
+   signing secret in `STRIPE_WEBHOOK_SECRET`.
+4. **Settings → Billing → Customer portal**: turn on cancelling and switching
+   between the two prices.
+5. If you charge other amounts, set `SUPPORTER_MONTHLY_LABEL` and
+   `SUPPORTER_YEARLY_LABEL` to the prices as people should read them (e.g.
+   `€5`); they're only labels, Stripe's prices are what's charged.
+6. `docker compose -f docker-compose.prod.yml up -d`. The Subscribe buttons
+   appear at `/supporter`. Try it first with test-mode keys and Stripe's test
+   card 4242 4242 4242 4242.
+
+To give someone Supporter for free (a contributor, a reviewer): Owner →
+Revenue → Supporters.
+
+## Trails
+
+The trail list starts with about 40 well-known long trails. **Owner → Trails**
+edits them, adds more, and shows the names hikers typed that match nothing
+yet: add one as a trail, merge it into an existing trail (it becomes a
+nickname), or ignore it. Trail pages are at `/trails/<slug>` and in the
+sitemap.
+
+## AI assistants (MCP) and the API
+
+Nothing to set up: `/mcp` and `/api/v1` run on every install. People connect
+Claude or ChatGPT at `/developers` (the assistant signs them in through
+`/oauth/authorize`) or make personal tokens there. The API is described in
+API.md.
 
 ## Running somewhere else
 

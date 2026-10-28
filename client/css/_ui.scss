@@ -62,6 +62,23 @@
         margin: 10px 0 0;
     }
 
+    // Phone: headings and ledes a size down so the content starts sooner.
+    @media (max-width: 720px) {
+        .wgH2 {
+            font-size: 28px;
+        }
+
+        .wgLede {
+            font-size: 15.5px;
+            margin-top: 6px;
+        }
+
+        .wgHome > main.wgPage {
+            padding-bottom: 40px;
+            padding-top: 18px;
+        }
+    }
+
     .wgMuted {
         color: var(--lp-text-secondary);
     }

@@ -373,10 +373,11 @@ test.describe('Per-list settings', () => {
     // Compact takes 2px off each end of the row and 2px off each end of the
     // inputs inside it. Chromium 147 measured exactly 8px shorter; current
     // Chromium sizes a control in the row slightly differently and lands at
-    // 6px, so assert a clear reduction rather than pixel-exact math.
+    // 6px, and font rendering on CI machines adds fractions of a pixel, so
+    // assert a clear reduction rather than pixel-exact math.
     await setDensity(page, 'Compact');
     await expect(listBody).toHaveClass(/lpDensityCompact/);
-    expect((await row.boundingBox()).height).toBeLessThanOrEqual(comfortableHeight - 6);
+    expect((await row.boundingBox()).height).toBeLessThan(comfortableHeight - 4);
 
     await page.waitForResponse(
       (response) => response.url().includes('saveLibrary') && response.status() === 200,
@@ -387,7 +388,7 @@ test.describe('Per-list settings', () => {
 
     await expect(page.locator('.lpListBody')).toHaveClass(/lpDensityCompact/);
     expect((await page.getByTestId('item-row').first().boundingBox()).height)
-      .toBeLessThanOrEqual(comfortableHeight - 6);
+      .toBeLessThan(comfortableHeight - 4);
 
     // And back — density is a library-wide preference, not a per-list one.
     await setDensity(page, 'Comfortable');

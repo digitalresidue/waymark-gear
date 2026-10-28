@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html class="lp" lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>{{pageTitle}} — Waymark Gear</title>
+        <meta name="description" content="{{metaDescription}}">
+        <link rel="canonical" href="{{deployUrl}}{{path}}">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="Waymark Gear">
+        <meta property="og:title" content="{{pageTitle}}">
+        <meta property="og:description" content="{{metaDescription}}">
+        <meta property="og:url" content="{{deployUrl}}{{path}}">
+        {{{styles}}}
+        <link rel="icon" href="/favicon.png" />
+        <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script nonce="{{{cspNonce}}}">
+            (function () {
+                try {
+                    var t = localStorage.getItem('lpTheme');
+                    if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+                } catch (e) { /* storage blocked; the media query decides */ }
+            }());
+        </script>
+    </head>
+    <body class="wgProfilePage wgTrailsPage">
+        <header class="wgShareBar">
+            <a href="/welcome" class="wgShareBrand" aria-label="Waymark Gear home">
+                <img class="wgLogo wgLogoOnLight" src="/images/waymark-logo.png" alt="Waymark Gear" width="843" height="127">
+                <img class="wgLogo wgLogoOnDark" src="/images/waymark-logo-light.png" alt="Waymark Gear" width="843" height="127">
+            </a>
+            <nav class="wgShareActions" aria-label="Site">
+                <a href="/explore" class="wgBtn wgBtnGhost">Explore kits</a>
+                <a href="/" class="wgBtn wgBtnPrimary">Build your own</a>
+            </nav>
+            <details class="wgShareMenuPhone">
+                <summary aria-label="Menu" data-testid="share-menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg></summary>
+                <nav aria-label="Site">
+                    <a href="/">My lists</a>
+                    <a href="/explore">Explore kits</a>
+                    <a href="/trails">Trails</a>
+                    <a href="/leaderboard">Leaderboards</a>
+                    <a href="/reviews">Gear reviews</a>
+                    <a href="/supporter">Support Waymark</a>
+                    <a href="/signin">Sign in</a>
+                </nav>
+            </details>
+        </header>
+
+        <main class="wgTrails">
+            <p class="wgTrailKicker">Trails</p>
+            {{#trailView}}
+            <h1 class="wgTrailTitle" data-testid="trails-heading">What people carry on the <span id="wgTrailTitleName">{{trail.shortOrName}}</span></h1>
+            <p class="wgTrailLede">Pick a trail to see every pack hikers have published for it, what most of them carry, and how it compares with other long trails.</p>
+
+            <div class="wgTrailPicker" id="wgTrailPicker" data-testid="trail-picker">
+                <nav class="wgTrailChips" aria-label="Popular trails">
+                    {{#chips}}<a href="/trails/{{slug}}" data-trail="{{slug}}" class="wgTrailChip" {{#on}}aria-current="true"{{/on}} data-testid="trail-chip-{{slug}}"><b>{{label}}</b><span>{{count}}</span></a>{{/chips}}
+                </nav>
+                <form class="wgTrailSearch" action="/trails/all" method="get" role="search">
+                    <label for="wgTrailQ" class="wgVisuallyHidden">Find a trail</label>
+                    <input id="wgTrailQ" name="q" type="search" class="wgInput" placeholder="All trails: search by name or place" autocomplete="off" data-testid="trail-search">
+                    <ul class="wgTrailResults" id="wgTrailResults" role="listbox" hidden data-testid="trail-results"></ul>
+                </form>
+            </div>
+
+            {{> trailBody}}
+            {{/trailView}}
+
+            {{#directory}}
+            <h1 class="wgTrailTitle">All trails</h1>
+            <p class="wgTrailLede">{{count}} trails{{#q}} matching “{{q}}”{{/q}}. Pack counts are published lists tagged with the trail.</p>
+            <form class="wgTrailSearch wgTrailSearchWide" action="/trails/all" method="get" role="search">
+                <label for="wgTrailAllQ" class="wgVisuallyHidden">Find a trail</label>
+                <input id="wgTrailAllQ" name="q" type="search" class="wgInput" value="{{q}}" placeholder="Search by name or place" data-testid="trail-directory-search">
+            </form>
+            {{#groups}}
+            <h2 class="wgTrailGroup">{{label}}</h2>
+            <ul class="wgTrailDirectory" data-testid="trail-directory">
+                {{#trails}}<li><a href="/trails/{{slug}}">{{name}}</a>{{#short}} <span class="wgMuted">({{short}})</span>{{/short}}<span class="wgMuted">{{#lengthMi}}{{lengthMi}} mi · {{/lengthMi}}{{region}}</span><span class="wgTrailCount">{{count}}</span></li>{{/trails}}
+            </ul>
+            {{/groups}}
+            {{/directory}}
+            <p class="wgTrailFoot"><a href="/trails/all">All trails</a> · Missing yours? Type it in your list's trail field and we'll add it once a few hikers use it.</p>
+        </main>
+        {{{scripts}}}
+        <footer class="wgProfileFoot">
+            <a href="/welcome">Waymark Gear</a> · Build it. Share it. Go.
+        </footer>
+    </body>
+</html>

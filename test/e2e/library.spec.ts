@@ -140,9 +140,11 @@ test.describe('Library Item Management', () => {
 
     const libraryItem = page.locator('#library .lpLibraryItem').filter({ hasText: 'Delete Me Item' });
     await libraryItem.hover();
-    await libraryItem.getByTitle('Delete this item permanently').click();
+    await libraryItem.getByTitle('Remove from your closet').click();
 
-    await page.getByRole('button', { name: 'Yes' }).click();
+    // It's in a list, so the dialog offers to retire it first.
+    await expect(page.getByTestId('speedbump-alternate')).toHaveText('Retire it');
+    await page.getByRole('button', { name: 'Delete everywhere' }).click();
     await expect(page.locator('#library').getByText('Delete Me Item', { exact: true })).toHaveCount(0);
   });
 
@@ -158,9 +160,9 @@ test.describe('Library Item Management', () => {
 
     const libraryItem = page.locator('#library .lpLibraryItem').filter({ hasText: 'Keep This Item' });
     await libraryItem.hover();
-    await libraryItem.getByTitle('Delete this item permanently').click();
+    await libraryItem.getByTitle('Remove from your closet').click();
 
-    await page.getByRole('button', { name: 'No' }).click();
+    await page.getByTestId('speedbump-cancel').click();
 
     // Item should still exist
     await expect(page.locator('#library').getByText('Keep This Item', { exact: true })).toBeVisible();
@@ -205,5 +207,60 @@ test.describe('Library Item Management', () => {
     // Library should reflect the change
     await expect(page.locator('#library').getByText('Updated Name', { exact: true })).toBeVisible();
     await expect(page.locator('#library').getByText('Original Name', { exact: true })).toHaveCount(0);
+  });
+});
+
+test.describe('Closet', () => {
+  test('retiring gear hides it from the closet but keeps it in the list, and it can be restored', async ({ page }) => {
+    const { username, password, email } = generateTestUser('retire');
+    await registerUser(page, username, password, email);
+    const category = await createCategory(page, 'Shelter');
+    await addItem(category, 'Old tent', { weight: '40' });
+    await openSidebar(page);
+
+    const closetItem = page.locator('#library .lpLibraryItem').filter({ hasText: 'Old tent' });
+    await closetItem.hover();
+    await closetItem.getByTitle('Remove from your closet').click();
+    await page.getByTestId('speedbump-alternate').click();
+
+    await expect(closetItem).toHaveCount(0);
+    // Still in the list, weight and all.
+    await expect(category.getByTestId('item-row').last().getByPlaceholder('Name', { exact: true })).toHaveValue('Old tent');
+
+    await page.getByTestId('closet-show-retired').click();
+    await expect(closetItem).toContainText('Retired');
+    await closetItem.getByTestId('closet-restore').click();
+    await expect(closetItem).not.toContainText('Retired');
+    await expect(page.getByTestId('closet-show-retired')).toHaveCount(0);
+  });
+
+  test('gear from the closet can be checked off and added to a category in one go', async ({ page }) => {
+    const { username, password, email } = generateTestUser('closetadd');
+    await registerUser(page, username, password, email);
+    const title = page.getByPlaceholder('Name your list', { exact: true });
+    await title.fill('Trip one');
+    await title.blur();
+    const first = await createCategory(page, 'Kitchen');
+    await addItem(first, 'Stove', { weight: '3' });
+    await addItem(first, 'Pot', { weight: '4' });
+    await addItem(first, 'Spoon', { weight: '1' });
+
+    // A second list starts empty; fill it from the closet.
+    await page.getByTestId('new-list').click();
+    await title.fill('Trip two');
+    await title.blur();
+    await page.getByTestId('add-from-catalog').first().click();
+    await page.getByTestId('picker-source-closet').click();
+    const picker = page.getByTestId('catalog-picker');
+    await picker.getByRole('checkbox', { name: 'Select Stove' }).check();
+    await picker.getByRole('checkbox', { name: 'Select Pot' }).check();
+    await picker.getByTestId('closet-add-selected').click();
+    await expect(picker.getByTestId('closet-result').filter({ hasText: 'Stove' })).toHaveCount(0);
+    await picker.getByTestId('catalog-picker-close').click();
+
+    const names = page.getByTestId('category').first().getByPlaceholder('Name', { exact: true });
+    await expect(names).toHaveCount(3); // the new list's blank item, plus two
+    await expect(names.nth(1)).toHaveValue('Stove');
+    await expect(names.nth(2)).toHaveValue('Pot');
   });
 });

@@ -70,7 +70,7 @@ test.describe('Confirmation Dialog (Speedbump)', () => {
 
     // Confirmation dialog should appear
     await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'No' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'No', exact: true })).toBeVisible();
   });
 
   test('should cancel deletion when clicking No', async ({ page }) => {
@@ -81,7 +81,7 @@ test.describe('Confirmation Dialog (Speedbump)', () => {
     await category.locator('.lpItemsHeader').hover();
     await category.getByTitle('Remove this category').click();
 
-    await page.getByRole('button', { name: 'No' }).click();
+    await page.getByRole('button', { name: 'No', exact: true }).click();
 
     // Category should still exist
     await expect(page.getByTestId('category')).toHaveCount(initialCount);

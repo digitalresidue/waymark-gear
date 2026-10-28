@@ -1,0 +1,281 @@
+#!/usr/bin/env bash
+# The `waymark` command: run and look after a Waymark Gear server.
+# deploy/install.sh puts it in /usr/local/bin. `waymark help` lists commands;
+# INSTALL.md explains each one.
+
+set -euo pipefail
+
+DIR="${WAYMARK_DIR:-/opt/waymark}"
+SELF=$(readlink -f "$0")
+COMPOSE=(docker compose --project-directory "$DIR" -f "$DIR/docker-compose.prod.yml")
+
+bold() { printf '\n\033[1m%s\033[0m\n' "$*"; }
+ok() { printf '  \033[32m✓\033[0m %s\n' "$*"; }
+bad() { printf '  \033[31m✗\033[0m %s\n' "$*"; }
+note() { printf '  %s\n' "$*"; }
+stop() { printf '\n\033[31mStopped:\033[0m %s\n' "$*" >&2; exit 1; }
+
+need_root() { [ "$(id -u)" -eq 0 ] || stop "run it as root (sudo waymark $*)."; }
+need_install() { [ -f "$DIR/.env" ] || stop "Waymark isn't installed in $DIR (see INSTALL.md)."; }
+env_get() { grep -E "^$1=" "$DIR/.env" | tail -1 | cut -d= -f2- | sed -E 's/^"(.*)"$/\1/'; }
+
+healthy() {
+    "${COMPOSE[@]}" exec -T app node -e "fetch('http://127.0.0.1:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))" >/dev/null 2>&1
+}
+wait_healthy() { # seconds
+    local _
+    for _ in $(seq 1 $(($1 / 2))); do
+        if healthy; then return 0; fi
+        sleep 2
+    done
+    return 1
+}
+running_image() { docker inspect --format '{{.Image}}' waymark-app-1 2>/dev/null || true; }
+
+# Copy the deploy files that ship inside an image into DIR (not .env).
+extract() { # image dest
+    local cid f
+    cid=$(docker create "$1")
+    for f in docker-compose.prod.yml Caddyfile backup.sh .env.production.example waymark; do
+        docker cp "$cid:/app/deploy/$f" "$2/$f"
+    done
+    docker rm -f "$cid" >/dev/null
+}
+
+cmd_help() {
+    cat <<'EOF'
+
+Waymark Gear: commands
+
+  waymark status      Is everything running, and is the site reachable?
+  waymark logs        Show what the app is doing (Ctrl+C to stop watching).
+  waymark update      Get the newest version. Goes back by itself if it won't start.
+  waymark restart     Restart everything.
+  waymark settings    Edit your settings (email, Google, payments...), then apply them.
+  waymark backup      Back up now (it also happens every night at 03:15).
+  waymark backups     List the backups on this server.
+  waymark offsite     Set up copying backups to another place (recommended).
+  waymark restore     Put back a backup:  waymark restore <date>, e.g. 2026-10-27
+  waymark reset-password <username>   Set a new password for an account.
+  waymark version     Which version is running.
+  waymark help        This list.
+
+More help: INSTALL.md in the Waymark repository.
+EOF
+}
+
+cmd_status() {
+    need_install
+    local domain
+    domain=$(env_get SITE_DOMAIN)
+    bold "Waymark status"
+    local svc state
+    for svc in caddy app db; do
+        state=$(docker inspect --format '{{.State.Status}}{{if .State.Health}} ({{.State.Health.Status}}){{end}}' "waymark-$svc-1" 2>/dev/null || echo "not created")
+        case "$state" in
+            running*unhealthy*|*starting*) bad "$svc: $state" ;;
+            running*) ok "$svc: $state" ;;
+            *) bad "$svc: $state" ;;
+        esac
+    done
+    if healthy; then ok "The app answers"; else bad "The app isn't answering (try: waymark logs)"; fi
+    if [ "$domain" = "localhost" ]; then
+        if curl -fsSk -m 10 https://localhost/healthz >/dev/null 2>&1; then ok "https://localhost works"; else bad "https://localhost doesn't answer"; fi
+    elif curl -fsS -m 15 "https://$domain/healthz" >/dev/null 2>&1; then
+        ok "https://$domain works from the internet"
+    else
+        bad "https://$domain doesn't answer yet. Check the domain's A record points here (INSTALL.md, step 4)."
+    fi
+    local disk
+    disk=$(df -h / | awk 'NR==2 {print $5 " used, " $4 " free"}')
+    note "Disk: $disk"
+    local last
+    last=$(ls -1t "$DIR"/backups/waymark-db-* 2>/dev/null | head -1 || true)
+    if [ -n "$last" ]; then note "Last backup: $(basename "$last" | sed -E 's/waymark-db-(.*)\.sql\.gz/\1/')"; else note "No backups yet (waymark backup)"; fi
+}
+
+cmd_logs() { need_install; "${COMPOSE[@]}" logs --tail 100 -f app; }
+
+cmd_restart() {
+    need_root restart; need_install
+    "${COMPOSE[@]}" up -d
+    "${COMPOSE[@]}" restart
+    if wait_healthy 120; then ok "Restarted"; else stop "the app didn't come back. See: waymark logs"; fi
+}
+
+cmd_settings() {
+    need_root settings; need_install
+    local before after
+    before=$(sha256sum "$DIR/.env")
+    "${EDITOR:-nano}" "$DIR/.env"
+    after=$(sha256sum "$DIR/.env")
+    if [ "$before" = "$after" ]; then note "No changes."; return; fi
+    bold "Applying your settings"
+    "${COMPOSE[@]}" up -d
+    if wait_healthy 120; then ok "Done"; else stop "the app didn't start with those settings. Run  waymark settings  to fix them, and  waymark logs  to see why."; fi
+}
+
+cmd_update() {
+    need_root update; need_install
+    local image old new tmp
+    image=$(env_get APP_IMAGE)
+    old=$(running_image)
+    bold "Updating Waymark"
+    if [ -z "${WAYMARK_NO_PULL:-}" ]; then
+        docker pull -q "$image" >/dev/null || stop "couldn't download $image. Check the internet connection and try again."
+    fi
+    new=$(docker image inspect --format '{{.Id}}' "$image")
+    if [ "$new" = "$old" ] && [ -z "${WAYMARK_FORCE:-}" ]; then ok "Already up to date."; return; fi
+
+    # Keep the current files so we can go back.
+    tmp=$(mktemp -d)
+    cp -a "$DIR/docker-compose.prod.yml" "$DIR/Caddyfile" "$DIR/backup.sh" "$tmp/"
+    cp -a "$SELF" "$tmp/waymark"
+
+    note "Backing up first..."
+    if "$DIR/backup.sh" before-update >/dev/null 2>&1; then ok "Backed up"; else note "(backup failed; carrying on)"; fi
+
+    extract "$image" "$DIR"
+    chmod 700 "$DIR/backup.sh"
+    # install(1) writes a new file, so this running copy isn't disturbed.
+    install -m 755 "$DIR/waymark" "$SELF"
+    rm -f "$DIR/waymark"
+
+    # New settings the release added: put them in .env (as notes) once.
+    local key added=
+    while IFS= read -r key; do
+        if ! grep -qE "^#? ?$key=" "$DIR/.env"; then
+            grep -E "^$key=" "$DIR/.env.production.example" | sed 's/^/# /' >> "$DIR/.env"
+            added="$added $key"
+        fi
+    done < <(grep -oE '^[A-Z][A-Z0-9_]*=' "$DIR/.env.production.example" | tr -d '=')
+    [ -z "$added" ] || note "New settings you can use (see waymark settings):$added"
+
+    "${COMPOSE[@]}" up -d --remove-orphans
+    if wait_healthy 180; then
+        ok "Updated and running"
+        docker image prune -f >/dev/null 2>&1 || true
+        rm -rf "$tmp"
+        return
+    fi
+
+    bold "The new version didn't start, so going back"
+    "${COMPOSE[@]}" logs --tail 30 app >&2 || true
+    cp -a "$tmp/docker-compose.prod.yml" "$tmp/Caddyfile" "$tmp/backup.sh" "$DIR/"
+    install -m 755 "$tmp/waymark" "$SELF"
+    [ -z "$old" ] || docker tag "$old" "$image"
+    "${COMPOSE[@]}" up -d
+    if wait_healthy 120; then
+        ok "Back on the previous version. Nothing was lost."
+        note "Please report the messages above (INSTALL.md, \"Getting help\")."
+    else
+        stop "the previous version didn't start either. See INSTALL.md, \"If something goes wrong\"."
+    fi
+    rm -rf "$tmp"
+    exit 1
+}
+
+cmd_backup() {
+    need_root backup; need_install
+    bold "Backing up"
+    "$DIR/backup.sh"
+    ok "Saved in $DIR/backups"
+}
+
+cmd_backups() {
+    need_install
+    local f found=
+    for f in "$DIR"/backups/waymark-db-*.sql.gz; do
+        [ -e "$f" ] || continue
+        found=1
+        f=$(basename "$f" .sql.gz)
+        note "${f#waymark-db-}    ($(du -h "$DIR/backups/$f.sql.gz" | cut -f1))"
+    done
+    if [ -n "$found" ]; then note "Restore one with:  waymark restore <name on the left>"; else note "No backups yet (waymark backup)."; fi
+}
+
+cmd_offsite() {
+    need_root offsite; need_install
+    command -v rclone >/dev/null || { apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq rclone >/dev/null; }
+    bold "Copying backups somewhere else"
+    note "rclone will ask some questions. Choose \"n\" for a new remote and name it exactly:  offsite"
+    note "INSTALL.md, \"Backups\", walks through DigitalOcean Spaces and Backblaze B2."
+    rclone config
+    if rclone listremotes | grep -q '^offsite:'; then
+        "$DIR/backup.sh" && ok "Backups now copy to offsite: every night"
+    else
+        note "No remote named offsite yet; run  waymark offsite  again when ready."
+    fi
+}
+
+cmd_restore() {
+    need_root restore; need_install
+    local day=${1:-}
+    [ -n "$day" ] || { note "Which one? These are on the server:"; cmd_backups; stop "run  waymark restore <date>,  e.g. waymark restore $(date +%F)"; }
+    local db="$DIR/backups/waymark-db-$day.sql.gz" img="$DIR/backups/waymark-images-$day.tar.gz"
+    [ -f "$db" ] || stop "no backup called $day in $DIR/backups (waymark backups lists them)."
+    bold "Restoring the backup from $day"
+    note "This replaces everything on the site with the copy from $day."
+    note "Anything saved since then will be lost (a backup of now is made first)."
+    read -r -p "  Type RESTORE to go ahead: " yes || true
+    [ "$yes" = "RESTORE" ] || stop "nothing changed."
+    "$DIR/backup.sh" before-restore >/dev/null
+    ok "Backed up the current site first (waymark backups lists it as ...-before-restore-...)"
+    # Caddy keeps running and shows a brief error page while the app is down.
+    "${COMPOSE[@]}" stop app
+    gunzip -c "$db" | "${COMPOSE[@]}" exec -T db psql -q -U waymark -d waymark -v ON_ERROR_STOP=0 >/dev/null
+    ok "Database restored"
+    if [ -f "$img" ]; then
+        docker run --rm -v waymark_userimages:/images -v "$DIR/backups":/in:ro alpine \
+            sh -c "rm -rf /images/* && tar -xzf /in/$(basename "$img") -C /images"
+        ok "Photos restored"
+    fi
+    "${COMPOSE[@]}" up -d
+    if wait_healthy 120; then ok "Site is back, as of $day"; else stop "the site didn't come back. See: waymark logs"; fi
+}
+
+cmd_reset_password() {
+    need_root reset-password; need_install
+    local user=${1:-} pw=${WAYMARK_NEW_PASSWORD:-} p2 hash n
+    [ -n "$user" ] || stop "which account?  waymark reset-password <username>"
+    user=$(printf '%s' "$user" | tr 'A-Z' 'a-z')
+    while [ -z "$pw" ]; do
+        read -r -s -p "  New password for $user (8 or more characters; nothing shows as you type): " pw || true
+        printf '\n'
+        if [ "${#pw}" -lt 8 ] || [ "${#pw}" -gt 60 ]; then printf '  Use 8 to 60 characters.\n'; pw=; continue; fi
+        read -r -s -p "  Type it again: " p2 || true
+        printf '\n'
+        if [ "$pw" != "$p2" ]; then printf "  Those didn't match.\n"; pw=; fi
+    done
+    hash=$("${COMPOSE[@]}" exec -T -e P="$pw" app node -e "import('bcryptjs').then((b) => b.default.hash(process.env.P, 10)).then((h) => console.log(h))")
+    n=$(printf "with x as (update users set password = :'h' where username = :'u' returning 1) select count(*) from x;\n" \
+        | "${COMPOSE[@]}" exec -T db psql -U waymark -d waymark -Atq -v u="$user" -v h="$hash")
+    if [ "$n" = "1" ]; then ok "New password set for $user. Sign in with it now."; else stop "there's no account called $user."; fi
+}
+
+cmd_version() {
+    need_install
+    local image id
+    image=$(env_get APP_IMAGE)
+    id=$(running_image)
+    note "Image:   $image"
+    note "Running: ${id:-not running}"
+    docker inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' waymark-app-1 2>/dev/null | grep . | sed 's/^/  Commit:  /' || true
+    "${COMPOSE[@]}" exec -T app node -p "'  Version: ' + require('./package.json').version" 2>/dev/null || true
+}
+
+case "${1:-help}" in
+    status) cmd_status ;;
+    logs) cmd_logs ;;
+    update) cmd_update ;;
+    restart) cmd_restart ;;
+    settings) cmd_settings ;;
+    backup) cmd_backup ;;
+    backups) cmd_backups ;;
+    offsite) cmd_offsite ;;
+    restore) shift; cmd_restore "${1:-}" ;;
+    reset-password) shift; cmd_reset_password "${1:-}" ;;
+    version) cmd_version ;;
+    help|-h|--help) cmd_help ;;
+    *) printf 'Unknown command: %s\n' "$1"; cmd_help; exit 1 ;;
+esac

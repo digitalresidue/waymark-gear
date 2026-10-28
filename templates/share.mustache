@@ -10,8 +10,12 @@
         <meta property="og:title" content="{{listName}} · {{baseWeight}} base weight">
         <meta property="og:description" content="{{metaDescription}}">
         <meta property="og:url" content="{{deployUrl}}/r/{{externalId}}">
-        <meta property="og:image" content="{{deployUrl}}/images/og-image.png">
+        <meta property="og:image" content="{{{ogImage}}}">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta property="og:image:alt" content="{{listName}}: {{baseWeight}} base weight, by @{{username}}">
         <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:image" content="{{{ogImage}}}">
         {{{styles}}}
         <link rel="icon" href="/favicon.png" />
         <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
@@ -42,13 +46,30 @@
                 <a href="/explore" class="wgBtn wgBtnGhost">Explore kits</a>
                 <a href="/?copy={{externalId}}" class="wgBtn wgBtnPrimary" data-testid="copy-list">Copy to my lists</a>
             </nav>
+            <details class="wgShareMenuPhone">
+                <summary aria-label="Menu" data-testid="share-menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg></summary>
+                <nav aria-label="Site">
+                    <a href="/">My lists</a>
+                    <a href="/explore">Explore kits</a>
+                    <a href="/trails">Trails</a>
+                    <a href="/leaderboard">Leaderboards</a>
+                    <a href="/reviews">Gear reviews</a>
+                    <a href="/supporter">Support Waymark</a>
+                    <a href="/signin">Sign in</a>
+                </nav>
+            </details>
         </header>
         <div id="main" class="lpShare">
             <div class="lpList {{#optionalFields.images}}lpShowImages{{/optionalFields.images}} {{#optionalFields.worn}}lpShowWorn{{/optionalFields.worn}} {{#optionalFields.consumable}}lpShowConsumable{{/optionalFields.consumable}} {{#optionalFields.price}}lpShowPrices{{/optionalFields.price}}">
                 <div class="lpShareHeader">
                     <div class="wgShareTitle">
                         <h1 class="lpListName">{{listName}}</h1>
-                        <p class="wgShareByline">by <strong>@{{username}}</strong> · {{baseWeight}} base weight · {{itemCount}} items{{#weightClass}} · <span class="wgBadge">{{weightClass}}</span>{{/weightClass}}</p>
+                        <p class="wgShareByline">by <a href="/@{{username}}" class="wgShareProfileLink" data-testid="share-profile-link"><strong>@{{username}}</strong></a> · {{baseWeight}} base weight · {{itemCount}} items{{#weightClass}} · <span class="wgBadge">{{weightClass}}</span>{{/weightClass}}{{#tripTypeLabel}} · <span class="wgBadge" data-testid="share-trip-type">{{tripTypeLabel}}</span>{{/tripTypeLabel}}{{#trailLabel}} · {{#trailSlug}}<a href="/trails/{{trailSlug}}" class="wgBadge wgBadgeTrail" data-testid="share-trail">{{trailLabel}}</a>{{/trailSlug}}{{^trailSlug}}<span class="wgBadge">{{trailLabel}}</span>{{/trailSlug}}{{/trailLabel}}</p>
+                        <div class="wgShareSocial">
+                            {{#published}}<span id="wgVotes" class="wgVotes" data-external-id="{{externalId}}" aria-label="Votes"></span>{{/published}}
+                            <span class="wgFollow" data-follow-user="{{username}}"></span>
+                        </div>
+                        {{#shakedown}}<p class="wgShakedownBanner" data-testid="shakedown-banner"><strong>Shakedown requested.</strong> @{{username}} would like suggestions: what to cut, swap or rethink. <a href="#wgComments">Leave one below</a>.</p>{{/shakedown}}
                     </div>
                     <div class="lpShareMenu">
                         <button type="button" class="lpShareMenuTarget" data-testid="share-settings" aria-label="Page settings" aria-expanded="false" aria-controls="lpShareMenuContent">
@@ -80,6 +101,14 @@
                 {{/renderedDescription}}
 
                 <ul class="lpCategories">{{{renderedCategories}}}</ul>
+                <p class="wgReportLink"><a href="/report?kind=list&amp;url=%2Fr%2F{{externalId}}" data-testid="report-list">Report a problem with this list</a></p>
+                <p class="wgReportLink wgDisclosure">Links to catalog gear may earn Waymark Gear a commission, which pays for the site. <a href="/supporter">Supporters</a> get plain links.</p>
+                {{#published}}
+                <section id="wgComments" class="wgComments" data-external-id="{{externalId}}" aria-labelledby="wgCommentsTitle">
+                    <h2 id="wgCommentsTitle">{{#shakedown}}Shakedown{{/shakedown}}{{^shakedown}}Comments{{/shakedown}}</h2>
+                    <noscript><p>Turn on JavaScript to read and write comments.</p></noscript>
+                </section>
+                {{/published}}
             </div>
         </div>
         <div class="lpDialog" id="lpImageDialog"></div>

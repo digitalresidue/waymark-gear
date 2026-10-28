@@ -134,7 +134,7 @@ test.describe('Phone item rows', () => {
     // The opening tap reaches the document dismisser too, after the row has
     // re-rendered — so a plain containment test would see a detached target,
     // call it an outside tap, and close what it just opened.
-    await page.locator('#lpFooter').tap();
+    await page.locator('#lpFooter').tap({ position: { x: 4, y: 4 } }); // a corner, clear of the footer's links
     await expect(page.getByTestId('item-editor')).toHaveCount(0);
   });
 
@@ -181,7 +181,7 @@ test.describe('Phone item rows', () => {
 
     await editor.getByPlaceholder('Name', { exact: true }).fill('Duffel bag XL');
     await editor.getByTestId('item-weight').fill('36');
-    await page.locator('#lpFooter').tap();
+    await page.locator('#lpFooter').tap({ position: { x: 4, y: 4 } }); // a corner, clear of the footer's links
 
     await expect(page.getByTestId('item-editor')).toHaveCount(0);
     await expect(page.getByTestId('item-rest').first()).toContainText('Duffel bag XL');
@@ -644,8 +644,10 @@ test.describe('Phone onboarding', () => {
     const bottom = await start.evaluate((el) => el.getBoundingClientRect().bottom);
     expect(bottom).toBeLessThan(PHONE.height);
 
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-    expect(overflow).toBeLessThanOrEqual(0);
+    // Against the phone's width, not innerWidth, which Chromium's phone
+    // emulation widens to fit overflowing content.
+    const width = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(width).toBeLessThanOrEqual(PHONE.width);
   });
 
   test('register shows its validation inside the card', async ({ page }) => {

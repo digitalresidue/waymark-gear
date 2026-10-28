@@ -8,14 +8,27 @@ Plan, weigh and share the gear you take on adventures — **waymarkgear.com**.
 - Collapse categories into drawers; find lists fast with search and pins.
 - Share a read-only link, embed a list, export CSV, or **publish to Explore**
   so it can appear on the homepage. Anyone can **copy** a shared list.
+- Keep a **gear closet** of everything you own and build trip lists from it;
+  retire old gear without losing trip history.
+- **Pack mode**: a phone checklist with big tap targets and swipe to check.
+  Installable, and it works offline.
+- **Trip planner**: food and water by day, Day 1 vs. last-day pack weight.
+- **Import from LighterPack** by link or CSV.
+- Public **@profiles** with flagship lists and a gear grid; **comments**,
+  **shakedown requests** and notifications on published lists.
+- Link previews drawn on the server, and public pages cached for traffic
+  spikes.
 - Sign in with **Google** or email.
-- Site owners manage the catalog (with **CSV import/export**) and choose
-  featured kits.
+- Site owners manage the catalog (with **CSV import/export**), choose
+  featured kits, and moderate reported comments.
 
 Waymark Gear began as a fork of [LighterPack](https://github.com/galenmaly/lighterpack)
 by Galen Maly and is licensed under the GPL-2.0 (see [LICENSE](LICENSE)).
 
 **Stack:** Node.js 24 · Express 5 · Vue 3 · Vite · PostgreSQL · Playwright
+
+**Run your own:** [INSTALL.md](INSTALL.md) takes you from nothing to a live
+site on DigitalOcean in about 30 minutes, with no server experience needed.
 
 ---
 
@@ -72,11 +85,12 @@ falling back to `config/default.json`. The ones you're most likely to set:
 | `NODE_ENV` | `development` | `production` enables secure cookies, HSTS, HTTPS upgrades |
 | `TRUST_PROXY` | `1` | Reverse proxies in front of the app. **Set `0` if none**, or clients can spoof their IP past the rate limiter |
 | `SESSION_DAYS` | `90` | How long a sign-in lasts |
-| `MAILGUN_DOMAIN`, `MAILGUN_API_KEY` | — | Password-reset and forgot-username email |
+| `MAILGUN_DOMAIN`, `MAILGUN_API_KEY` | — | Password-reset, forgot-username and comment-notification email |
 | `MAIL_FROM`, `MAIL_REPLY_TO` | `noreply@<mailgun domain>` | Sender for those emails |
 | `ADMINS` | `[]` | JSON array of site-owner usernames: gear catalog and featured kits |
 | `MODERATORS` | `[]` | JSON array of usernames allowed into `/moderation` |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | — | Sign in with Google; the button appears when both are set |
+| `LIGHTERPACK_URL` | `https://lighterpack.com` | Where "Import from LighterPack" links are read from |
 | `VITE_CONTACT_EMAIL` | — | *Build time.* Contact address in the footer and help; hidden if unset |
 | `VITE_SOURCE_URL` | upstream LighterPack | *Build time.* Source link in the footer (the GPL requires offering source) |
 
@@ -100,9 +114,14 @@ request, end-to-end on Chromium and Firefox, and checks the Docker image builds.
 
 ## Deploying
 
-**See [DEPLOY.md](DEPLOY.md)** for the full guide: required services, GitHub
-setup, server, DNS, Google sign-in, email, HTTPS, backups and updates. The
-production stack is in [`deploy/`](deploy/).
+- **[INSTALL.md](INSTALL.md)**: step-by-step install on DigitalOcean for
+  anyone, no server experience assumed. One script sets up the server, and the
+  `waymark` command looks after it (status, update, backup, restore). CI runs
+  the guide's commands on every pull request.
+- **[DEPLOY.md](DEPLOY.md)**: the reference for everything else: publishing
+  your own image, Google sign-in, Stripe, Cloudflare, other hosts, scaling.
+
+The production stack is in [`deploy/`](deploy/).
 
 Before launch: finish `PRIVACY.md` and `TERMS.md` (drafts with `[bracketed]`
 placeholders), set `VITE_CONTACT_EMAIL` and `VITE_SOURCE_URL`, and replace the
