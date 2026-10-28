@@ -22,7 +22,9 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'html',
+  reporter: process.env.CI
+    ? [['github'], ['html', { open: 'never' }], ['json', { outputFile: 'test-results/results.json' }]]
+    : 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -87,6 +89,12 @@ export default defineConfig({
     url: 'http://127.0.0.1:3999/',
     reuseExistingServer: !process.env.CI,
   }, {
+    // Stands in for Stripe (test/support/fake-stripe.mjs).
+    command: 'node test/support/fake-stripe.mjs',
+    url: 'http://127.0.0.1:3998/',
+    reuseExistingServer: !process.env.CI,
+    env: { FAKE_STRIPE_APP: `http://127.0.0.1:${process.env.LP_PORT || '3000'}` },
+  }, {
     command: 'npm run build && npm run start',
     url: `http://127.0.0.1:${process.env.LP_PORT || '3000'}`,
     reuseExistingServer: !process.env.CI,
@@ -94,6 +102,9 @@ export default defineConfig({
       NODE_CONFIG: JSON.stringify({
         port: Number(process.env.LP_PORT || 3000),
         deployUrl: `http://localhost:${process.env.LP_PORT || '3000'}`,
+        // LighterPack link import reads /csv/:id and /r/:id, which this app
+        // serves in the same format, so the suite imports from itself.
+        lighterpackUrl: `http://localhost:${process.env.LP_PORT || '3000'}`,
         // Lets the suite exercise the moderator-only endpoints. Names have to be
         // fixed rather than generated, since the list is read at startup. One
         // per worker, because a user row holds a single session token - sharing
@@ -104,6 +115,15 @@ export default defineConfig({
         rateLimit: { enabled: false },
         // One site-owner account per worker, like the moderators above.
         admins: Array.from({ length: 32 }, (_, i) => `wge2eowner${i}`),
+        // Named gear reviewers (staff who aren't owners or moderators).
+        reviewers: Array.from({ length: 32 }, (_, i) => `wge2ereviewer${i}`),
+        stripe: {
+          secretKey: 'sk_test_fake',
+          webhookSecret: 'whsec_test',
+          priceMonthly: 'price_month',
+          priceYearly: 'price_year',
+          apiBase: 'http://127.0.0.1:3998',
+        },
         google: {
           clientId: 'test-client',
           clientSecret: 'test-secret',

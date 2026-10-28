@@ -1,20 +1,23 @@
 # Production stack for a single server: Caddy (HTTPS) -> app -> Postgres.
 #
-# On the server, in /opt/waymark:
-#   docker-compose.prod.yml  (this file)
-#   Caddyfile
-#   .env                     (copy of .env.production.example, filled in)
+# deploy/install.sh puts this in /opt/waymark with the Caddyfile and a
+# filled-in .env, and the `waymark` command runs it (waymark status,
+# waymark update, ...). See INSTALL.md. By hand:
 #
 #   docker compose -f docker-compose.prod.yml up -d
 #
-# Updates: docker compose -f docker-compose.prod.yml pull && \
-#          docker compose -f docker-compose.prod.yml up -d
-# Migrations run automatically when the app starts. See DEPLOY.md.
+# Migrations run automatically when the app starts.
+
+# A fixed name, so volumes are always waymark_pgdata, waymark_userimages...
+# whatever folder this file is in (backup.sh relies on it).
+name: waymark
 
 services:
   caddy:
     image: caddy:2
     restart: unless-stopped
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:?Set SITE_DOMAIN in .env}
     ports:
       - "80:80"
       - "443:443"
@@ -28,7 +31,7 @@ services:
 
   app:
     # Built and published by .github/workflows/release.yml.
-    image: ${APP_IMAGE:-ghcr.io/your-github-user/waymark-gear:latest}
+    image: ${APP_IMAGE:-ghcr.io/digitalresidue/waymark-gear:latest}
     restart: unless-stopped
     env_file: .env
     environment:
@@ -36,6 +39,7 @@ services:
       # Caddy is the one proxy in front of the app.
       TRUST_PROXY: 1
       DATABASE_URL: postgres://waymark:${POSTGRES_PASSWORD}@db:5432/waymark
+      DEPLOY_URL: https://${SITE_DOMAIN}
     volumes:
       - userimages:/app/public/userimages
     depends_on:

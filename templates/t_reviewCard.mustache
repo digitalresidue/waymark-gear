@@ -1,0 +1,18 @@
+<li class="wgReview{{#hidden}} wgReviewHidden{{/hidden}}" id="review-{{id}}" data-testid="review" data-review-id="{{id}}">
+    <header>
+        <span class="wgStars" aria-label="{{rating}} out of 5">{{stars}}</span>
+        {{#staff}}<span class="wgReviewBadge" data-testid="review-staff">Waymark staff</span>{{/staff}}
+        {{^staff}}<span class="wgReviewBadge wgReviewBadgeMember">Member</span>{{/staff}}
+        {{#hidden}}<span class="wgReviewBadge wgReviewBadgeHidden">Hidden</span>{{/hidden}}
+    </header>
+    {{#itemName}}<p class="wgReviewItem"><a href="/g/{{catalogId}}">{{itemName}}</a></p>{{/itemName}}
+    {{#title}}<h3>{{title}}</h3>{{/title}}
+    <p class="wgReviewBy">@<a href="/@{{author}}">{{author}}</a> · {{when}}{{#usedFor}} · Used for {{usedFor}}{{/usedFor}}</p>
+    <div class="lpListDescription">{{{bodyHtml}}}</div>
+    {{#hasProsCons}}
+    <dl class="wgReviewPC">
+        {{#pros}}<div><dt>Liked</dt><dd>{{pros}}</dd></div>{{/pros}}
+        {{#cons}}<div><dt>Didn't like</dt><dd>{{cons}}</dd></div>{{/cons}}
+    </dl>
+    {{/hasProsCons}}
+</li>

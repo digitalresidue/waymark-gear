@@ -27,3 +27,4 @@ app.sublime-workspace
 
 # Local environment
 .env
+demo-seed.json

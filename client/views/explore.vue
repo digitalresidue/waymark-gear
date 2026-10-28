@@ -30,11 +30,35 @@
                         {{ c.label }}<small>{{ c.range }}</small>
                     </button>
                 </div>
+                <button type="button" class="wgChip" :aria-pressed="String(shakedownOnly)" data-testid="explore-shakedown" @click="toggleShakedown">
+                    Shakedown requests
+                </button>
+                <button v-if="signedIn" type="button" class="wgChip" :aria-pressed="String(followingOnly)" data-testid="explore-following" @click="toggleFollowing">
+                    Following
+                </button>
+                <label class="wgExploreSort">
+                    <span class="wgMuted">Sort</span>
+                    <select v-model="sort" class="wgSelect" data-testid="explore-sort" @change="load(true)">
+                        <option value="featured">Featured</option>
+                        <option value="new">Newest</option>
+                        <option value="top">Top this month</option>
+                        <option value="light">Lightest</option>
+                    </select>
+                </label>
                 <label class="wgSearch wgExploreSearch">
                     <span class="wgVisuallyHidden">Search kits</span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
                     <input v-model="query" type="search" class="wgInput" placeholder="Search by name or hiker" data-testid="explore-search" @input="queueSearch">
                 </label>
+            </div>
+
+            <div class="wgTripFilter" role="group" aria-label="Trip type">
+                <button type="button" class="wgChip" :aria-pressed="String(tripType === '')" data-testid="trip-all" @click="pickTrip('')">
+                    Any trip
+                </button>
+                <button v-for="t in tripTypes" :key="t.id" type="button" class="wgChip" :aria-pressed="String(tripType === t.id)" :data-testid="`trip-filter-${t.id}`" @click="pickTrip(t.id)">
+                    {{ t.label }}
+                </button>
             </div>
 
             <p class="wgMuted wgExploreCount" aria-live="polite">
@@ -62,6 +86,7 @@
 </template>
 
 <script>
+import { TRIP_TYPES, TRIP_TYPE_LABELS } from '../utils/gear-meta.js';
 import siteHeader from '../components/site-header.vue';
 import siteFooter from '../components/site-footer.vue';
 import kitCard from '../components/kit-card.vue';
@@ -77,6 +102,11 @@ export default {
             weightClasses: [],
             activeClass: '',
             query: '',
+            shakedownOnly: false,
+            followingOnly: false,
+            tripType: '',
+            sort: 'featured',
+            tripTypes: TRIP_TYPES.map((id) => ({ id, label: TRIP_TYPE_LABELS[id] })),
             kits: [],
             total: 0,
             loaded: false,
@@ -84,9 +114,15 @@ export default {
             timer: null,
         };
     },
+    computed: {
+        signedIn() {
+            return Boolean(this.$store.state.loggedIn);
+        },
+    },
     async mounted() {
         document.title = 'Explore kits — Waymark Gear';
         const fromUrl = String(this.$route.query.class || '');
+        if (this.$route.query.shakedown === '1') this.shakedownOnly = true;
         const config = await siteConfig();
         this.weightClasses = config.weightClasses || [];
         if (this.weightClasses.some((c) => c.id === fromUrl)) this.activeClass = fromUrl;
@@ -105,11 +141,27 @@ export default {
         loadMore() {
             this.load(false);
         },
+        toggleFollowing() {
+            this.followingOnly = !this.followingOnly;
+            this.load(true);
+        },
+        pickTrip(id) {
+            this.tripType = id;
+            this.load(true);
+        },
+        toggleShakedown() {
+            this.shakedownOnly = !this.shakedownOnly;
+            this.load(true);
+        },
         async load(reset) {
             this.loading = true;
             const params = new URLSearchParams({ limit: String(PAGE), offset: String(reset ? 0 : this.kits.length) });
             if (this.activeClass) params.set('class', this.activeClass);
             if (this.query.trim()) params.set('q', this.query.trim());
+            if (this.shakedownOnly) params.set('shakedown', '1');
+            if (this.followingOnly) params.set('following', '1');
+            if (this.tripType) params.set('trip', this.tripType);
+            if (this.sort !== 'featured') params.set('sort', this.sort);
             try {
                 const r = await api(`/api/explore/kits?${params}`);
                 this.kits = reset ? r.kits : this.kits.concat(r.kits);
@@ -128,6 +180,11 @@ export default {
 .wgExplore {
     padding-bottom: 72px;
     padding-top: 48px;
+
+    @media (max-width: 720px) {
+        padding-bottom: 40px;
+        padding-top: 20px;
+    }
 }
 
 .wgExploreTools {
@@ -152,5 +209,21 @@ export default {
     display: flex;
     justify-content: center;
     margin-top: 28px;
+}
+.wgExploreSort {
+    align-items: center;
+    display: inline-flex;
+    gap: 8px;
+
+    .wgSelect {
+        width: auto;
+    }
+}
+
+.wgTripFilter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 12px 0 0;
 }
 </style>

@@ -13,7 +13,7 @@
     {{/showImages}}
     <span class="lpName">
         {{#url}}
-            <a href="{{url}}" class="lpHref" target="_blank" rel="noopener nofollow ugc">
+            <a href="{{url}}" class="lpHref" target="_blank" rel="noopener nofollow {{#sponsored}}sponsored{{/sponsored}}{{^sponsored}}ugc{{/sponsored}}">
         {{/url}}
 
         {{name}}
@@ -21,6 +21,7 @@
         {{#url}}
             </a>
         {{/url}}
+        {{#hasMedia}}<span class="wgMediaLinks">{{#photoCount}}<a href="#" class="wgMediaLink" data-photos="{{photosJson}}" data-title="{{name}}" data-testid="item-photos">Photos ({{photoCount}})</a>{{/photoCount}}{{#videoUrl}}<a href="{{videoUrl}}" class="wgMediaLink" data-video="{{videoUrl}}" data-title="{{name}}" data-testid="item-video">▶ Review</a>{{/videoUrl}}</span>{{/hasMedia}}
     </span>
     <span class="lpDescription">
         {{description}}

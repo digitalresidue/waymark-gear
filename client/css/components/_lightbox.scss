@@ -1,0 +1,159 @@
+// Gear photo and review-video lightbox (client/utils/lightbox.js).
+.wgLightbox {
+    align-items: center;
+    background: rgba(10, 18, 14, 0.82);
+    display: flex;
+    inset: 0;
+    justify-content: center;
+    padding: 16px;
+    position: fixed;
+    z-index: 10000;
+}
+
+.wgLightboxPanel {
+    background: var(--lp-surface, #fff);
+    border-radius: 16px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+    color: var(--lp-text, #111);
+    max-height: calc(100vh - 32px);
+    max-width: min(880px, 100%);
+    overflow: hidden;
+    width: max-content;
+}
+
+.wgLightboxHead {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    padding: 10px 10px 10px 16px;
+}
+
+.wgLightboxTitle {
+    font-weight: 700;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wgLightboxClose {
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+    color: inherit;
+    cursor: pointer;
+    font-size: 28px;
+    height: 40px;
+    line-height: 1;
+    width: 40px;
+
+    &:hover {
+        background: var(--lp-surface-sunken, #eee);
+    }
+}
+
+.wgLightboxBody {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    position: relative;
+}
+
+// Photos are stored at most 512×512, so they never get bigger than that.
+.wgLightboxImg {
+    display: block;
+    max-height: min(512px, calc(100vh - 140px));
+    max-width: min(512px, calc(100vw - 32px));
+    object-fit: contain;
+}
+
+.wgLightboxVideo {
+    aspect-ratio: 16 / 9;
+    border: 0;
+    display: block;
+    width: min(856px, calc(100vw - 32px));
+}
+
+.wgLightboxNav {
+    background: rgba(0, 0, 0, 0.45);
+    border: 0;
+    border-radius: 999px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 28px;
+    height: 44px;
+    position: absolute;
+    top: calc(50% - 22px);
+    width: 44px;
+}
+
+.wgLightboxPrev {
+    left: 8px;
+}
+
+.wgLightboxNext {
+    right: 8px;
+}
+
+.wgLightboxFoot {
+    color: var(--lp-text-secondary, #666);
+    font-size: 13px;
+    margin: 0;
+    min-height: 8px;
+    padding: 6px 16px 10px;
+    text-align: center;
+}
+
+// The small links that open it, in list rows.
+.wgMediaLinks {
+    display: inline-flex;
+    gap: 6px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.wgMediaLink {
+    background: var(--lp-surface-sunken, #eee);
+    border: 0;
+    border-radius: 6px;
+    color: var(--lp-text-secondary, #555);
+    cursor: pointer;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    text-decoration: none;
+    white-space: nowrap;
+
+    &:hover {
+        color: var(--lp-text, #111);
+    }
+}
+
+// "New" corner banner on shakedown cards (requested in the last 8 hours).
+// The card needs position: relative and overflow: hidden.
+.wgNewRibbon {
+    background: #C4571F;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    padding: 4px 0;
+    pointer-events: none;
+    position: absolute;
+    right: -34px;
+    text-align: center;
+    text-transform: uppercase;
+    top: 14px;
+    transform: rotate(45deg);
+    width: 120px;
+    z-index: 1;
+}
+
+.wgNewRibbonLeft {
+    left: -34px;
+    right: auto;
+    transform: rotate(-45deg);
+}

@@ -13,6 +13,13 @@
                 <router-link to="/explore">
                     Explore
                 </router-link>
+                <router-link to="/supporter" data-testid="footer-supporter">
+                    Support Waymark
+                </router-link>
+                <router-link to="/developers">
+                    API and AI
+                </router-link>
+                <a href="/report" data-testid="footer-report">Report a problem</a>
                 <a href="/privacy">Privacy</a>
                 <a href="/terms">Terms</a>
                 <a :href="sourceUrl" target="_blank" rel="noopener noreferrer">Source</a>
@@ -30,6 +37,8 @@
                 -
                 <a class="lpHref" :href="`mailto:${contactEmail}`">Contact</a>
             </template>
+            -
+            <a class="lpHref" href="/report">Report a problem</a>
             -
             <a class="lpHref" href="/privacy">Privacy</a>
             -

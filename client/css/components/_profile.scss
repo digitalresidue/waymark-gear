@@ -1,0 +1,444 @@
+// Public @profile page (templates/profile.mustache): banner, avatar layered
+// over its lower edge, name and links, markdown bio, then lists or a gear grid.
+
+.wgProfilePage {
+    background: var(--lp-bg);
+    margin: 0;
+}
+
+.wgProfile {
+    margin: 0 auto;
+    max-width: 1040px;
+    padding: 0 16px 48px;
+}
+
+.wgProfileBanner {
+    aspect-ratio: 3 / 1;
+    background: var(--lp-surface-sunken);
+    border-radius: 0 0 $radius-lg $radius-lg;
+    margin: 0 -16px;
+    max-height: 340px;
+    overflow: hidden;
+    width: calc(100% + 32px);
+
+    img {
+        display: block;
+        height: 100%;
+        object-fit: cover;
+        width: 100%;
+    }
+}
+
+// No banner yet: a quiet ridgeline in the brand greens.
+.wgProfileBannerPlain {
+    background:
+        linear-gradient(170deg, transparent 58%, rgba(255, 255, 255, 0.06) 58.5%),
+        linear-gradient(195deg, transparent 64%, rgba(0, 0, 0, 0.12) 64.5%),
+        linear-gradient(135deg, #1D3B30, #3F6B52 60%, #C4571F 160%);
+}
+
+.wgProfileHead {
+    align-items: start;
+    display: grid;
+    gap: 8px 24px;
+    grid-template-columns: auto 1fr auto;
+    padding: 14px 8px 0;
+    position: relative;
+}
+
+.wgProfileAvatar {
+    align-items: center;
+    background: var(--lp-primary);
+    border: 5px solid var(--lp-bg);
+    border-radius: 50%;
+    color: #fff;
+    display: flex;
+    font-family: $font-display;
+    font-size: 56px;
+    font-weight: 800;
+    height: 148px;
+    justify-content: center;
+    // Only the picture rides up over the banner; the name sits below it.
+    margin-top: -88px;
+    overflow: hidden;
+    width: 148px;
+
+    img {
+        display: block;
+        height: 100%;
+        object-fit: cover;
+        width: 100%;
+    }
+}
+
+.wgProfileWho {
+    min-width: 0;
+
+    h1 {
+        font-family: $font-display;
+        font-size: 30px;
+        font-stretch: 110%;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 0;
+        overflow-wrap: anywhere;
+    }
+}
+
+.wgProfileHandle {
+    color: var(--lp-text-secondary);
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 15px;
+    gap: 4px 12px;
+    margin: 4px 0 0;
+}
+
+.wgProfileTrail {
+    color: var(--lp-text);
+    font-weight: 600;
+}
+
+.wgProfileLinks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    list-style: none;
+    margin: 10px 0 0;
+    padding: 0;
+
+    a {
+        border: 1px solid var(--lp-border);
+        border-radius: 999px;
+        color: var(--lp-text);
+        display: inline-block;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 5px 12px;
+        text-decoration: none;
+
+        &:hover {
+            border-color: var(--lp-primary);
+        }
+    }
+}
+
+.wgProfileStats {
+    display: flex;
+    gap: 22px;
+    margin: 0;
+    padding-top: 4px;
+
+    div {
+        text-align: right;
+    }
+
+    dt {
+        color: var(--lp-text-secondary);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    dd {
+        font-size: 20px;
+        font-weight: 700;
+        margin: 2px 0 0;
+    }
+}
+
+.wgProfileBio {
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: $radius-lg;
+    margin: 24px 0 0;
+    padding: 4px 20px;
+    max-width: 760px;
+}
+
+.wgProfileTabs {
+    border-bottom: 1px solid var(--lp-border);
+    display: flex;
+    gap: 4px;
+    margin: 28px 0 20px;
+
+    a {
+        border-bottom: 3px solid transparent;
+        color: var(--lp-text-secondary);
+        font-weight: 700;
+        padding: 10px 14px;
+        text-decoration: none;
+
+        &[aria-current="page"] {
+            border-color: var(--lp-primary);
+            color: var(--lp-text);
+        }
+    }
+}
+
+.wgProfileSection {
+    font-family: $font-body;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    margin: 0 0 10px;
+    text-transform: uppercase;
+}
+
+.wgProfileKits {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    list-style: none;
+    margin: 0 0 28px;
+    padding: 0;
+}
+
+.wgProfileFeatured {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+
+    .wgKitCardLink {
+        border-left: 4px solid var(--lp-primary);
+    }
+
+    .wgKitCardWeight {
+        font-size: 30px;
+    }
+}
+
+.wgKitCardLink {
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: $radius-lg;
+    color: var(--lp-text);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    height: 100%;
+    padding: 16px 18px;
+    text-decoration: none;
+    transition: border-color 0.15s, transform 0.15s;
+
+    &:hover {
+        border-color: var(--lp-primary);
+        transform: translateY(-1px);
+    }
+}
+
+.wgKitCardName {
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.wgKitCardWeight {
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.wgKitCardMeta,
+.wgKitCardDesc {
+    color: var(--lp-text-secondary);
+    font-size: 13px;
+}
+
+.wgGearGrid {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.wgGearCard {
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: $radius-lg;
+    overflow: hidden;
+
+    p {
+        margin: 0;
+        padding: 0 12px;
+    }
+}
+
+.wgGearThumb {
+    align-items: center;
+    aspect-ratio: 1;
+    background: var(--lp-surface-sunken);
+    color: var(--lp-text-secondary);
+    display: flex;
+    font-family: $font-display;
+    font-size: 40px;
+    font-weight: 800;
+    justify-content: center;
+
+    img {
+        display: block;
+        height: 100%;
+        object-fit: cover;
+        width: 100%;
+    }
+}
+
+.wgGearName {
+    font-size: 14px;
+    font-weight: 650;
+    margin-top: 10px !important;
+
+    a {
+        color: inherit;
+    }
+}
+
+.wgGearMeta {
+    color: var(--lp-text-secondary);
+    font-size: 12.5px;
+    padding-bottom: 12px !important;
+}
+
+.wgProfileEmpty {
+    color: var(--lp-text-secondary);
+    padding: 24px 0;
+}
+
+.wgProfileFoot {
+    color: var(--lp-text-secondary);
+    font-size: 13px;
+    padding: 24px;
+    text-align: center;
+
+    a {
+        color: inherit;
+    }
+}
+
+.wgShareProfileLink {
+    color: inherit;
+}
+
+@media (max-width: 720px) {
+    .wgProfileHead {
+        grid-template-columns: 1fr;
+        padding: 0;
+    }
+
+    .wgProfileAvatar {
+        font-size: 44px;
+        height: 112px;
+        margin-top: -56px;
+        width: 112px;
+    }
+
+    .wgProfileWho h1 {
+        font-size: 26px;
+    }
+
+    .wgProfileStats {
+        justify-content: flex-start;
+
+        div {
+            text-align: left;
+        }
+    }
+
+    .wgProfileBanner {
+        border-radius: 0;
+    }
+}
+
+.wgProfileTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    list-style: none;
+    margin: 10px 0 0;
+    padding: 0;
+
+    li {
+        background: var(--lp-surface-sunken);
+        border-radius: 999px;
+        font-size: 12.5px;
+        font-weight: 600;
+        padding: 3px 10px;
+        text-transform: capitalize;
+    }
+}
+
+.wgProfileFollow {
+    margin-top: 10px;
+}
+
+.wgFollow {
+    align-items: center;
+    display: inline-flex;
+    gap: 10px;
+}
+
+.wgFollowCount {
+    color: var(--lp-text-secondary);
+    font-size: 13px;
+}
+
+.wgGearMedia {
+    padding-bottom: 12px !important;
+}
+
+// Votes and follow on a shared list.
+.wgShareSocial {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 10px;
+}
+
+.wgVotes {
+    align-items: center;
+    border: 1px solid var(--lp-border);
+    border-radius: 999px;
+    display: inline-flex;
+    gap: 2px;
+    padding: 2px;
+}
+
+.wgVoteBtn {
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+    color: var(--lp-text-secondary);
+    cursor: pointer;
+    font-size: 13px;
+    height: 32px;
+    width: 32px;
+
+    &[aria-pressed="true"] {
+        background: var(--lp-primary);
+        color: #fff;
+    }
+}
+
+.wgVoteScore {
+    font-weight: 700;
+    min-width: 22px;
+    text-align: center;
+}
+
+.wgReportLink {
+    font-size: 13px;
+    margin: 24px 0 0;
+
+    a {
+        color: var(--lp-text-secondary);
+    }
+}
+
+.wgSupporterBadge {
+    background: linear-gradient(135deg, #C4571F, #E39B3B);
+    border-radius: 999px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 9px;
+}
