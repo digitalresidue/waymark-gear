@@ -1,6 +1,6 @@
 <template>
     <li :id="category.id" class="lpCategory" :class="{lpCategoryEmpty: isEmpty, wgCollapsed: category.collapsed}" data-testid="category">
-        <ul class="lpItems lpDataTable" :class="{lpHasPrice: optionalFields['price'], lpHasImages: optionalFields['images']}">
+        <ul class="lpItems lpDataTable" :class="{lpHasPrice: optionalFields['price'], lpHasImages: showImages}">
             <li class="lpHeader lpItemsHeader">
                 <span class="lpHandleCell">
                     <div class="lpHandle lpCategoryHandle" title="Reorder this category" />
@@ -101,6 +101,11 @@ export default {
         },
         isEmpty() {
             return this.category.categoryItems.length === 0;
+        },
+        // The photo column is only there when the Images option is on and an
+        // item in this category has a photo: no photos, no empty column.
+        showImages() {
+            return Boolean(this.optionalFields.images) && this.itemContainers.some(({ item }) => item && (item.image || item.imageUrl));
         },
     },
     mounted() {
@@ -218,7 +223,9 @@ export default {
     border-radius: 14px;
     list-style: none;
     margin: 0 0 12px;
-    padding: 8px 14px 6px;
+    // The side padding is the gutter the drag handle (left) and remove ✕
+    // (right) sit in, so they stay inside the card.
+    padding: 8px 46px 6px 36px;
     transition: border-color 0.15s;
 
     &:hover {
@@ -267,7 +274,7 @@ export default {
     }
 
     .lpItem {
-        grid-template-columns: 230px minmax(0, 1fr) auto 82px 35px;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto 82px 35px;
     }
 
     .lpItemsHeader {
@@ -280,7 +287,7 @@ export default {
 
     &.lpHasPrice {
         .lpItem {
-            grid-template-columns: 230px minmax(0, 1fr) auto 52px 82px 35px;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto 52px 82px 35px;
         }
 
         .lpItemsHeader {
@@ -288,12 +295,17 @@ export default {
         }
     }
 
+    // Images on, but no photos in this category: no column (see showImages).
+    &:not(.lpHasImages) .lpItem .lpImageCell {
+        display: none;
+    }
+
     &.lpHasImages .lpItem {
-        grid-template-columns: 90px 230px minmax(0, 1fr) auto 82px 35px;
+        grid-template-columns: 25px minmax(0, 1fr) minmax(0, 1fr) auto 82px 35px;
     }
 
     &.lpHasImages.lpHasPrice .lpItem {
-        grid-template-columns: 90px 230px minmax(0, 1fr) auto 52px 82px 35px;
+        grid-template-columns: 25px minmax(0, 1fr) minmax(0, 1fr) auto 52px 82px 35px;
     }
 
     // Gutter controls live in the side margins so columns never shift.
@@ -438,8 +450,11 @@ export default {
 // swatch · name · subtotal — with the rows' 14px inset.
 // ============================================================
 @media only screen and (width <= $mobile) {
+    // No drag handle or ✕ gutters on a phone.
     .lpCategory {
         margin: 0;
+        padding-left: 14px;
+        padding-right: 14px;
     }
 
     .lpItems .lpItemsHeader {
