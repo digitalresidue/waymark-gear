@@ -145,3 +145,24 @@ export async function ratingsFor(ids) {
         .groupBy('catalog_id').select('catalog_id', knex.raw('avg(rating)::float as avg'), knex.raw('count(*)::int as n'));
     return Object.fromEntries(rows.map((r) => [r.catalog_id, { average: Math.round(r.avg * 10) / 10, count: r.n }]));
 }
+
+// For a reviewer with nothing particular in mind: the catalog gear most
+// carried in published kits that they haven't reviewed yet (and how many
+// reviews each has), so the useful reviews get written first.
+export async function reviewSuggestions(user, limit = 8) {
+    if (!canReview(user)) return [];
+    const n = Math.min(Math.max(Number(limit) || 8, 1), 20);
+    const used = knex('public_kits').select(knex.raw('unnest(catalog_ids) as catalog_id'));
+    const rows = await knex.with('used', used)
+        .select('c.id', 'c.name', 'c.brand', 'c.category')
+        .count({ uses: 'used.catalog_id' })
+        .select(knex.raw('(select count(*) from gear_reviews g where g.catalog_id = c.id and g.hidden_at is null)::int as reviews'))
+        .from('catalog_items as c')
+        .leftJoin('used', 'used.catalog_id', 'c.id')
+        .where('c.status', 'published')
+        .whereNotExists(knex('gear_reviews').select(1).whereRaw('gear_reviews.catalog_id = c.id').andWhere('gear_reviews.author_id', user.user_id))
+        .groupBy('c.id')
+        .orderBy([{ column: 'uses', order: 'desc' }, { column: 'reviews', order: 'asc' }, { column: 'c.name', order: 'asc' }])
+        .limit(n);
+    return rows.map((r) => ({ id: r.id, name: [r.brand, r.name].filter(Boolean).join(' '), category: r.category, uses: Number(r.uses), reviews: Number(r.reviews) }));
+}

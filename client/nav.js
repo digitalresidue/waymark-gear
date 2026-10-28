@@ -33,6 +33,7 @@ export const MENU = [
             { id: 'owner-kits', label: 'Featured kits', href: '/owner/kits', show: 'admin' },
             { id: 'owner-trails', label: 'Trails', href: '/owner/trails', show: 'admin' },
             { id: 'owner-revenue', label: 'Revenue', href: '/owner/revenue', show: 'admin' },
+            { id: 'owner-review', label: 'Write a review', href: '/reviews#write', show: 'staff' },
             { id: 'owner-users', label: 'Users', href: '/moderation', show: 'staff' },
             { id: 'tickets', label: 'Tickets', href: '/staff/tickets', show: 'staff' },
         ],

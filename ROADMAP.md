@@ -1,11 +1,19 @@
 # Waymark Gear roadmap
 
 Living document. Each phase gets a dated entry in the changelog when it ships;
-the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 4: chart styles; part 3: the editor's rail, tools and account menu).
+the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 5: a way in to writing gear reviews; part 4: chart styles; part 3: the editor's rail, tools and account menu).
 
 ---
 
 ## Changelog
+
+### Phase 8, part 5 — Writing gear reviews · 2026-10-28 · branch `reviews-writing`
+- **A way in**: reviews are written on each gear page, but nothing led there. Now reviewers (owners, moderators, the `reviewers` setting, or everyone with `openReviews`) get a **Write a review** panel at the top of `/reviews`: search the catalog, or pick from **suggestions** — the most-carried published gear you haven't reviewed yet. Members and visitors don't see it.
+- Also reachable from **Owner ▾ → Write a review**, and a **Review** button on each published item in the owner's gear catalog.
+- Every route lands on the gear page at `#write-review` with the review form **open and focused**.
+- `/api/viewer` now says whether you can review; new `GET /api/reviews/suggestions`.
+- The empty state on `/reviews` says where reviews are written.
+- This branch also carries part 4 (chart styles), which had merged into `list-drawer` after that branch was already in `main`.
 
 ### Phase 8, part 4 — Chart styles · 2026-10-28 · branch `chart-styles`
 - **Donut, Bars or Treemap** for the weight chart, picked under it. Bars sort categories largest first; the treemap sizes blocks by weight, with labels in whichever ink reads on each color. Like the donut, both highlight the category in the totals on hover and open a category into its items on click (with a way back).
