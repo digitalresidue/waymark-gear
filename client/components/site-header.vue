@@ -1,6 +1,6 @@
 <template>
     <header class="wgSiteHeader" :class="{ wgSiteHeaderApp: app }">
-        <div class="wgSiteHeaderInner" :class="{ wgPage: !app }">
+        <div class="wgSiteHeaderInner wgPage">
             <router-link to="/welcome" class="wgSiteHeaderLogo" aria-label="Waymark Gear home" data-testid="site-logo">
                 <brandLogo />
             </router-link>
@@ -100,8 +100,8 @@ export default {
     name: 'SiteHeader',
     components: { brandLogo, notificationBell },
     props: {
-        // Inside the editor: full width, and the editor's own header
-        // carries the account menu.
+        // Inside the editor: the editor's own header carries the account
+        // menu. The header itself lines up with every other page.
         app: { type: Boolean, default: false },
         // Kept for callers; the current section now comes from the route.
         active: { type: String, default: '' },
