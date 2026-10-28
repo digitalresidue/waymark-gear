@@ -6,8 +6,16 @@
                     <h2>Add image by URL</h2>
                     <form id="itemImageUrlForm" @submit.prevent="saveImageUrl()">
                         <div class="lpFields">
-                            <input id="itemImageUrl" v-model="imageUrl" type="text" placeholder="Image URL">
+                            <input id="itemImageUrl" v-model="imageUrl" type="text" placeholder="Image URL" :disabled="copying" data-testid="item-image-url">
                         </div>
+                        <!-- The photo is copied to Waymark (fit within 512px), so
+                             your list never loads it from the shop's site. -->
+                        <p class="lpImageUrlNote">
+                            {{ copying ? 'Copying the photo…' : 'We save a copy, so your list doesn\'t load it from their site.' }}
+                        </p>
+                        <p v-if="copyError" class="lpImageUrlError" role="alert" data-testid="item-image-url-error">
+                            {{ copyError }}
+                        </p>
                         <div class="lpButtons">
                             <input type="submit" class="lpButton" value="Save">
                             <a class="lpHref" @click="$emit('hide')">Cancel</a>
@@ -46,6 +54,7 @@
 <script>
 import modal from './modal.vue';
 import { fetchJson } from '../utils/utils.js';
+import { api } from '../utils/format.js';
 
 export default {
     name: 'ItemImage',
@@ -67,6 +76,8 @@ export default {
         return {
             imageUrl: null,
             uploading: false,
+            copying: false,
+            copyError: '',
         };
     },
     computed: {
@@ -80,9 +91,25 @@ export default {
         },
     },
     methods: {
-        saveImageUrl() {
-            this.$store.commit('updateItemImageUrl', { imageUrl: this.imageUrl, item: this.item });
-            this.$emit('hide');
+        async saveImageUrl() {
+            const url = String(this.imageUrl || '').trim();
+            this.copyError = '';
+            if (!url || url === this.item.imageUrl || url.startsWith('/userimages/')) {
+                this.$store.commit('updateItemImageUrl', { imageUrl: url, item: this.item });
+                this.$emit('hide');
+                return;
+            }
+            this.copying = true;
+            try {
+                const { imageUrl } = await api('/api/images/copy', { method: 'POST', body: JSON.stringify({ url }) });
+                this.imageUrl = imageUrl;
+                this.$store.commit('updateItemImageUrl', { imageUrl, item: this.item });
+                this.$emit('hide');
+            } catch (err) {
+                this.copyError = err.status === 401 ? 'Sign in to add a photo by link.' : err.message;
+            } finally {
+                this.copying = false;
+            }
         },
         triggerImageUpload() {
             this.$refs.imageInput.click();
@@ -134,6 +161,18 @@ export default {
 @import "../css/_globals";
 
 #itemImageDialog {
+    .lpImageUrlNote {
+        color: var(--lp-text-secondary);
+        font-size: 12.5px;
+        margin: 6px 0 0;
+    }
+
+    .lpImageUrlError {
+        color: var(--lp-danger);
+        font-size: 13px;
+        margin: 6px 0 0;
+    }
+
     // Two ways in, side by side, need more room than the stock dialog. Below
     // the phone breakpoint the columns stack and the modal's own full-width
     // rule takes over, so this stays out of the way rather than overflowing.

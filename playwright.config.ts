@@ -117,6 +117,9 @@ export default defineConfig({
         admins: Array.from({ length: 32 }, (_, i) => `wge2eowner${i}`),
         // Named gear reviewers (staff who aren't owners or moderators).
         reviewers: Array.from({ length: 32 }, (_, i) => `wge2ereviewer${i}`),
+        // Lets the photo-copy tests fetch images from this same local server
+        // (in production, only public internet addresses are fetched).
+        remoteImages: { allowPrivate: true },
         stripe: {
           secretKey: 'sk_test_fake',
           webhookSecret: 'whsec_test',

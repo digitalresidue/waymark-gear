@@ -26,6 +26,28 @@
                     </div>
                 </div>
 
+                <!-- Photos that still load from other sites (pasted before
+                     copying existed, or still being copied after an import). -->
+                <section v-if="remoteImages || copyResult" class="wgCard wgRemoteImages" data-testid="remote-images">
+                    <p v-if="remoteImages">
+                        <strong>{{ remoteImages }} {{ remoteImages === 1 ? 'photo still loads' : 'photos still load' }} from other websites.</strong>
+                        Copying keeps a 512px version here, so their sites aren't hotlinked.
+                    </p>
+                    <p v-if="copyResult" role="status" data-testid="remote-images-result">
+                        Copied {{ copyResult.copied }}.<template v-if="copyResult.failed.length">
+                            {{ copyResult.failed.length }} couldn't be copied; fix or clear their photo links:
+                        </template>
+                    </p>
+                    <ul v-if="copyResult && copyResult.failed.length" class="wgImportErrors">
+                        <li v-for="f in copyResult.failed" :key="f.id">
+                            <strong>{{ f.name }}</strong>: {{ f.error }}
+                        </li>
+                    </ul>
+                    <button v-if="remoteImages" type="button" class="wgBtn wgBtnSmall wgBtnPrimary" :disabled="copyingImages" data-testid="remote-images-copy" @click="copyRemoteImages">
+                        {{ copyingImages ? 'Copying…' : 'Copy them now' }}
+                    </button>
+                </section>
+
                 <!-- Import review -->
                 <section v-if="importPlan" class="wgCard wgImport" aria-label="Import review" data-testid="import-review">
                     <div class="wgImportHead">
@@ -224,8 +246,8 @@
                         <p class="wgSpan2 wgBuyRoute" data-testid="catalog-buy-route">
                             {{ buyRoute }}
                         </p>
-                        <label class="wgField wgSpan2">Photo URL
-                            <input v-model="form.imageUrl" class="wgInput" type="url" placeholder="https://">
+                        <label class="wgField wgSpan2">Photo URL <span class="wgMuted">(copied here on save, up to 512px, so their site isn't hotlinked)</span>
+                            <input v-model="form.imageUrl" class="wgInput" type="url" placeholder="https://" data-testid="catalog-image-url">
                         </label>
                         <label class="wgField wgSpan2">Tags <span class="wgMuted">(separate with ;)</span>
                             <input v-model="form.tags" class="wgInput">
@@ -302,6 +324,9 @@ export default {
             importPlan: null,
             applying: false,
             notice: '',
+            remoteImages: 0,
+            copyResult: null,
+            copyingImages: false,
         };
     },
     computed: {
@@ -326,6 +351,7 @@ export default {
         if (this.isAdmin) {
             this.load(true);
             this.loadCategories();
+            this.loadRemoteImages();
         }
     },
     methods: {
@@ -435,10 +461,31 @@ export default {
                 this.importText = '';
                 this.load(true);
                 this.loadCategories();
+                // Photo links are being copied in the background.
+                setTimeout(() => this.loadRemoteImages(), 1500);
             } catch (err) {
                 this.notice = err.message;
             }
             this.applying = false;
+        },
+        async loadRemoteImages() {
+            try {
+                this.remoteImages = (await api('/api/admin/catalog/remote-images')).remaining;
+            } catch {
+                this.remoteImages = 0;
+            }
+        },
+        async copyRemoteImages() {
+            this.copyingImages = true;
+            try {
+                const r = await api('/api/admin/catalog/remote-images/copy', { method: 'POST' });
+                this.copyResult = r;
+                this.remoteImages = r.remaining;
+                this.load(true);
+            } catch (err) {
+                this.notice = err.message;
+            }
+            this.copyingImages = false;
         },
     },
 };
@@ -446,6 +493,15 @@ export default {
 
 <style lang="scss">
 @import "../css/_globals";
+
+.wgRemoteImages {
+    margin: 0 0 16px;
+    padding: 14px 16px;
+
+    p {
+        margin: 0 0 8px;
+    }
+}
 
 .wgReviewLink {
     margin-right: 6px;
