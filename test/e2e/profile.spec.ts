@@ -25,6 +25,9 @@ async function publishFirstList(page: Page, listName: string, itemName: string) 
 
 test.describe('Public profiles', () => {
     test('fill in a profile and see it at /@username', async ({ page }) => {
+        // Long: signs up, publishes a list, uploads two images and visits
+        // four pages; slower browsers on CI were right at 30s.
+        test.setTimeout(60000);
         const { username, password, email } = generateTestUser('prof');
         await registerUser(page, username, password, email);
         await expect(page.getByTestId('item-row').first()).toBeVisible();

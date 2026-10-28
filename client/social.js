@@ -398,9 +398,17 @@ function initTrails() {
             document.title = `${fresh.dataset.title} — Waymark Gear`;
             if (push) history.pushState({ slug, sort }, '', url);
         } catch (err) {
-            if (err.name !== 'AbortError') window.location.href = url;
+            // Fall back to a full page load, unless the visitor is already
+            // going somewhere else: leaving cancels this fetch (Firefox
+            // reports that as a network error, not an abort), and sending
+            // them back to the trail would override where they were going.
+            if (err.name !== 'AbortError' && !leaving) window.location.href = url;
         }
     }
+
+    let leaving = false;
+    window.addEventListener('beforeunload', () => { leaving = true; });
+    window.addEventListener('pageshow', () => { leaving = false; });
 
     document.addEventListener('click', (e) => {
         const a = e.target.closest('a[data-trail]');
