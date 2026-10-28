@@ -65,7 +65,12 @@
                 </div>
                 <div class="lpListSummary">
                     <div class="lpChartContainer">
-                        <canvas class="lpChart" height="260" width="260"></canvas>
+                        <div class="lpChartStage" data-testid="chart"></div>
+                        <div class="wgChartStyles" role="group" aria-label="Chart style" data-chart-styles>
+                            <button type="button" class="wgChartStyle" data-style="donut" data-testid="chart-style-donut" aria-pressed="true">Donut</button>
+                            <button type="button" class="wgChartStyle" data-style="bars" data-testid="chart-style-bars" aria-pressed="false">Bars</button>
+                            <button type="button" class="wgChartStyle" data-style="treemap" data-testid="chart-style-treemap" aria-pressed="false">Treemap</button>
+                        </div>
                     </div>
                     <div class="lpTotalsContainer">
                         {{{renderedTotals}}}

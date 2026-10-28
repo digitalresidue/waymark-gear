@@ -1,7 +1,20 @@
 <template>
     <div class="lpListSummary">
         <div class="lpChartContainer">
-            <canvas class="lpChart" height="260" width="260" />
+            <div ref="stage" class="lpChartStage" data-testid="chart" :data-style="chartStyle" />
+            <div class="wgChartStyles" role="group" aria-label="Chart style">
+                <button
+                    v-for="option in chartStyles"
+                    :key="option.id"
+                    type="button"
+                    class="wgChartStyle"
+                    :aria-pressed="String(chartStyle === option.id)"
+                    :data-testid="`chart-style-${option.id}`"
+                    @click="setChartStyle(option.id)"
+                >
+                    {{ option.label }}
+                </button>
+            </div>
         </div>
         <div class="lpTotalsContainer">
             <ul class="lpTotals lpTable lpDataTable" :class="{ lpHasPrice: list.optionalFields['price'] }">
@@ -94,7 +107,7 @@
 import colorPicker from './colorpicker.vue';
 import unitSelect from './unit-select.vue';
 
-import pies from '../pies.js';
+import { makeChart, CHART_STYLES, chartStyle, rememberStyle } from '../charts.js';
 import { chartLineColor, chartHoverColor, onThemeChange } from '../utils/theme.js';
 import utilsMixin from '../mixins/utils-mixin.js';
 import colorUtils from '../utils/color.js';
@@ -120,13 +133,25 @@ export default {
         categories() {
             return this.list.categoryIds.map(id => this.library.getCategoryById(id));
         },
+        chartStyles() {
+            return CHART_STYLES;
+        },
+        chartStyle() {
+            return chartStyle(this.library.preferences.chartStyle);
+        },
     },
     watch: {
         '$store.state.library.defaultListId': 'updateChart',
         'list.totalWeight': 'updateChart',
         'list.categoryIds': 'updateChart',
+        chartStyle(style) {
+            rememberStyle(style);
+            this.redrawChart();
+        },
     },
     mounted() {
+        // Shared lists read the choice from this browser.
+        rememberStyle(this.chartStyle);
         this.updateChart();
         // The canvas can't follow the palette on its own, so re-hand it the
         // colors when the theme flips. Stored off `data` — it's a handle, not
@@ -143,14 +168,14 @@ export default {
         },
         updateChart(type) {
             const chartData = this.library.renderChart(type);
-
             if (chartData) {
-                if (this.chart) {
+                if (this.chart && this.chart.style === this.chartStyle) {
                     this.chart.update({ processedData: chartData });
                 } else {
-                    this.chart = pies({
+                    if (this.chart) this.chart.destroy();
+                    this.chart = makeChart(this.chartStyle, {
                         processedData: chartData,
-                        container: document.getElementsByClassName('lpChart')[0],
+                        stage: this.$refs.stage,
                         hoverCallback: this.chartHover,
                         lineColor: chartLineColor(),
                         hoverColor: chartHoverColor(),
@@ -158,6 +183,15 @@ export default {
                 }
             }
             return chartData;
+        },
+        redrawChart() {
+            if (this.chart) this.chart.destroy();
+            this.chart = null;
+            this.updateChart();
+        },
+        // Saved with the account (and mirrored for shared lists).
+        setChartStyle(style) {
+            this.$store.commit('setPreference', { preference: 'chartStyle', value: style });
         },
         chartHover(chartItem) {
             if (chartItem && chartItem.id) {

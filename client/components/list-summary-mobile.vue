@@ -36,8 +36,21 @@
             @after-leave="onPanelSettled"
         >
             <div v-show="expanded" class="lpSummaryPanel" data-testid="summary-panel">
-                <div class="lpSummaryChartWrap">
-                    <canvas class="lpChart" height="260" width="260" />
+                <div class="lpSummaryChartWrap lpChartContainer">
+                    <div ref="stage" class="lpChartStage" data-testid="chart" :data-style="chartStyle" />
+                    <div class="wgChartStyles" role="group" aria-label="Chart style">
+                        <button
+                            v-for="option in chartStyles"
+                            :key="option.id"
+                            type="button"
+                            class="wgChartStyle"
+                            :aria-pressed="String(chartStyle === option.id)"
+                            :data-testid="`chart-style-${option.id}`"
+                            @click="setChartStyle(option.id)"
+                        >
+                            {{ option.label }}
+                        </button>
+                    </div>
                 </div>
 
                 <ul class="lpSummaryLegend">
@@ -111,7 +124,7 @@
 import colorPicker from './colorpicker.vue';
 import unitSelect from './unit-select.vue';
 
-import pies from '../pies.js';
+import { makeChart, CHART_STYLES, chartStyle, rememberStyle } from '../charts.js';
 import { chartLineColor, chartHoverColor, onThemeChange } from '../utils/theme.js';
 import utilsMixin from '../mixins/utils-mixin.js';
 import colorUtils from '../utils/color.js';
@@ -131,6 +144,12 @@ export default {
         };
     },
     computed: {
+        chartStyles() {
+            return CHART_STYLES;
+        },
+        chartStyle() {
+            return chartStyle(this.library.preferences.chartStyle);
+        },
         library() {
             return this.$store.state.library;
         },
@@ -170,6 +189,12 @@ export default {
         'list.totalWeight': 'updateChart',
         'list.categoryIds': 'updateChart',
         expanded: 'updateChart',
+        chartStyle(style) {
+            rememberStyle(style);
+            if (this.chart) this.chart.destroy();
+            this.chart = null;
+            this.updateChart();
+        },
     },
     mounted() {
         this.updateChart();
@@ -213,22 +238,23 @@ export default {
         updateChart(type) {
             const chartData = this.library.renderChart(typeof type === 'string' ? type : undefined);
 
-            if (chartData) {
-                if (this.chart) {
+            if (chartData && this.$refs.stage) {
+                if (this.chart && this.chart.style === this.chartStyle) {
                     this.chart.update({ processedData: chartData });
                 } else {
-                    const canvas = this.$el.querySelector('.lpChart');
-                    if (canvas) {
-                        this.chart = pies({
-                            processedData: chartData,
-                            container: canvas,
-                            lineColor: chartLineColor(),
-                            hoverColor: chartHoverColor(),
-                        });
-                    }
+                    if (this.chart) this.chart.destroy();
+                    this.chart = makeChart(this.chartStyle, {
+                        processedData: chartData,
+                        stage: this.$refs.stage,
+                        lineColor: chartLineColor(),
+                        hoverColor: chartHoverColor(),
+                    });
                 }
             }
             return chartData;
+        },
+        setChartStyle(style) {
+            this.$store.commit('setPreference', { preference: 'chartStyle', value: style });
         },
         setTotalUnit(unit) {
             this.$store.commit('setTotalUnit', unit);

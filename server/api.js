@@ -176,9 +176,11 @@ const publicJson = (handler) => pub(async (req, res) => {
 router.get('/api/viewer', publicJson(async (req, res) => {
     res.set('Cache-Control', 'private, no-store');
     const user = await optionalUser(req);
-    res.json(user
-        ? { username: user.username, isAdmin: isAdmin(user.username), isModerator: isModerator(user.username) }
-        : { username: null, isAdmin: false, isModerator: false });
+    if (!user) return res.json({ username: null, isAdmin: false, isModerator: false });
+    // Their chart style, so shared lists draw the way they chose in the app.
+    const settings = await knex('library_settings').where({ user_id: user.user_id }).first('preferences').catch(() => null);
+    const prefs = settings && settings.preferences ? (typeof settings.preferences === 'string' ? JSON.parse(settings.preferences) : settings.preferences) : {};
+    res.json({ username: user.username, isAdmin: isAdmin(user.username), isModerator: isModerator(user.username), chartStyle: prefs.chartStyle || null });
 }));
 
 router.get('/api/users/:username/follow', publicJson(async (req, res) => {
