@@ -221,6 +221,27 @@ function initSiteHeader() {
         if (e.target.closest('a')) setMenu(false);
     });
 
+    // The account menu (signed in).
+    const avatar = header.querySelector('.wgAvatarMenu');
+    if (avatar) {
+        const btn = avatar.querySelector('.lpAvatar');
+        const list = avatar.querySelector('.wgAvatarMenuList');
+        const setAvatar = (open) => {
+            list.hidden = !open;
+            btn.setAttribute('aria-expanded', String(open));
+        };
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setAvatar(list.hidden);
+        });
+        document.addEventListener('click', (e) => { if (!avatar.contains(e.target)) setAvatar(false); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setAvatar(false); });
+        avatar.querySelector('[data-signout]').addEventListener('click', async () => {
+            await fetch('/signout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
+            window.location.href = '/welcome';
+        });
+    }
+
     let hasLibrary = false;
     try {
         hasLibrary = Boolean(localStorage.getItem('library'));
@@ -235,15 +256,26 @@ function initSiteHeader() {
             if (!g.hidden && !g.querySelector('.wgNavDropItem:not([hidden])')) g.hidden = true;
         });
         const cta = header.querySelector('[data-lists-button]');
-        if (viewer.signedIn || viewer.hasLibrary) {
+        if (!viewer.signedIn && viewer.hasLibrary) {
             cta.href = '/';
-            cta.querySelector('.wgLong').textContent = viewer.signedIn ? 'Open my lists' : 'My lists';
+            cta.querySelector('.wgLong').textContent = 'My lists';
             cta.querySelector('.wgShort').textContent = 'My lists';
         }
-        const name = header.querySelector('[data-viewer-name]');
         if (viewer.signedIn) {
-            name.textContent = viewer.username;
-            name.hidden = false;
+            header.querySelectorAll('[data-viewer-name]').forEach((el) => { el.textContent = viewer.username; });
+            const initial = header.querySelector('[data-viewer-initial]');
+            initial.textContent = viewer.username.charAt(0).toUpperCase();
+            initial.title = viewer.username;
+            fetch('/api/notifications?limit=1', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+                .then((r) => (r.ok ? r.json() : null))
+                .then((n) => {
+                    const count = header.querySelector('[data-bell-count]');
+                    if (n && n.unread) {
+                        count.textContent = n.unread > 9 ? '9+' : String(n.unread);
+                        count.hidden = false;
+                    }
+                })
+                .catch(() => {});
         }
         header.dataset.viewer = viewer.signedIn ? 'signed-in' : 'guest';
     };

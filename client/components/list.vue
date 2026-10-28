@@ -241,7 +241,9 @@ export default {
 // The 56px side padding forms the gutters that row controls bleed into.
 .lpListBody {
     flex: 0 0 auto;
-    padding: 0 56px;
+    // A gutter next to the sidebar; on the right the list runs to the
+    // site's column edge, like every other page.
+    padding: 0 0 0 32px;
 }
 
 .lpCategories {

@@ -47,7 +47,7 @@
                         :aria-label="open ? 'Hide the panel' : 'Show the panel'"
                         :aria-expanded="String(open)"
                         aria-controls="wgSidebarPanel"
-                        data-testid="rail-collapse"
+                        data-testid="toggle-sidebar"
                         @click="$store.commit('toggleSidebar')"
                     >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path v-if="open" d="m15 6-6 6 6 6" /><path v-else d="m9 6 6 6-6 6" /></svg>
@@ -80,10 +80,21 @@
                         <span class="wgRailLabel">Closet</span>
                         <span class="wgRailCount">{{ closetCount }}</span>
                     </button>
-                    <router-link to="/pack" class="wgRailBtn" title="Pack this list" data-testid="rail-pack">
+                    <span class="wgRailSep" aria-hidden="true" />
+                    <router-link to="/pack" class="wgRailBtn" title="Pack this list" data-testid="open-pack">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8" /><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" /></svg>
                         <span class="wgRailLabel">Pack</span>
                     </router-link>
+                    <router-link to="/print" class="wgRailBtn" title="Print a paper checklist" data-testid="open-print">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6" /><rect x="3" y="9" width="18" height="8" rx="2" /><path d="M7 14h10v7H7z" /></svg>
+                        <span class="wgRailLabel">Print</span>
+                    </router-link>
+                    <button v-if="canPlan" type="button" class="wgRailBtn wgTeamButton" title="Plan this list with others" data-testid="open-team" @click="openTeam()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2" /><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" /><circle cx="17" cy="9" r="2.6" /><path d="M16 14.2c2.8.3 5 2.7 5 5.8" /></svg>
+                        <span class="wgRailLabel">Team</span>
+                    </button>
+                    <share rail />
+                    <listSettings rail />
                 </nav>
                 <div id="wgSidebarPanel" class="wgSidebarPanel" :inert="!open">
                     <div v-show="panel === 'lists'" class="wgPanel wgPanelLists" data-testid="panel-lists">
@@ -119,6 +130,8 @@
 import libraryItems from './library-items.vue';
 import libraryLists from './library-lists.vue';
 import brandLogo from './brand-logo.vue';
+import share from './share.vue';
+import listSettings from './list-settings.vue';
 
 import { isMobile } from '../utils/viewport.js';
 
@@ -140,7 +153,10 @@ export default {
         libraryItems,
         libraryLists,
         brandLogo,
+        share,
+        listSettings,
     },
+    inject: { openTeam: { default: () => () => {} } },
     setup() {
         return { isMobile };
     },
@@ -153,6 +169,10 @@ export default {
         },
         open() {
             return Boolean(this.library.showSidebar);
+        },
+        // Planning together needs a signed-in, saved list (as in dashboard.vue).
+        canPlan() {
+            return this.$store.state.saveType === 'remote' && Boolean(this.$store.state.loggedIn);
         },
         isAdmin() {
             return Boolean(this.$store.state.account && this.$store.state.account.isAdmin);
@@ -415,6 +435,52 @@ $panelWidth: 300px;
     color: #fff;
 }
 
+.wgRailSep {
+    border-top: 1px solid var(--lp-sidebar-border);
+    margin: 6px 0;
+    width: 32px;
+}
+
+// Share and Settings bring their own menus: open them beside the rail,
+// not under it.
+.wgRailTool {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+
+    // Outranks the header placement in list-settings.vue (#share/#settings
+    // hang from their target's right edge there).
+    #share .lpContent,
+    &#settings .lpContent {
+        border-radius: 0 14px 14px;
+        left: calc(100% + 10px);
+        margin-top: 0;
+        right: auto;
+        top: -6px;
+        transform: none;
+    }
+
+    .lpPopover .lpContent {
+        left: calc(100% + 10px);
+        margin-top: 0;
+        top: -6px;
+        transform: none;
+    }
+
+    .lpPopover.lpPopoverShown .lpContent {
+        margin-top: 0;
+    }
+
+    .lpPopover .lpContent::before {
+        bottom: 0;
+        height: auto;
+        left: -14px;
+        right: auto;
+        top: 0;
+        width: 14px;
+    }
+}
+
 .wgRailCollapse {
     border-bottom: 1px solid var(--lp-sidebar-border);
     border-radius: 11px 11px 0 0;
@@ -519,6 +585,21 @@ $panelWidth: 300px;
     flex: none;
     font-size: 13px;
     font-weight: 650;
+}
+
+// Tablets and small laptops: a narrower panel, so the list keeps room.
+@media only screen and (width > $mobile) and (width <= 1180px) {
+    #sidebar.wgSidebarDesk {
+        flex-basis: $railWidth + 240px;
+
+        .lpSidebarSticky {
+            width: $railWidth + 240px;
+        }
+    }
+
+    .wgSidebarPanel {
+        flex-basis: 240px;
+    }
 }
 
 // ============================================================

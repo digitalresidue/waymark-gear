@@ -72,8 +72,13 @@ test.describe('Site menu', () => {
         await expect(o.page.getByTestId('nav-trips')).toBeVisible();
         await expect(o.page.getByTestId('nav-lists')).toBeVisible();
         await expect(o.page.getByTestId('header-signin')).toBeHidden();
-        await expect(o.page.locator('[data-viewer-name]')).toHaveText(o.username);
-        await expect(o.page.getByTestId('header-lists')).toHaveAttribute('href', '/');
+        // Bell and account menu, top right; My lists is inside it.
+        await expect(o.page.getByTestId('header-lists')).toBeHidden();
+        await expect(o.page.getByTestId('notification-bell')).toBeVisible();
+        await expect(o.page.locator('[data-viewer-initial]')).toHaveText(o.username.charAt(0).toUpperCase());
+        await o.page.getByTestId('account-menu').click();
+        await expect(o.page.getByTestId('menu-lists')).toHaveAttribute('href', '/');
+        await o.page.keyboard.press('Escape');
         await o.page.getByTestId('nav-owner').click();
         await o.page.getByTestId('nav-owner-users').click();
         await expect(o.page).toHaveURL(/\/moderation$/);
@@ -110,6 +115,27 @@ test.describe('Site menu', () => {
         await page.goto(url('/?start=1'));
         await expect(page.getByTestId('item-row').first()).toBeVisible();
         expect(await page.evaluate(() => localStorage.getItem('library'))).toBe(before);
+    });
+});
+
+test.describe('Account menu everywhere', () => {
+    test('signed in, every app page has the bell and account menu; My lists and Account Settings work from anywhere', async ({ page }) => {
+        const u = generateTestUser('acctmenu');
+        await registerUser(page, u.username, u.password, u.email);
+        await expect(page.getByTestId('item-row').first()).toBeVisible();
+        await page.goto(url('/explore'));
+        const header = page.locator('.wgSiteHeader');
+        await expect(header.locator('.lpAvatar')).toHaveText(u.username.charAt(0).toUpperCase());
+        await expect(header.getByText('Open my lists')).toHaveCount(0);
+        // Account Settings opens here, away from the list editor.
+        await header.locator('#accountPopover').hover();
+        await header.locator('.accountSettings').click();
+        await expect(page.locator('#accountSettings')).toBeVisible();
+        await page.keyboard.press('Escape');
+        // My lists from the menu.
+        await header.locator('#accountPopover').hover();
+        await header.getByTestId('menu-lists').click();
+        await expect(page.getByTestId('item-row').first()).toBeVisible();
     });
 });
 

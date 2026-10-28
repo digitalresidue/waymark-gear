@@ -1,7 +1,10 @@
 <template>
-    <span v-if="isSignedIn" class="headerItem hasPopover">
+    <span v-if="isSignedIn" class="headerItem hasPopover" :class="{ wgRailTool: rail }">
         <PopoverHover id="share" @shown="focusShare">
-            <template #target><span><i class="lpSprite lpLink" /> Share</span></template>
+            <template #target>
+                <span v-if="rail" class="wgRailBtn" title="Share this list"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7" /><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" /></svg><span class="wgRailLabel">Share</span></span>
+                <span v-else><i class="lpSprite lpLink" /> Share</span>
+            </template>
             <template #content>
                 <div class="lpFields">
                     <div class="lpField">
@@ -58,6 +61,10 @@ export default {
     components: {
         PopoverHover,
         toggle,
+    },
+    props: {
+        // Drawn as a button in the editor's icon rail (desktop).
+        rail: { type: Boolean, default: false },
     },
     computed: {
         library() {

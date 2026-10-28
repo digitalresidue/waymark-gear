@@ -11,6 +11,9 @@
                         Signed in as <span class="username">{{ username }}</span>
                     </div>
                     <hr>
+                    <router-link to="/" class="lpHref wgMenuLists" data-testid="menu-lists" @click="hide()">
+                        My lists
+                    </router-link><br>
                     <router-link to="/profile" class="lpHref" data-testid="menu-profile" @click="hide()">
                         Your profile
                     </router-link><br>

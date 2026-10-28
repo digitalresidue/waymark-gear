@@ -9,22 +9,26 @@
             <div class="lpDrawerScrim" data-testid="drawer-scrim" @click="closeDrawer" />
             <div class="lpContentCol">
                 <div id="header">
-                    <span class="headerItem">
+                    <!-- On the desktop the tools live in the sidebar's rail and the
+                         account menu in the site header, so the title has the
+                         row. Phones (and shared plans, which have their own
+                         sidebar) keep them here. -->
+                    <span v-if="!railTools" class="headerItem">
                         <a id="hamburger" class="lpTransition" data-testid="toggle-sidebar" @click="toggleSidebar"><i class="lpSprite lpHamburger" /></a>
                     </span>
                     <input id="lpListName" :value="list.name" type="text" class="lpListName lpSilent headerItem" placeholder="Name your list" autocomplete="off" name="lastpass-disable-search" @input="updateListName">
-                    <router-link to="/pack" class="headerItem wgPackLink" data-testid="open-pack">
+                    <router-link v-if="!railTools" to="/pack" class="headerItem wgPackLink" data-testid="open-pack">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8" /><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" /></svg>
                         Pack
                     </router-link>
-                    <router-link to="/print" class="headerItem wgPackLink wgPrintLink" data-testid="open-print" title="Print a paper checklist">
+                    <router-link v-if="!railTools" to="/print" class="headerItem wgPackLink wgPrintLink" data-testid="open-print" title="Print a paper checklist">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6" /><rect x="3" y="9" width="18" height="8" rx="2" /><path d="M7 14h10v7H7z" /></svg>
                         Print
                     </router-link>
-                    <planPresence v-if="canPlan" @team="showTeam = true" />
-                    <share v-if="!planMode" />
-                    <listSettings v-if="!planMode" />
-                    <accountDropdown />
+                    <planPresence v-if="canPlan" :team="!railTools" @team="showTeam = true" />
+                    <share v-if="!planMode && !railTools" />
+                    <listSettings v-if="!planMode && !railTools" />
+                    <accountDropdown v-if="isMobile" />
                 </div>
 
                 <list />
@@ -118,6 +122,7 @@ export default {
         return {
             openAccount: () => { this.showAccount = true; },
             openHelp: () => { this.showHelp = true; },
+            openTeam: () => { this.showTeam = true; },
             openDeleteAccount: () => { this.showDeleteAccount = true; },
             openCopyList: () => { this.showCopyList = true; },
             openImportCSV: () => { this.$refs.importCSVRef.triggerUpload(); },
@@ -179,6 +184,10 @@ export default {
             return this.$store.state.saveType === 'shared' && Boolean(this.$store.state.plan);
         },
         // Planning together needs an account (saved on the server).
+        // Desktop, own lists: the tools are in the sidebar's rail.
+        railTools() {
+            return !this.isMobile && !this.planMode;
+        },
         canPlan() {
             return this.planMode || (this.$store.state.saveType === 'remote' && Boolean(this.isSignedIn));
         },
@@ -331,19 +340,38 @@ export default {
     background: var(--lp-content-bg);
     color: var(--lp-text);
     display: flex;
-    flex: 0 1 1060px;
     flex-direction: column;
     min-width: 0;
-    width: 1060px;
 }
 
-@media only screen and (width <= 1300px) {
+// The editor sits in the same column as the site header and every other
+// page (.wgPage: 1200px wide, 24px in from each side), so the rail starts
+// under the logo and the list ends where the header does. The rail and
+// panel take what they need; the list gets the rest of the 1152px.
+@media only screen and (width > $mobile) {
+    // Row controls (remove ✕, drag handle) appear in the margins beside the
+    // list on hover; the margins are always at least the 24px they need.
+    // Their invisible hover band reaches a little further: clip it rather
+    // than let it scroll the page sideways.
+    #main {
+        overflow-x: clip;
+    }
+
     .lpFrameFill {
-        display: none;
+        min-width: 24px;
     }
 
     .lpContentCol {
-        flex: 1 1 auto;
+        flex: 0 1 calc(1152px - 360px);
+    }
+
+    #main:not(.lpHasSidebar) .lpContentCol {
+        flex-basis: calc(1152px - 60px);
+    }
+
+    // Shared plans have their own, fixed-width sidebar.
+    #main .wgPlanSidebar ~ .lpContentCol {
+        flex-basis: calc(1152px - 280px);
     }
 }
 
@@ -358,6 +386,12 @@ export default {
     flex: 0 0 auto;
     gap: 18px;
     padding: 22px 32px 14px;
+
+    // Desktop: the gutter beside the sidebar, and none on the right, so the
+    // header ends where the site header does.
+    @media only screen and (width > $mobile) {
+        padding-right: 0;
+    }
 
     .lpTarget  .lpSprite {
         height: 14px;

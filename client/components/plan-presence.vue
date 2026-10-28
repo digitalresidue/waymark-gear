@@ -6,7 +6,7 @@
             </span>
             <span v-if="others.length > 4" class="wgPresenceMore">+{{ others.length - 4 }}</span>
         </span>
-        <button type="button" class="wgPackLink wgTeamButton" data-testid="open-team" title="Plan this list with others" @click="$emit('team')">
+        <button v-if="team" type="button" class="wgPackLink wgTeamButton" data-testid="open-team" title="Plan this list with others" @click="$emit('team')">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2" /><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" /><circle cx="17" cy="9" r="2.6" /><path d="M16 14.2c2.8.3 5 2.7 5 5.8" /></svg>
             Team
         </button>
@@ -16,6 +16,11 @@
 <script>
 export default {
     name: 'PlanPresence',
+    props: {
+        // On the desktop the Team button lives in the sidebar's rail; the
+        // faces of who's here stay by the title.
+        team: { type: Boolean, default: true },
+    },
     emits: ['team'],
     computed: {
         others() {

@@ -54,14 +54,10 @@
                     >{{ item.label }}</a>
                 </div>
             </nav>
-            <div v-if="!app" class="wgSiteHeaderActions">
-                <template v-if="signedIn">
-                    <notificationBell />
-                    <span class="wgMuted wgSiteHeaderUser">{{ signedIn }}</span>
-                    <router-link to="/" class="wgBtn wgBtnPrimary" data-testid="header-lists">
-                        <span class="wgLong">Open my lists</span><span class="wgShort">My lists</span>
-                    </router-link>
-                </template>
+            <div class="wgSiteHeaderActions">
+                <!-- Signed in: notifications and the account menu, on every
+                     page (My lists is in the menu). -->
+                <accountDropdown v-if="signedIn" class="wgHeaderAccount" />
                 <template v-else>
                     <router-link to="/signin" class="wgBtn wgBtnGhost wgHideOnPhone" data-testid="header-signin">
                         Sign in
@@ -84,12 +80,21 @@
                 <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
             </button>
         </div>
+        <!-- The account menu's dialogs, so it works on every page. -->
+        <template v-if="!pageOpenAccount">
+            <account v-if="signedIn" :shown="showAccount" @hide="showAccount = false" />
+            <accountDelete v-if="signedIn" :shown="showDeleteAccount" @hide="showDeleteAccount = false" />
+            <help :shown="showHelp" @hide="showHelp = false" />
+        </template>
     </header>
 </template>
 
 <script>
 import brandLogo from './brand-logo.vue';
-import notificationBell from './notification-bell.vue';
+import accountDropdown from './account-dropdown.vue';
+import account from './account.vue';
+import accountDelete from './account-delete.vue';
+import help from './help.vue';
 import { menuFor, activeFor, PHONE_EXTRAS, canSee } from '../nav.js';
 
 // Pages the Vue app draws; anything else (Trails, reviews...) is a full
@@ -98,7 +103,20 @@ const APP_PATHS = /^\/(welcome|explore|leaderboard|trips|owner|moderation|staff|
 
 export default {
     name: 'SiteHeader',
-    components: { brandLogo, notificationBell },
+    components: { brandLogo, accountDropdown, account, accountDelete, help },
+    // The editor already has these dialogs; elsewhere the header brings
+    // its own, so the account menu works on every page.
+    inject: {
+        pageOpenAccount: { from: 'openAccount', default: null },
+        pageOpenHelp: { from: 'openHelp', default: null },
+    },
+    provide() {
+        return {
+            openAccount: () => (this.pageOpenAccount ? this.pageOpenAccount() : (this.showAccount = true)),
+            openHelp: () => (this.pageOpenHelp ? this.pageOpenHelp() : (this.showHelp = true)),
+            openDeleteAccount: () => { this.showDeleteAccount = true; },
+        };
+    },
     props: {
         // Inside the editor: the editor's own header carries the account
         // menu. The header itself lines up with every other page.
@@ -107,7 +125,7 @@ export default {
         active: { type: String, default: '' },
     },
     data() {
-        return { menuOpen: false, dropdown: '' };
+        return { menuOpen: false, dropdown: '', showAccount: false, showHelp: false, showDeleteAccount: false };
     },
     computed: {
         signedIn() {
