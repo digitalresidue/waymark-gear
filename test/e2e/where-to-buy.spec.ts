@@ -81,7 +81,7 @@ test('shops from the import sheet: a Buy menu with badges, each link through its
     // The owner adds a third shop in the editor.
     await o.page.goto(url('/owner/catalog'));
     await o.page.getByPlaceholder('Search name, brand, SKU').fill(`Multi shop tent ${tag}`);
-    await o.page.getByTestId('catalog-row').filter({ hasText: tag }).getByRole('button', { name: 'Edit' }).click();
+    await o.page.getByRole('button', { name: `Edit Multi shop tent ${tag}`, exact: true }).click();
     const shops = o.page.getByTestId('catalog-shop');
     await expect(shops).toHaveCount(2);
     await expect(shops.first().locator('img.wgShopBadge')).toBeVisible();
