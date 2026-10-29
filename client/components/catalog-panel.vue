@@ -14,14 +14,14 @@
             </select>
         </label>
 
-        <div v-if="catalogCategories.length" class="wgCatalogChips" role="group" aria-label="Catalog category">
+        <scrollRow v-if="catalogCategories.length" track-class="wgCatalogChips" role="group" aria-label="Catalog category" data-testid="catalog-panel-chips">
             <button type="button" class="wgChip" :aria-pressed="String(category === '')" @click="pickCategory('')">
                 All
             </button>
             <button v-for="c in catalogCategories" :key="c.name" type="button" class="wgChip" :aria-pressed="String(category === c.name)" @click="pickCategory(c.name)">
                 {{ c.name }}
             </button>
-        </div>
+        </scrollRow>
 
         <ul v-if="results.length" class="wgCatalogResults" aria-live="polite">
             <li v-for="entry in results" :key="entry.id" class="wgCatalogRow" data-testid="catalog-panel-result">
@@ -60,6 +60,7 @@
 
 <script>
 import { api } from '../utils/format.js';
+import scrollRow from './scroll-row.vue';
 
 const PAGE = 30;
 const TARGET_KEY = 'wgCatalogTarget';
@@ -69,6 +70,7 @@ const TARGET_KEY = 'wgCatalogTarget';
 // like the "Add from catalog" picker (catalog-picker.vue).
 export default {
     name: 'CatalogPanel',
+    components: { scrollRow },
     props: {
         // Load on first show, not with the page.
         active: { type: Boolean, default: false },
@@ -193,14 +195,8 @@ export default {
 
 .wgCatalogChips {
     display: flex;
-    flex: 0 0 auto;
     gap: 4px;
-    // One row that scrolls sideways: a long category list mustn't push the
-    // results out of sight.
-    margin: 0 -14px;
-    overflow-x: auto;
-    padding: 0 14px 4px;
-    scrollbar-width: thin;
+    padding-bottom: 2px;
 
     .wgChip {
         flex: 0 0 auto;
@@ -244,18 +240,26 @@ export default {
     display: flex;
     flex-direction: column;
     font-size: 13px;
+    gap: 1px;
     line-height: 1.25;
     min-width: 0;
     text-decoration: none;
 
-    span {
+    // The name gets two lines before it's cut; the brand · type line one.
+    span:first-child {
+        -webkit-box-orient: vertical;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
         overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        overflow-wrap: anywhere;
     }
 
     .wgMuted {
         font-size: 11.5px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     &:hover span:first-child {

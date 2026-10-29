@@ -31,14 +31,14 @@
                 <input ref="search" v-model="query" type="search" class="wgInput" :placeholder="source === 'closet' ? 'Search your closet' : 'Search tents, quilts, stoves…'" data-testid="catalog-picker-search" @input="queue">
             </label>
 
-            <div v-if="source === 'catalog' && catalogCategories.length" class="wgChips wgPickerChips" role="group" aria-label="Catalog category">
+            <scrollRow v-if="source === 'catalog' && catalogCategories.length" track-class="wgChips wgPickerChips" role="group" aria-label="Catalog category">
                 <button type="button" class="wgChip" :aria-pressed="String(category === '')" @click="pickCategory('')">
                     All
                 </button>
                 <button v-for="c in catalogCategories" :key="c.name" type="button" class="wgChip" :aria-pressed="String(category === c.name)" @click="pickCategory(c.name)">
                     {{ c.name }}
                 </button>
-            </div>
+            </scrollRow>
 
             <!-- My closet: check off gear you already own, add it in one go.
                  The list gets the same item (linked), not a copy. -->
@@ -116,6 +116,7 @@
 
 <script>
 import { api } from '../utils/format.js';
+import scrollRow from './scroll-row.vue';
 import weightUtils from '../utils/weight.js';
 import { isPlaceholder } from '../utils/closet.js';
 
@@ -123,6 +124,7 @@ const PAGE = 30;
 
 export default {
     name: 'CatalogPicker',
+    components: { scrollRow },
     props: {
         shown: { type: Boolean, required: true },
         // The category the picker was opened from; the target can be changed.
@@ -328,10 +330,7 @@ export default {
 
 .wgPickerChips {
     flex-wrap: nowrap !important;
-    margin: 0 -20px !important;
-    overflow-x: auto;
-    padding: 0 20px 4px;
-    scrollbar-width: thin;
+    padding: 0 0 4px;
 
     .wgChip {
         flex: none;

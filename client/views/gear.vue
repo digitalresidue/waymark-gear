@@ -23,7 +23,7 @@
             </label>
         </div>
 
-        <div class="lpGearFilters">
+        <scrollRow track-class="lpGearFilters" data-testid="gear-filters">
             <a
                 v-for="option in filterOptions"
                 :key="option.key"
@@ -32,7 +32,7 @@
                 :data-testid="'gear-filter-' + option.key"
                 @click="filter = option.key"
             >{{ option.label }}</a>
-        </div>
+        </scrollRow>
 
         <ul class="lpGearList">
             <li v-for="entry in filteredItems" :key="entry.item.id" class="lpGearRow" data-testid="gear-row">
@@ -114,6 +114,7 @@
 <script>
 import globalAlerts from '../components/global-alerts.vue';
 import speedbump from '../components/speedbump.vue';
+import scrollRow from '../components/scroll-row.vue';
 import gearDetails from '../components/gear-details.vue';
 import { replaceSoon } from '../utils/gear-meta.js';
 import { api } from '../utils/format.js';
@@ -126,6 +127,7 @@ export default {
     components: {
         globalAlerts,
         speedbump,
+        scrollRow,
         gearDetails,
     },
     mixins: [utilsMixin],

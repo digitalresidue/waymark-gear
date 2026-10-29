@@ -1,6 +1,7 @@
 // Small interactive bits on the server-rendered pages (shared lists and
 // @profiles): voting, following, and the photo/video lightbox.
 
+import { initScrollRows } from './utils/scroll-row.js';
 import { bindLightboxLinks } from './utils/lightbox.js';
 import { canSee } from './nav.js';
 
@@ -553,5 +554,6 @@ export function initSocial() {
     initFollow();
     initReviews();
     initBrands();
+    initScrollRows();
     bindLightboxLinks();
 }
