@@ -377,6 +377,7 @@ Open the Console (step 3) and type any of these:
 | `waymark status` | Checks everything is running and the site is reachable. Start here if anything seems wrong. |
 | `waymark update` | Gets the newest version of Waymark. Backs up first, and goes back to the previous version by itself if the new one won't start. |
 | `waymark settings` | Changes settings (email, Google sign-in and Analytics, payments, owners), then applies them. |
+| `waymark clean-images` | Deletes photos nothing uses any more (deleted gear, old profile pictures, emptied closets). This already happens by itself once a day; run it to free space now. Add `--dry-run` to only see how much would go. |
 | `waymark logs` | Shows what the site is doing, live. Press **Ctrl+C** to stop watching. |
 | `waymark restart` | Restarts everything. Safe to do any time. |
 | `waymark backup` | Backs up now. (Also happens every night at 03:15.) |

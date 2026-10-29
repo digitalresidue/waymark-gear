@@ -5,6 +5,9 @@
             <button v-if="retiredCount" type="button" class="wgClosetToggle" :aria-pressed="String(showRetired)" data-testid="closet-show-retired" @click="showRetired = !showRetired">
                 {{ showRetired ? 'Hide retired' : `Retired (${retiredCount})` }}
             </button>
+            <button v-if="hasGear" type="button" class="wgClosetToggle wgClosetEmpty" title="Delete all the gear in your closet" data-testid="closet-empty" @click="emptyCloset">
+                Empty
+            </button>
         </div>
         <div class="lpSidebarSearch">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
@@ -48,7 +51,7 @@
 import utilsMixin from '../mixins/utils-mixin.js';
 import dragula from 'dragula';
 import { getElementIndex } from '../utils/utils.js';
-import { confirmClosetRemoval, isPlaceholder, restoreClosetItem } from '../utils/closet.js';
+import { confirmClosetRemoval, confirmEmptyCloset, isPlaceholder, restoreClosetItem } from '../utils/closet.js';
 import { replaceSoon } from '../utils/gear-meta.js';
 
 export default {
@@ -75,6 +78,9 @@ export default {
         },
         activeCount() {
             return this.closetGear.filter((item) => !item.retired).length;
+        },
+        hasGear() {
+            return this.activeCount > 0 || this.retiredCount > 0;
         },
         retiredCount() {
             return this.closetGear.length - this.activeCount;
@@ -177,6 +183,9 @@ export default {
         removeItem(item) {
             confirmClosetRemoval({ store: this.$store, initSpeedbump: this.initSpeedbump }, this.library.getItemById(item.id));
         },
+        emptyCloset() {
+            confirmEmptyCloset({ store: this.$store, initSpeedbump: this.initSpeedbump });
+        },
         restore(item) {
             restoreClosetItem(this.$store, this.library.getItemById(item.id));
         },
@@ -186,6 +195,20 @@ export default {
 
 <style lang="scss">
 @import "../css/_globals";
+
+.lpSidebarSectionHeader .lpSectionLabel {
+    margin-right: auto;
+}
+
+.wgClosetEmpty.wgClosetToggle {
+    color: var(--lp-sidebar-muted, var(--lp-text-secondary));
+    font-size: 12px;
+    font-weight: 600;
+
+    &:hover {
+        color: var(--lp-danger);
+    }
+}
 
 .wgClosetToggle {
     background: transparent;

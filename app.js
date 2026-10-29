@@ -16,6 +16,7 @@ import billing, { webhookHandler as stripeWebhook } from './server/billing.js';
 import affiliate from './server/affiliate.js';
 import brands from './server/brands.js';
 import headTags, { injectHeadTags, loadHeadTags } from './server/head-tags.js';
+import { scheduleImageCleanup } from './server/image-gc.js';
 import googleAuth from './server/google.js';
 import views, { hasBuiltAssets } from './server/views.js';
 import { authRateLimit, cspNonce, securityHeaders } from './server/security.js';
@@ -168,6 +169,9 @@ logger.info({ message: 'Starting up Waymark Gear...' });
 server.listen(config.get('port'), () => {
     logger.info({ message: `Listening on ${config.get('port')}` });
 });
+
+// Once a day: delete stored images nothing refers to any more.
+scheduleImageCleanup(knex, logger);
 
 // Docker and most process managers send SIGTERM and wait a few seconds before
 // killing. Stop accepting connections, let in-flight saves finish, close the

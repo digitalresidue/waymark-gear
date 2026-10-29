@@ -272,6 +272,17 @@ const store = createStore({
             }
             list.calculateTotals();
         },
+        // Empty the closet. Without `everything`, only gear that isn't in any
+        // list goes (lists are untouched); with it, every piece of gear goes,
+        // and every list is left with its categories but no gear.
+        emptyCloset(state, { everything = false } = {}) {
+            const library = state.library;
+            const ids = library.items
+                .filter((item) => everything || !library.getListsContainingItem(item.id).length)
+                .map((item) => item.id);
+            ids.forEach((id) => library.removeItem(id));
+            library.lists.forEach((list) => list.calculateTotals());
+        },
         loadLibraryData(state, libraryData) {
             const library = new Library();
             try {

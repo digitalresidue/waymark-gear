@@ -57,6 +57,7 @@ Waymark Gear: commands
   waymark offsite     Set up copying backups to another place (recommended).
   waymark restore     Put back a backup:  waymark restore <date>, e.g. 2026-10-27
   waymark reset-password <username>   Set a new password for an account.
+  waymark clean-images   Delete photos nothing uses any more (also runs daily). --dry-run to just look.
   waymark version     Which version is running.
   waymark help        This list.
 
@@ -253,6 +254,12 @@ cmd_reset_password() {
     if [ "$n" = "1" ]; then ok "New password set for $user. Sign in with it now."; else stop "there's no account called $user."; fi
 }
 
+cmd_clean_images() {
+    need_root clean-images; need_install
+    bold "Cleaning up unused images"
+    "${COMPOSE[@]}" exec -T app node scripts/clean-images.js "$@" || stop "the clean-up didn't finish. Run  waymark logs  to see why."
+}
+
 cmd_version() {
     need_install
     local image id
@@ -275,6 +282,7 @@ case "${1:-help}" in
     offsite) cmd_offsite ;;
     restore) shift; cmd_restore "${1:-}" ;;
     reset-password) shift; cmd_reset_password "${1:-}" ;;
+    clean-images) shift; cmd_clean_images "$@" ;;
     version) cmd_version ;;
     help|-h|--help) cmd_help ;;
     *) printf 'Unknown command: %s\n' "$1"; cmd_help; exit 1 ;;

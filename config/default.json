@@ -31,6 +31,11 @@
     "reviewers": [],
     "openReviews": false,
     "googleAnalyticsId": "",
+    "imageCleanup": {
+        "enabled": true,
+        "minAgeHours": 24,
+        "firstRunMinutes": 10
+    },
     "remoteImages": {
         "allowPrivate": false
     },
