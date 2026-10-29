@@ -324,8 +324,17 @@ function initSiteHeader() {
         if (viewer.signedIn) {
             header.querySelectorAll('[data-viewer-name]').forEach((el) => { el.textContent = viewer.username; });
             const initial = header.querySelector('[data-viewer-initial]');
-            initial.textContent = viewer.username.charAt(0).toUpperCase();
             initial.title = viewer.username;
+            if (viewer.avatarUrl && /^\/userimages\//.test(viewer.avatarUrl)) {
+                const img = document.createElement('img');
+                img.src = viewer.avatarUrl;
+                img.alt = '';
+                img.dataset.testid = 'header-avatar-img';
+                initial.replaceChildren(img);
+                initial.classList.add('lpAvatarPhoto');
+            } else {
+                initial.textContent = viewer.username.charAt(0).toUpperCase();
+            }
             fetch('/api/notifications?limit=1', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
                 .then((r) => (r.ok ? r.json() : null))
                 .then((n) => {
@@ -344,7 +353,7 @@ function initSiteHeader() {
         .then((r) => (r.ok ? r.json() : null))
         .then((v) => {
             if (!v) return;
-            apply({ signedIn: Boolean(v.username), username: v.username, hasLibrary: hasLibrary || Boolean(v.username), isAdmin: v.isAdmin, isModerator: v.isModerator });
+            apply({ signedIn: Boolean(v.username), username: v.username, avatarUrl: v.avatarUrl, hasLibrary: hasLibrary || Boolean(v.username), isAdmin: v.isAdmin, isModerator: v.isModerator });
             initReviewWriter(v);
         })
         .catch(() => {});

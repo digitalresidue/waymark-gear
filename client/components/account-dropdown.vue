@@ -3,7 +3,10 @@
         <notificationBell v-if="isSignedIn" />
         <PopoverHover v-if="isSignedIn" id="accountPopover" data-testid="account-menu">
             <template #target>
-                <span class="lpAvatar" :title="username">{{ initial }}</span>
+                <span class="lpAvatar" :class="{ lpAvatarPhoto: avatarUrl }" :title="username" data-testid="header-avatar">
+                    <img v-if="avatarUrl" :src="avatarUrl" alt="" data-testid="header-avatar-img">
+                    <template v-else>{{ initial }}</template>
+                </span>
             </template>
             <template #content="{ hide }">
                 <div class="lpAccountMenu">
@@ -93,6 +96,11 @@ export default {
         initial() {
             return (this.username || '?').trim().charAt(0);
         },
+        // Their own picture, once they've added one (Your profile).
+        avatarUrl() {
+            const account = this.$store.state.account;
+            return (account && account.avatarUrl) || '';
+        },
     },
     methods: {
         showAccount() {
@@ -139,6 +147,7 @@ export default {
 }
 
 .lpAvatar {
+    overflow: hidden;
     align-items: center;
     background: var(--lp-primary);
     border-radius: 50%;
@@ -155,6 +164,17 @@ export default {
     text-transform: uppercase;
     user-select: none;
     width: 36px;
+}
+
+.lpAvatarPhoto {
+    background: var(--lp-surface-sunken);
+
+    img {
+        display: block;
+        height: 100%;
+        object-fit: cover;
+        width: 100%;
+    }
 }
 
 #accountPopover {

@@ -181,7 +181,7 @@ router.get('/api/viewer', publicJson(async (req, res) => {
     // Their chart style, so shared lists draw the way they chose in the app.
     const settings = await knex('library_settings').where({ user_id: user.user_id }).first('preferences').catch(() => null);
     const prefs = settings && settings.preferences ? (typeof settings.preferences === 'string' ? JSON.parse(settings.preferences) : settings.preferences) : {};
-    res.json({ username: user.username, isAdmin: isAdmin(user.username), isModerator: isModerator(user.username), canReview: reviews.canReview(user), chartStyle: prefs.chartStyle || null });
+    res.json({ username: user.username, avatarUrl: user.avatar_url || '', isAdmin: isAdmin(user.username), isModerator: isModerator(user.username), canReview: reviews.canReview(user), chartStyle: prefs.chartStyle || null });
 }));
 
 router.get('/api/users/:username/follow', publicJson(async (req, res) => {

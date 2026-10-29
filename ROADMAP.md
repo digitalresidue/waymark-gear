@@ -7,6 +7,9 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 9 — Your picture in the header · 2026-10-28 · branch `header-avatar`
+- The account button at the top right shows **your profile picture** instead of your initial once you've added one (Your profile), on every page, in the app and on server-rendered pages, and changes as soon as you save a new one. No picture: the initial, as before.
+
 ### Phase 8, part 6 — Header tags · 2026-10-28 · branch `head-tags`
 - **Owner → Revenue → Header tags**: paste up to 10 `<meta>` verification tags (Impact, Google Search Console, Pinterest...), one per line; they go into the `<head>` of every page the server sends, at once, no restart. Only `name`/`property`/`itemprop` with `content`/`value` are accepted (no scripts, no `http-equiv`); each tag is rebuilt and escaped, not echoed as pasted. Stored in `site_settings`.
 
