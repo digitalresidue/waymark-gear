@@ -360,6 +360,25 @@ function initSiteHeader() {
         .catch(() => {});
 }
 
+// Where to buy menus (<details>): close on a click elsewhere or Escape, and
+// only one open at a time.
+function initBuyMenus() {
+    const menus = () => document.querySelectorAll('details.wgBuyMenu[open]');
+    document.addEventListener('click', (e) => {
+        menus().forEach((d) => { if (!d.contains(e.target)) d.open = false; });
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        menus().forEach((d) => {
+            d.open = false;
+            d.querySelector('summary').focus();
+        });
+    });
+    document.querySelectorAll('details.wgBuyMenu').forEach((d) => d.addEventListener('toggle', () => {
+        if (d.open) menus().forEach((o) => { if (o !== d) o.open = false; });
+    }));
+}
+
 // The Brands page: filter the cards in place as you type, tick or pick a
 // gear type, keeping the URL in step so the view can be shared. The server
 // applies the same rules (server/brands.js, matchesBrand) for the first load.
@@ -554,6 +573,7 @@ export function initSocial() {
     initFollow();
     initReviews();
     initBrands();
+    initBuyMenus();
     initScrollRows();
     bindLightboxLinks();
 }

@@ -79,14 +79,20 @@ router.get('/go/:id', async (req, res) => {
     res.set('X-Robots-Tag', 'noindex, nofollow');
     if (!isUuid(id)) return res.status(404).send('No such gear.');
     try {
-        const row = await knex('catalog_items').where({ id, status: 'published' }).first('id', 'url', 'affiliate_url');
-        if (!row) return res.status(404).send('No such gear.');
+        const item = await knex('catalog_items').where({ id, status: 'published' }).first('id', 'url', 'affiliate_url', 'shops');
+        if (!item) return res.status(404).send('No such gear.');
+        // ?shop=N: one of the item's other shops (Where to buy); 0 or none is
+        // the product link. Same affiliate rule for each.
+        const n = Number(req.query.shop);
+        const shop = Number.isInteger(n) && n >= 1 ? (item.shops || [])[n - 1] : null;
+        if (req.query.shop && n >= 1 && !shop) return res.redirect(302, `/g/${id}`);
+        const row = shop ? { url: shop.url, affiliate_url: shop.affiliate_url } : item;
         const viewer = await optionalUser(req);
         const { url, affiliate } = destination(row, await getSettings(), isSupporter(viewer));
         if (!/^https?:\/\//i.test(url)) return res.redirect(302, `/g/${id}`);
         const source = SOURCES.includes(req.query.from) ? req.query.from : '';
-        knex('outbound_clicks').insert({ catalog_id: id, source, affiliate, clicks: 1 })
-            .onConflict(['catalog_id', 'day', 'source', 'affiliate'])
+        knex('outbound_clicks').insert({ catalog_id: id, source, affiliate, shop: shop ? shop.domain : '', clicks: 1 })
+            .onConflict(['catalog_id', 'day', 'source', 'affiliate', 'shop'])
             .merge({ clicks: knex.raw('outbound_clicks.clicks + 1') })
             .catch((err) => logWithRequest(req, { message: 'click count failed', err }));
         res.set('Referrer-Policy', 'no-referrer-when-downgrade');
