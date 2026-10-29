@@ -33,7 +33,7 @@
             <p class="wgTrailLede">Pick a trail to see every pack hikers have published for it, what most of them carry, and how it compares with other long trails.</p>
 
             <div class="wgTrailPicker" id="wgTrailPicker" data-testid="trail-picker">
-                <nav class="wgTrailChips" aria-label="Popular trails">
+                <nav class="wgTrailChips" aria-label="Popular trails" data-scroll-row>
                     {{#chips}}<a href="/trails/{{slug}}" data-trail="{{slug}}" class="wgTrailChip" {{#on}}aria-current="true"{{/on}} data-testid="trail-chip-{{slug}}"><b>{{label}}</b><span>{{count}}</span></a>{{/chips}}
                 </nav>
                 <form class="wgTrailSearch" action="/trails/all" method="get" role="search">

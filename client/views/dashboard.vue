@@ -345,9 +345,9 @@ export default {
 }
 
 // The editor sits in the same column as the site header and every other
-// page (.wgPage: 1200px wide, 24px in from each side), so the rail starts
+// page (.wgPage: 1366px wide, 24px in from each side), so the rail starts
 // under the logo and the list ends where the header does. The rail and
-// panel take what they need; the list gets the rest of the 1152px.
+// panel take what they need; the list gets the rest of the 1318px.
 @media only screen and (width > $mobile) {
     // Row controls (remove ✕, drag handle) appear in the margins beside the
     // list on hover; the margins are always at least the 24px they need.
@@ -362,16 +362,16 @@ export default {
     }
 
     .lpContentCol {
-        flex: 0 1 calc(1152px - 360px);
+        flex: 0 1 calc(1318px - 440px);
     }
 
     #main:not(.lpHasSidebar) .lpContentCol {
-        flex-basis: calc(1152px - 60px);
+        flex-basis: calc(1318px - 60px);
     }
 
     // Shared plans have their own, fixed-width sidebar.
     #main .wgPlanSidebar ~ .lpContentCol {
-        flex-basis: calc(1152px - 280px);
+        flex-basis: calc(1318px - 280px);
     }
 }
 

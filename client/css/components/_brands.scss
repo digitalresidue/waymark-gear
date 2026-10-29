@@ -38,6 +38,11 @@
     grid-column: 1 / -1;
 }
 
+// Wrapped for the sideways-scroll hint (client/utils/scroll-row.js).
+.wgBrandFilters > .wgScrollRow {
+    grid-column: 1 / -1;
+}
+
 .wgBrandType {
     background: transparent;
     border: 1px solid var(--lp-border);
@@ -166,9 +171,7 @@
 
     .wgBrandTypes {
         flex-wrap: nowrap;
-        margin: 0 -14px;
-        overflow-x: auto;
-        padding: 0 14px 4px;
+        padding: 0 0 4px;
     }
 
     .wgBrandType {

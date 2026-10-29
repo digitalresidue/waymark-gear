@@ -7,6 +7,11 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 13 — A wider site, a roomier gear panel, visible sideways scrolling · 2026-10-29 · branch `wider-site`
+- **The site column is 1366px** (was 1200px), header, footer, editor and every page in it alike; the editor still lines up with the header at both edges.
+- **The editor's side panel is 380px** on big screens (was 300px): 320px up to 1365px wide windows, 270px up to 1180px. Gear names in the Closet and Catalog get the room; catalog names also wrap to a second line instead of being cut off.
+- **Rows that scroll sideways say so**: the edge with more fades out and a round ‹ / › button sits on it (and scrolls the row). Catalog panel and "Add gear" picker categories, the phone Gear filters, and on phones the Brands and Trails chips. One component (`scroll-row.vue`) for the app, one helper (`utils/scroll-row.js`) for server pages, shared styles.
+
 ### Phase 8, part 12 — Empty closet; unused images cleaned up · 2026-10-29 · branch `empty-closet`
 - **Empty** on the closet (desktop sidebar and the phone Gear screen) asks first: delete **only the gear no list uses** (offered first), or **everything**, which also empties your lists (their categories stay). Says how many of each; can't be undone.
 - **Unused images are deleted automatically, once a day.** Every text and JSON column in the database is searched (in SQL) for stored-image paths, so list gear, gear photos, the catalog, brand logos, avatars, banners, trip photos and any future feature are all covered without a list to maintain; stored files nothing refers to, more than a day old (an upload not saved yet is safe), go, with their other sizes. One run at a time across instances (Postgres advisory lock); refuses to delete more than half of all images in one go unless forced. Images can be shared (catalog photos in everyone's lists, copied lists), which is why this is a sweep rather than deleting at the moment something is removed.

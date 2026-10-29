@@ -369,7 +369,8 @@ export default {
 // beside it; the panel's content (lists or closet) is a per-browser choice.
 // ============================================================
 $railWidth: 60px;
-$panelWidth: 300px;
+// Wide enough to read gear names in the closet and catalog.
+$panelWidth: 380px;
 
 #sidebar.wgSidebarDesk {
     flex-basis: $railWidth + $panelWidth;
@@ -624,18 +625,32 @@ $panelWidth: 300px;
     font-weight: 650;
 }
 
-// Tablets and small laptops: a narrower panel, so the list keeps room.
-@media only screen and (width > $mobile) and (width <= 1180px) {
+// Smaller laptops and tablets: a narrower panel, so the list keeps room.
+@media only screen and (width > $mobile) and (width <= 1365px) {
     #sidebar.wgSidebarDesk {
-        flex-basis: $railWidth + 240px;
+        flex-basis: $railWidth + 320px;
 
         .lpSidebarSticky {
-            width: $railWidth + 240px;
+            width: $railWidth + 320px;
         }
     }
 
     .wgSidebarPanel {
-        flex-basis: 240px;
+        flex-basis: 320px;
+    }
+}
+
+@media only screen and (width > $mobile) and (width <= 1180px) {
+    #sidebar.wgSidebarDesk {
+        flex-basis: $railWidth + 270px;
+
+        .lpSidebarSticky {
+            width: $railWidth + 270px;
+        }
+    }
+
+    .wgSidebarPanel {
+        flex-basis: 270px;
     }
 }
 

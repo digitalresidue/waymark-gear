@@ -52,6 +52,12 @@
     min-width: 0;
 }
 
+// Wrapped for the sideways-scroll hint (client/utils/scroll-row.js); the
+// wrapper takes the chips' place in the picker.
+.wgTrailPicker > .wgScrollRow {
+    flex: 1 1 auto;
+}
+
 .wgTrailChip {
     align-items: center;
     border-radius: 10px;
@@ -559,14 +565,7 @@
 
     .wgTrailChips {
         flex-wrap: nowrap;
-        margin: 0 -8px;
-        overflow-x: auto;
-        padding: 0 8px 2px;
-        scrollbar-width: none;
-
-        &::-webkit-scrollbar {
-            display: none;
-        }
+        padding: 0 0 2px;
     }
 
     .wgTrailSearch {

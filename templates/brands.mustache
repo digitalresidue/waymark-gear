@@ -37,7 +37,7 @@
                 <label for="wgBrandQ" class="wgVisuallyHidden">Search brands by name</label>
                 <input id="wgBrandQ" name="q" type="search" class="wgInput" value="{{filters.q}}" placeholder="Search brands, e.g. Zpacks" autocomplete="off" data-testid="brand-search">
                 <label class="wgBrandToggle"><input type="checkbox" name="cottage" value="1" {{#filters.cottage}}checked{{/filters.cottage}} data-testid="brand-cottage"> Cottage makers only</label>
-                <div class="wgBrandTypes" role="group" aria-label="What they make">
+                <div class="wgBrandTypes" role="group" aria-label="What they make" data-scroll-row>
                     <button type="submit" name="type" value="" class="wgBrandType" {{^filters.type}}aria-pressed="true"{{/filters.type}}{{#filters.type}}aria-pressed="false"{{/filters.type}} data-type="" data-testid="brand-type-all">All gear</button>
                     {{#types}}<button type="submit" name="type" value="{{id}}" class="wgBrandType" aria-pressed="{{#on}}true{{/on}}{{^on}}false{{/on}}" data-type="{{id}}" data-testid="brand-type-{{id}}">{{label}}</button>{{/types}}
                 </div>
