@@ -128,14 +128,14 @@ function userImageLocation(userId) {
  * hash of the bytes. Skips the conversion when both files are already there,
  * so re-storing the same image is a no-op. Returns the id.
  */
-async function storeImageFiles(srcPath, buf, width, dir) {
+async function storeImageFiles(srcPath, buf, width, dir, displayMaxWidth = DISPLAY_MAX_WIDTH) {
     const id = crypto.createHash('sha256').update(buf).digest('hex').slice(0, 16);
     const displayPath = path.join(dir, `${id}.webp`);
     const thumbPath = path.join(dir, `${id}_t.webp`);
 
     if (!fs.existsSync(displayPath) || !fs.existsSync(thumbPath)) {
         fs.mkdirSync(dir, { recursive: true });
-        await convert(srcPath, displayPath, width, DISPLAY_MAX_WIDTH);
+        await convert(srcPath, displayPath, width, displayMaxWidth);
         await convert(srcPath, thumbPath, width, THUMB_MAX_WIDTH);
     }
 

@@ -10,6 +10,12 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 ### Phase 8, part 6 — Header tags · 2026-10-28 · branch `head-tags`
 - **Owner → Revenue → Header tags**: paste up to 10 `<meta>` verification tags (Impact, Google Search Console, Pinterest...), one per line; they go into the `<head>` of every page the server sends, at once, no restart. Only `name`/`property`/`itemprop` with `content`/`value` are accepted (no scripts, no `http-equiv`); each tag is rebuilt and escaped, not echoed as pasted. Stored in `site_settings`.
 
+### Phase 8, part 8 — Image links are copied, not hotlinked · 2026-10-28 · branch `local-images`
+- **Pasted image links are copied to Waymark**, fit within **512×512** (plus a 180px thumbnail), as webp: list item photos ("Add image by URL"), catalog gear photos (editor and CSV import) and brand logos. Pages never load images from the shop's own site.
+- Catalog photos are copied when an item is saved, and in the background after an import. **Owner → Gear catalog** shows how many photos still load from other sites (older items, or links that failed), with **Copy them now** and a list of any that couldn't be copied. Lists using catalog gear pick up the copy through the catalog link.
+- The server fetches only public internet addresses on the standard ports (private, loopback and cloud-metadata ranges refused; the checked address is the one connected to; each redirect checked), at most 8 MB in 10 s, and only real JPEG/PNG/WebP. Copies for catalog gear and logos are site content, so they outlive any one account. 20 copies a minute per person.
+- Photo links people pasted into their own lists before this keep working as they are; pasting one again copies it.
+
 ### Phase 8, part 7 — Brands directory · 2026-10-28 · branch `brands`
 - **`/brands`** (Explore ▾ → Brands): gear makers as cards with logo (or a monogram), a short description, a Cottage badge, country, and what they make. Search by name, **Cottage makers only**, and gear-type filters (shelters, sleep, packs, insulation, shells, clothing, footwear, cooking, water, electronics, poles, navigation, accessories). Filters apply in place and keep the URL in step; the same URL works without JavaScript. In the sitemap.
 - **Visit** goes through `/go/brand/:id`, like catalog Buy buttons: the brand's affiliate link when it has one (or a matching affiliate rule), its website for Supporters and when affiliate links are off. Visits are counted per day (no personal data).

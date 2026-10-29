@@ -35,6 +35,7 @@ import { profileForEditing, updateProfile, ProfileError } from './profiles.js';
 import { googleEnabled } from './google.js';
 import { logWithRequest } from './log.js';
 import { importFromLighterPack, importRateLimit, ImportError } from './lighterpack.js';
+import { copyRemoteImage, isLocalImage, localizeCatalogImages, remoteCatalogImageCount, RemoteImageError } from './remote-image.js';
 
 const router = express.Router();
 
@@ -603,6 +604,43 @@ router.get('/api/kits/:externalId', pub(async (req, res) => {
     res.json({ name: list.name, username: row.username, categories });
 }));
 
+// ---- images pasted as links: copied here, never hotlinked -----------------
+
+// A few per minute per person is plenty for pasting photos by hand.
+const copyBudget = new Map();
+function copyAllowed(userId) {
+    const now = Date.now();
+    const recent = (copyBudget.get(userId) || []).filter((t) => t > now - 60000);
+    if (recent.length >= 20) return false;
+    recent.push(now);
+    copyBudget.set(userId, recent);
+    return true;
+}
+
+router.post('/api/images/copy', requireJson, signedIn(async (req, res, user) => {
+    const url = String((req.body && req.body.url) || '').trim();
+    if (isLocalImage(url)) return res.json({ imageUrl: url });
+    if (!copyAllowed(user.user_id)) return res.status(429).json({ message: 'That\'s a lot of images at once; try again in a minute.' });
+    try {
+        res.json(await copyRemoteImage(url, user.user_id));
+    } catch (err) {
+        if (err instanceof RemoteImageError) return res.status(400).json({ message: err.message });
+        throw err;
+    }
+}));
+
+// Catalog photos: a pasted link is copied before the item is saved.
+async function localizeCatalogPhoto(value) {
+    if (!value.image_url || isLocalImage(value.image_url)) return null;
+    try {
+        value.image_url = (await copyRemoteImage(value.image_url, 'site')).imageUrl;
+        return null;
+    } catch (err) {
+        if (err instanceof RemoteImageError) return `Couldn't copy the photo: ${err.message}`;
+        throw err;
+    }
+}
+
 // ---- owner: catalog ----------------------------------------------------------
 
 router.get('/api/admin/catalog', admin(async (req, res) => {
@@ -623,6 +661,8 @@ router.get('/api/admin/catalog/categories', admin(async (req, res) => {
 router.post('/api/admin/catalog', requireJson, admin(async (req, res, user) => {
     const { value, errors } = catalog.validateEntry(req.body || {});
     if (errors.length) return res.status(400).json({ errors });
+    const photoError = await localizeCatalogPhoto(value);
+    if (photoError) return res.status(400).json({ errors: [photoError] });
     try {
         const item = await catalog.create(value);
         logWithRequest(req, { message: 'catalog item created', id: item.id, username: user.username });
@@ -636,6 +676,8 @@ router.post('/api/admin/catalog', requireJson, admin(async (req, res, user) => {
 router.put('/api/admin/catalog/:id', requireJson, admin(async (req, res, user) => {
     const { value, errors } = catalog.validateEntry(req.body || {});
     if (errors.length) return res.status(400).json({ errors });
+    const photoError = await localizeCatalogPhoto(value);
+    if (photoError) return res.status(400).json({ errors: [photoError] });
     try {
         const item = await catalog.update(req.params.id, value);
         if (!item) return res.status(404).json({ message: 'Not found.' });
@@ -692,7 +734,21 @@ router.post('/api/admin/catalog/import/apply', requireJson, admin(async (req, re
     const result = await catalog.applyImport(String(req.body?.csv || ''));
     if (result.error) return res.status(400).json({ message: result.error });
     logWithRequest(req, { message: 'catalog import applied', summary: result.summary, username: user.username });
+    // Photo links in the import are copied in the background; the catalog
+    // page shows how many are left and any that couldn't be copied.
+    localizeCatalogImages(knex, { log: (err) => logWithRequest(req, { message: 'catalog photo copy failed', err }) })
+        .catch((err) => logWithRequest(req, { message: 'catalog photo copy failed', err }));
     res.json(result);
+}));
+
+router.get('/api/admin/catalog/remote-images', admin(async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.json({ remaining: await remoteCatalogImageCount(knex) });
+}));
+
+router.post('/api/admin/catalog/remote-images/copy', admin(async (req, res) => {
+    const result = await localizeCatalogImages(knex, { log: (err) => logWithRequest(req, { message: 'catalog photo copy failed', err }) });
+    res.json({ ...result, remaining: await remoteCatalogImageCount(knex) });
 }));
 
 // ---- owner: featured kits -----------------------------------------------------
