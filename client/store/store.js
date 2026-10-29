@@ -6,6 +6,7 @@ import { fetchJson, readCookie, arrayMove } from '../utils/utils.js';
 import { themePreference, setThemePreference } from '../utils/theme.js';
 import { diffLibrary } from '../utils/library-diff.js';
 import { writeOfflineCache, readOfflineCache, clearOfflineCache, isNetworkError } from '../utils/offline-cache.js';
+import { isPlaceholder } from '../utils/closet.js';
 
 const saveInterval = 5000;
 
@@ -242,6 +243,34 @@ const store = createStore({
             category.collapsed = false;
             state.library.newItemFromCatalog({ category, entry });
             state.library.getListById(state.library.defaultListId).calculateTotals();
+        },
+        // Sidebar Catalog panel, "Sort by type": file the gear under the list
+        // category named like its catalog category (Shelter, Sleep...). If the
+        // list has none, the starter "Untitled" category (nothing in it yet)
+        // takes the name; otherwise a new category is made.
+        addCatalogItemByType(state, { entry }) {
+            const library = state.library;
+            const list = library.getListById(library.defaultListId);
+            const want = String(entry.category || 'Gear').trim();
+            const categories = list.categoryIds.map((id) => library.getCategoryById(id)).filter(Boolean);
+            let category = categories.find((c) => (c.name || '').trim().toLowerCase() === want.toLowerCase());
+            if (!category) {
+                category = categories.find((c) => !(c.name || '').trim()
+                    && c.categoryItems.every((ci) => isPlaceholder(library.getItemById(ci.itemId) || {})));
+                if (category) category.name = want;
+            }
+            if (!category) {
+                category = library.newCategory({ list });
+                category.name = want;
+            }
+            category.collapsed = false;
+            library.newItemFromCatalog({ category, entry });
+            // A starter row that was never filled in goes once real gear arrives.
+            for (const ci of category.categoryItems.slice()) {
+                const item = library.getItemById(ci.itemId);
+                if (item && !item.catalogId && isPlaceholder(item) && category.categoryItems.length > 1) library.removeItem(item.id);
+            }
+            list.calculateTotals();
         },
         loadLibraryData(state, libraryData) {
             const library = new Library();
