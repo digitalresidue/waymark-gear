@@ -7,6 +7,9 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 10 — "@name" goes to the profile · 2026-10-29 · branch `profile-links`
+- On kit cards (homepage featured kit, Explore and homepage kit lists, shakedown cards), Leaderboards and Trails pack cards, **the hiker's @name links to their profile**. The rest of the card still opens the list (the title link stretches over the card; the name sits above it, since links can't nest). Cards are no longer one big link, which also reads better with screen readers.
+
 ### Phase 8, part 9 — Your picture in the header · 2026-10-28 · branch `header-avatar`
 - The account button at the top right shows **your profile picture** instead of your initial once you've added one (Your profile), on every page, in the app and on server-rendered pages, and changes as soon as you save a new one. No picture: the initial, as before.
 

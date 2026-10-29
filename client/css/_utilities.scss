@@ -283,3 +283,43 @@
 .gu-transit {
     opacity: 0.2;
 }
+
+// Cards that open a pack from anywhere on them, but also link to the
+// author's profile: the title link stretches over the card (.wgStretch), and
+// the @name link (.wgByLink) sits above it. Links can't nest, so this is how
+// one card holds two. The card itself needs position: relative.
+.wgStretch {
+    color: inherit;
+    text-decoration: none;
+
+    &::after {
+        content: "";
+        inset: 0;
+        position: absolute;
+        z-index: 1;
+    }
+
+    &:focus-visible {
+        outline: none;
+
+        &::after {
+            border-radius: inherit;
+            outline: 2px solid var(--lp-primary);
+            outline-offset: 2px;
+        }
+    }
+}
+
+.wgByLink {
+    color: inherit;
+    font-weight: 600;
+    position: relative;
+    text-decoration: none;
+    z-index: 2;
+
+    &:hover,
+    &:focus-visible {
+        color: var(--lp-primary);
+        text-decoration: underline;
+    }
+}

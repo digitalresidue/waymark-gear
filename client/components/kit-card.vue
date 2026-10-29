@@ -1,11 +1,11 @@
 <template>
-    <a :href="`/r/${kit.externalId}`" class="wgKitCard" :class="{ wgKitCardNew: newShakedown }" data-testid="kit-card">
+    <article class="wgKitCard" :class="{ wgKitCardNew: newShakedown }" data-testid="kit-card">
         <span v-if="newShakedown" class="wgNewRibbon wgNewRibbonLeft" title="Shakedown asked for in the last 8 hours" data-testid="shakedown-new">New</span>
         <div class="wgKitCardTop">
             <div class="wgKitCardTitle">
-                <h3>{{ kit.name }}</h3>
+                <h3><a :href="`/r/${kit.externalId}`" class="wgStretch" data-testid="kit-card-link">{{ kit.name }}</a></h3>
                 <p class="wgMuted">
-                    by @{{ kit.username }}<span v-if="kit.featured"> · <span class="wgKitFeatured">Featured</span></span><span v-if="kit.shakedown"> · <span class="wgKitShakedown" data-testid="kit-shakedown">Shakedown requested</span></span><span v-if="tripLabel"> · {{ tripLabel }}</span>
+                    by <a :href="`/@${kit.username}`" class="wgByLink" data-testid="kit-card-author">@{{ kit.username }}</a><span v-if="kit.featured"> · <span class="wgKitFeatured">Featured</span></span><span v-if="kit.shakedown"> · <span class="wgKitShakedown" data-testid="kit-shakedown">Shakedown requested</span></span><span v-if="tripLabel"> · {{ tripLabel }}</span>
                 </p>
             </div>
             <span class="wgKitCardWeight wgMono">{{ baseWeight }}</span>
@@ -17,7 +17,7 @@
             <span>{{ kit.itemCount }} {{ kit.itemCount === 1 ? 'item' : 'items' }}<template v-if="kit.score"> · <span data-testid="kit-score">{{ kit.score > 0 ? '▲' : '▼' }} {{ Math.abs(kit.score) }}</span></template><template v-if="kit.shakedown && kit.commentCount !== undefined"> · {{ kit.commentCount }} {{ kit.commentCount === 1 ? 'suggestion' : 'suggestions' }}</template></span>
             <span>{{ topCategories }}</span>
         </p>
-    </a>
+    </article>
 </template>
 
 <script>

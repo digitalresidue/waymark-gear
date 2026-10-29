@@ -73,6 +73,7 @@ test.describe('Phase 8: trails', () => {
         await expect(page).toHaveURL(/\/trails\/pct$/);
         await expect(page.getByTestId('trail-name')).toHaveText('Pacific Crest Trail');
         await expect(page.getByTestId('trail-pack').filter({ hasText: listName })).toContainText('2026 NOBO');
+        await expect(page.getByTestId('trail-pack').filter({ hasText: listName }).getByTestId('trail-pack-author')).toHaveAttribute('href', new RegExp(`^/@${u.username}$`));
         await page.getByTestId('trail-sort-year').click();
         await expect(page).toHaveURL(/\/trails\/pct\?sort=year$/);
         await expect(page.getByTestId('trail-pack').filter({ hasText: listName })).toBeVisible();

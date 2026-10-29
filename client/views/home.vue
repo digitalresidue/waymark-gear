@@ -43,7 +43,12 @@
                     <div class="wgHeroCardHead">
                         <div>
                             <p class="wgMuted wgHeroCardBy">
-                                {{ heroKit ? `Kit by @${heroKit.username}` : 'Example kit' }}
+                                <template v-if="heroKit">
+                                    Kit by <a :href="`/@${heroKit.username}`" class="wgByLink" data-testid="hero-kit-author">@{{ heroKit.username }}</a>
+                                </template>
+                                <template v-else>
+                                    Example kit
+                                </template>
                             </p>
                             <h2 class="wgHeroCardTitle">
                                 {{ heroKit ? heroKit.name : 'Three nights, shoulder season' }}
@@ -146,14 +151,14 @@
                     </div>
                 </div>
                 <div v-if="shakedowns.length" class="wgKitGrid">
-                    <a v-for="kit in shakedowns" :key="kit.externalId" :href="`/r/${kit.externalId}#wgComments`" class="wgShakeCard" data-testid="shakedown-card">
+                    <article v-for="kit in shakedowns" :key="kit.externalId" class="wgShakeCard" data-testid="shakedown-card">
                         <span v-if="isNew(kit)" class="wgNewRibbon" :title="`Asked ${ago(kit.shakedownAt)}`" data-testid="shakedown-new">New</span>
                         <span class="wgShakeTag">{{ kit.commentCount ? `${kit.commentCount} ${kit.commentCount === 1 ? 'suggestion' : 'suggestions'}` : 'No suggestions yet' }}</span>
-                        <strong class="wgShakeName">{{ kit.name }}</strong>
-                        <span class="wgMuted">by @{{ kit.username }}{{ tripLabel(kit) ? ` · ${tripLabel(kit)}` : '' }}</span>
+                        <a :href="`/r/${kit.externalId}#wgComments`" class="wgShakeName wgStretch">{{ kit.name }}</a>
+                        <span class="wgMuted">by <a :href="`/@${kit.username}`" class="wgByLink" data-testid="shakedown-card-author">@{{ kit.username }}</a>{{ tripLabel(kit) ? ` · ${tripLabel(kit)}` : '' }}</span>
                         <span class="wgShakeWeight wgMono">{{ formatWeight(kit.baseWeightMg, 'lb') }} <small class="wgMuted">base</small></span>
                         <span class="wgShakeCta">Suggest a change →</span>
-                    </a>
+                    </article>
                 </div>
                 <div v-else-if="shakedownsLoaded" class="wgEmpty">
                     <p><strong>No shakedown requests right now.</strong></p>
@@ -752,6 +757,7 @@ export default {
 
 .wgShakeName {
     font-size: 17px;
+    font-weight: 700;
 }
 
 .wgShakeWeight {

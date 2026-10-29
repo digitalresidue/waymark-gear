@@ -43,12 +43,12 @@
     <ul class="wgTrailCards" data-testid="trail-packs-list">
         {{#kits}}
         <li class="wgTrailCard" data-testid="trail-pack">
-            <a href="/r/{{externalId}}">
-                <span class="wgTrailCardTop"><strong>{{name}}</strong><span class="wgMono">{{baseWeight}}</span></span>
-                <span class="wgTrailCardBy">@{{username}}{{#tag}} · {{tag}}{{/tag}}{{#shakedown}} · <span class="wgTrailShakedown">Shakedown requested</span>{{/shakedown}}</span>
+            <div class="wgTrailCardBox">
+                <span class="wgTrailCardTop"><a href="/r/{{externalId}}" class="wgStretch"><strong>{{name}}</strong></a><span class="wgMono">{{baseWeight}}</span></span>
+                <span class="wgTrailCardBy"><a href="/@{{username}}" class="wgByLink" data-testid="trail-pack-author">@{{username}}</a>{{#tag}} · {{tag}}{{/tag}}{{#shakedown}} · <span class="wgTrailShakedown">Shakedown requested</span>{{/shakedown}}</span>
                 <span class="wgTrailBar">{{#bars}}<span style="flex: {{flex}}" class="wgBar{{i}}"></span>{{/bars}}</span>
                 <span class="wgTrailCardFoot"><span>▲ {{score}} · {{comments}}</span><span>{{itemCount}} items</span></span>
-            </a>
+            </div>
         </li>
         {{/kits}}
     </ul>
