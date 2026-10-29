@@ -7,11 +7,11 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 10 — "@name" goes to the profile · 2026-10-29 · branch `profile-links`
+- On kit cards (homepage featured kit, Explore and homepage kit lists, shakedown cards), Leaderboards and Trails pack cards, **the hiker's @name links to their profile**. The rest of the card still opens the list (the title link stretches over the card; the name sits above it, since links can't nest). Cards are no longer one big link, which also reads better with screen readers.
+
 ### Phase 8, part 9 — Your picture in the header · 2026-10-28 · branch `header-avatar`
 - The account button at the top right shows **your profile picture** instead of your initial once you've added one (Your profile), on every page, in the app and on server-rendered pages, and changes as soon as you save a new one. No picture: the initial, as before.
-
-### Phase 8, part 6 — Header tags · 2026-10-28 · branch `head-tags`
-- **Owner → Revenue → Header tags**: paste up to 10 `<meta>` verification tags (Impact, Google Search Console, Pinterest...), one per line; they go into the `<head>` of every page the server sends, at once, no restart. Only `name`/`property`/`itemprop` with `content`/`value` are accepted (no scripts, no `http-equiv`); each tag is rebuilt and escaped, not echoed as pasted. Stored in `site_settings`.
 
 ### Phase 8, part 8 — Image links are copied, not hotlinked · 2026-10-28 · branch `local-images`
 - **Pasted image links are copied to Waymark**, fit within **512×512** (plus a 180px thumbnail), as webp: list item photos ("Add image by URL"), catalog gear photos (editor and CSV import) and brand logos. Pages never load images from the shop's own site.
@@ -23,6 +23,9 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 - **`/brands`** (Explore ▾ → Brands): gear makers as cards with logo (or a monogram), a short description, a Cottage badge, country, and what they make. Search by name, **Cottage makers only**, and gear-type filters (shelters, sleep, packs, insulation, shells, clothing, footwear, cooking, water, electronics, poles, navigation, accessories). Filters apply in place and keep the URL in step; the same URL works without JavaScript. In the sitemap.
 - **Visit** goes through `/go/brand/:id`, like catalog Buy buttons: the brand's affiliate link when it has one (or a matching affiliate rule), its website for Supporters and when affiliate links are off. Visits are counted per day (no personal data).
 - **Owner → Brands**: add, edit and delete brands, upload a logo (or paste an https link), draft or published, with visits over the last 30 days. Saying who gets which link in words, as the catalog editor does.
+
+### Phase 8, part 6 — Header tags · 2026-10-28 · branch `head-tags`
+- **Owner → Revenue → Header tags**: paste up to 10 `<meta>` verification tags (Impact, Google Search Console, Pinterest...), one per line; they go into the `<head>` of every page the server sends, at once, no restart. Only `name`/`property`/`itemprop` with `content`/`value` are accepted (no scripts, no `http-equiv`); each tag is rebuilt and escaped, not echoed as pasted. Stored in `site_settings`.
 
 ### Phase 8, part 5 — Writing gear reviews, list rows, Analytics · 2026-10-28 · branch `reviews-writing`
 - **A way in**: reviews are written on each gear page, but nothing led there. Now reviewers (owners, moderators, the `reviewers` setting, or everyone with `openReviews`) get a **Write a review** panel at the top of `/reviews`: search the catalog, or pick from **suggestions** — the most-carried published gear you haven't reviewed yet. Members and visitors don't see it.
