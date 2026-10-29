@@ -28,7 +28,7 @@
                         <li v-for="(k, i) in results[col.sort]" :key="k.externalId">
                             <span class="wgBoardRank">{{ i + 1 }}</span>
                             <a :href="`/r/${k.externalId}`" class="wgBoardName">{{ k.name }}</a>
-                            <span class="wgMuted wgBoardBy">@{{ k.username }}</span>
+                            <a :href="`/@${k.username}`" class="wgMuted wgBoardBy wgByLink" data-testid="board-author">@{{ k.username }}</a>
                             <span class="wgMono wgBoardStat">{{ col.sort === 'top' ? `▲ ${k.score}` : weight(k.baseWeightMg) }}</span>
                         </li>
                     </ol>

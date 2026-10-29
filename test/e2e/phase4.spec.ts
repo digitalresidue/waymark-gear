@@ -141,7 +141,9 @@ test.describe('Phase 4', () => {
         await expect(card.getByTestId('shakedown-new')).toHaveText('New');
         const api = await (await visitor.request.get(url(`/api/explore/kits?shakedown=1&q=${encodeURIComponent(name)}`))).json();
         expect(Date.now() - new Date(api.kits[0].shakedownAt).getTime()).toBeLessThan(10 * 60 * 1000);
-        await card.click();
+        // The author's name goes to their profile; the rest of the card to the list.
+        await expect(card.getByTestId('shakedown-card-author')).toHaveAttribute('href', /^\/@/);
+        await card.getByRole('link', { name }).click();
         await expect(visitor).toHaveURL(/#wgComments$/);
         await asker.context.close();
     });

@@ -370,7 +370,8 @@
     padding: 0;
 }
 
-.wgTrailCard a {
+.wgTrailCardBox {
+    position: relative;
     background: var(--lp-surface);
     border: 1px solid var(--lp-border);
     border-radius: 14px;
