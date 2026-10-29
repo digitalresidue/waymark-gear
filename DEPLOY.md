@@ -248,6 +248,23 @@ Who gets what when they click Buy:
 | Supporter | Product link | Product link |
 | Everyone else | Affiliate link | Product link, with your shop rule's code added if one matches its site |
 
+**Where to buy: more shops.** Gear is often sold by general stores too
+(Backcountry, Garage Grown Gear, REI). Each item can list up to **four more
+shops** besides its product link, and Buy then opens a "Where to buy" menu of
+them all (one place to buy is still a plain Buy link). Per shop, the CSV has
+four columns, `shop1_name, shop1_badge, shop1_url, shop1_affiliate_url`
+through `shop4_...`, and the catalog editor has the same under "Also sold by":
+
+- **Name**: what the menu shows (blank: the shop's website).
+- **Badge**: a link to the shop's logo. It's copied to your server (never
+  loaded from theirs) and kept once per shop website, so it's used on every
+  item that shop sells; leave it blank and Waymark tries the shop's own site
+  icon, or shows its initial.
+- **Link** and **affiliate link**: the same rules as the product link above,
+  per shop, including your shop rules.
+
+Leave the shop columns out of a CSV and items keep the shops they have.
+
 Shop rules (**Owner → Revenue → Affiliate rules**) cover programs that work
 by adding a parameter, e.g. domain `amazon.com`, parameter `tag`, value
 `yourtag-20`, so you don't need an affiliate link per Amazon item. The

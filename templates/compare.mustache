@@ -58,7 +58,7 @@
                         <tr><th scope="row">In public lists</th>{{#items}}<td>{{uses}}</td>{{/items}}</tr>
                         <tr><th scope="row">Category</th>{{#items}}<td>{{category}}</td>{{/items}}</tr>
                         <tr><th scope="row">About</th>{{#items}}<td class="wgCompareAbout">{{description}}</td>{{/items}}</tr>
-                        <tr><th scope="row"></th>{{#items}}<td>{{#url}}<a href="/go/{{id}}?from=compare" rel="sponsored nofollow noopener" target="_blank" class="wgBtn wgBtnPrimary wgBtnSmall" data-testid="compare-buy">Buy</a> {{/url}}<a href="/gear?wish={{id}}" class="wgBtn wgBtnGhost wgBtnSmall" data-testid="compare-wish">Add to wishlist</a></td>{{/items}}</tr>
+                        <tr><th scope="row"></th>{{#items}}<td>{{> buy}} <a href="/gear?wish={{id}}" class="wgBtn wgBtnGhost wgBtnSmall" data-testid="compare-wish">Add to wishlist</a></td>{{/items}}</tr>
                     </tbody>
                 </table>
             </div>

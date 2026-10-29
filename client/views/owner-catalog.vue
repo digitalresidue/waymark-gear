@@ -246,6 +246,29 @@
                         <p class="wgSpan2 wgBuyRoute" data-testid="catalog-buy-route">
                             {{ buyRoute }}
                         </p>
+                        <!-- Where to buy: other shops that sell it (server/shops.js). -->
+                        <fieldset class="wgSpan2 wgShops" data-testid="catalog-shops">
+                            <legend>Also sold by <span class="wgMuted">(up to {{ maxShops }} more shops; the Buy button lists them all)</span></legend>
+                            <div v-for="(shop, i) in form.shops" :key="i" class="wgShopRow" data-testid="catalog-shop">
+                                <span class="wgShopBadgeWrap">
+                                    <img v-if="shop.badgeUrl" :src="shop.badgeUrl" alt="" class="wgShopBadge">
+                                    <span v-else class="wgShopBadge wgShopInitial" aria-hidden="true">{{ (shop.name || shop.url.replace(/^https?:\/\/(www\.)?/, '') || '?').charAt(0).toUpperCase() }}</span>
+                                </span>
+                                <input v-model.trim="shop.name" class="wgInput" placeholder="Shop name, e.g. Backcountry" :aria-label="`Shop ${i + 1} name`" data-testid="catalog-shop-name">
+                                <input v-model.trim="shop.url" class="wgInput" type="url" placeholder="Product link at the shop" :aria-label="`Shop ${i + 1} link`" data-testid="catalog-shop-url">
+                                <input v-model.trim="shop.affiliateUrl" class="wgInput" type="url" placeholder="Affiliate link (optional)" :aria-label="`Shop ${i + 1} affiliate link`" data-testid="catalog-shop-affiliate">
+                                <input v-model.trim="shop.badge" class="wgInput" type="url" placeholder="Badge image link (optional)" :aria-label="`Shop ${i + 1} badge image link`" data-testid="catalog-shop-badge">
+                                <button type="button" class="wgBtn wgBtnSmall wgBtnGhost" :aria-label="`Remove shop ${i + 1}`" @click="form.shops.splice(i, 1)">
+                                    Remove
+                                </button>
+                            </div>
+                            <button v-if="form.shops.length < maxShops" type="button" class="wgBtn wgBtnSmall" data-testid="catalog-shop-add" @click="form.shops.push({ name: '', url: '', affiliateUrl: '', badge: '', badgeUrl: '' })">
+                                + Add a shop
+                            </button>
+                            <p class="wgMuted wgShopHint">
+                                A shop's badge is kept once for its website and used on every item it sells; leave it blank to use the shop's own site icon. Affiliate links follow the same rule as above: Supporters get the plain link.
+                            </p>
+                        </fieldset>
                         <label class="wgField wgSpan2">Photo URL <span class="wgMuted">(copied here on save, up to 512px, so their site isn't hotlinked)</span>
                             <input v-model="form.imageUrl" class="wgInput" type="url" placeholder="https://" data-testid="catalog-image-url">
                         </label>
@@ -298,6 +321,7 @@ const PAGE = 100;
 const emptyForm = () => ({
     name: '', brand: '', sku: '', category: '', weight: '', unit: 'oz', price: '', currency: 'USD',
     status: 'published', description: '', url: '', affiliateUrl: '', imageUrl: '', tags: '', wornDefault: false, consumableDefault: false,
+    shops: [],
 });
 
 export default {
@@ -324,6 +348,7 @@ export default {
             importPlan: null,
             applying: false,
             notice: '',
+            maxShops: 4,
             remoteImages: 0,
             copyResult: null,
             copyingImages: false,
@@ -394,21 +419,25 @@ export default {
                 weight: String(item.weight),
                 price: item.price === null ? '' : String(item.price),
                 tags: (item.tags || []).join('; '),
+                shops: (item.shops || []).map((x) => ({ name: x.name, url: x.url, affiliateUrl: x.affiliateUrl || '', badge: '', badgeUrl: x.badgeUrl || '' })),
             } : emptyForm();
             this.editorOpen = true;
         },
         async save() {
             this.saving = true;
             this.formError = '';
-            const body = JSON.stringify({ ...this.form, tags: this.form.tags });
+            const shops = this.form.shops.map(({ badgeUrl, ...x }) => x); // eslint-disable-line no-unused-vars
+            const body = JSON.stringify({ ...this.form, tags: this.form.tags, shops });
             try {
+                let r;
                 if (this.editing && this.editing.id) {
-                    await api(`/api/admin/catalog/${this.editing.id}`, { method: 'PUT', body });
+                    r = await api(`/api/admin/catalog/${this.editing.id}`, { method: 'PUT', body });
                     this.notice = `Saved “${this.form.name}”. Lists using it pick up the change the next time they load.`;
                 } else {
-                    await api('/api/admin/catalog', { method: 'POST', body });
+                    r = await api('/api/admin/catalog', { method: 'POST', body });
                     this.notice = `Added “${this.form.name}” to the catalog.`;
                 }
+                if (r && r.warnings && r.warnings.length) this.notice += ` ${r.warnings.join(' ')}`;
                 this.editorOpen = false;
                 this.load(true);
                 this.loadCategories();
@@ -493,6 +522,58 @@ export default {
 
 <style lang="scss">
 @import "../css/_globals";
+
+.wgShops {
+    border: 1px solid var(--lp-border);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 10px 12px;
+
+    legend {
+        font-weight: 700;
+        padding: 0 4px;
+    }
+}
+
+.wgShopRow {
+    align-items: center;
+    border-bottom: 1px dashed var(--lp-border);
+    display: grid;
+    gap: 6px;
+    padding-bottom: 8px;
+    grid-template-columns: 28px repeat(2, minmax(0, 1fr)) auto;
+
+    // Two lines per shop: name and link, then affiliate and badge.
+    > .wgInput:nth-of-type(3) {
+        grid-column: 2;
+    }
+}
+
+.wgShopBadge {
+    background: #fff;
+    border: 1px solid var(--lp-border);
+    border-radius: 7px;
+    display: inline-flex;
+    height: 28px;
+    object-fit: contain;
+    width: 28px;
+}
+
+.wgShopInitial {
+    align-items: center;
+    background: var(--lp-active-bg);
+    color: var(--lp-accent-green-deep);
+    font-weight: 800;
+    justify-content: center;
+}
+
+.wgShopHint {
+    font-size: 12.5px;
+    margin: 0;
+}
 
 .wgRemoteImages {
     margin: 0 0 16px;

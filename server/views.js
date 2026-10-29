@@ -26,6 +26,7 @@ import { reviewsFor, latestReviews } from './reviews.js';
 import { getById as catalogItem, isUuid, search as catalogSearch } from './catalog.js';
 import { priceHistory } from './prices.js';
 import * as trails from './trails.js';
+import { badgesFor, buyOptions } from './shops.js';
 import { publishedBrands, matchesBrand } from './brands.js';
 import { GEAR_TYPES, GEAR_TYPE_IDS, gearTypeLabel } from '../client/brand-types.js';
 import { PACK_FEATURES, DIRECTIONS } from '../client/utils/trails.js';
@@ -553,6 +554,21 @@ function reviewModel(r) {
     };
 }
 
+// The Buy button: one shop goes straight there; more open a Where to buy
+// menu (templates/t_buy.mustache). Every link goes through /go, which picks
+// the affiliate link or, for Supporters, the plain one.
+function buyModel(item, badges, { from, testid, btnClass }) {
+    const safe = { ...item, url: /^https:\/\//.test(item.url || '') ? item.url : '' };
+    const options = buyOptions(safe, badges).map((o) => ({ ...o, href: `/go/${item.id}?from=${from}${o.index ? `&shop=${o.index}` : ''}` }));
+    return {
+        testid,
+        btnClass,
+        any: options.length > 0,
+        single: options.length === 1 ? { href: options[0].href } : null,
+        menu: options.length > 1 ? { count: options.length, options } : null,
+    };
+}
+
 router.get('/g/:id', async (req, res) => {
     const id = String(req.params.id);
     if (!isUuid(id)) return res.status(404).send('No such gear.');
@@ -565,6 +581,7 @@ router.get('/g/:id', async (req, res) => {
         const kitCount = Number(uses.n);
         const fullName = [item.brand, item.name].filter(Boolean).join(' ');
         const history = await priceHistory(id);
+        const badges = await badgesFor([...(item.shops || []).map((x) => x.domain), item.url && new URL(item.url).hostname.replace(/^www\./, '')]);
         const model = {
             ...shareHead(),
             cspNonce: NONCE_PLACEHOLDER,
@@ -577,6 +594,7 @@ router.get('/g/:id', async (req, res) => {
                 weight: `${weightUtils.MgToDisplayWeight(item.weightMg, item.unit)} ${item.unit}`,
                 price: item.price ? `${item.currency === 'USD' || !item.currency ? '$' : `${item.currency} `}${item.price}` : '',
                 url: /^https:\/\//.test(item.url) ? item.url : '',
+                buy: buyModel(item, badges, { from: 'gear', testid: 'gear-buy', btnClass: 'wgBtnGhost' }),
                 average: summary.average,
                 stars: summary.average ? STARS(Math.round(summary.average)) : '',
                 countLabel: `${summary.count} ${summary.count === 1 ? 'review' : 'reviews'}`,
@@ -587,7 +605,7 @@ router.get('/g/:id', async (req, res) => {
                 prices: priceModel(history),
             },
         };
-        sendFresh(res, renderPage(gearTemplate, model, { reviewCard: templates.t_reviewCard || '' }, req.path));
+        sendFresh(res, renderPage(gearTemplate, model, { reviewCard: templates.t_reviewCard || '', buy: templates.t_buy || '' }, req.path));
     } catch (err) {
         logWithRequest(req, { message: 'error rendering gear page', err });
         res.status(500).send('An error occurred.');
@@ -624,6 +642,7 @@ router.get('/compare', async (req, res) => {
         const found = ids.length ? (await catalogSearch({ ids, limit: 4 })).items : [];
         const items = ids.map((id) => found.find((f) => f.id === id)).filter(Boolean);
         const ratings = await ratingsFor(items.map((i) => i.id));
+        const compareBadges = await badgesFor(items.flatMap((i) => [...(i.shops || []).map((x) => x.domain), i.url ? new URL(i.url).hostname.replace(/^www\./, '') : '']));
         const lowestRows = items.length ? await knex('catalog_price_history').whereIn('catalog_id', items.map((i) => i.id))
             .groupBy('catalog_id').select('catalog_id', knex.raw('min(price)::float as low')) : [];
         const lowest = new Map(lowestRows.map((r) => [r.catalog_id, r.low]));
@@ -644,6 +663,7 @@ router.get('/compare', async (req, res) => {
             hasItems: items.length > 0,
             items: items.map((i) => {
                 const r = ratings[i.id];
+                const buy = buyModel(i, compareBadges, { from: 'compare', testid: 'compare-buy', btnClass: 'wgBtnPrimary' });
                 return {
                     ...i,
                     initial: i.name.trim().charAt(0).toUpperCase(),
@@ -658,10 +678,11 @@ router.get('/compare', async (req, res) => {
                     uses: useCount.get(i.id) || 0,
                     description: i.description.slice(0, 300),
                     removeUrl: `/compare?ids=${items.filter((x) => x.id !== i.id).map((x) => x.id).join(',')}`,
+                    buy,
                 };
             }),
         };
-        sendFresh(res, renderPage(compareTemplate, model, {}, req.path));
+        sendFresh(res, renderPage(compareTemplate, model, { buy: templates.t_buy || '' }, req.path));
     } catch (err) {
         logWithRequest(req, { message: 'error rendering comparison', err });
         res.status(500).send('An error occurred.');

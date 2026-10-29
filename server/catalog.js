@@ -10,11 +10,14 @@ import { stringify } from 'csv-stringify/sync';
 
 import knex from './db.js';
 import weightUtils from '../client/utils/weight.js';
+import { parseShops, shopsToApi, publicShops, SHOP_CSV_COLUMNS, MAX_SHOPS } from './shops.js';
 
 export const UNITS = ['g', 'kg', 'oz', 'lb'];
 export const CSV_COLUMNS = [
     'sku', 'name', 'brand', 'category', 'description', 'weight', 'unit', 'price', 'currency',
     'url', 'image_url', 'worn_default', 'consumable_default', 'tags', 'status', 'affiliate_url',
+    // Where to buy, besides url: up to four more shops (server/shops.js).
+    ...SHOP_CSV_COLUMNS,
 ];
 export const MAX_IMPORT_ROWS = 5000;
 
@@ -45,6 +48,8 @@ export function toApi(row) {
         status: row.status,
         // Owner-only: public routes drop it (publicEntry).
         affiliateUrl: row.affiliate_url || '',
+        // Where to buy besides url; each shop's affiliate link is owner-only too.
+        shops: shopsToApi(row.shops),
         updatedAt: row.updated_at,
     };
 }
@@ -53,7 +58,7 @@ export function toApi(row) {
 // which only the /go redirect uses.
 export function publicEntry(entry) {
     const { affiliateUrl, ...rest } = entry; // eslint-disable-line no-unused-vars
-    return rest;
+    return { ...rest, shops: publicShops(rest.shops) };
 }
 
 const truthy = (v) => /^(1|true|yes|y|x)$/i.test(String(v ?? '').trim());
@@ -130,8 +135,14 @@ export function validateEntry(input) {
     const currency = (str(get('currency'), 3).toUpperCase() || 'USD');
     if (!/^[A-Z]{3}$/.test(currency)) errors.push('currency must be a 3-letter code like USD');
 
+    // Where to buy (server/shops.js). Badges aren't stored on the item: they're
+    // saved per shop website after the item is (badges).
+    const shopInput = parseShops(input, url);
+    errors.push(...shopInput.errors);
+
     return {
         errors,
+        badges: shopInput.badges,
         value: {
             sku,
             name,
@@ -149,6 +160,7 @@ export function validateEntry(input) {
             tags,
             status,
             ...(affiliateUrl === undefined ? {} : { affiliate_url: affiliateUrl }),
+            ...(shopInput.shops === undefined ? {} : { shops: JSON.stringify(shopInput.shops) }),
         },
     };
 }
@@ -250,12 +262,20 @@ export function neutralizeFormula(value) {
     return /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
 }
 
-export function toCsv(items) {
+// badges: domain -> { name, badgeUrl } (shops.badgesFor), for the badge
+// columns; an exported badge is our own copy's path, which imports back as is.
+export function toCsv(items, badges = new Map()) {
+    const shopCells = (i) => Array.from({ length: MAX_SHOPS }, (_, n) => {
+        const shop = (i.shops || [])[n];
+        if (!shop) return ['', '', '', ''];
+        const b = badges.get(shop.domain) || {};
+        return [shop.name, b.badgeUrl || '', shop.url, shop.affiliateUrl || ''];
+    }).flat();
     const rows = items.map((i) => [
         i.sku, i.name, i.brand, i.category, i.description, i.weight, i.unit,
         i.price === null ? '' : i.price.toFixed(2), i.currency, i.url, i.imageUrl,
         i.wornDefault ? 'true' : 'false', i.consumableDefault ? 'true' : 'false',
-        (i.tags || []).join(';'), i.status, i.affiliateUrl || '',
+        (i.tags || []).join(';'), i.status, i.affiliateUrl || '', ...shopCells(i),
     ].map(neutralizeFormula));
     return stringify([CSV_COLUMNS, ...rows]);
 }
@@ -267,7 +287,12 @@ export function templateCsv() {
             '28', 'oz', '399.00', 'USD', 'https://example.com/tent', '', 'false', 'false', 'tent;1p', 'draft',
             // affiliate_url: the tracking link from your affiliate network,
             // optional. url above stays the normal product page.
-            'https://www.avantlink.com/click.php?tt=cl&mi=12345&pw=67890&url=https%3A%2F%2Fexample.com%2Ftent'],
+            'https://www.avantlink.com/click.php?tt=cl&mi=12345&pw=67890&url=https%3A%2F%2Fexample.com%2Ftent',
+            // Where to buy, besides url: per shop, its name, a badge image link
+            // (copied to Waymark; leave blank to use the shop's own icon), the
+            // normal product link, then an affiliate link (optional).
+            'Example Outdoor Store', 'https://example-store.com/logo.png', 'https://example-store.com/p/tent', 'https://example-store.sjv.io/c/1/2/3',
+            ...Array(SHOP_CSV_COLUMNS.length - 4).fill('')],
     ]);
 }
 
@@ -283,13 +308,14 @@ function parseCsv(text) {
 }
 
 const COMPARED = ['sku', 'name', 'brand', 'category', 'description', 'weight_mg', 'unit', 'price', 'currency',
-    'url', 'image_url', 'worn_default', 'consumable_default', 'tags', 'status', 'affiliate_url'];
+    'url', 'image_url', 'worn_default', 'consumable_default', 'tags', 'status', 'affiliate_url', 'shops'];
 
 function differs(row, value) {
     return COMPARED.some((k) => {
         if (k === 'price') return (row.price === null ? null : Number(row.price)) !== value.price;
         if (k === 'tags') return (row.tags || []).join('\u0000') !== value.tags.join('\u0000');
         if (k === 'affiliate_url' && value[k] === undefined) return false;
+        if (k === 'shops') return value.shops !== undefined && JSON.stringify(row.shops || []) !== value.shops;
         return (row[k] ?? null) !== (value[k] ?? null);
     });
 }
@@ -314,7 +340,7 @@ export async function planImport(text) {
     const seen = new Set();
     const rows = records.map((record, index) => {
         const line = index + 2; // 1-based, after the header
-        const { value, errors } = validateEntry(record);
+        const { value, errors, badges } = validateEntry(record);
         const key = value.sku ? `sku:${value.sku.toLowerCase()}` : `name:${value.brand.toLowerCase()}\u0000${value.name.toLowerCase()}`;
         if (seen.has(key)) errors.push('duplicate of an earlier row in this file');
         seen.add(key);
@@ -322,9 +348,9 @@ export async function planImport(text) {
 
         const match = (value.sku && bySku.get(value.sku.toLowerCase()))
             || byName.get(`${value.brand.toLowerCase()}\u0000${value.name.toLowerCase()}`);
-        if (!match) return { line, action: 'new', name: value.name, value };
-        if (!differs(match, value)) return { line, action: 'unchanged', name: value.name, id: match.id };
-        return { line, action: 'update', name: value.name, id: match.id, value };
+        if (!match) return { line, action: 'new', name: value.name, value, badges };
+        if (!differs(match, value)) return { line, action: 'unchanged', name: value.name, id: match.id, badges };
+        return { line, action: 'update', name: value.name, id: match.id, value, badges };
     });
 
     const summary = { new: 0, update: 0, unchanged: 0, error: 0 };
@@ -350,5 +376,10 @@ export async function applyImport(text) {
         }
     });
     await recordPrices(touched);
-    return { summary: plan.summary, errors: plan.rows.filter((r) => r.action === 'error') };
+    // Shop badges and names from the sheet, and every shop it mentions (the
+    // caller saves and fetches badges in the background: it can take a while).
+    const ok = plan.rows.filter((r) => r.action !== 'error');
+    const badges = ok.flatMap((r) => r.badges || []);
+    const domains = ok.flatMap((r) => (r.value && r.value.shops ? JSON.parse(r.value.shops).map((x) => x.domain) : []));
+    return { summary: plan.summary, errors: plan.rows.filter((r) => r.action === 'error'), badges, domains };
 }

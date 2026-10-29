@@ -36,6 +36,7 @@ import { googleEnabled } from './google.js';
 import { logWithRequest } from './log.js';
 import { importFromLighterPack, importRateLimit, ImportError } from './lighterpack.js';
 import { copyRemoteImage, isLocalImage, localizeCatalogImages, remoteCatalogImageCount, RemoteImageError } from './remote-image.js';
+import { saveBadges, fetchMissingBadges, badgesFor, domainOf } from './shops.js';
 
 const router = express.Router();
 
@@ -641,17 +642,32 @@ async function localizeCatalogPhoto(value) {
     }
 }
 
+// Shop badges and site icons for an item's Where to buy (server/shops.js).
+// Given badges are saved now (so the editor can say if one failed); missing
+// ones are fetched in the background.
+async function afterShopsSaved(req, item, badges) {
+    const log = (err) => logWithRequest(req, { message: 'shop badge', err });
+    const failed = badges && badges.length ? await saveBadges(badges, { log }) : [];
+    const domains = [domainOf(item.url), ...(item.shops || []).map((x) => x.domain)];
+    fetchMissingBadges(domains, { log }).catch(log);
+    return failed.map((f) => `Couldn't copy the badge for ${f.domain}: ${f.error}`);
+}
+
 // ---- owner: catalog ----------------------------------------------------------
 
 router.get('/api/admin/catalog', admin(async (req, res) => {
     const status = ['published', 'draft'].includes(req.query.status) ? req.query.status : 'all';
-    res.json(await catalog.search({
+    const found = await catalog.search({
         q: String(req.query.q || '').slice(0, 200),
         category: String(req.query.category || '').slice(0, 80),
         status,
         limit: req.query.limit || 100,
         offset: req.query.offset,
-    }));
+    });
+    // Each shop's current badge, for the editor.
+    const badges = await badgesFor(found.items.flatMap((x) => (x.shops || []).map((y) => y.domain)));
+    found.items = found.items.map((x) => ({ ...x, shops: (x.shops || []).map((y) => ({ ...y, badgeUrl: (badges.get(y.domain) || {}).badgeUrl || '' })) }));
+    res.json(found);
 }));
 
 router.get('/api/admin/catalog/categories', admin(async (req, res) => {
@@ -659,14 +675,14 @@ router.get('/api/admin/catalog/categories', admin(async (req, res) => {
 }));
 
 router.post('/api/admin/catalog', requireJson, admin(async (req, res, user) => {
-    const { value, errors } = catalog.validateEntry(req.body || {});
+    const { value, errors, badges } = catalog.validateEntry(req.body || {});
     if (errors.length) return res.status(400).json({ errors });
     const photoError = await localizeCatalogPhoto(value);
     if (photoError) return res.status(400).json({ errors: [photoError] });
     try {
         const item = await catalog.create(value);
         logWithRequest(req, { message: 'catalog item created', id: item.id, username: user.username });
-        return res.status(201).json({ item });
+        return res.status(201).json({ item, warnings: await afterShopsSaved(req, item, badges) });
     } catch (err) {
         if (err.code === '23505') return res.status(400).json({ errors: ['That SKU is already in the catalog.'] });
         throw err;
@@ -674,7 +690,7 @@ router.post('/api/admin/catalog', requireJson, admin(async (req, res, user) => {
 }));
 
 router.put('/api/admin/catalog/:id', requireJson, admin(async (req, res, user) => {
-    const { value, errors } = catalog.validateEntry(req.body || {});
+    const { value, errors, badges } = catalog.validateEntry(req.body || {});
     if (errors.length) return res.status(400).json({ errors });
     const photoError = await localizeCatalogPhoto(value);
     if (photoError) return res.status(400).json({ errors: [photoError] });
@@ -682,7 +698,7 @@ router.put('/api/admin/catalog/:id', requireJson, admin(async (req, res, user) =
         const item = await catalog.update(req.params.id, value);
         if (!item) return res.status(404).json({ message: 'Not found.' });
         logWithRequest(req, { message: 'catalog item updated', id: item.id, username: user.username });
-        return res.json({ item });
+        return res.json({ item, warnings: await afterShopsSaved(req, item, badges) });
     } catch (err) {
         if (err.code === '23505') return res.status(400).json({ errors: ['That SKU is already in the catalog.'] });
         throw err;
@@ -712,7 +728,8 @@ router.get('/api/admin/catalog/export.csv', admin(async (req, res) => {
         if (!next.items.length) break;
     }
     csvHeaders(res, `waymark-catalog-${new Date().toISOString().slice(0, 10)}.csv`);
-    res.send(catalog.toCsv(all));
+    const badges = await badgesFor(all.flatMap((i) => (i.shops || []).map((x) => x.domain)));
+    res.send(catalog.toCsv(all, badges));
 }));
 
 router.get('/api/admin/catalog/template.csv', admin(async (req, res) => {
@@ -731,8 +748,13 @@ router.post('/api/admin/catalog/import/preview', requireJson, admin(async (req, 
 }));
 
 router.post('/api/admin/catalog/import/apply', requireJson, admin(async (req, res, user) => {
-    const result = await catalog.applyImport(String(req.body?.csv || ''));
+    const { badges, domains, ...result } = await catalog.applyImport(String(req.body?.csv || ''));
     if (result.error) return res.status(400).json({ message: result.error });
+    // Shop badges and site icons from the sheet: in the background.
+    const shopLog = (err) => logWithRequest(req, { message: 'shop badge', err });
+    saveBadges(badges || [], { log: shopLog })
+        .then(() => fetchMissingBadges(domains || [], { log: shopLog }))
+        .catch(shopLog);
     logWithRequest(req, { message: 'catalog import applied', summary: result.summary, username: user.username });
     // Photo links in the import are copied in the background; the catalog
     // page shows how many are left and any that couldn't be copied.

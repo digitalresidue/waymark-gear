@@ -92,7 +92,8 @@ test.describe('Gear catalog', () => {
 
         const csv = await (await page.request.get(url('/api/admin/catalog/export.csv'))).text();
         expect(csv).toContain(`Test tent ${tag}`);
-        expect(csv.split('\n')[0]).toBe('sku,name,brand,category,description,weight,unit,price,currency,url,image_url,worn_default,consumable_default,tags,status,affiliate_url');
+        const shopColumns = [1, 2, 3, 4].map((n) => `shop${n}_name,shop${n}_badge,shop${n}_url,shop${n}_affiliate_url`).join(',');
+        expect(csv.split('\n')[0]).toBe(`sku,name,brand,category,description,weight,unit,price,currency,url,image_url,worn_default,consumable_default,tags,status,affiliate_url,${shopColumns}`);
     });
 
     test('owner adds and edits an item by hand', async ({ page }, testInfo) => {

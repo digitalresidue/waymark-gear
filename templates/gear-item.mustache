@@ -52,10 +52,10 @@
                     <p class="wgGearHeroLinks">
                         <a href="/gear?wish={{id}}" class="wgBtn wgBtnPrimary wgBtnSmall" data-testid="gear-wish">Add to wishlist</a>
                         <a href="/compare?ids={{id}}" class="wgBtn wgBtnGhost wgBtnSmall" data-testid="gear-compare">Compare</a>
-                        {{#url}}<a href="/go/{{id}}?from=gear" rel="sponsored nofollow noopener" target="_blank" class="wgBtn wgBtnGhost wgBtnSmall" data-testid="gear-buy">Buy</a>{{/url}}
+                        {{> buy}}
                         {{#kitCount}}<a href="/explore?q={{searchName}}">In {{kitCountLabel}}</a>{{/kitCount}}
                     </p>
-                    {{#url}}<p class="wgDisclosure">Buy links may earn Waymark Gear a commission; it never changes what we suggest. <a href="/supporter">Supporters</a> get plain links.</p>{{/url}}
+                    {{#buy.any}}<p class="wgDisclosure">Buy links may earn Waymark Gear a commission; it never changes what we suggest. <a href="/supporter">Supporters</a> get plain links.</p>{{/buy.any}}
                 </div>
             </section>
 

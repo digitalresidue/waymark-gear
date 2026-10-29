@@ -7,6 +7,12 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 14 — Where to buy: more shops per item · 2026-10-29 · branch `where-to-buy`
+- Catalog gear can list **up to four more shops** besides its product link (Backcountry, Garage Grown Gear...), each with a normal link and an optional affiliate link. With more than one place to buy, **Buy opens a "Where to buy" menu** on the gear page and the compare page: each shop's badge (or initial), name and website. One place: a plain Buy link as before.
+- **Badges** are copied to the server (never hotlinked) and kept once per shop website, shared by every item it sells; a shop without one gets its own site icon, fetched once a week at most, or its initial.
+- **Import sheet**: `shop1_name, shop1_badge, shop1_url, shop1_affiliate_url` … `shop4_...`; a sheet without them leaves shops alone; export writes them back. **Editor**: "Also sold by", up to four rows.
+- Every link goes through `/go/<item>?shop=N` with the same rule (affiliate link, shop rule, or the plain link for Supporters); clicks record the shop. No affiliate links in the public catalog API.
+
 ### Phase 8, part 13 — A wider site, a roomier gear panel, visible sideways scrolling · 2026-10-29 · branch `wider-site`
 - **The site column is 1366px** (was 1200px), header, footer, editor and every page in it alike; the editor still lines up with the header at both edges.
 - **The editor's side panel is 380px** on big screens (was 300px): 320px up to 1365px wide windows, 270px up to 1180px. Gear names in the Closet and Catalog get the room; catalog names also wrap to a second line instead of being cut off.
