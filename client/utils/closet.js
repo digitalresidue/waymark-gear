@@ -43,3 +43,42 @@ export function confirmClosetRemoval({ store, initSpeedbump }, item) {
 export function restoreClosetItem(store, item) {
     store.commit('setItemRetired', { item, retired: false });
 }
+
+// "Empty closet": everything, or only the gear no list uses. Placeholder rows
+// (a new list's blank first line) aren't counted as gear.
+export function closetCounts(library) {
+    let unused = 0;
+    let inLists = 0;
+    for (const item of library.items) {
+        if (isPlaceholder(item)) continue;
+        if (library.getListsContainingItem(item.id).length) inLists++;
+        else unused++;
+    }
+    return { unused, inLists, total: unused + inLists };
+}
+
+export function confirmEmptyCloset({ store, initSpeedbump }) {
+    const { unused, inLists, total } = closetCounts(store.state.library);
+    const n = (k) => `${k} ${k === 1 ? 'piece' : 'pieces'} of gear`;
+    const everything = () => store.commit('emptyCloset', { everything: true });
+    if (!total) return;
+    if (!inLists) {
+        initSpeedbump(everything, {
+            title: 'Empty your closet?',
+            body: `This deletes all ${n(total)} in your closet. None of it is in a list. This can't be undone.`,
+            confirm: `Delete ${total}`,
+            cancel: 'Cancel',
+        });
+        return;
+    }
+    initSpeedbump(everything, {
+        title: 'Empty your closet?',
+        body: `You have ${n(total)}: ${unused} not in any list, and ${inLists} in your lists. Delete just the ${unused} no list uses, or everything, which also empties your lists (their categories stay). This can't be undone.`,
+        alternate: unused ? {
+            label: `Only the ${unused} not in a list`,
+            callback: () => store.commit('emptyCloset', { everything: false }),
+        } : null,
+        confirm: `Delete all ${total}`,
+        cancel: 'Cancel',
+    });
+}

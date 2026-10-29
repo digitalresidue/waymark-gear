@@ -199,7 +199,7 @@ sets cookies through our site.
 <!-- else -->
 <!-- end if -->
 
-Uploaded images are stored on our own servers.
+Uploaded images are stored on our own servers. An image nothing on the site uses any more (gear you deleted, a profile picture you replaced) is deleted automatically, usually within two days.
 No one else receives your data, except where required by law.
 
 ## Email we send you

@@ -11,6 +11,9 @@
                 Closet
             </h1>
             <span class="lpGearCount">{{ activeCount }}</span>
+            <button v-if="activeCount || retiredCount" type="button" class="lpGearEmpty" data-testid="closet-empty" @click="emptyCloset">
+                Empty
+            </button>
         </div>
 
         <div class="lpGearSearchRow">
@@ -116,7 +119,7 @@ import { replaceSoon } from '../utils/gear-meta.js';
 import { api } from '../utils/format.js';
 
 import utilsMixin from '../mixins/utils-mixin.js';
-import { confirmClosetRemoval, isPlaceholder, restoreClosetItem } from '../utils/closet.js';
+import { confirmClosetRemoval, confirmEmptyCloset, isPlaceholder, restoreClosetItem } from '../utils/closet.js';
 
 export default {
     name: 'Gear',
@@ -294,6 +297,16 @@ export default {
         restore(item) {
             restoreClosetItem(this.$store, item);
         },
+        emptyCloset() {
+            confirmEmptyCloset({
+                store: this.$store,
+                initSpeedbump: (callback, options) => {
+                    this.speedbumpCallback = callback;
+                    this.speedbumpOptions = options;
+                    this.showSpeedbump = true;
+                },
+            });
+        },
     },
 };
 </script>
@@ -365,6 +378,18 @@ export default {
 .lpGearCount {
     color: var(--lp-sidebar-muted);
     font-size: 12.5px;
+}
+
+.lpGearEmpty {
+    background: transparent;
+    border: 0;
+    color: var(--lp-sidebar-link);
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    margin-left: auto;
+    padding: 8px 4px;
 }
 
 .lpGearSearchRow {

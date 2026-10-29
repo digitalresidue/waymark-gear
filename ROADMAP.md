@@ -7,6 +7,11 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 12 — Empty closet; unused images cleaned up · 2026-10-29 · branch `empty-closet`
+- **Empty** on the closet (desktop sidebar and the phone Gear screen) asks first: delete **only the gear no list uses** (offered first), or **everything**, which also empties your lists (their categories stay). Says how many of each; can't be undone.
+- **Unused images are deleted automatically, once a day.** Every text and JSON column in the database is searched (in SQL) for stored-image paths, so list gear, gear photos, the catalog, brand logos, avatars, banners, trip photos and any future feature are all covered without a list to maintain; stored files nothing refers to, more than a day old (an upload not saved yet is safe), go, with their other sizes. One run at a time across instances (Postgres advisory lock); refuses to delete more than half of all images in one go unless forced. Images can be shared (catalog photos in everyone's lists, copied lists), which is why this is a sweep rather than deleting at the moment something is removed.
+- **`waymark clean-images`** (`npm run images:clean`) runs it now; `--dry-run` only reports. Setting: `imageCleanup.enabled`.
+
 ### Phase 8, part 11 — Catalog in the editor's rail · 2026-10-29 · branch `catalog-panel`
 - **Catalog** sits under Lists and Closet in the editor's left rail. Its panel searches the shared gear catalog (with category chips), shows each item's photo, brand, type and weight, and adds it to the list being edited with one click; the name opens its gear page.
 - **Add to: Its type** (the default) files gear under the list's category of that type — a tent under Shelter — making the category if the list hasn't got one (a brand-new list's empty starter category takes the name). Or pick one of the list's categories. Remembered per browser.

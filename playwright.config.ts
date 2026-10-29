@@ -120,6 +120,9 @@ export default defineConfig({
         // Lets the photo-copy tests fetch images from this same local server
         // (in production, only public internet addresses are fetched).
         remoteImages: { allowPrivate: true },
+        // The daily image clean-up stays off while tests run (the e2e test
+        // runs it directly, with its own settings).
+        imageCleanup: { enabled: false },
         stripe: {
           secretKey: 'sk_test_fake',
           webhookSecret: 'whsec_test',
