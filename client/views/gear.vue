@@ -11,7 +11,7 @@
                 Closet
             </h1>
             <span class="lpGearCount">{{ activeCount }}</span>
-            <button v-if="activeCount || retiredCount" type="button" class="lpGearEmpty" data-testid="closet-empty" @click="emptyCloset">
+            <button v-if="activeCount || retiredCount" type="button" class="lpGearEmptyCloset" data-testid="closet-empty" @click="emptyCloset">
                 Empty
             </button>
         </div>
@@ -380,7 +380,7 @@ export default {
     font-size: 12.5px;
 }
 
-.lpGearEmpty {
+.lpGearEmptyCloset {
     background: transparent;
     border: 0;
     color: var(--lp-sidebar-link);
