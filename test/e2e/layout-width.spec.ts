@@ -49,3 +49,22 @@ test('phone: the Trails chips show a › when there are more', async ({ page }) 
     if (overflows) await expect(row.locator('.wgScrollBtnRight')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
+
+test('wide pages share the header\'s column: Trails, all trails, Compare, Brands, profiles', async ({ page }) => {
+    await page.setViewportSize({ width: 1600, height: 900 });
+    const kits = await (await page.request.get(new URL('/api/explore/kits?limit=1', testRoot).toString())).json();
+    const pages = ['/trails/pct', '/trails/all', '/compare', '/brands'];
+    if (kits.kits[0]) pages.push(`/@${kits.kits[0].username}`);
+    for (const p of pages) {
+        await page.goto(new URL(p, testRoot).toString());
+        const e = await page.evaluate(() => {
+            const edges = (el: Element) => {
+                const b = el.getBoundingClientRect();
+                const cs = getComputedStyle(el);
+                return [Math.round(b.left + parseFloat(cs.paddingLeft)), Math.round(b.right - parseFloat(cs.paddingRight))];
+            };
+            return { header: edges(document.querySelector('.wgSiteHeaderInner')!), main: edges(document.querySelector('main')!) };
+        });
+        expect(e.main, p).toEqual(e.header);
+    }
+});

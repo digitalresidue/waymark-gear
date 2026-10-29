@@ -1,9 +1,16 @@
 // The Trails page (templates/trails.mustache, t_trailBody.mustache).
 
 .wgTrails {
+    // The site column (.wgPage): 1366px, 24px in from each side, so the page
+    // lines up with the header.
     margin: 0 auto;
-    max-width: 1120px;
-    padding: 28px max(16px, env(safe-area-inset-right, 0px)) 56px max(16px, env(safe-area-inset-left, 0px));
+    max-width: 1366px;
+    padding: 28px max(24px, env(safe-area-inset-right, 0px)) 56px max(24px, env(safe-area-inset-left, 0px));
+
+    @media (max-width: $mobile) {
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px));
+    }
 }
 
 .wgTrailKicker {
