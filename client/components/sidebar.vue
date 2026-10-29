@@ -80,6 +80,19 @@
                         <span class="wgRailLabel">Closet</span>
                         <span class="wgRailCount">{{ closetCount }}</span>
                     </button>
+                    <button
+                        type="button"
+                        class="wgRailBtn"
+                        :class="{ wgOn: open && panel === 'catalog' }"
+                        :aria-pressed="String(open && panel === 'catalog')"
+                        aria-controls="wgSidebarPanel"
+                        title="The gear catalog"
+                        data-testid="rail-catalog"
+                        @click="show('catalog')"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H10v16H5.5A1.5 1.5 0 0 1 4 18.5z" /><path d="M10 4h8.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H10" /><path d="M13.5 9h3M13.5 13h3" /></svg>
+                        <span class="wgRailLabel">Catalog</span>
+                    </button>
                     <span class="wgRailSep" aria-hidden="true" />
                     <router-link to="/pack" class="wgRailBtn" title="Pack this list" data-testid="open-pack">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8" /><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" /></svg>
@@ -120,6 +133,16 @@
                         </button>
                         <libraryItems />
                     </div>
+                    <div v-show="panel === 'catalog'" class="wgPanel wgPanelCatalog" data-testid="panel-catalog">
+                        <button type="button" class="wgCurrentList" title="Choose another list" @click="show('lists')">
+                            <span class="wgCurrentListText">
+                                <span class="wgCurrentListLabel">Adding to</span>
+                                <span class="wgCurrentListName">{{ currentListName }}</span>
+                            </span>
+                            <span class="wgCurrentListSwitch">Switch</span>
+                        </button>
+                        <catalogPanel :active="open && panel === 'catalog'" />
+                    </div>
                 </div>
             </template>
         </div>
@@ -128,6 +151,7 @@
 
 <script>
 import libraryItems from './library-items.vue';
+import catalogPanel from './catalog-panel.vue';
 import libraryLists from './library-lists.vue';
 import brandLogo from './brand-logo.vue';
 import share from './share.vue';
@@ -141,7 +165,8 @@ import { isMobile } from '../utils/viewport.js';
 const PANEL_KEY = 'wgSidebarPanel';
 const readPanel = () => {
     try {
-        return localStorage.getItem(PANEL_KEY) === 'lists' ? 'lists' : 'closet';
+        const v = localStorage.getItem(PANEL_KEY);
+        return ['lists', 'catalog'].includes(v) ? v : 'closet';
     } catch {
         return 'closet';
     }
@@ -151,6 +176,7 @@ export default {
     name: 'Sidebar',
     components: {
         libraryItems,
+        catalogPanel,
         libraryLists,
         brandLogo,
         share,
@@ -161,7 +187,8 @@ export default {
         return { isMobile };
     },
     data() {
-        return { panel: readPanel() };
+        const panel = readPanel();
+        return { panel, returnTo: panel === 'catalog' ? 'catalog' : 'closet' };
     },
     computed: {
         library() {
@@ -188,6 +215,7 @@ export default {
     methods: {
         setPanel(panel) {
             this.panel = panel;
+            if (panel !== 'lists') this.returnTo = panel;
             try {
                 localStorage.setItem(PANEL_KEY, panel);
             } catch {
@@ -205,9 +233,10 @@ export default {
             if (!this.open) this.$store.commit('toggleSidebar');
         },
         // A list was chosen: the lists go back into the rail and the closet
-        // takes the column, ready to add gear to it.
+        // (or the catalog, if that's where you came from) takes the column,
+        // ready to add gear to it.
         chosen() {
-            this.setPanel('closet');
+            this.setPanel(this.returnTo || 'closet');
         },
     },
 };
@@ -504,6 +533,14 @@ $panelWidth: 300px;
     flex: 1 1 0;
     flex-direction: column;
     min-height: 0;
+}
+
+.wgPanelCatalog .wgCatalogPanel {
+    flex: 1 1 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    // Lines up with the "Adding to" card above.
+    padding: 10px 14px 12px;
 }
 
 // On its own, the lists panel uses the whole height rather than the

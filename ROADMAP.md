@@ -7,6 +7,11 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 11 — Catalog in the editor's rail · 2026-10-29 · branch `catalog-panel`
+- **Catalog** sits under Lists and Closet in the editor's left rail. Its panel searches the shared gear catalog (with category chips), shows each item's photo, brand, type and weight, and adds it to the list being edited with one click; the name opens its gear page.
+- **Add to: Its type** (the default) files gear under the list's category of that type — a tent under Shelter — making the category if the list hasn't got one (a brand-new list's empty starter category takes the name). Or pick one of the list's categories. Remembered per browser.
+- Gear added this way stays linked to the catalog, like "Add from catalog". Choosing another list from the panel's Switch comes back to the catalog.
+
 ### Phase 8, part 10 — "@name" goes to the profile · 2026-10-29 · branch `profile-links`
 - On kit cards (homepage featured kit, Explore and homepage kit lists, shakedown cards), Leaderboards and Trails pack cards, **the hiker's @name links to their profile**. The rest of the card still opens the list (the title link stretches over the card; the name sits above it, since links can't nest). Cards are no longer one big link, which also reads better with screen readers.
 
