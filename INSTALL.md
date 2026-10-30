@@ -156,7 +156,7 @@ Menu names change now and then; look for the same words.
   further down the page.
 - **Cloudflare**: your domain → **DNS** → **Records** → **Add record**.
   **Click the orange cloud so it turns grey ("DNS only")** on both records.
-  Leave it grey while you install; [DEPLOY.md](DEPLOY.md#traffic-spikes-and-cloudflare)
+  Leave it grey while you install; "Optional: put Cloudflare in front" below
   explains how to turn it orange safely later.
 - **Porkbun**: Domain Management → **DNS** next to the domain. Delete the
   ALIAS and CNAME records pointing at `pixie.porkbun.com`.
@@ -334,6 +334,46 @@ in as an owner, open **Owner → Revenue → Header tags**, paste each tag on it
 own line (up to 10), and click **Save tags**. They're on every page straight
 away. Only `<meta>` tags are accepted.
 
+### Optional: put Cloudflare in front
+
+If your domain's DNS is on Cloudflare, its proxy (the orange cloud) puts
+Cloudflare between visitors and your server: it soaks up bot traffic and
+attacks before they reach you, and can serve busy pages from its own cache.
+The server is already set up for it; only Cloudflare needs settings. Do these
+in this order, after the site works with the grey cloud:
+
+1. **SSL/TLS → Overview → Configure**: choose **Full (strict)**. This one
+   matters: the default, *Flexible*, makes Cloudflare talk to your server
+   without HTTPS, your server sends it back to HTTPS, and browsers give up
+   with **"too many redirects"**.
+2. **SSL/TLS → Edge Certificates**: leave **Always Use HTTPS** off (your
+   server already does that, and it keeps its own certificate renewals
+   working). **Minimum TLS Version** 1.2 is fine.
+3. **DNS → Records**: click the grey cloud on both records (the domain and
+   `www`) so they turn **orange**. Open the site in a private window: it
+   should load as before.
+4. **Security** (bot protection), all on the free plan. Cloudflare has been
+   moving these menus; in older dashboards they're under **Security → WAF**
+   and **Security → Bots**, in newer ones under **Security → Security rules**
+   and **Security → Settings**.
+   - **Rate limiting rules → Create rule**: *URI Path* equals `/signin`, or
+     `/register`, or `/forgotPassword`; same IP; *10 requests per 10
+     seconds*; action **Block** for 10 seconds. The app limits these too;
+     this stops floods before they reach your server.
+   - **Block AI bots**: turn on if you don't want AI crawlers reading the
+     site (search engines are still let in).
+   - **Bot Fight Mode** challenges traffic that looks automated, and on the
+     free plan it can't make exceptions for any path. Stripe's payment
+     notifications (`/stripe/webhook`) come from a verified bot and normally
+     pass, but uptime monitors on `/healthz` may not. If you turn it on, check
+     Stripe (Developers → Webhooks) still shows deliveries succeeding and
+     your uptime monitor stays green; turn it off if either fails.
+5. Optional, for traffic spikes: the Cache Rule in
+   [DEPLOY.md](DEPLOY.md#traffic-spikes-and-cloudflare).
+
+To turn the proxy off again, click the orange clouds back to grey. Nothing on
+the server needs to change either way.
+
 ### Optional: tell Google about your site
 
 Waymark keeps a list of every public page for search engines at
@@ -470,6 +510,12 @@ A/AAAA/CNAME records. Free checker: **dnschecker.org**: enter your domain,
 choose **A**, and you should see your droplet's IP. The script keeps waiting
 and checking; you can also press **Ctrl+C** and run `bash install.sh` again
 later.
+
+**"Too many redirects" (ERR_TOO_MANY_REDIRECTS) after turning Cloudflare's
+cloud orange.**
+Cloudflare's SSL/TLS mode is *Flexible*. Set it to **Full (strict)**
+(SSL/TLS → Overview → Configure); the site comes back within a minute. See
+"Optional: put Cloudflare in front".
 
 **The site shows a padlock warning, "not secure", or a page from your domain
 company.**

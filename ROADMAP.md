@@ -7,6 +7,11 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 23 — Ready for Cloudflare's proxy · 2026-10-30 · branch `cloudflare-proxy`
+- "Too many redirects" with the orange cloud on was Cloudflare's *Flexible* SSL mode looping with Caddy's own HTTPS redirect; the fix is **Full (strict)** in Cloudflare, now in INSTALL.md ("Optional: put Cloudflare in front", plus a troubleshooting entry).
+- Behind Cloudflare the app would have seen Cloudflare's addresses as every visitor's, so per-IP limits would lump people together. Caddy now trusts Cloudflare's published ranges for `X-Forwarded-For` (`servers { trusted_proxies static … }`) and the app counts two proxies (`TRUST_PROXY: 2`): visitors' own IPs with the cloud orange or grey, and an address sent by anyone else is ignored. Tested with Caddy 2.10.2 in front of Express.
+- `waymark update` restarts Caddy when a release changes its Caddyfile (and on a roll-back). The guide covers Cloudflare rate limiting for sign-in, register and password reset, AI-bot blocking, and Bot Fight Mode's catch: no exceptions on the free plan, so check Stripe deliveries and uptime monitors after turning it on.
+
 ### Phase 8, part 22 — "What people actually carry" filters by what people carry · 2026-10-30 · branch `common-gear-categories`
 - The category chips were the catalog's first 8 categories alphabetically, so later ones (Packs, Shelter, Sleep…) never appeared. They're now the categories that show up most across published kits, most carried first (up to 12), from `GET /api/explore/common/categories`. With nothing carried yet, no chips are shown.
 

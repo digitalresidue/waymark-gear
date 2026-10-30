@@ -36,8 +36,10 @@ services:
     env_file: .env
     environment:
       NODE_ENV: production
-      # Caddy is the one proxy in front of the app.
-      TRUST_PROXY: 1
+      # Caddy, and Cloudflare if its proxy (orange cloud) is on. Caddy only
+      # passes on a forwarded address from Cloudflare (Caddyfile), so 2 gives
+      # the visitor's real IP either way and can't be forged.
+      TRUST_PROXY: 2
       DATABASE_URL: postgres://waymark:${POSTGRES_PASSWORD}@db:5432/waymark
       DEPLOY_URL: https://${SITE_DOMAIN}
     volumes:
