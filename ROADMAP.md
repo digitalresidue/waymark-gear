@@ -7,6 +7,10 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 21 — A spotlight kit in the homepage hero, rotating every 12 hours · 2026-10-30 · branch `hero-spotlight`
+- The hero card shows a **random creator's public list**, the same for everyone for 12 hours, then another. A creator is picked first, then one of their lists, so prolific publishers don't crowd others out. Lists with 5+ items from visible profiles are preferred; a young site falls back to any list with gear.
+- The pick is a hash of the 12-hour window (no stored state, so every server agrees). `GET /api/explore/spotlight` → `{ kit, until }`, cached until the pick changes (at most 5 minutes).
+- The card is labelled **Spotlight**. The list name links to the list, the whole card opens it, and the creator's name still links to their profile.
 ### Phase 8, part 20 — Import from PackWizard and other apps · 2026-10-30 · branch `import-other-apps`
 - **Import a list** (was "Import from LighterPack") takes a share link from **LighterPack or PackWizard**, a CSV file, or rows pasted from a spreadsheet.
 - **PackWizard links** (`packwizard.com/s/…`) are read from PackWizard's public shared-pack JSON (only that one path on the configured `packwizardUrl`, no redirects, size-capped, rate-limited like LighterPack). Brands join the item name, units, quantities, prices, links and worn/consumable come across, and for someone signed in the item photos (up to 40) are copied here.
