@@ -7,6 +7,9 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 22 — "What people actually carry" filters by what people carry · 2026-10-30 · branch `common-gear-categories`
+- The category chips were the catalog's first 8 categories alphabetically, so later ones (Packs, Shelter, Sleep…) never appeared. They're now the categories that show up most across published kits, most carried first (up to 12), from `GET /api/explore/common/categories`. With nothing carried yet, no chips are shown.
+
 ### Phase 8, part 21 — A spotlight kit in the homepage hero, rotating every 12 hours · 2026-10-30 · branch `hero-spotlight`
 - The hero card shows a **random creator's public list**, the same for everyone for 12 hours, then another. A creator is picked first, then one of their lists, so prolific publishers don't crowd others out. Lists with 5+ items from visible profiles are preferred; a young site falls back to any list with gear.
 - The pick is a hash of the 12-hour window (no stored state, so every server agrees). `GET /api/explore/spotlight` → `{ kit, until }`, cached until the pick changes (at most 5 minutes).

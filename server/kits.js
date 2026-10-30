@@ -285,6 +285,21 @@ export async function castVote(user, externalId, value) {
 }
 
 // The catalog gear that shows up in the most published kits.
+// The catalog categories that show up most across published kits, for the
+// "What people actually carry" filter: what people carry, most carried
+// first, not the catalog's alphabetical list (where Packs fell off the end).
+export async function commonCategories({ limit = 12 } = {}) {
+    const rows = await knex.with('uses', (qb) => qb.select(knex.raw('unnest(catalog_ids) as catalog_id')).from('public_kits'))
+        .select('c.category').count({ uses: '*' })
+        .from('uses')
+        .join('catalog_items as c', 'c.id', 'uses.catalog_id')
+        .where('c.status', 'published').whereNot('c.category', '')
+        .groupBy('c.category')
+        .orderBy([{ column: 'uses', order: 'desc' }, { column: 'c.category', order: 'asc' }])
+        .limit(Math.min(Number(limit) || 12, 30));
+    return rows.map((r) => ({ name: r.category, count: Number(r.uses) }));
+}
+
 export async function commonGear({ category = '', limit = 10 } = {}) {
     const [{ total }] = await knex('public_kits').count({ total: '*' });
     const kitCount = Number(total);
