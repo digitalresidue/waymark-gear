@@ -566,6 +566,40 @@ router.get('/api/explore/kits', pub(async (req, res) => {
     }));
 }));
 
+// The homepage's discovery sections in one request: busiest trails, the
+// newest reviews, brands (cottage makers first), and the top and lightest
+// kits. Each part is on its own: one failing leaves the rest. Cached a
+// minute, like the other public lists.
+router.get('/api/home', pub(async (req, res) => {
+    const safe = (p, fallback) => p.catch((err) => {
+        logWithRequest(req, { message: 'home section failed', err });
+        return fallback;
+    });
+    const [topTrails, latest, brandRows, top, light] = await Promise.all([
+        safe(trails.topTrails(8), []),
+        safe(reviews.latestReviews({ limit: 6 }), []),
+        safe(knex('brands').where({ status: 'published' }).orderBy([{ column: 'cottage', order: 'desc' }, { column: 'updated_at', order: 'desc' }]).limit(12)
+            .select('id', 'name', 'logo_url', 'cottage', 'gear_types'), []),
+        safe(kits.listKits({ sort: 'top', limit: 3 }), { kits: [] }),
+        safe(kits.listKits({ sort: 'light', limit: 12 }), { kits: [] }),
+    ]);
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json({
+        trails: topTrails.map((t) => ({ slug: t.slug, name: t.name, short: t.short, region: t.region, lengthMi: t.lengthMi, count: t.count })),
+        reviews: latest.map((r) => ({
+            id: r.id, rating: r.rating, title: r.title, body: String(r.body || '').slice(0, 220), author: r.author,
+            displayName: r.displayName, staff: r.staff, createdAt: r.createdAt, item: r.item,
+        })),
+        brands: brandRows.map((b) => ({ id: b.id, name: b.name, logoUrl: b.logo_url, cottage: b.cottage, gearTypes: b.gear_types || [] })),
+        leaders: {
+            // "Top" only ranks lists people have actually voted up.
+            top: (top.kits || []).filter((k) => k.score > 0),
+            // An empty list isn't "lightest".
+            light: (light.kits || []).filter((k) => k.baseWeightMg > 0).slice(0, 3),
+        },
+    });
+}));
+
 router.get('/api/explore/common', pub(async (req, res) => {
     res.set('Cache-Control', 'public, max-age=300');
     res.json(await kits.commonGear({ category: String(req.query.category || '').slice(0, 80), limit: req.query.limit }));
