@@ -289,7 +289,7 @@
                     <li v-for="(g, i) in common" :key="g.id">
                         <span class="wgMono wgMuted wgRank">{{ String(i + 1).padStart(2, '0') }}</span>
                         <div class="wgCommonName">
-                            <p>{{ g.name }}</p>
+                            <p><a :href="`/g/${g.id}`" class="wgCommonLink" data-testid="common-gear-link">{{ g.name }}</a></p>
                             <p class="wgMuted">
                                 {{ [g.brand, g.category].filter(Boolean).join(' · ') }}
                             </p>
@@ -990,6 +990,16 @@ export default {
         gap: 16px;
         grid-template-columns: 32px minmax(0, 1fr) 150px 80px;
         padding: 16px 22px;
+        position: relative;
+
+        &:hover {
+            background: var(--lp-row-hover);
+        }
+
+        &:has(.wgCommonLink:focus-visible) {
+            outline: 2px solid var(--lp-primary);
+            outline-offset: -2px;
+        }
 
         &:last-child {
             border-bottom: 0;
@@ -1013,6 +1023,26 @@ export default {
 .wgCommonName p:first-child {
     font-size: 16px;
     font-weight: 600;
+}
+
+// The name links to the gear page; the whole row is the click target.
+.wgCommonLink {
+    color: var(--lp-text);
+    text-decoration: none;
+
+    &::after {
+        content: "";
+        inset: 0;
+        position: absolute;
+    }
+
+    &:focus-visible {
+        outline: none;
+    }
+
+    li:hover & {
+        text-decoration: underline;
+    }
 }
 
 .wgCommonName .wgMuted,

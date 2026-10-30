@@ -58,3 +58,22 @@ test('homepage: trails, latest reviews, brands and leaderboards, each leading on
     await card.getByRole('link', { name: `Trailco Home quilt ${tag}` }).click();
     await expect(visitor).toHaveURL(new RegExp(`/g/${item.id}$`));
 });
+
+test('what people actually carry: each gear row opens its gear page', async ({ page }) => {
+    // Any published catalog item, ranked as if kits carried it.
+    const gear = (await (await page.request.get(url('/api/catalog?limit=1'))).json()).items[0];
+    expect(gear).toBeTruthy();
+    await page.route('**/api/explore/common?*', (route) => route.fulfill({
+        json: { kitCount: 4, items: [{ id: gear.id, name: gear.name, brand: gear.brand, category: gear.category, weightMg: 500000, unit: 'oz', kits: 3, share: 0.75 }] },
+    }));
+    await page.goto(url('/welcome'));
+    const link = page.getByTestId('common-gear-link');
+    await expect(link).toHaveText(gear.name);
+    await expect(link).toHaveAttribute('href', `/g/${gear.id}`);
+    // The whole row is the target: a click on the weight, far from the name, opens it.
+    const weightCell = page.getByTestId('common-gear').locator('.wgCommonWeight').first();
+    await weightCell.scrollIntoViewIfNeeded();
+    const weight = await weightCell.boundingBox();
+    await page.mouse.click(weight!.x + weight!.width / 2, weight!.y + weight!.height / 2);
+    await expect(page).toHaveURL(new RegExp(`/g/${gear.id}$`));
+});
