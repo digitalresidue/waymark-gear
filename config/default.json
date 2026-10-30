@@ -31,6 +31,10 @@
     "reviewers": [],
     "openReviews": false,
     "googleAnalyticsId": "",
+    "sitemap": {
+        "enabled": true,
+        "firstRunSeconds": 30
+    },
     "imageCleanup": {
         "enabled": true,
         "minAgeHours": 24,

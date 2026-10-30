@@ -17,6 +17,7 @@ import affiliate from './server/affiliate.js';
 import brands from './server/brands.js';
 import headTags, { injectHeadTags, loadHeadTags } from './server/head-tags.js';
 import { scheduleImageCleanup } from './server/image-gc.js';
+import { scheduleSitemap } from './server/sitemap.js';
 import googleAuth from './server/google.js';
 import views, { hasBuiltAssets } from './server/views.js';
 import { authRateLimit, cspNonce, securityHeaders } from './server/security.js';
@@ -172,6 +173,9 @@ server.listen(config.get('port'), () => {
 
 // Once a day: delete stored images nothing refers to any more.
 scheduleImageCleanup(knex, logger);
+
+// Once a day (and just after start): rebuild sitemap.xml.
+scheduleSitemap(knex, logger);
 
 // Docker and most process managers send SIGTERM and wait a few seconds before
 // killing. Stop accepting connections, let in-flight saves finish, close the

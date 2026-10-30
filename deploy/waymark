@@ -58,6 +58,7 @@ Waymark Gear: commands
   waymark restore     Put back a backup:  waymark restore <date>, e.g. 2026-10-27
   waymark reset-password <username>   Set a new password for an account.
   waymark clean-images   Delete photos nothing uses any more (also runs daily). --dry-run to just look.
+  waymark sitemap     Rebuild sitemap.xml for search engines now (it also happens daily).
   waymark version     Which version is running.
   waymark help        This list.
 
@@ -260,6 +261,12 @@ cmd_clean_images() {
     "${COMPOSE[@]}" exec -T app node scripts/clean-images.js "$@" || stop "the clean-up didn't finish. Run  waymark logs  to see why."
 }
 
+cmd_sitemap() {
+    need_root sitemap; need_install
+    bold "Rebuilding the sitemap"
+    "${COMPOSE[@]}" exec -T app node scripts/build-sitemap.js || stop "the sitemap didn't build. Run  waymark logs  to see why."
+}
+
 cmd_version() {
     need_install
     local image id
@@ -283,6 +290,7 @@ case "${1:-help}" in
     restore) shift; cmd_restore "${1:-}" ;;
     reset-password) shift; cmd_reset_password "${1:-}" ;;
     clean-images) shift; cmd_clean_images "$@" ;;
+    sitemap) cmd_sitemap ;;
     version) cmd_version ;;
     help|-h|--help) cmd_help ;;
     *) printf 'Unknown command: %s\n' "$1"; cmd_help; exit 1 ;;
