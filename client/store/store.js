@@ -478,6 +478,10 @@ const store = createStore({
                 });
             const result = library.importGearList(parsed);
             if (previous) result.list.optionalFields = { ...previous.optionalFields };
+            // A list that came with photos or prices shows them.
+            const imported = (parsed.categories || []).flatMap((c) => c.items || []);
+            if (imported.some((i) => /^\/userimages\//.test(i.imageUrl || ''))) result.list.optionalFields.images = true;
+            if (imported.some((i) => Number(i.price) > 0)) result.list.optionalFields.price = true;
             if (starter) library.removeList(previous.id);
             parsed.result = { reused: result.reused };
         },

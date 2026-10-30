@@ -22,6 +22,7 @@
         "importMaxPerWindow": 20
     },
     "lighterpackUrl": "https://lighterpack.com",
+    "packwizardUrl": "https://www.packwizard.com",
     "mailgunDomain": "",
     "mailgunAPIKey": "",
     "mailFrom": "",
