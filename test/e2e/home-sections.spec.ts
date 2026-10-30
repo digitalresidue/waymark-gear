@@ -131,6 +131,41 @@ test('packs by trail: twelve trails, ranked by packs, each with its weight-class
     await expect(visitor.getByRole('list', { name: 'Weight classes' })).toContainText('Ultralight');
 });
 
+test('the hero spotlights one public kit for everyone, rotating every 12 hours, and links to it', async ({ page }) => {
+    // The API: the same pick on every call until the window ends, within 12 hours.
+    const first = await (await page.request.get(url('/api/explore/spotlight'))).json();
+    const again = await (await page.request.get(url('/api/explore/spotlight'))).json();
+    expect(again).toEqual(first);
+    const left = new Date(first.until).getTime() - Date.now();
+    expect(left).toBeGreaterThan(0);
+    expect(left).toBeLessThanOrEqual(12 * 60 * 60 * 1000);
+    if (first.kit) {
+        expect(first.kit.baseWeightMg).toBeGreaterThan(0);
+        expect((await page.request.get(url(`/r/${first.kit.externalId}`))).status()).toBe(200);
+    }
+
+    // The card: the creator and the list are both links; the whole card opens the list.
+    const kit = {
+        externalId: 'spot123abc', username: 'spotlighter', name: 'Sierra High Route, 6 days', weightClass: 'ul',
+        baseWeightMg: 4200000, wornWeightMg: 900000, consumableWeightMg: 2000000, itemCount: 30,
+        categories: [{ name: 'Shelter', weightMg: 700000 }, { name: 'Sleep', weightMg: 900000 }],
+    };
+    await page.route('**/api/explore/spotlight', (route) => route.fulfill({ json: { kit, until: first.until } }));
+    await page.route('**/r/spot123abc', (route) => route.fulfill({ contentType: 'text/html', body: '<h1>the list</h1>' }));
+    await page.goto(url('/welcome'));
+    const card = page.getByTestId('hero-kit');
+    await expect(card).toContainText('Spotlight');
+    await expect(card.getByTestId('hero-kit-author')).toHaveAttribute('href', '/@spotlighter');
+    await expect(card.getByTestId('hero-kit-link')).toHaveText('Sierra High Route, 6 days');
+    await expect(card.getByTestId('hero-kit-link')).toHaveAttribute('href', '/r/spot123abc');
+    // A click on the stats, not the title, still opens the list.
+    const stat = card.locator('.wgStatBig');
+    await stat.scrollIntoViewIfNeeded();
+    const box = (await stat.boundingBox())!;
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await expect(page).toHaveURL(/\/r\/spot123abc$/);
+});
+
 test('what people actually carry: the category chips are the ones people carry, most carried first', async ({ page }) => {
     const { categories } = await (await page.request.get(url('/api/explore/common/categories?limit=12'))).json();
     const counts = categories.map((c: { count: number }) => c.count);

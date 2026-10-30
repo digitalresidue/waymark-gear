@@ -1,7 +1,7 @@
 // JSON API for the gear catalog, Explore, and the site owner's screens.
 //
 // Public:  GET /api/config, /api/catalog, /api/catalog/categories,
-//          /api/explore/featured, /api/explore/kits, /api/explore/common
+//          /api/explore/featured, /api/explore/spotlight, /api/explore/kits, /api/explore/common
 // Owner:   /api/admin/catalog (CRUD, CSV import/export), /api/admin/kits
 
 import express from 'express';
@@ -34,7 +34,8 @@ import { youTubeId, TRIP_TYPES } from '../client/utils/gear-meta.js';
 import { profileForEditing, updateProfile, ProfileError } from './profiles.js';
 import { googleEnabled } from './google.js';
 import { logWithRequest } from './log.js';
-import { importFromLighterPack, importRateLimit, ImportError } from './lighterpack.js';
+import { importRateLimit, ImportError } from './lighterpack.js';
+import { importFromLink } from './import-links.js';
 import { copyRemoteImage, isLocalImage, localizeCatalogImages, remoteCatalogImageCount, RemoteImageError } from './remote-image.js';
 import { saveBadges, fetchMissingBadges, badgesFor, domainOf } from './shops.js';
 
@@ -496,20 +497,28 @@ router.post('/api/admin/trails/suggestions/:action', requireJson, trailAdmin(asy
 
 // ---- public ----------------------------------------------------------------
 
-// Read a public LighterPack list from its share link. Returns the parsed list;
-// the browser adds it to the library like any other edit, so this works the
-// same for signed-in and account-less users.
-router.post('/api/import/lighterpack', requireJson, importRateLimit(), async (req, res) => {
+// Read a public list from another app by its share link (LighterPack or
+// PackWizard). Returns the parsed list; the browser adds it to the library
+// like any other edit, so this works the same for signed-in and account-less
+// users. Photos are copied only for someone signed in (they own the copies).
+const importLink = async (req, res) => {
     try {
-        const list = await importFromLighterPack(String((req.body && req.body.url) || '').slice(0, 500));
+        const owner = await optionalUser(req);
+        const list = await importFromLink(String((req.body && req.body.url) || '').slice(0, 500), {
+            owner: owner ? owner.user_id : null,
+            log: (err) => logWithRequest(req, { message: 'import photo copy failed', err }),
+        });
         res.set('Cache-Control', 'no-store');
         res.json(list);
     } catch (err) {
         if (err instanceof ImportError) return res.status(err.status).json({ message: err.message });
-        logWithRequest(req, { message: 'lighterpack import error', err });
+        logWithRequest(req, { message: 'list import error', err });
         res.status(500).json({ message: 'An error occurred.' });
     }
-});
+};
+router.post('/api/import/link', requireJson, importRateLimit(), importLink);
+// The original name, kept for anything already calling it.
+router.post('/api/import/lighterpack', requireJson, importRateLimit(), importLink);
 
 router.get('/api/config', (req, res) => {
     res.set('Cache-Control', 'no-store');
@@ -539,6 +548,15 @@ router.get('/api/explore/featured', pub(async (req, res) => {
     if (!validClass(weightClass)) return res.status(400).json({ message: 'Unknown weight class.' });
     res.set('Cache-Control', 'public, max-age=60');
     res.json({ kits: await kits.featuredKits({ weightClass, limit: req.query.limit }) });
+}));
+
+// The homepage hero's kit, rotating every few hours (kits.spotlightKit).
+// Cached until the pick changes, at most five minutes.
+router.get('/api/explore/spotlight', pub(async (req, res) => {
+    const { kit, endsAt } = await kits.spotlightKit();
+    const left = Math.max(0, Math.floor((endsAt.getTime() - Date.now()) / 1000));
+    res.set('Cache-Control', `public, max-age=${Math.min(300, left)}`);
+    res.json({ kit, until: endsAt.toISOString() });
 }));
 
 router.get('/api/explore/kits', pub(async (req, res) => {

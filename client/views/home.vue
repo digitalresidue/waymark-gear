@@ -35,23 +35,26 @@
                     </p>
                     <p class="wgHeroNote wgMuted">
                         <!-- eslint-disable-next-line vue/singleline-html-element-content-newline -->
-                        Coming from LighterPack? <router-link to="/?import=lighterpack" data-testid="hero-import">Bring your list over</router-link> in one step.
+                        Coming from LighterPack or PackWizard? <router-link to="/?import=1" data-testid="hero-import">Bring your list over</router-link> in one step.
                     </p>
                 </div>
 
-                <div class="wgHeroCard wgCard" aria-label="Example kit">
+                <div class="wgHeroCard wgCard" :class="{ wgHeroCardLive: heroKit }" :aria-label="heroKit ? 'Spotlight kit' : 'Example kit'" data-testid="hero-kit">
                     <div class="wgHeroCardHead">
                         <div>
                             <p class="wgMuted wgHeroCardBy">
                                 <template v-if="heroKit">
-                                    Kit by <a :href="`/@${heroKit.username}`" class="wgByLink" data-testid="hero-kit-author">@{{ heroKit.username }}</a>
+                                    <span class="wgHeroSpot">Spotlight</span> Kit by <a :href="`/@${heroKit.username}`" class="wgByLink" data-testid="hero-kit-author">@{{ heroKit.username }}</a>
                                 </template>
                                 <template v-else>
                                     Example kit
                                 </template>
                             </p>
                             <h2 class="wgHeroCardTitle">
-                                {{ heroKit ? heroKit.name : 'Three nights, shoulder season' }}
+                                <a v-if="heroKit" :href="`/r/${heroKit.externalId}`" class="wgHeroKitLink" data-testid="hero-kit-link">{{ heroKit.name }}</a>
+                                <template v-else>
+                                    Three nights, shoulder season
+                                </template>
                             </h2>
                         </div>
                         <span class="wgBadge">{{ heroClassLabel }}</span>
@@ -90,7 +93,7 @@
                             <span :class="`wgSwatch wgData${i + 1}`" />{{ c.name }}<span class="wgMono wgMuted">{{ c.weight }}</span>
                         </li>
                     </ul>
-                    <a v-if="heroKit" :href="`/r/${heroKit.externalId}`" class="wgHeroCardLink">See the full list →</a>
+                    <span v-if="heroKit" class="wgHeroCardLink" aria-hidden="true">See the full list →</span>
                 </div>
             </section>
 
@@ -537,7 +540,17 @@ export default {
             this.kitsLoaded = true;
         },
         async loadHero() {
-            // The first featured kit in any class, lightest class first.
+            // Today's spotlight: a random creator's list, changing every 12 hours.
+            try {
+                const r = await api('/api/explore/spotlight');
+                if (r.kit) {
+                    this.heroKit = r.kit;
+                    return;
+                }
+            } catch {
+                // Fall back to a featured kit below.
+            }
+            // No list qualifies yet (a new site): the first featured kit, lightest class first.
             for (const c of ['ul', 'sul', 'lw', 'trad']) {
                 try {
                     const r = await api(`/api/explore/featured?class=${c}&limit=1`);
@@ -623,6 +636,59 @@ export default {
     padding: 26px;
 }
 
+// A real kit: the whole card opens it (the title link is stretched over the
+// card); the creator's name stays its own link on top.
+.wgHeroCardLive {
+    position: relative;
+    transition: border-color 0.15s, transform 0.15s;
+
+    &:hover {
+        border-color: var(--lp-primary);
+        transform: translateY(-2px);
+    }
+
+    &:hover .wgHeroCardLink {
+        text-decoration: underline;
+    }
+
+    &:has(.wgHeroKitLink:focus-visible) {
+        outline: 2px solid var(--lp-primary);
+        outline-offset: 2px;
+    }
+
+    .wgByLink {
+        position: relative;
+        z-index: 1;
+    }
+}
+
+.wgHeroKitLink {
+    color: inherit;
+    text-decoration: none;
+
+    &::after {
+        content: "";
+        inset: 0;
+        position: absolute;
+    }
+
+    &:focus-visible {
+        outline: none;
+    }
+}
+
+.wgHeroSpot {
+    background: var(--lp-active-bg);
+    border-radius: 999px;
+    color: var(--lp-accent-green-deep);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    margin-right: 6px;
+    padding: 2px 8px;
+    text-transform: uppercase;
+}
+
 .wgHeroCardHead {
     align-items: flex-start;
     display: flex;
@@ -706,6 +772,7 @@ export default {
 }
 
 .wgHeroCardLink {
+    color: var(--lp-accent-green-deep);
     display: inline-block;
     font-weight: 600;
     margin-top: 18px;

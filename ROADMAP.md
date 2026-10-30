@@ -10,6 +10,16 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 ### Phase 8, part 22 — "What people actually carry" filters by what people carry · 2026-10-30 · branch `common-gear-categories`
 - The category chips were the catalog's first 8 categories alphabetically, so later ones (Packs, Shelter, Sleep…) never appeared. They're now the categories that show up most across published kits, most carried first (up to 12), from `GET /api/explore/common/categories`. With nothing carried yet, no chips are shown.
 
+### Phase 8, part 21 — A spotlight kit in the homepage hero, rotating every 12 hours · 2026-10-30 · branch `hero-spotlight`
+- The hero card shows a **random creator's public list**, the same for everyone for 12 hours, then another. A creator is picked first, then one of their lists, so prolific publishers don't crowd others out. Lists with 5+ items from visible profiles are preferred; a young site falls back to any list with gear.
+- The pick is a hash of the 12-hour window (no stored state, so every server agrees). `GET /api/explore/spotlight` → `{ kit, until }`, cached until the pick changes (at most 5 minutes).
+- The card is labelled **Spotlight**. The list name links to the list, the whole card opens it, and the creator's name still links to their profile.
+### Phase 8, part 20 — Import from PackWizard and other apps · 2026-10-30 · branch `import-other-apps`
+- **Import a list** (was "Import from LighterPack") takes a share link from **LighterPack or PackWizard**, a CSV file, or rows pasted from a spreadsheet.
+- **PackWizard links** (`packwizard.com/s/…`) are read from PackWizard's public shared-pack JSON (only that one path on the configured `packwizardUrl`, no redirects, size-capped, rate-limited like LighterPack). Brands join the item name, units, quantities, prices, links and worn/consumable come across, and for someone signed in the item photos (up to 40) are copied here.
+- **Other apps' CSV exports and spreadsheets** (Packstack, Google Sheets, Excel…): columns are found by name in many spellings (Gear/Item/Product, Brand, Group/Category, Notes, Count/Quantity, Weight (g), Cost, Type = worn/consumable…). The file can use commas, semicolons with decimal commas or tabs. Weights can carry a unit ("394 g", "1 lb 4 oz") or take it from the header. When nothing says the unit, the preview asks.
+- The preview lists which column each field was read from. An imported list with photos or prices turns those columns on. A "Where do I find my list in other apps?" guide sits in the dialog. `/api/import/link` replaces `/api/import/lighterpack` (kept as an alias).
+
 ### Phase 8, part 19 — Packs by trail: twelve trails, each with how its packs split · 2026-10-30 · branch `trail-cards-stats`
 - The homepage's **Packs by trail** shows **12** trails (was 8), ranked by published packs (sections count toward their trail; ties keep the curated AT, PCT, CDT… order).
 - Each card has the **pack count** as a badge, a **weight-class bar** (Ultra-UL, Ultralight, Lightweight, Traditional, lightest on the left, with one legend under the grid) and the packs' **average base weight** (empty lists left out). A trail without packs says so and invites the first one.

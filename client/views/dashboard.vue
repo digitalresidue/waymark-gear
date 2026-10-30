@@ -45,7 +45,7 @@
                 @hide="showSpeedbump = false"
             />
             <copyList :shown="showCopyList" @hide="showCopyList = false" />
-            <importLighterpack :shown="showImport" @hide="showImport = false" />
+            <importList :shown="showImport" @hide="showImport = false" />
             <gearDetails :shown="showGearDetails" :item="gearDetailsItem" @hide="showGearDetails = false" />
             <planTeam v-if="canPlan" :shown="showTeam" :owner="teamOwner" :list-id="teamListId" @hide="showTeam = false" @members="onMembers" />
             <importCSV ref="importCSVRef" />
@@ -75,7 +75,7 @@ import itemViewImage from '../components/item-view-image.vue';
 import itemLink from '../components/item-link.vue';
 import importCSV from '../components/import-csv.vue';
 import copyList from '../components/copy-list.vue';
-import importLighterpack from '../components/import-lighterpack.vue';
+import importList from '../components/import-list.vue';
 import gearDetails from '../components/gear-details.vue';
 import planTeam from '../components/plan-team.vue';
 import planPresence from '../components/plan-presence.vue';
@@ -97,7 +97,7 @@ export default {
         planPresence,
         planSidebar,
         gearDetails,
-        importLighterpack,
+        importList,
         offlineBanner,
         sidebar,
         share,
@@ -209,9 +209,9 @@ export default {
     },
     beforeMount() {
         const copyId = this.$route.query.copy;
-        // "Import from LighterPack" on the homepage: same, an account-less
+        // "Bring your list over" on the homepage: same, an account-less
         // library to import into if there isn't one yet.
-        const importing = this.$route.query.import === 'lighterpack';
+        const importing = ['lighterpack', 'packwizard', '1'].includes(String(this.$route.query.import || ''));
         // "Start a list" in the header of a server-rendered page.
         const starting = this.$route.query.start === '1';
         // "Copy to my lists" from a shared page works without an account:
