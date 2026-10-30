@@ -7,6 +7,11 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 21 — A spotlight kit in the homepage hero, rotating every 12 hours · 2026-10-30 · branch `hero-spotlight`
+- The hero card shows a **random creator's public list**, the same for everyone for 12 hours, then another. A creator is picked first, then one of their lists, so prolific publishers don't crowd others out. Lists with 5+ items from visible profiles are preferred; a young site falls back to any list with gear.
+- The pick is a hash of the 12-hour window (no stored state, so every server agrees). `GET /api/explore/spotlight` → `{ kit, until }`, cached until the pick changes (at most 5 minutes).
+- The card is labelled **Spotlight**. The list name links to the list, the whole card opens it, and the creator's name still links to their profile.
+
 ### Phase 8, part 19 — Packs by trail: twelve trails, each with how its packs split · 2026-10-30 · branch `trail-cards-stats`
 - The homepage's **Packs by trail** shows **12** trails (was 8), ranked by published packs (sections count toward their trail; ties keep the curated AT, PCT, CDT… order).
 - Each card has the **pack count** as a badge, a **weight-class bar** (Ultra-UL, Ultralight, Lightweight, Traditional, lightest on the left, with one legend under the grid) and the packs' **average base weight** (empty lists left out). A trail without packs says so and invites the first one.

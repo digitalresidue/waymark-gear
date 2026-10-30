@@ -1,7 +1,7 @@
 // JSON API for the gear catalog, Explore, and the site owner's screens.
 //
 // Public:  GET /api/config, /api/catalog, /api/catalog/categories,
-//          /api/explore/featured, /api/explore/kits, /api/explore/common
+//          /api/explore/featured, /api/explore/spotlight, /api/explore/kits, /api/explore/common
 // Owner:   /api/admin/catalog (CRUD, CSV import/export), /api/admin/kits
 
 import express from 'express';
@@ -539,6 +539,15 @@ router.get('/api/explore/featured', pub(async (req, res) => {
     if (!validClass(weightClass)) return res.status(400).json({ message: 'Unknown weight class.' });
     res.set('Cache-Control', 'public, max-age=60');
     res.json({ kits: await kits.featuredKits({ weightClass, limit: req.query.limit }) });
+}));
+
+// The homepage hero's kit, rotating every few hours (kits.spotlightKit).
+// Cached until the pick changes, at most five minutes.
+router.get('/api/explore/spotlight', pub(async (req, res) => {
+    const { kit, endsAt } = await kits.spotlightKit();
+    const left = Math.max(0, Math.floor((endsAt.getTime() - Date.now()) / 1000));
+    res.set('Cache-Control', `public, max-age=${Math.min(300, left)}`);
+    res.json({ kit, until: endsAt.toISOString() });
 }));
 
 router.get('/api/explore/kits', pub(async (req, res) => {

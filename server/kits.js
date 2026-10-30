@@ -169,6 +169,42 @@ export async function featuredKits({ weightClass, limit = 6 }) {
     return rows.map(kitToApi);
 }
 
+// The homepage hero's kit: a random published list, the same for everyone
+// for SPOTLIGHT_HOURS, then another. A random *creator* is picked first and
+// then one of their lists, so someone with twenty lists isn't twenty times as
+// likely to be shown. Lists with a few items (5+) are preferred, from
+// profiles that aren't hidden; a young site without any shows any list with
+// gear in it. Deterministic for the window (hashed with it),
+// so every server and every cache agrees, with no state to keep.
+export const SPOTLIGHT_HOURS = 12;
+const MIN_SPOTLIGHT_ITEMS = 5;
+
+export function spotlightWindow(now = Date.now(), hours = SPOTLIGHT_HOURS) {
+    const ms = hours * 60 * 60 * 1000;
+    const index = Math.floor(now / ms);
+    return { index, endsAt: new Date((index + 1) * ms) };
+}
+
+export async function spotlightKit({ now = Date.now(), hours = SPOTLIGHT_HOURS } = {}) {
+    const { index, endsAt } = spotlightWindow(now, hours);
+    const salt = `spotlight-${index}`;
+    // Fuller lists first; on a young site, any list with gear in it.
+    for (const minItems of [MIN_SPOTLIGHT_ITEMS, 1]) {
+        const eligible = () => knex('public_kits')
+            .join('users', 'users.user_id', 'public_kits.user_id')
+            .where('users.profile_hidden', false)
+            .where('public_kits.item_count', '>=', minItems)
+            .where('public_kits.base_weight_mg', '>', 0);
+        const creator = await eligible().groupBy('public_kits.user_id').select('public_kits.user_id')
+            .orderByRaw('md5(public_kits.user_id::text || ?)', [salt]).first();
+        if (!creator) continue;
+        const row = await eligible().where('public_kits.user_id', creator.user_id)
+            .orderByRaw('md5(public_kits.external_id || ?)', [salt]).first('public_kits.*');
+        if (row) return { kit: kitToApi(row), endsAt };
+    }
+    return { kit: null, endsAt };
+}
+
 // One person's published kits, newest first (their profile page).
 export async function kitsForUser(userId, db = knex) {
     const rows = await db('public_kits').where({ user_id: userId }).orderBy('updated_at', 'desc').limit(100);
