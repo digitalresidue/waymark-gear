@@ -7,6 +7,10 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 16 — A homepage section for each part of the site · 2026-10-29 · branch `home-sections`
+- The homepage now previews everything in the menu, each with a "See all" link: **Packs by trail** (the busiest trails, with pack counts), **Latest gear reviews** (the six newest: stars, gear, headline, the start of the review, who and when), **Gear makers** (brands, cottage makers first), and **Leaderboards** (top three voted and lightest), alongside the existing featured kits, shakedown board and popular gear. Order: hero, featured kits, trails, reviews, shakedowns, brands, popular gear, leaderboards, how it works.
+- Sections with nothing to show yet stay hidden, so a new site doesn't look empty. One request (`GET /api/home`, cached a minute) feeds all four; one part failing leaves the rest.
+
 ### Phase 8, part 15 — Wide pages line up with the 1366px column · 2026-10-29 · branch `trails-width`
 - **Trails** (and All trails), **Compare** and **profiles** use the site column like the header (1366px, 24px in), instead of their own 1120/1100/1040px boxes; the profile banner sits in the column on bigger screens (edge to edge on a phone). A test checks these pages and Brands line up with the header at both edges.
 - Reading pages (gear items, Gear reviews, trip journals, shared lists) keep their narrower centred column for comfortable line lengths.

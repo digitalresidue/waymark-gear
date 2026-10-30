@@ -138,6 +138,69 @@
                 </div>
             </section>
 
+            <!-- Trails: what people carry, trail by trail -->
+            <section v-if="home.trails.length" id="trails" class="wgPage wgHomeSection" data-testid="home-trails">
+                <div class="wgSectionHead">
+                    <div>
+                        <h2 class="wgH2">
+                            Packs by trail
+                        </h2>
+                        <p class="wgLede">
+                            See what hikers carry on the trail you're planning, and how their packs compare.
+                        </p>
+                    </div>
+                </div>
+                <ul class="wgHomeTrails">
+                    <li v-for="t in home.trails" :key="t.slug">
+                        <a :href="`/trails/${t.slug}`" class="wgHomeTrail" data-testid="home-trail">
+                            <strong>{{ t.short || t.name }}</strong>
+                            <span class="wgMuted">{{ t.short ? t.name : t.region }}</span>
+                            <span class="wgHomeTrailCount">{{ t.count ? `${t.count} ${t.count === 1 ? 'pack' : 'packs'}` : (t.lengthMi ? `${t.lengthMi.toLocaleString()} mi` : '') }}</span>
+                        </a>
+                    </li>
+                </ul>
+                <p class="wgSectionMore">
+                    <a href="/trails/all">All trails →</a>
+                </p>
+            </section>
+
+            <!-- The newest gear reviews -->
+            <section v-if="home.reviews.length" id="reviews" class="wgBand" data-testid="home-reviews">
+                <div class="wgPage">
+                    <div class="wgSectionHead">
+                        <div>
+                            <h2 class="wgH2">
+                                Latest gear reviews
+                            </h2>
+                            <p class="wgLede">
+                                How gear held up out there, from people who carried it.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="wgHomeReviews">
+                        <article v-for="r in home.reviews" :key="r.id" class="wgHomeReview" data-testid="home-review">
+                            <p class="wgHomeReviewTop">
+                                <span class="wgStars" :aria-label="`${r.rating} out of 5`">{{ '★'.repeat(r.rating) }}<span class="wgStarsOff">{{ '★'.repeat(5 - r.rating) }}</span></span>
+                                <span v-if="r.staff" class="wgBadge">Waymark staff</span>
+                            </p>
+                            <a v-if="r.item" :href="`/g/${r.item.id}`" class="wgHomeReviewItem wgStretch">{{ [r.item.brand, r.item.name].filter(Boolean).join(' ') }}</a>
+                            <h3 v-if="r.title">
+                                {{ r.title }}
+                            </h3>
+                            <p class="wgHomeReviewBody">
+                                {{ r.body }}
+                            </p>
+                            <p class="wgMuted wgHomeReviewBy">
+                                <a :href="`/@${r.author}`" class="wgByLink">{{ r.displayName || `@${r.author}` }}</a> · {{ reviewDate(r.createdAt) }}
+                            </p>
+                        </article>
+                    </div>
+                    <p class="wgSectionMore">
+                        <a href="/reviews">Read all reviews →</a>
+                    </p>
+                </div>
+            </section>
+
             <!-- Shakedown board: lists asking the community for suggestions -->
             <section id="shakedowns" class="wgPage wgShakedownBoard" data-testid="shakedown-board">
                 <div class="wgSectionHead">
@@ -173,6 +236,34 @@
                     <router-link to="/leaderboard">
                         Leaderboards →
                     </router-link>
+                </p>
+            </section>
+
+            <!-- Brands: who makes it, big and cottage -->
+            <section v-if="home.brands.length" id="brands" class="wgPage wgHomeSection" data-testid="home-brands">
+                <div class="wgSectionHead">
+                    <div>
+                        <h2 class="wgH2">
+                            Gear makers
+                        </h2>
+                        <p class="wgLede">
+                            From one-person cottage shops to the big names. Find who makes what you need.
+                        </p>
+                    </div>
+                </div>
+                <ul class="wgHomeBrands">
+                    <li v-for="b in home.brands" :key="b.id">
+                        <a :href="`/brands?q=${encodeURIComponent(b.name)}`" class="wgHomeBrand" data-testid="home-brand">
+                            <img v-if="b.logoUrl" :src="b.logoUrl" alt="" class="wgHomeBrandLogo" loading="lazy">
+                            <span v-else class="wgHomeBrandLogo wgHomeBrandInitial" aria-hidden="true">{{ b.name.charAt(0).toUpperCase() }}</span>
+                            <span class="wgHomeBrandName">{{ b.name }}</span>
+                            <span v-if="b.cottage" class="wgHomeBrandTag">Cottage</span>
+                        </a>
+                    </li>
+                </ul>
+                <p class="wgSectionMore">
+                    <a href="/brands">All brands →</a>
+                    <a href="/brands?cottage=1">Cottage makers →</a>
                 </p>
             </section>
 
@@ -220,6 +311,41 @@
                         This fills in as people publish kits built from the gear catalog.
                     </p>
                 </div>
+            </section>
+
+            <!-- Leaderboards: a taste -->
+            <section v-if="home.leaders.top.length || home.leaders.light.length" id="leaders" class="wgPage wgHomeSection" data-testid="home-leaders">
+                <div class="wgSectionHead">
+                    <div>
+                        <h2 class="wgH2">
+                            Leaderboards
+                        </h2>
+                        <p class="wgLede">
+                            The kits people voted up most this month, and the lightest out there.
+                        </p>
+                    </div>
+                </div>
+                <div class="wgHomeLeaders">
+                    <div v-for="col in leaderCols" :key="col.key" class="wgCard wgHomeLeaderCol">
+                        <h3>{{ col.title }}</h3>
+                        <ol>
+                            <li v-for="(k, i) in col.kits" :key="k.externalId" data-testid="home-leader">
+                                <span class="wgMono wgMuted">{{ i + 1 }}</span>
+                                <a :href="`/r/${k.externalId}`" class="wgHomeLeaderName">{{ k.name }}</a>
+                                <a :href="`/@${k.username}`" class="wgByLink wgMuted">@{{ k.username }}</a>
+                                <span class="wgMono">{{ col.key === 'top' ? `▲ ${k.score}` : formatWeight(k.baseWeightMg, 'lb') }}</span>
+                            </li>
+                        </ol>
+                        <p v-if="!col.kits.length" class="wgMuted">
+                            Nothing here yet.
+                        </p>
+                    </div>
+                </div>
+                <p class="wgSectionMore">
+                    <router-link to="/leaderboard">
+                        Full leaderboards →
+                    </router-link>
+                </p>
             </section>
 
             <!-- How it works -->
@@ -292,6 +418,8 @@ export default {
     components: { siteHeader, siteFooter, globalAlerts, googleButton, kitCard },
     data() {
         return {
+            // Trails, latest reviews, brands, leaderboards (GET /api/home).
+            home: { trails: [], reviews: [], brands: [], leaders: { top: [], light: [] } },
             googleOn: false,
             weightClasses: FALLBACK_CLASSES,
             activeClass: 'ul',
@@ -308,6 +436,12 @@ export default {
         };
     },
     computed: {
+        leaderCols() {
+            return [
+                { key: 'top', title: 'Top this month', kits: this.home.leaders.top },
+                { key: 'light', title: 'Lightest', kits: this.home.leaders.light },
+            ];
+        },
         hasLibrary() {
             return Boolean(this.$store.state.library);
         },
@@ -330,6 +464,7 @@ export default {
     },
     async mounted() {
         document.title = 'Waymark Gear — Build it. Share it. Go.';
+        api('/api/home').then((r) => { this.home = r; }).catch(() => {});
         siteConfig().then((config) => {
             if (config.weightClasses && config.weightClasses.length) this.weightClasses = config.weightClasses;
         });
@@ -351,6 +486,9 @@ export default {
         },
         ago(when) {
             return hoursAgo(when);
+        },
+        reviewDate(when) {
+            return new Date(when).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
         },
         tripLabel(kit) {
             return TRIP_TYPE_LABELS[kit.tripType] || '';
@@ -583,9 +721,235 @@ export default {
 }
 
 .wgSectionMore {
+    display: flex;
+    flex-wrap: wrap;
     font-size: 16px;
     font-weight: 600;
+    gap: 8px 24px;
     margin: 24px 0 0;
+}
+
+// ---- Discovery sections (trails, reviews, brands, leaderboards) ----
+
+.wgHomeSection {
+    padding-bottom: 56px;
+    padding-top: 56px;
+}
+
+.wgHomeTrails {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.wgHomeTrail {
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: $radius-lg;
+    color: var(--lp-text);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    height: 100%;
+    padding: 14px 16px;
+    text-decoration: none;
+    transition: border-color 0.15s, transform 0.15s;
+
+    strong {
+        font-family: $font-display;
+        font-size: 20px;
+    }
+
+    .wgMuted {
+        font-size: 13px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &:hover {
+        border-color: var(--lp-primary);
+        transform: translateY(-1px);
+    }
+}
+
+.wgHomeTrailCount {
+    color: var(--lp-accent-green-deep);
+    font: 600 13px $font-mono;
+    margin-top: 6px;
+}
+
+.wgHomeReviews {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+
+.wgHomeReview {
+    background: var(--lp-content-bg);
+    border: 1px solid var(--lp-border);
+    border-radius: $radius-lg;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 18px 20px;
+    position: relative;
+
+    h3 {
+        font-size: 17px;
+        margin: 0;
+    }
+
+    &:hover {
+        border-color: var(--lp-border-strong);
+    }
+}
+
+.wgHomeReviewTop {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    margin: 0;
+}
+
+.wgStars {
+    color: #C48A1F;
+    letter-spacing: 1px;
+}
+
+.wgStarsOff {
+    color: var(--lp-border-strong);
+}
+
+.wgHomeReviewItem {
+    color: var(--lp-accent-green-deep);
+    font-weight: 700;
+}
+
+.wgHomeReviewBody {
+    -webkit-box-orient: vertical;
+    color: var(--lp-text-secondary);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    margin: 0;
+    overflow: hidden;
+}
+
+.wgHomeReviewBy {
+    font-size: 13px;
+    margin: auto 0 0;
+}
+
+.wgHomeBrands {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.wgHomeBrand {
+    align-items: center;
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: $radius-lg;
+    color: var(--lp-text);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    height: 100%;
+    padding: 16px 12px;
+    text-align: center;
+    text-decoration: none;
+
+    &:hover {
+        border-color: var(--lp-primary);
+    }
+}
+
+.wgHomeBrandLogo {
+    background: #fff;
+    border: 1px solid var(--lp-border);
+    border-radius: 12px;
+    height: 56px;
+    object-fit: contain;
+    padding: 4px;
+    width: 56px;
+}
+
+.wgHomeBrandInitial {
+    align-items: center;
+    background: var(--lp-active-bg);
+    color: var(--lp-accent-green-deep);
+    display: inline-flex;
+    font: 800 24px/1 $font-display;
+    justify-content: center;
+}
+
+.wgHomeBrandName {
+    font-weight: 700;
+}
+
+.wgHomeBrandTag {
+    background: var(--lp-active-bg);
+    border-radius: 999px;
+    color: var(--lp-accent-green-deep);
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 2px 8px;
+}
+
+.wgHomeLeaders {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.wgHomeLeaderCol {
+    padding: 18px 20px;
+
+    h3 {
+        font-size: 17px;
+        margin: 0 0 10px;
+    }
+
+    ol {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    li {
+        align-items: baseline;
+        border-top: 1px solid var(--lp-border);
+        display: grid;
+        gap: 10px;
+        grid-template-columns: 18px minmax(0, 1fr) auto auto;
+        padding: 9px 0;
+    }
+
+    .wgByLink {
+        font-size: 13px;
+        font-weight: 500;
+    }
+}
+
+.wgHomeLeaderName {
+    color: var(--lp-text);
+    font-weight: 650;
+    overflow: hidden;
+    text-decoration: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:hover {
+        text-decoration: underline;
+    }
 }
 
 .wgCommon {
