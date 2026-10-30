@@ -7,6 +7,9 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 22 — "What people actually carry" filters by what people carry · 2026-10-30 · branch `common-gear-categories`
+- The category chips were the catalog's first 8 categories alphabetically, so later ones (Packs, Shelter, Sleep…) never appeared. They're now the categories that show up most across published kits, most carried first (up to 12), from `GET /api/explore/common/categories`. With nothing carried yet, no chips are shown.
+
 ### Phase 8, part 19 — Packs by trail: twelve trails, each with how its packs split · 2026-10-30 · branch `trail-cards-stats`
 - The homepage's **Packs by trail** shows **12** trails (was 8), ranked by published packs (sections count toward their trail; ties keep the curated AT, PCT, CDT… order).
 - Each card has the **pack count** as a badge, a **weight-class bar** (Ultra-UL, Ultralight, Lightweight, Traditional, lightest on the left, with one legend under the grid) and the packs' **average base weight** (empty lists left out). A trail without packs says so and invites the first one.

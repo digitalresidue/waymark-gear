@@ -293,7 +293,7 @@
                     <p class="wgLede">
                         The catalog gear that shows up most across published kits.
                     </p>
-                    <div class="wgChips" role="group" aria-label="Gear category">
+                    <div v-if="categories.length" class="wgChips" role="group" aria-label="Gear category" data-testid="common-chips">
                         <button type="button" class="wgChip" :aria-pressed="String(activeCategory === '')" @click="pickCategory('')">
                             All
                         </button>
@@ -492,7 +492,8 @@ export default {
             .catch(() => {})
             .finally(() => { this.shakedownsLoaded = true; });
         this.loadCommon();
-        api('/api/catalog/categories').then((r) => { this.categories = r.categories.slice(0, 8); }).catch(() => {});
+        // The categories people carry most, so the chips match the list.
+        api('/api/explore/common/categories?limit=12').then((r) => { this.categories = r.categories; }).catch(() => {});
     },
     methods: {
         formatWeight(mg, unit) {

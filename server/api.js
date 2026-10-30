@@ -605,6 +605,11 @@ router.get('/api/home', pub(async (req, res) => {
     });
 }));
 
+router.get('/api/explore/common/categories', pub(async (req, res) => {
+    res.set('Cache-Control', 'public, max-age=300');
+    res.json({ categories: await kits.commonCategories({ limit: req.query.limit }) });
+}));
+
 router.get('/api/explore/common', pub(async (req, res) => {
     res.set('Cache-Control', 'public, max-age=300');
     res.json(await kits.commonGear({ category: String(req.query.category || '').slice(0, 80), limit: req.query.limit }));

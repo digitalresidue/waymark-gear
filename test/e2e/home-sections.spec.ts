@@ -130,3 +130,29 @@ test('packs by trail: twelve trails, ranked by packs, each with its weight-class
     await expect(card.getByTestId('home-trail-avg')).toContainText('avg base weight');
     await expect(visitor.getByRole('list', { name: 'Weight classes' })).toContainText('Ultralight');
 });
+
+test('what people actually carry: the category chips are the ones people carry, most carried first', async ({ page }) => {
+    const { categories } = await (await page.request.get(url('/api/explore/common/categories?limit=12'))).json();
+    const counts = categories.map((c: { count: number }) => c.count);
+    expect(counts).toEqual([...counts].sort((a, b) => b - a));
+    // Every category in the most-carried list has its chip (while there are 12 or fewer).
+    const top = await (await page.request.get(url('/api/explore/common?limit=50'))).json();
+    const carried = [...new Set(top.items.map((i: { category: string }) => i.category).filter(Boolean))];
+    if (carried.length <= 12) {
+        for (const c of carried) expect(categories.map((x: { name: string }) => x.name)).toContain(c);
+    }
+
+    // The page shows the chips it's given, in order, after All; Packs isn't
+    // lost however late it sorts alphabetically. Picking one asks for it.
+    await page.route('**/api/explore/common/categories?*', (route) => route.fulfill({
+        json: { categories: [{ name: 'Packs', count: 30 }, { name: 'Shelter', count: 22 }, { name: 'Accessories', count: 3 }] },
+    }));
+    await page.goto(url('/welcome'));
+    const chips = page.getByTestId('common-chips').getByRole('button');
+    await expect(chips).toHaveText(['All', 'Packs', 'Shelter', 'Accessories']);
+    const asked = page.waitForRequest((r) => r.url().includes('/api/explore/common?') && r.url().includes('category=Packs'));
+    await chips.nth(1).click();
+    await asked;
+    await expect(chips.nth(1)).toHaveAttribute('aria-pressed', 'true');
+});
+
