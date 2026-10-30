@@ -1,4 +1,6 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
+
+import { registerUser, generateTestUser } from './auth-utils';
 
 import { testRoot } from './utils';
 
@@ -76,4 +78,55 @@ test('what people actually carry: each gear row opens its gear page', async ({ p
     const weight = await weightCell.boundingBox();
     await page.mouse.click(weight!.x + weight!.width / 2, weight!.y + weight!.height / 2);
     await expect(page).toHaveURL(new RegExp(`/g/${gear.id}$`));
+});
+
+const saved = (page: Page) => page.waitForResponse((r) => r.url().includes('saveLibrary') && r.status() === 200, { timeout: 20000 });
+
+test('packs by trail: twelve trails, ranked by packs, each with its weight-class split and average', async ({ browser }) => {
+    test.setTimeout(90000);
+    // A hiker publishes a PCT list with a 20 oz quilt.
+    const page = await (await browser.newContext()).newPage();
+    const u = generateTestUser('homtrail');
+    await registerUser(page, u.username, u.password, u.email);
+    await expect(page.getByTestId('item-row').first()).toBeVisible();
+    const title = page.getByPlaceholder('Name your list', { exact: true });
+    let done = saved(page);
+    await title.fill(`PCT 2026 home ${Date.now()}`);
+    await title.blur();
+    await done;
+    const row = page.getByTestId('item-row').first();
+    done = saved(page);
+    await row.getByPlaceholder('Name', { exact: true }).fill('Quilt');
+    await row.getByTestId('item-weight').fill('20');
+    await done;
+    done = saved(page);
+    await page.getByTestId('trail-tag-suggest').click();
+    await done;
+    await page.getByText('Share', { exact: true }).hover();
+    const toggle = page.getByTestId('publish-toggle');
+    await expect(toggle).toBeEnabled({ timeout: 10000 });
+    done = saved(page);
+    await toggle.check();
+    await done;
+
+    // The data: ranked by packs, the split adds up, and an average to show.
+    const home = await (await page.request.get(url('/api/home'))).json();
+    expect(home.trails).toHaveLength(12);
+    const counts = home.trails.map((t: { count: number }) => t.count);
+    expect(counts).toEqual([...counts].sort((a, b) => b - a));
+    const pct = home.trails.find((t: { slug: string }) => t.slug === 'pct');
+    expect(pct.count).toBeGreaterThan(0);
+    expect(Object.values(pct.classes).reduce((a: number, b) => a + (b as number), 0)).toBe(pct.count);
+    expect(pct.avgBaseWeightMg).toBeGreaterThan(0);
+
+    // The cards.
+    const visitor = await (await browser.newContext()).newPage();
+    await visitor.goto(url('/welcome'));
+    const cards = visitor.getByTestId('home-trail');
+    await expect(cards).toHaveCount(12);
+    const card = visitor.locator('a[data-testid="home-trail"][href="/trails/pct"]');
+    await expect(card.getByTestId('home-trail-packs')).toHaveText(`${pct.count.toLocaleString()} ${pct.count === 1 ? 'pack' : 'packs'}`);
+    await expect(card.getByTestId('home-trail-tiers')).toHaveAttribute('aria-label', /^PCT packs: \d+ /);
+    await expect(card.getByTestId('home-trail-avg')).toContainText('avg base weight');
+    await expect(visitor.getByRole('list', { name: 'Weight classes' })).toContainText('Ultralight');
 });

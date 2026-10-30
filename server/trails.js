@@ -50,6 +50,33 @@ async function packCounts() {
     return counts;
 }
 
+// How the packs on each trail split by weight class, and their average base
+// weight (empty lists left out of the average). Sections count toward their
+// parent, like packCounts. trail id -> { classes: { sul, ul, lw, trad }, avgBaseWeightMg }
+export async function packStats() {
+    await ensureTrails();
+    const rows = await knex('public_kits').whereNotNull('trail_id').groupBy('trail_id', 'weight_class')
+        .select('trail_id', 'weight_class')
+        .count({ n: '*' })
+        .select(knex.raw('coalesce(sum(base_weight_mg) filter (where base_weight_mg > 0), 0) as weighed_sum'))
+        .select(knex.raw('count(*) filter (where base_weight_mg > 0) as weighed'));
+    const idx = trailIndex();
+    const acc = new Map();
+    const add = (id, r) => {
+        const a = acc.get(id) || { classes: { sul: 0, ul: 0, lw: 0, trad: 0 }, sum: 0, weighed: 0 };
+        if (r.weight_class in a.classes) a.classes[r.weight_class] += Number(r.n);
+        a.sum += Number(r.weighed_sum);
+        a.weighed += Number(r.weighed);
+        acc.set(id, a);
+    };
+    for (const r of rows) {
+        add(r.trail_id, r);
+        const t = idx.byId.get(r.trail_id);
+        if (t && t.parentId) add(t.parentId, r);
+    }
+    return new Map([...acc].map(([id, a]) => [id, { classes: a.classes, avgBaseWeightMg: a.weighed ? Math.round(a.sum / a.weighed) : null }]));
+}
+
 const published = (t) => t.status === 'published';
 
 // The most-packed trails, for the picker's chips.

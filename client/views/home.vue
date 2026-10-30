@@ -153,10 +153,27 @@
                 <ul class="wgHomeTrails">
                     <li v-for="t in home.trails" :key="t.slug">
                         <a :href="`/trails/${t.slug}`" class="wgHomeTrail" data-testid="home-trail">
-                            <strong>{{ t.short || t.name }}</strong>
+                            <span class="wgHomeTrailTop">
+                                <strong>{{ t.short || t.name }}</strong>
+                                <span class="wgHomeTrailPacks" :class="{ wgHomeTrailPacksNone: !t.count }" data-testid="home-trail-packs">{{ t.count ? `${t.count.toLocaleString()} ${t.count === 1 ? 'pack' : 'packs'}` : '0 packs' }}</span>
+                            </span>
                             <span class="wgMuted">{{ t.short ? t.name : t.region }}</span>
-                            <span class="wgHomeTrailCount">{{ t.count ? `${t.count} ${t.count === 1 ? 'pack' : 'packs'}` : (t.lengthMi ? `${t.lengthMi.toLocaleString()} mi` : '') }}</span>
+                            <span v-if="t.lengthMi" class="wgMuted wgHomeTrailLength">{{ t.lengthMi.toLocaleString() }} mi</span>
+                            <span class="wgHomeTrailStats">
+                                <template v-if="t.count && t.classes">
+                                    <span class="wgTierBar" role="img" :aria-label="tierLabel(t)" :title="tierLabel(t)" data-testid="home-trail-tiers">
+                                        <span v-for="c in weightClasses" v-show="t.classes[c.id]" :key="c.id" :class="`wgTier-${c.id}`" :style="{ flexGrow: t.classes[c.id] || 0 }" />
+                                    </span>
+                                    <span v-if="t.avgBaseWeightMg" class="wgHomeTrailAvg" data-testid="home-trail-avg"><span class="wgMono">{{ formatWeight(t.avgBaseWeightMg, 'lb') }}</span> avg base<span class="wgHomeTrailAvgWord"> weight</span></span>
+                                </template>
+                                <span v-else class="wgMuted wgHomeTrailFirst">Be the first to share a pack</span>
+                            </span>
                         </a>
+                    </li>
+                </ul>
+                <ul v-if="home.trails.some((t) => t.count)" class="wgTierLegend" aria-label="Weight classes">
+                    <li v-for="c in weightClasses" :key="c.id">
+                        <span :class="`wgTierDot wgTier-${c.id}`" aria-hidden="true" />{{ c.label }} <span class="wgMuted">{{ c.range }}</span>
                     </li>
                 </ul>
                 <p class="wgSectionMore">
@@ -532,6 +549,11 @@ export default {
                 }
             }
         },
+        // "PCT packs: 3 Ultra-UL, 9 Ultralight, ..." for the class bar.
+        tierLabel(t) {
+            const parts = this.weightClasses.filter((c) => t.classes[c.id]).map((c) => `${t.classes[c.id]} ${c.label}`);
+            return `${t.short || t.name} packs: ${parts.join(', ')}`;
+        },
         async loadCommon() {
             const asked = this.activeCategory;
             try {
@@ -776,10 +798,139 @@ export default {
     }
 }
 
-.wgHomeTrailCount {
+.wgHomeTrailTop {
+    // A long name keeps whole words: the pack count drops below it instead.
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    justify-content: space-between;
+
+    strong {
+        line-height: 1.15;
+        min-width: 0;
+    }
+}
+
+// The pack count: the number the section is ranked by.
+.wgHomeTrailPacks {
+    background: var(--lp-active-bg);
+    border-radius: 999px;
     color: var(--lp-accent-green-deep);
-    font: 600 13px $font-mono;
-    margin-top: 6px;
+    flex: 0 0 auto;
+    font: 600 12.5px $font-mono;
+    padding: 3px 9px;
+    white-space: nowrap;
+}
+
+.wgHomeTrailPacksNone {
+    background: var(--lp-surface-sunken);
+    color: var(--lp-text-secondary);
+    font-family: $font-body;
+}
+
+// Stats sit at the bottom, whatever the name's length.
+.wgHomeTrailStats {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: auto;
+    padding-top: 10px;
+}
+
+.wgHomeTrail .wgHomeTrailFirst {
+    white-space: normal;
+}
+
+.wgHomeTrailAvg {
+    color: var(--lp-text-secondary);
+    font-size: 13px;
+
+    .wgMono {
+        color: var(--lp-text);
+        font-weight: 600;
+    }
+}
+
+// Packs by weight class, lightest on the left.
+.wgTierBar {
+    background: var(--lp-surface-sunken);
+    border-radius: 999px;
+    display: flex;
+    gap: 2px;
+    height: 8px;
+    overflow: hidden;
+
+    span {
+        flex-basis: 0;
+        min-width: 4px;
+    }
+}
+
+.wgTier-sul { background: var(--wg-tier-sul, #1F6B4F); }
+.wgTier-ul { background: #5BAA7E; }
+.wgTier-lw { background: #D9A53F; }
+.wgTier-trad { background: #9A7358; }
+
+// The darkest green disappears on a dark page.
+@media (prefers-color-scheme: dark) {
+    .lp:not([data-theme="light"]) {
+        --wg-tier-sul: #2E9A70;
+    }
+}
+
+.lp[data-theme="dark"] {
+    --wg-tier-sul: #2E9A70;
+}
+
+// Phones: two narrow columns rather than twelve full-width cards.
+@media (max-width: $mobile) {
+    .wgHomeTrails {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .wgHomeTrail {
+        padding: 12px;
+
+        strong {
+            font-size: 17px;
+        }
+    }
+
+    .wgHomeTrailTop {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .wgHomeTrailLength,
+    .wgHomeTrailAvgWord {
+        display: none;
+    }
+}
+
+.wgTierLegend {
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 13px;
+    gap: 6px 18px;
+    list-style: none;
+    margin: 14px 0 0;
+    padding: 0;
+
+    li {
+        align-items: center;
+        display: inline-flex;
+        gap: 6px;
+    }
+}
+
+.wgTierDot {
+    border-radius: 3px;
+    display: inline-block;
+    height: 10px;
+    width: 10px;
 }
 
 .wgHomeReviews {
