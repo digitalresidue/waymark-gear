@@ -28,12 +28,17 @@ test.describe('Public profiles', () => {
         // Long: signs up, publishes a list, uploads two images and visits
         // four pages; slower browsers on CI were right at 30s.
         test.setTimeout(60000);
+        // Firefox under automation sometimes never reports "load" (some
+        // resource still pending), and a navigation has no time limit of its
+        // own: wait for the page itself, and give each step a limit, so a
+        // stall names its step instead of using up the whole test.
+        page.setDefaultNavigationTimeout(20000);
         const { username, password, email } = generateTestUser('prof');
         await registerUser(page, username, password, email);
         await expect(page.getByTestId('item-row').first()).toBeVisible();
         await publishFirstList(page, 'JMT in 14 days', 'Trekking poles');
 
-        await page.goto(url('/profile'));
+        await page.goto(url('/profile'), { waitUntil: 'domcontentloaded' });
         await expect(page.getByTestId('profile-form')).toBeVisible();
         await page.getByTestId('profile-display-name').fill('Robin Ridge');
         await page.getByTestId('profile-trail-name').fill('Switchback');
@@ -57,7 +62,7 @@ test.describe('Public profiles', () => {
         const avatar = await page.request.get(url(avatarSrc!));
         expect(avatar.headers()['content-type']).toContain('image/webp');
 
-        await page.goto(url(`/@${username}`));
+        await page.goto(url(`/@${username}`), { waitUntil: 'domcontentloaded' });
         await expect(page.getByTestId('profile-name')).toHaveText('Robin Ridge');
         await expect(page.getByTestId('profile-trail')).toContainText('Switchback');
         await expect(page.getByTestId('profile-bio').locator('strong')).toHaveText('PCT');
@@ -71,7 +76,7 @@ test.describe('Public profiles', () => {
         await expect(page.getByTestId('profile-gear')).toContainText('Trekking poles');
 
         // The shared list links back to its author's profile.
-        await page.goto(url(`/@${username}`));
+        await page.goto(url(`/@${username}`), { waitUntil: 'domcontentloaded' });
         await page.getByTestId('profile-featured').getByRole('link').first().click();
         // Check the link, then follow it.
         const back = page.getByTestId('share-profile-link');
@@ -79,7 +84,7 @@ test.describe('Public profiles', () => {
         // Open it in a fresh tab: leaving the shared list mid-load lost the
         // navigation in Firefox's automation.
         const profileTab = await page.context().newPage();
-        await profileTab.goto(url((await back.getAttribute('href'))!));
+        await profileTab.goto(url((await back.getAttribute('href'))!), { waitUntil: 'domcontentloaded' });
         await expect(profileTab.getByTestId('profile-name')).toHaveText('Robin Ridge');
         await profileTab.close();
     });
