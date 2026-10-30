@@ -61,5 +61,5 @@ test('shared lists are cached, revalidate cheaply, and update the moment the own
     expect(robots).toContain('Disallow: /api/');
     const sitemap = await page.request.get(url('/sitemap.xml'));
     expect(sitemap.headers()['content-type']).toContain('xml');
-    expect(await sitemap.text()).toContain('<urlset');
+    expect(await sitemap.text()).toContain('<sitemapindex');
 });

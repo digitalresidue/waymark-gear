@@ -334,6 +334,22 @@ in as an owner, open **Owner → Revenue → Header tags**, paste each tag on it
 own line (up to 10), and click **Save tags**. They're on every page straight
 away. Only `<meta>` tags are accepted.
 
+### Optional: tell Google about your site
+
+Waymark keeps a list of every public page for search engines at
+`https://yourdomain.com/sitemap.xml`, rebuilt every day. To get found sooner:
+
+1. Go to [Google Search Console](https://search.google.com/search-console),
+   click **Add property**, choose **URL prefix**, and enter your site's address.
+2. For **verify ownership**, pick **HTML tag**. Copy the `<meta ...>` tag it
+   shows, paste it into **Owner → Revenue → Header tags** on your site, save,
+   then click **Verify**.
+3. In Search Console, open **Sitemaps**, enter `sitemap.xml`, and click
+   **Submit**.
+
+Bing Webmaster Tools works the same way (it can also import from Search
+Console).
+
 ### Optional: Google Analytics
 
 To see visitor numbers in Google Analytics:
@@ -377,6 +393,7 @@ Open the Console (step 3) and type any of these:
 | `waymark status` | Checks everything is running and the site is reachable. Start here if anything seems wrong. |
 | `waymark update` | Gets the newest version of Waymark. Backs up first, and goes back to the previous version by itself if the new one won't start. |
 | `waymark settings` | Changes settings (email, Google sign-in and Analytics, payments, owners), then applies them. |
+| `waymark sitemap` | Rebuilds `sitemap.xml`, the list of public pages search engines read. It already rebuilds by itself every day and when Waymark starts; run it after a big catalog import if you don't want to wait. |
 | `waymark clean-images` | Deletes photos nothing uses any more (deleted gear, old profile pictures, emptied closets). This already happens by itself once a day; run it to free space now. Add `--dry-run` to only see how much would go. |
 | `waymark logs` | Shows what the site is doing, live. Press **Ctrl+C** to stop watching. |
 | `waymark restart` | Restarts everything. Safe to do any time. |

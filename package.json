@@ -10,6 +10,7 @@
     "db:migrate": "node --env-file-if-exists=.env scripts/migrate.js",
     "db:seed-sample": "node --env-file-if-exists=.env scripts/seed-sample-catalog.js",
     "images:clean": "node --env-file-if-exists=.env scripts/clean-images.js",
+    "sitemap:build": "node --env-file-if-exists=.env scripts/build-sitemap.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "playwright test",

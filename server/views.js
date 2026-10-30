@@ -28,6 +28,7 @@ import { priceHistory } from './prices.js';
 import * as trails from './trails.js';
 import { badgesFor, buyOptions } from './shops.js';
 import { publishedBrands, matchesBrand } from './brands.js';
+import { ensureSitemap, sitemapFile } from './sitemap.js';
 import { GEAR_TYPES, GEAR_TYPE_IDS, gearTypeLabel } from '../client/brand-types.js';
 import { PACK_FEATURES, DIRECTIONS } from '../client/utils/trails.js';
 import { ratingsFor } from './reviews.js';
@@ -246,42 +247,23 @@ router.get('/robots.txt', (req, res) => {
 
 // Published lists and the profiles of the people who published them.
 // Rebuilt at most every 30 minutes.
-let sitemap = { xml: '', built: 0 };
-const xmlEscape = (v) => String(v).replace(/[<>&'"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c]));
-
-router.get('/sitemap.xml', async (req, res) => {
+// The sitemap index and its files, built daily from the database
+// (server/sitemap.js). Served from disk; the very first request after a
+// start waits for the first build.
+const sendSitemap = (name) => async (req, res) => {
     try {
-        if (!sitemap.xml || Date.now() - sitemap.built > 30 * 60 * 1000) {
-            const base = config.get('deployUrl');
-            const kits = await knex('public_kits').select('external_id', 'updated_at').orderBy('updated_at', 'desc').limit(40000);
-            const people = await knex('public_kits').join('users', 'users.user_id', 'public_kits.user_id')
-                .where('users.profile_hidden', false)
-                .groupBy('users.username').select('users.username').max({ updated_at: 'public_kits.updated_at' }).limit(9000);
-            const url = (loc, lastmod) => `<url><loc>${xmlEscape(loc)}</loc>${lastmod ? `<lastmod>${new Date(lastmod).toISOString()}</lastmod>` : ''}</url>`;
-            const trailSlugs = await knex('trails').where({ status: 'published' }).pluck('slug').catch(() => []);
-            sitemap = {
-                built: Date.now(),
-                xml: [
-                    '<?xml version="1.0" encoding="UTF-8"?>',
-                    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-                    url(`${base}/welcome`),
-                    url(`${base}/explore`),
-                    url(`${base}/trails/all`),
-                    url(`${base}/brands`),
-                    ...trailSlugs.map((slug) => url(`${base}/trails/${slug}`)),
-                    ...kits.map((k) => url(`${base}/r/${k.external_id}`, k.updated_at)),
-                    ...people.map((p) => url(`${base}/@${p.username}`, p.updated_at)),
-                    '</urlset>',
-                ].join('\n'),
-            };
-        }
-        res.set('Cache-Control', 'public, max-age=1800');
-        res.type('application/xml').send(sitemap.xml);
+        await ensureSitemap(knex, { log: (err) => logWithRequest(req, { message: 'error building sitemap', err }) });
+        const file = sitemapFile(name || `${req.params.name}.xml`);
+        if (!file) return res.status(404).end();
+        res.set('Cache-Control', 'public, max-age=3600');
+        res.type('application/xml').sendFile(file);
     } catch (err) {
-        logWithRequest(req, { message: 'error building sitemap', err });
+        logWithRequest(req, { message: 'error serving sitemap', err });
         res.status(500).end();
     }
-});
+};
+router.get('/sitemap.xml', sendSitemap('sitemap.xml'));
+router.get('/sitemaps/:name.xml', sendSitemap());
 
 // ---- link-preview images -----------------------------------------------------
 
