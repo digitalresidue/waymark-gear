@@ -7,6 +7,9 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 18 — "What people actually carry" links to the gear · 2026-10-29 · branch `common-gear-links`
+- Each row in the homepage's most-carried gear list now opens that item's gear page (`/g/:id`): the name is the link and the whole row is the click target, with a hover highlight and a keyboard focus ring.
+
 ### Phase 8, part 17 — A daily sitemap that covers every public page · 2026-10-29 · branch `sitemap`
 - `sitemap.xml` is now a **sitemap index** over files built **daily and at start-up** from the database (not by crawling: the database knows every public page): `pages.xml` (home, Explore, Brands, Gear reviews, Leaderboards, All trails, Support, Developers, Privacy, Terms, every trail) and numbered `gear-N`, `lists-N`, `people-N`, `trips-N` files — **gear pages and public trip journals were missing before**.
 - Each file holds up to 40,000 links (the limit is 50,000), read a page at a time and written as it goes, so it scales to millions of pages without holding them in memory; a new set is swapped in only when complete. Drafts, hidden profiles and private pages never appear.
