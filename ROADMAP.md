@@ -7,6 +7,11 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 19 — Packs by trail: twelve trails, each with how its packs split · 2026-10-30 · branch `trail-cards-stats`
+- The homepage's **Packs by trail** shows **12** trails (was 8), ranked by published packs (sections count toward their trail; ties keep the curated AT, PCT, CDT… order).
+- Each card has the **pack count** as a badge, a **weight-class bar** (Ultra-UL, Ultralight, Lightweight, Traditional, lightest on the left, with one legend under the grid) and the packs' **average base weight** (empty lists left out). A trail without packs says so and invites the first one.
+- `/api/home` trails carry `classes` and `avgBaseWeightMg`, from one grouped query (`trails.packStats`). Phones get two compact columns.
+
 ### Phase 8, part 18 — "What people actually carry" links to the gear · 2026-10-29 · branch `common-gear-links`
 - Each row in the homepage's most-carried gear list now opens that item's gear page (`/g/:id`): the name is the link and the whole row is the click target, with a hover highlight and a keyboard focus ring.
 

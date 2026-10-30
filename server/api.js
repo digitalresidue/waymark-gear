@@ -575,8 +575,9 @@ router.get('/api/home', pub(async (req, res) => {
         logWithRequest(req, { message: 'home section failed', err });
         return fallback;
     });
-    const [topTrails, latest, brandRows, top, light] = await Promise.all([
-        safe(trails.topTrails(8), []),
+    const [topTrails, trailStats, latest, brandRows, top, light] = await Promise.all([
+        safe(trails.topTrails(12), []),
+        safe(trails.packStats(), new Map()),
         safe(reviews.latestReviews({ limit: 6 }), []),
         safe(knex('brands').where({ status: 'published' }).orderBy([{ column: 'cottage', order: 'desc' }, { column: 'updated_at', order: 'desc' }]).limit(12)
             .select('id', 'name', 'logo_url', 'cottage', 'gear_types'), []),
@@ -585,7 +586,11 @@ router.get('/api/home', pub(async (req, res) => {
     ]);
     res.set('Cache-Control', 'public, max-age=60');
     res.json({
-        trails: topTrails.map((t) => ({ slug: t.slug, name: t.name, short: t.short, region: t.region, lengthMi: t.lengthMi, count: t.count })),
+        trails: topTrails.map((t) => ({
+            slug: t.slug, name: t.name, short: t.short, region: t.region, lengthMi: t.lengthMi, count: t.count,
+            classes: (trailStats.get(t.id) || {}).classes || null,
+            avgBaseWeightMg: (trailStats.get(t.id) || {}).avgBaseWeightMg || null,
+        })),
         reviews: latest.map((r) => ({
             id: r.id, rating: r.rating, title: r.title, body: String(r.body || '').slice(0, 220), author: r.author,
             displayName: r.displayName, staff: r.staff, createdAt: r.createdAt, item: r.item,
