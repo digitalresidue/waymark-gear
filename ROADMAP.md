@@ -7,6 +7,10 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 15 — Wide pages line up with the 1366px column · 2026-10-29 · branch `trails-width`
+- **Trails** (and All trails), **Compare** and **profiles** use the site column like the header (1366px, 24px in), instead of their own 1120/1100/1040px boxes; the profile banner sits in the column on bigger screens (edge to edge on a phone). A test checks these pages and Brands line up with the header at both edges.
+- Reading pages (gear items, Gear reviews, trip journals, shared lists) keep their narrower centred column for comfortable line lengths.
+
 ### Phase 8, part 14 — Where to buy: more shops per item · 2026-10-29 · branch `where-to-buy`
 - Catalog gear can list **up to four more shops** besides its product link (Backcountry, Garage Grown Gear...), each with a normal link and an optional affiliate link. With more than one place to buy, **Buy opens a "Where to buy" menu** on the gear page and the compare page: each shop's badge (or initial), name and website. One place: a plain Buy link as before.
 - **Badges** are copied to the server (never hotlinked) and kept once per shop website, shared by every item it sells; a shop without one gets its own site icon, fetched once a week at most, or its initial.

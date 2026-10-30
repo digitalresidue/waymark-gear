@@ -7,19 +7,30 @@
 }
 
 .wgProfile {
+    // The site column, like the header.
     margin: 0 auto;
-    max-width: 1040px;
-    padding: 0 16px 48px;
+    max-width: 1366px;
+    padding: 0 24px 48px;
+
+    @media (max-width: $mobile) {
+        padding-inline: 16px;
+    }
 }
 
 .wgProfileBanner {
     aspect-ratio: 3 / 1;
     background: var(--lp-surface-sunken);
     border-radius: 0 0 $radius-lg $radius-lg;
-    margin: 0 -16px;
     max-height: 340px;
     overflow: hidden;
-    width: calc(100% + 32px);
+    width: 100%;
+
+    // Edge to edge on a phone; in the site column (lined up with the
+    // header) on bigger screens.
+    @media (max-width: $mobile) {
+        margin: 0 -16px;
+        width: calc(100% + 32px);
+    }
 
     img {
         display: block;
