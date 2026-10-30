@@ -532,6 +532,8 @@ Library.prototype.importGearList = function (parsed) {
                 item.authorUnit = ['g', 'kg', 'oz', 'lb'].includes(s.unit) ? s.unit : this.itemUnit;
                 item.price = Number(s.price) || 0;
                 item.url = s.url || '';
+                // Only photos already copied here (the server does that for links).
+                if (/^\/userimages\/[\w/.-]+$/.test(s.imageUrl || '')) item.imageUrl = s.imageUrl;
                 closet.set(key(item.name, item.weight), item);
             }
             const ci = category.getCategoryItemById(item.id);

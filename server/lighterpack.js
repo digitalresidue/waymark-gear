@@ -25,19 +25,19 @@ export function lighterPackOrigin() {
     return new URL(config.get('lighterpackUrl')).origin;
 }
 
-async function fetchText(url) {
+export async function fetchText(url, source = 'LighterPack', { accept } = {}) {
     let res;
     try {
         res = await fetch(url, {
             redirect: 'error',
             signal: AbortSignal.timeout(TIMEOUT_MS),
-            headers: { 'User-Agent': 'WaymarkGear-import (+https://waymarkgear.com)' },
+            headers: { 'User-Agent': 'WaymarkGear-import (+https://waymarkgear.com)', ...(accept ? { Accept: accept } : {}) },
         });
     } catch {
-        throw new ImportError("Couldn't reach LighterPack. Try again in a minute, or upload the list's CSV instead.", 502);
+        throw new ImportError(`Couldn't reach ${source}. Try again in a minute, or upload the list's CSV instead.`, 502);
     }
     if (!res.ok) {
-        throw new ImportError("We couldn't find that list. Check the link, and that the list is shared on LighterPack.", 404);
+        throw new ImportError(`We couldn't find that list. Check the link, and that the list is shared on ${source}.`, 404);
     }
     const reader = res.body.getReader();
     const chunks = [];
