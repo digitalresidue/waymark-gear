@@ -271,7 +271,7 @@
                         </p>
                     </div>
                 </div>
-                <ul class="wgHomeBrands">
+                <ul class="wgHomeBrands" data-testid="home-brand-grid">
                     <li v-for="b in home.brands" :key="b.id">
                         <a :href="`/brands?q=${encodeURIComponent(b.name)}`" class="wgHomeBrand" data-testid="home-brand">
                             <img v-if="b.logoUrl" :src="b.logoUrl" alt="" class="wgHomeBrandLogo" loading="lazy">
@@ -1063,13 +1063,33 @@ export default {
     margin: auto 0 0;
 }
 
+// A fixed grid that always ends on a full row: 7 across (two rows of the 14
+// the homepage sends), 4 across on tablets (12) and 2 on phones (8). Brands
+// past the last full row are left out at that width rather than leaving gaps.
 .wgHomeBrands {
     display: grid;
     gap: 12px;
-    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     list-style: none;
     margin: 0;
     padding: 0;
+
+    @media (width <= 1000px) {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+
+        > li:nth-child(n + 13) {
+            display: none;
+        }
+    }
+
+    @media (width <= 640px) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+
+        > li:nth-child(n + 9) {
+            display: none;
+        }
+    }
 }
 
 .wgHomeBrand {
@@ -1112,6 +1132,7 @@ export default {
 
 .wgHomeBrandName {
     font-weight: 700;
+    overflow-wrap: break-word;
 }
 
 .wgHomeBrandTag {

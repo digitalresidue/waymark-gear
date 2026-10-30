@@ -191,3 +191,21 @@ test('what people actually carry: the category chips are the ones people carry, 
     await expect(chips.nth(1)).toHaveAttribute('aria-pressed', 'true');
 });
 
+test('gear makers: a grid that always ends on a full row', async ({ browser }) => {
+    const { brands } = await (await (await browser.newContext()).request.get(url('/api/home'))).json();
+    expect(brands.length).toBeLessThanOrEqual(14);
+    for (const [width, columns, most] of [[1366, 7, 14], [900, 4, 12], [390, 2, 8]]) {
+        const page = await (await browser.newContext({ viewport: { width, height: 900 } })).newPage();
+        await page.goto(url('/welcome'));
+        const grid = page.getByTestId('home-brand-grid');
+        await grid.scrollIntoViewIfNeeded();
+        const tops = await grid.locator('> li:visible').evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)));
+        expect(tops.length).toBe(Math.min(brands.length, most));
+        // Count per row: every row full except possibly the last when there aren't enough brands yet.
+        const rows = [...tops.reduce((m, t) => m.set(t, (m.get(t) || 0) + 1), new Map()).values()];
+        expect(Math.max(...rows)).toBeLessThanOrEqual(columns);
+        if (brands.length >= most) expect(rows.every((n) => n === columns)).toBe(true);
+        await page.context().close();
+    }
+});
+

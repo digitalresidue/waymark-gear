@@ -7,6 +7,9 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 24 — Gear makers: a grid that ends on a full row · 2026-10-30 · branch `home-brands-grid`
+- The homepage's brand grid fitted as many columns as the width allowed (7) but got 12 brands: one row of 7 and one of 5. It's now a fixed **7 across × 2 rows (14 brands)**, 4 × 3 on tablets and 2 × 4 on phones, leaving out brands past the last full row at that width.
+
 ### Phase 8, part 22 — "What people actually carry" filters by what people carry · 2026-10-30 · branch `common-gear-categories`
 - The category chips were the catalog's first 8 categories alphabetically, so later ones (Packs, Shelter, Sleep…) never appeared. They're now the categories that show up most across published kits, most carried first (up to 12), from `GET /api/explore/common/categories`. With nothing carried yet, no chips are shown.
 

@@ -588,6 +588,8 @@ router.get('/api/explore/kits', pub(async (req, res) => {
 // newest reviews, brands (cottage makers first), and the top and lightest
 // kits. Each part is on its own: one failing leaves the rest. Cached a
 // minute, like the other public lists.
+// Two full rows of the homepage's 7-across brand grid.
+const HOME_BRANDS = 14;
 router.get('/api/home', pub(async (req, res) => {
     const safe = (p, fallback) => p.catch((err) => {
         logWithRequest(req, { message: 'home section failed', err });
@@ -597,7 +599,7 @@ router.get('/api/home', pub(async (req, res) => {
         safe(trails.topTrails(12), []),
         safe(trails.packStats(), new Map()),
         safe(reviews.latestReviews({ limit: 6 }), []),
-        safe(knex('brands').where({ status: 'published' }).orderBy([{ column: 'cottage', order: 'desc' }, { column: 'updated_at', order: 'desc' }]).limit(12)
+        safe(knex('brands').where({ status: 'published' }).orderBy([{ column: 'cottage', order: 'desc' }, { column: 'updated_at', order: 'desc' }]).limit(HOME_BRANDS)
             .select('id', 'name', 'logo_url', 'cottage', 'gear_types'), []),
         safe(kits.listKits({ sort: 'top', limit: 3 }), { kits: [] }),
         safe(kits.listKits({ sort: 'light', limit: 12 }), { kits: [] }),
