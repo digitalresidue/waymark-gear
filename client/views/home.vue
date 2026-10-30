@@ -35,7 +35,7 @@
                     </p>
                     <p class="wgHeroNote wgMuted">
                         <!-- eslint-disable-next-line vue/singleline-html-element-content-newline -->
-                        Coming from LighterPack? <router-link to="/?import=lighterpack" data-testid="hero-import">Bring your list over</router-link> in one step.
+                        Coming from LighterPack or PackWizard? <router-link to="/?import=1" data-testid="hero-import">Bring your list over</router-link> in one step.
                     </p>
                 </div>
 

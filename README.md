@@ -13,7 +13,7 @@ Plan, weigh and share the gear you take on adventures — **waymarkgear.com**.
 - **Pack mode**: a phone checklist with big tap targets and swipe to check.
   Installable, and it works offline.
 - **Trip planner**: food and water by day, Day 1 vs. last-day pack weight.
-- **Import from LighterPack** by link or CSV.
+- **Import a list** from LighterPack or PackWizard by share link (PackWizard photos come too), or from any app's CSV export or a spreadsheet (file or pasted rows).
 - Public **@profiles** with flagship lists and a gear grid; **comments**,
   **shakedown requests** and notifications on published lists.
 - Link previews drawn on the server, and public pages cached for traffic
@@ -90,7 +90,8 @@ falling back to `config/default.json`. The ones you're most likely to set:
 | `ADMINS` | `[]` | JSON array of site-owner usernames: gear catalog and featured kits |
 | `MODERATORS` | `[]` | JSON array of usernames allowed into `/moderation` |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | — | Sign in with Google; the button appears when both are set |
-| `LIGHTERPACK_URL` | `https://lighterpack.com` | Where "Import from LighterPack" links are read from |
+| `LIGHTERPACK_URL` | `https://lighterpack.com` | Where LighterPack import links are read from |
+| `PACKWIZARD_URL` | `https://www.packwizard.com` | Where PackWizard import links are read from |
 | `VITE_CONTACT_EMAIL` | — | *Build time.* Contact address in the footer and help; hidden if unset |
 | `VITE_SOURCE_URL` | upstream LighterPack | *Build time.* Source link in the footer (the GPL requires offering source) |
 

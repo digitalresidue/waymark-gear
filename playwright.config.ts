@@ -95,6 +95,11 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     env: { FAKE_STRIPE_APP: `http://127.0.0.1:${process.env.LP_PORT || '3000'}` },
   }, {
+    // Stands in for PackWizard's shared-pack endpoint (test/support/fake-packwizard.mjs).
+    command: 'node test/support/fake-packwizard.mjs',
+    url: 'http://127.0.0.1:3997/',
+    reuseExistingServer: !process.env.CI,
+  }, {
     command: 'npm run build && npm run start',
     url: `http://127.0.0.1:${process.env.LP_PORT || '3000'}`,
     reuseExistingServer: !process.env.CI,
@@ -105,6 +110,8 @@ export default defineConfig({
         // LighterPack link import reads /csv/:id and /r/:id, which this app
         // serves in the same format, so the suite imports from itself.
         lighterpackUrl: `http://localhost:${process.env.LP_PORT || '3000'}`,
+        // PackWizard link import reads the stand-in above.
+        packwizardUrl: 'http://127.0.0.1:3997',
         // Lets the suite exercise the moderator-only endpoints. Names have to be
         // fixed rather than generated, since the list is read at startup. One
         // per worker, because a user row holds a single session token - sharing

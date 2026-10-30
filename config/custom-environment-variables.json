@@ -71,5 +71,6 @@
         "clientSecret": "GOOGLE_CLIENT_SECRET"
     },
     "cwebpPath": "CWEBP_PATH",
-    "lighterpackUrl": "LIGHTERPACK_URL"
+    "lighterpackUrl": "LIGHTERPACK_URL",
+    "packwizardUrl": "PACKWIZARD_URL"
 }
