@@ -55,6 +55,15 @@ test('Catalog beside Closet: search and add gear, by type or to a chosen categor
     await expect(categories).toHaveCount(2);
     await expect(categories.nth(1).locator('input.lpCategoryName')).toHaveValue('Sleep');
 
+    // The person's own spelling of a type still counts as that type: no
+    // near-duplicate "Sleep" next to their "Sleeps".
+    const sleepName = categories.nth(1).locator('input.lpCategoryName');
+    await sleepName.fill('sleeps');
+    await sleepName.blur();
+    await panel.getByTestId('catalog-panel-result').filter({ hasText: `Panel quilt ${tag}` }).getByTestId('catalog-panel-add').click();
+    await expect(categories).toHaveCount(2);
+    await expect(categories.nth(1).getByTestId('item-row')).toHaveCount(2);
+
     // A chosen category instead.
     await panel.getByTestId('catalog-panel-target').selectOption({ label: 'Shelter' });
     await panel.getByTestId('catalog-panel-result').filter({ hasText: `Panel stove ${tag}` }).getByTestId('catalog-panel-add').click();
