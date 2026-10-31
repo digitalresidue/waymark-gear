@@ -7,6 +7,9 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 26 — Catalog gear joins the category you already have · 2026-10-30 · branch `category-matching`
+- Adding catalog gear "by type" matched the list's categories by exact name, so a list with "Mid-layers" or "Midlayer" got a second "Mid Layer" category. Names now match ignoring case, spaces, hyphens, "&"/"and" and plurals (`categoryKey` in `client/utils/gear-meta.js`).
+
 ### Phase 8, part 25 — "Find us" on social, in the footer · 2026-10-30 · branch `footer-social`
 - The site footer (app pages and server-rendered pages alike) has a **Find us** row: round icon links to the Facebook group, YouTube channel and Instagram, opening in a new tab with a clear label for screen readers.
 - The accounts live in `client/brand.js` (`socialLinks`) beside the other site details, and the drawings in `client/social-icons.js`, so a fork can point them elsewhere or empty the list to hide the row.
