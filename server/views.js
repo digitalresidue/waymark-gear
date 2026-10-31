@@ -8,6 +8,7 @@ import { thumbnailUrl } from './images.js';
 import config from 'config';
 import { logWithRequest, logger } from './log.js';
 import weightUtils from '../client/utils/weight.js';
+import { specRows } from '../client/utils/gear-specs.js';
 import { marked, isSafeHref } from '../client/utils/markdown.js';
 import { Library } from '../client/dataTypes.js';
 import { listToCsv } from './csv.js';
@@ -587,6 +588,8 @@ router.get('/g/:id', async (req, res) => {
                 searchName: encodeURIComponent(item.name),
                 reviews: reviews.map(reviewModel),
                 prices: priceModel(history),
+                // "Trail weight: 26 oz (737.1 g)"... (client/utils/gear-specs.js)
+                specs: specRows(item.category, item.specs),
             },
         };
         sendFresh(res, renderPage(gearTemplate, model, { reviewCard: templates.t_reviewCard || '', buy: templates.t_buy || '' }, req.path));

@@ -62,7 +62,7 @@ router.get('/api/v1/lists/:id', handle((req, user) => gear.listDetail(user, req.
 router.get('/api/v1/lists/:id/check', handle((req, user) => gear.checkList(user, req.params.id)));
 router.post('/api/v1/lists/:id/items', json, handle((req, user) => gear.addToList(user, req.params.id, req.body || {})));
 router.delete('/api/v1/lists/:id/items/:gearId', handle((req, user) => gear.removeFromList(user, req.params.id, req.params.gearId)));
-router.get('/api/v1/catalog', handle((req) => gear.searchCatalog({ q: req.query.q, category: req.query.category, limit: req.query.limit }).then((c) => ({ items: c }))));
+router.get('/api/v1/catalog', handle((req) => gear.searchCatalog({ q: req.query.q, category: req.query.category, limit: req.query.limit, query: req.query }).then((c) => ({ items: c }))));
 
 router.use('/api/v1', (req, res) => res.status(404).json({ error: 'not_found', message: 'No such endpoint. See API.md.' }));
 

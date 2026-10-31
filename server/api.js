@@ -533,6 +533,8 @@ router.get('/api/catalog', pub(async (req, res) => {
         limit: req.query.limit,
         offset: req.query.offset,
         ids,
+        // spec_pitch=freestanding, spec_trail_weight_max=2lb... (catalog.specFilters)
+        specs: catalog.specFilters(req.query),
     });
     res.set('Cache-Control', 'public, max-age=60');
     res.json({ ...result, items: result.items.map(catalog.publicEntry) });
@@ -727,6 +729,7 @@ router.get('/api/admin/catalog', admin(async (req, res) => {
         status,
         limit: req.query.limit || 100,
         offset: req.query.offset,
+        specs: catalog.specFilters(req.query),
     });
     // Each shop's current badge, for the editor.
     const badges = await badgesFor(found.items.flatMap((x) => (x.shops || []).map((y) => y.domain)));

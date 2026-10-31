@@ -75,7 +75,7 @@ describe('catalog: product link and affiliate link', async () => {
     test('the CSV template shows both columns in use', () => {
         const [head, example] = templateCsv().trim().split('\n');
         assert.match(head, /,url,/);
-        assert.match(head, /affiliate_url$/);
+        assert.match(head, /,affiliate_url,/);
         assert.match(example, /https:\/\/example\.com\/tent/);
         assert.match(example, /avantlink\.com/);
     });

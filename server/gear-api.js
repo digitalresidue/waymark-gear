@@ -14,7 +14,8 @@ import { checkEssentials, listRows, readinessLabel } from '../client/utils/insig
 import { tripEstimates } from '../client/utils/trip.js';
 import { categoryKey } from '../client/utils/gear-meta.js';
 import { loadLibrary, applyChanges } from './library-store.js';
-import { applyCatalog, search as catalogSearch, isUuid } from './catalog.js';
+import { applyCatalog, search as catalogSearch, specFilters, isUuid } from './catalog.js';
+import { specRows } from '../client/utils/gear-specs.js';
 import { listInsights } from './insights.js';
 import { syncPublishedKits } from './kits.js';
 import { forgetUserPages } from './page-cache.js';
@@ -165,8 +166,10 @@ export async function checkList(user, listId) {
     };
 }
 
-export async function searchCatalog({ q = '', category = '', limit = 10 } = {}) {
-    const { items } = await catalogSearch({ q: String(q).slice(0, 200), category: String(category).slice(0, 80), limit: Math.min(Number(limit) || 10, 25) });
+export async function searchCatalog({ q = '', category = '', limit = 10, query = {} } = {}) {
+    const { items } = await catalogSearch({
+        q: String(q).slice(0, 200), category: String(category).slice(0, 80), limit: Math.min(Number(limit) || 10, 25), specs: specFilters(query),
+    });
     return items.map((i) => ({
         catalogId: i.id,
         name: i.name,
@@ -176,6 +179,8 @@ export async function searchCatalog({ q = '', category = '', limit = 10 } = {}) 
         price: i.price,
         url: i.url,
         page: `/g/${i.id}`,
+        // Readable specs ("Trail weight": "26 oz (737.1 g)"), when it has any.
+        specs: Object.fromEntries(specRows(i.category, i.specs).map((r) => [r.label, r.text])),
     }));
 }
 

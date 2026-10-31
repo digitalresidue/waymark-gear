@@ -59,6 +59,17 @@
                 </div>
             </section>
 
+            {{#specs.length}}
+            <section class="wgGearSpecs" data-testid="gear-specs">
+                <h2 class="wgProfileSection">Specs</h2>
+                <dl class="wgSpecList">
+                    {{#specs}}
+                    <div data-spec="{{key}}"><dt>{{label}}</dt><dd>{{text}}</dd></div>
+                    {{/specs}}
+                </dl>
+            </section>
+            {{/specs.length}}
+
             <section class="wgReviews">
                 <h2 class="wgProfileSection">Reviews</h2>
                 <div id="wgReviewForm" data-catalog-id="{{id}}"></div>
