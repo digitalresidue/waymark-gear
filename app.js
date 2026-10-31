@@ -46,7 +46,9 @@ app.disable('x-powered-by');
 // than that lets the client pick its own req.ip: anyone could forge the
 // address in the access log below, and the per-IP rate limit would be a header
 // away from useless. Exposed directly with no proxy, set it to 0; with a CDN
-// ahead of nginx, 2.
+// ahead of nginx, 2. The Docker install uses 2: Caddy only keeps a forwarded
+// address that comes from Cloudflare (deploy/Caddyfile), so the second hop is
+// either Cloudflare's view of the visitor or the visitor themselves.
 app.set('trust proxy', Number(config.get('trustProxy')));
 
 app.use((req, res, next) => {
