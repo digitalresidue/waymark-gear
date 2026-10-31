@@ -7,6 +7,10 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 25 — "Find us" on social, in the footer · 2026-10-30 · branch `footer-social`
+- The site footer (app pages and server-rendered pages alike) has a **Find us** row: round icon links to the Facebook group, YouTube channel and Instagram, opening in a new tab with a clear label for screen readers.
+- The accounts live in `client/brand.js` (`socialLinks`) beside the other site details, and the drawings in `client/social-icons.js`, so a fork can point them elsewhere or empty the list to hide the row.
+
 ### Phase 8, part 24 — Gear makers: a grid that ends on a full row · 2026-10-30 · branch `home-brands-grid`
 - The homepage's brand grid fitted as many columns as the width allowed (7) but got 12 brands: one row of 7 and one of 5. It's now a fixed **7 across × 2 rows (14 brands)**, 4 × 3 on tablets and 2 × 4 on phones, leaving out brands past the last full row at that width.
 

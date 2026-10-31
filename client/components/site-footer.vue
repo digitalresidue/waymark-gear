@@ -8,6 +8,15 @@
                 <p>
                     waymarkgear.com · Based on <a :href="upstream.url" target="_blank" rel="noopener noreferrer">{{ upstream.name }}</a> by {{ upstream.author }}
                 </p>
+                <div v-if="social.length" class="wgSiteFooterSocial" data-testid="footer-social">
+                    <span>Find us</span>
+                    <ul>
+                        <li v-for="s in social" :key="s.url">
+                            <!-- eslint-disable-next-line vue/no-v-html -- fixed drawings from client/social-icons.js -->
+                            <a :href="s.url" target="_blank" rel="noopener noreferrer me" :aria-label="s.label" :title="s.name" data-testid="footer-social-link" v-html="s.svg" />
+                        </li>
+                    </ul>
+                </div>
             </div>
             <nav class="wgSiteFooterLinks" aria-label="Footer">
                 <router-link to="/explore">
@@ -55,7 +64,8 @@
 </template>
 
 <script>
-import { siteName, contactEmail, sourceUrl, upstream } from '../brand.js';
+import { siteName, contactEmail, sourceUrl, upstream, socialLinks } from '../brand.js';
+import { withIcons } from '../social-icons.js';
 
 export default {
     name: 'SiteFooter',
@@ -72,7 +82,7 @@ export default {
         },
     },
     data() {
-        return { siteName, contactEmail, sourceUrl, upstream };
+        return { siteName, contactEmail, sourceUrl, upstream, social: withIcons(socialLinks) };
     },
     computed: {
         year() {

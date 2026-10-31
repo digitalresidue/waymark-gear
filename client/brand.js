@@ -17,6 +17,15 @@ export const contactEmail = import.meta.env?.VITE_CONTACT_EMAIL || serverEnv('VI
 
 export const sourceUrl = import.meta.env?.VITE_SOURCE_URL || serverEnv('VITE_SOURCE_URL') || 'https://github.com/digitalresidue/waymark-gear';
 
+// "Find us" in the footer. A fork points these at its own accounts (or
+// empties the list to hide the row). `icon` picks a drawing from
+// client/social-icons.js.
+export const socialLinks = [
+    { name: 'Facebook', label: 'Waymark Gear group on Facebook', url: 'https://facebook.com/groups/waymarkgear/', icon: 'facebook' },
+    { name: 'YouTube', label: 'Waymark Gear on YouTube', url: 'https://www.youtube.com/@WaymarkGear', icon: 'youtube' },
+    { name: 'Instagram', label: 'Waymark Gear on Instagram', url: 'https://instagram.com/waymarkgear', icon: 'instagram' },
+];
+
 // Waymark Gear began as a fork of LighterPack (GPL-2.0). Keep this credit.
 export const upstream = {
     name: 'LighterPack',
