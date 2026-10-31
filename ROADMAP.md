@@ -7,6 +7,12 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 29 — Gear specs for packs, tents, quilts, pads, sleeping bags and insulated layers · 2026-10-31 · branch `gear-specs`
+- Catalog gear carries **specs by type**, from its category: **Pack** (volume, max carry, frame, shoulder straps, roll top, adjustable torso), **Tent** (size 1P–3P, pitch, trail and minimum weight, double wall, vestibules, floor width and length, peak height, packed size), **Quilt** (comfort and limit ratings, down or synthetic, fill power, RDS, footbox, draft collar, shape), **Sleeping pad** (R-value, type, thickness, width, length, packed size), **Sleeping bag** (ratings, insulation, fill power, RDS, fit for, width, shape) and **Outer layer** (insulation, fill power, fill weight, RDS, fit for, hooded, zipper, baffles). Definitions in `client/utils/gear-specs.js`.
+- Typed in either unit ("20F" or "-7C", "14 oz" or "397 g", "72 in" or "183 cm"), stored in one (°C, g, cm, L) so they compare, shown in both ("20°F (−7°C)"). Fill power and RDS are kept only for down.
+- Filled in from the owner's catalog editor (the fields for the item's category) or the import sheet (one column per field; export writes them back). Shown as a **Specs** section on gear pages; in the API, readable in `/api/v1/catalog` and **filterable** on `/api/catalog` (`spec_pitch=freestanding`, `spec_trail_weight_max=2lb`, `spec_fill_power_min=800`...), ready for search and filters. DEPLOY.md lists every column.
+- Stored in `catalog_items.specs` (jsonb, GIN-indexed; migration `20261105000000_gear_specs`).
+
 ### Phase 8, part 28 — Socks, shoes, hats and underwear under Clothing · 2026-10-30 · branch `clothing-basics`
 - New Socks, Shoes (and the catalog's Footwear), Hat and Underwear categories added from the catalog now go in the list's **Clothing** group, with the layers and shells (`DEFAULT_GROUPS` in `client/utils/gear-meta.js`; singulars and plurals both match).
 

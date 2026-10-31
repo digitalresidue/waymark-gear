@@ -561,3 +561,37 @@
     border-radius: 10px;
     padding: 4px;
 }
+
+// A catalog item's specs on its gear page (client/utils/gear-specs.js):
+// label over value, in a grid of small tiles.
+.wgGearSpecs {
+    margin: 8px 0 28px;
+}
+
+.wgSpecList {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    margin: 0;
+
+    > div {
+        background: var(--lp-surface);
+        border: 1px solid var(--lp-border);
+        border-radius: 12px;
+        padding: 10px 12px;
+    }
+
+    dt {
+        color: var(--lp-text-secondary);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    dd {
+        font-size: 15px;
+        font-weight: 600;
+        margin: 4px 0 0;
+    }
+}

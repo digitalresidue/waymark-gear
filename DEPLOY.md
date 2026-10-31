@@ -140,6 +140,8 @@ first request, which can take a few seconds.
 2. Sign in. **Owner → Gear catalog → Download CSV template**, fill it in
    (one row per product; weight with a unit of `g`, `kg`, `oz` or `lb`), then
    **Import CSV**. Review what will be added or changed, and **Apply**.
+   Packs, tents, quilts, pads, sleeping bags and insulated layers can carry
+   specs too (see "Gear specs" below).
 4. Before launch, finish `PRIVACY.md` and `TERMS.md` (replace every
    `[bracketed]` item and remove the draft notes), and replace the remaining
    LighterPack artwork in `public/images/` (background images and the welcome
@@ -307,6 +309,98 @@ the gear page instead.
 
 To give someone Supporter for free (a contributor, a reviewer): Owner →
 Revenue → Supporters.
+
+## Gear specs
+
+Catalog gear of these types can carry specs: a pack's volume and frame, a
+tent's size and pitch, a quilt's ratings and fill, and so on. They show on
+the gear page, come out of the API (`/api/catalog?spec_pitch=freestanding`,
+`spec_trail_weight_max=2lb`, `spec_temp_limit_max=20F`...; choices take a
+comma list, measures `_min` and `_max`), and will drive gear search and
+filters.
+
+Fill them in from **Owner → Gear catalog** (the item editor shows the
+fields for its category) or the import sheet: one column per field, named
+below, read only for rows of that type. Measurements take either unit and
+are shown in both; a bare number means the unit in brackets. Fill power and
+RDS are kept only for down. A spec column left empty clears that spec; a
+sheet without spec columns leaves specs as they are.
+
+**Pack** (category "Pack", "Backpack", "Rucksack", any spelling or plural)
+
+| Column | Field | Value |
+|---|---|---|
+| `volume` | Volume | `40 L` or `2440 cu in` (bare number: L) |
+| `max_carry` | Max carry weight | `14 oz` or `397 g` (bare number: lb) |
+| `frame` | Frame | Framed / Frameless |
+| `strap_type` | Shoulder straps | J-curve / S-curve / Vest / Other |
+| `roll_top` | Roll top | yes / no |
+| `adjustable_torso` | Adjustable torso | yes / no |
+
+**Tent** (category "Tent", any spelling or plural)
+
+| Column | Field | Value |
+|---|---|---|
+| `capacity` | Size | 1P / 1P+ / 2P / 2P+ / 3P |
+| `pitch` | Pitch | Trekking pole / Semi-freestanding / Freestanding |
+| `trail_weight` | Trail weight | `14 oz` or `397 g` (bare number: oz) |
+| `min_weight` | Minimum weight | `14 oz` or `397 g` (bare number: oz) |
+| `double_wall` | Double walled | yes / no |
+| `vestibules` | Vestibules | number (whole) |
+| `floor_width` | Floor width | `72 in` or `183 cm` (bare number: in) |
+| `floor_length` | Floor length | `72 in` or `183 cm` (bare number: in) |
+| `peak_height` | Peak height | `72 in` or `183 cm` (bare number: in) |
+| `packed_size` | Packed size | sizes, e.g. `18 x 5 x 5 in` (bare: in) |
+
+**Quilt** (category "Quilt", "Top Quilt", "Backpacking Quilt", "Underquilt", any spelling or plural)
+
+| Column | Field | Value |
+|---|---|---|
+| `temp_comfort` | Comfort rating | `20F` or `-7C` (bare number: °F) |
+| `temp_limit` | Limit rating | `20F` or `-7C` (bare number: °F) |
+| `insulation` | Insulation | Down / Synthetic |
+| `fill_power` | Fill power | 450 fill / 550 fill / 650 fill / 750 fill / 800 fill / 850 fill / 900 fill / 950 fill / 1000 fill |
+| `rds` | RDS certified | Yes / No / Unknown |
+| `footbox` | Footbox | Sewn / Zippered / Drawcord |
+| `draft_collar` | Draft collar | yes / no |
+| `quilt_shape` | Shape | Tapered / Rectangular / Other |
+
+**Sleeping pad** (category "Sleeping Pad", "Sleep Pad", any spelling or plural)
+
+| Column | Field | Value |
+|---|---|---|
+| `r_value` | R-value | number |
+| `pad_type` | Type | Closed-cell foam / Inflatable / Self-inflating |
+| `thickness` | Thickness | `72 in` or `183 cm` (bare number: in) |
+| `pad_width` | Width | `72 in` or `183 cm` (bare number: in) |
+| `pad_length` | Length | `72 in` or `183 cm` (bare number: in) |
+| `packed_size` | Packed size | sizes, e.g. `18 x 5 x 5 in` (bare: in) |
+
+**Sleeping bag** (category "Sleeping Bag", any spelling or plural)
+
+| Column | Field | Value |
+|---|---|---|
+| `temp_comfort` | Comfort rating | `20F` or `-7C` (bare number: °F) |
+| `temp_limit` | Limit rating | `20F` or `-7C` (bare number: °F) |
+| `insulation` | Insulation | Down / Synthetic |
+| `fill_power` | Fill power | 450 fill / 550 fill / 650 fill / 750 fill / 800 fill / 850 fill / 900 fill / 950 fill / 1000 fill |
+| `rds` | RDS certified | Yes / No / Unknown |
+| `gender` | Fit for | Men's / Women's / Unisex |
+| `bag_width` | Width | Slim / Regular / Wide |
+| `bag_shape` | Shape | Mummy / Tapered / Rectangular / Other |
+
+**Outer layer** (category "Outer Layer", "Insulation", "Insulated Jacket", "Puffy", any spelling or plural)
+
+| Column | Field | Value |
+|---|---|---|
+| `insulation` | Insulation | Down / Synthetic |
+| `fill_power` | Fill power | 450 fill / 550 fill / 650 fill / 750 fill / 800 fill / 850 fill / 900 fill / 950 fill / 1000 fill |
+| `fill_weight` | Fill weight | `14 oz` or `397 g` (bare number: oz) |
+| `rds` | RDS certified | Yes / No / Unknown |
+| `gender` | Fit for | Men's / Women's / Unisex |
+| `hooded` | Hooded | yes / no |
+| `zipper` | Zipper | Full / Quarter / None |
+| `baffles` | Baffles | Sewn-through / Box / Other |
 
 ## Trails
 

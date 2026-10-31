@@ -269,6 +269,27 @@
                                 A shop's badge is kept once for its website and used on every item it sells; leave it blank to use the shop's own site icon. Affiliate links follow the same rule as above: Supporters get the plain link.
                             </p>
                         </fieldset>
+                        <!-- Specs for this kind of gear (client/utils/gear-specs.js). -->
+                        <fieldset v-if="specType" class="wgSpan2 wgSpecs" data-testid="catalog-specs">
+                            <legend>{{ specType.label }} specs <span class="wgMuted">(optional; type either unit, like 20F or -7C, 14 oz or 397 g, 72 in or 183 cm)</span></legend>
+                            <template v-for="field in specFields" :key="field.key">
+                                <label class="wgField">{{ field.label }}
+                                    <select v-if="field.kind === 'choice'" v-model="form.specs[field.key]" class="wgSelect" :data-testid="`spec-${field.key}`">
+                                        <option value="">—</option>
+                                        <option v-for="[value, label] in field.options" :key="value" :value="label">{{ label }}</option>
+                                    </select>
+                                    <select v-else-if="field.kind === 'yesno'" v-model="form.specs[field.key]" class="wgSelect" :data-testid="`spec-${field.key}`">
+                                        <option value="">—</option>
+                                        <option value="yes">Yes</option>
+                                        <option value="no">No</option>
+                                    </select>
+                                    <input v-else v-model.trim="form.specs[field.key]" class="wgInput" :placeholder="field.placeholder" :data-testid="`spec-${field.key}`">
+                                </label>
+                            </template>
+                        </fieldset>
+                        <p v-else-if="form.category" class="wgSpan2 wgMuted wgSpecsNone" data-testid="catalog-specs-none">
+                            No specs for {{ form.category }} yet. Specs come with these categories: {{ specCategories }}.
+                        </p>
                         <label class="wgField wgSpan2">Photo URL <span class="wgMuted">(copied here on save, up to 512px, so their site isn't hotlinked)</span>
                             <input v-model="form.imageUrl" class="wgInput" type="url" placeholder="https://" data-testid="catalog-image-url">
                         </label>
@@ -316,12 +337,17 @@ import siteFooter from '../components/site-footer.vue';
 import ownerNav from '../components/owner-nav.vue';
 import modal from '../components/modal.vue';
 import { api } from '../utils/format.js';
+import { specTypeFor, specInput, SPEC_FIELDS, SPEC_TYPES } from '../utils/gear-specs.js';
+
+// What a measurement box suggests, by kind.
+const SPEC_PLACEHOLDERS = { temp: '20F or -7C', weight: '14 oz or 397 g', length: '72 in or 183 cm', volume: '40 L', dims: '18 x 5 x 5 in', number: '' };
 
 const PAGE = 100;
 const emptyForm = () => ({
     name: '', brand: '', sku: '', category: '', weight: '', unit: 'oz', price: '', currency: 'USD',
     status: 'published', description: '', url: '', affiliateUrl: '', imageUrl: '', tags: '', wornDefault: false, consumableDefault: false,
     shops: [],
+    specs: {},
 });
 
 export default {
@@ -366,6 +392,21 @@ export default {
         },
         isAdmin() {
             return Boolean(this.$store.state.account && this.$store.state.account.isAdmin);
+        },
+        // The kind of gear the category says this is (Tent, Quilt...), for its specs.
+        specType() {
+            return specTypeFor(this.form.category);
+        },
+        // Its fields; fill power and RDS only for down.
+        specFields() {
+            if (!this.specType) return [];
+            const insulation = String(this.form.specs.insulation || '').toLowerCase();
+            return this.specType.fields
+                .filter((key) => !SPEC_FIELDS[key].onlyWhen || !insulation || insulation === 'down')
+                .map((key) => ({ key, ...SPEC_FIELDS[key], placeholder: SPEC_PLACEHOLDERS[SPEC_FIELDS[key].kind] || '' }));
+        },
+        specCategories() {
+            return SPEC_TYPES.map((t) => t.categories[0]).join(', ');
         },
         importErrors() {
             return this.importPlan ? this.importPlan.rows.filter((r) => r.action === 'error') : [];
@@ -420,6 +461,8 @@ export default {
                 price: item.price === null ? '' : String(item.price),
                 tags: (item.tags || []).join('; '),
                 shops: (item.shops || []).map((x) => ({ name: x.name, url: x.url, affiliateUrl: x.affiliateUrl || '', badge: '', badgeUrl: x.badgeUrl || '' })),
+                // Specs as editable text ("20F", "Freestanding").
+                specs: Object.fromEntries(Object.entries(item.specs || {}).map(([k, v]) => [k, specInput(k, v)])),
             } : emptyForm();
             this.editorOpen = true;
         },
@@ -427,7 +470,9 @@ export default {
             this.saving = true;
             this.formError = '';
             const shops = this.form.shops.map(({ badgeUrl, ...x }) => x); // eslint-disable-line no-unused-vars
-            const body = JSON.stringify({ ...this.form, tags: this.form.tags, shops });
+            // Only this type's specs; an empty box clears that spec.
+            const specs = Object.fromEntries((this.specType ? this.specType.fields : []).map((k) => [k, this.form.specs[k] || '']));
+            const body = JSON.stringify({ ...this.form, tags: this.form.tags, shops, specs });
             try {
                 let r;
                 if (this.editing && this.editing.id) {
@@ -522,6 +567,31 @@ export default {
 
 <style lang="scss">
 @import "../css/_globals";
+
+.wgSpecs {
+    border: 1px solid var(--lp-border);
+    border-radius: 12px;
+    display: grid;
+    gap: 10px 14px;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    margin: 0;
+    padding: 12px 14px 14px;
+
+    legend {
+        font-weight: 650;
+        padding: 0 6px;
+    }
+
+    .wgSelect,
+    .wgInput {
+        width: 100%;
+    }
+}
+
+.wgSpecsNone {
+    font-size: 13px;
+    margin: 0;
+}
 
 .wgShops {
     border: 1px solid var(--lp-border);

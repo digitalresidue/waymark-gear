@@ -11,6 +11,7 @@ import { stringify } from 'csv-stringify/sync';
 import knex from './db.js';
 import weightUtils from '../client/utils/weight.js';
 import { parseShops, shopsToApi, publicShops, SHOP_CSV_COLUMNS, MAX_SHOPS } from './shops.js';
+import { readSpec, readSpecs, specInput, specTypeFor, filterKind, SPEC_KEYS } from '../client/utils/gear-specs.js';
 
 export const UNITS = ['g', 'kg', 'oz', 'lb'];
 export const CSV_COLUMNS = [
@@ -18,6 +19,9 @@ export const CSV_COLUMNS = [
     'url', 'image_url', 'worn_default', 'consumable_default', 'tags', 'status', 'affiliate_url',
     // Where to buy, besides url: up to four more shops (server/shops.js).
     ...SHOP_CSV_COLUMNS,
+    // Specs (client/utils/gear-specs.js), one column per field; only the
+    // fields for the row's type are read ("20F", "14 oz", "Freestanding").
+    ...SPEC_KEYS,
 ];
 export const MAX_IMPORT_ROWS = 5000;
 
@@ -50,6 +54,8 @@ export function toApi(row) {
         affiliateUrl: row.affiliate_url || '',
         // Where to buy besides url; each shop's affiliate link is owner-only too.
         shops: shopsToApi(row.shops),
+        // Stored units (gear-specs.js); formatSpec/specRows show them.
+        specs: row.specs || {},
         updatedAt: row.updated_at,
     };
 }
@@ -140,6 +146,17 @@ export function validateEntry(input) {
     const shopInput = parseShops(input, url);
     errors.push(...shopInput.errors);
 
+    // Specs: an object from the editor ({ temp_comfort: '20F', ... }), or a
+    // sheet's spec columns. Neither given: the item keeps the specs it has.
+    const category = str(get('category'), 80);
+    let specs;
+    if (input.specs && typeof input.specs === 'object' && !Array.isArray(input.specs)) {
+        specs = readSpecs(category, input.specs);
+    } else if (SPEC_KEYS.some((k) => k in input)) {
+        specs = readSpecs(category, Object.fromEntries(SPEC_KEYS.map((k) => [k, input[k]])));
+    }
+    if (specs) errors.push(...specs.errors);
+
     return {
         errors,
         badges: shopInput.badges,
@@ -147,7 +164,7 @@ export function validateEntry(input) {
             sku,
             name,
             brand: str(get('brand'), 120),
-            category: str(get('category'), 80),
+            category,
             description: str(get('description'), 1000),
             weight_mg: weightMg,
             unit,
@@ -161,6 +178,7 @@ export function validateEntry(input) {
             status,
             ...(affiliateUrl === undefined ? {} : { affiliate_url: affiliateUrl }),
             ...(shopInput.shops === undefined ? {} : { shops: JSON.stringify(shopInput.shops) }),
+            ...(specs === undefined ? {} : { specs: JSON.stringify(specs.specs) }),
         },
     };
 }
@@ -171,8 +189,41 @@ function escapeLike(s) {
     return s.replace(/[\\%_]/g, (c) => `\\${c}`);
 }
 
-export async function search({ q = '', category = '', status = 'published', limit = 50, offset = 0, ids } = {}) {
+/**
+ * Spec filters from a query string: spec_<key>=a,b (any of) for choices and
+ * yes/no, spec_<key>_min / spec_<key>_max for measures ("2lb", "20F", "40").
+ * Returns [{ key, any } | { key, min, max }]; unknown keys are ignored.
+ */
+export function specFilters(query = {}) {
+    const out = [];
+    for (const key of SPEC_KEYS) {
+        const kind = filterKind(key);
+        if (kind === 'match' && query[`spec_${key}`] !== undefined) {
+            const any = String(query[`spec_${key}`]).split(',').slice(0, 10).map((v) => readSpec(key, v).value).filter((v) => v !== undefined);
+            if (any.length) out.push({ key, any: any.map(String) });
+        }
+        if (kind === 'range') {
+            const min = query[`spec_${key}_min`] !== undefined ? readSpec(key, query[`spec_${key}_min`]).value : undefined;
+            const max = query[`spec_${key}_max`] !== undefined ? readSpec(key, query[`spec_${key}_max`]).value : undefined;
+            if (min !== undefined || max !== undefined) out.push({ key, min, max });
+            // A choice measured in numbers (fill power) can also be matched.
+            if (query[`spec_${key}`] !== undefined) {
+                const any = String(query[`spec_${key}`]).split(',').slice(0, 10).map((v) => readSpec(key, v).value).filter((v) => v !== undefined);
+                if (any.length) out.push({ key, any: any.map(String) });
+            }
+        }
+    }
+    return out;
+}
+
+export async function search({ q = '', category = '', status = 'published', limit = 50, offset = 0, ids, specs = [] } = {}) {
     const query = knex('catalog_items');
+    for (const f of specs) {
+        if (!SPEC_KEYS.includes(f.key)) continue;
+        if (f.any) query.whereRaw('specs->>? = any(?)', [f.key, f.any]);
+        if (f.min !== undefined) query.whereRaw("jsonb_typeof(specs->?) = 'number' and (specs->>?)::numeric >= ?", [f.key, f.key, f.min]);
+        if (f.max !== undefined) query.whereRaw("jsonb_typeof(specs->?) = 'number' and (specs->>?)::numeric <= ?", [f.key, f.key, f.max]);
+    }
     if (status && status !== 'all') query.where({ status });
     if (category) query.where({ category });
     if (ids) query.whereIn('id', ids.filter(isUuid));
@@ -276,6 +327,7 @@ export function toCsv(items, badges = new Map()) {
         i.price === null ? '' : i.price.toFixed(2), i.currency, i.url, i.imageUrl,
         i.wornDefault ? 'true' : 'false', i.consumableDefault ? 'true' : 'false',
         (i.tags || []).join(';'), i.status, i.affiliateUrl || '', ...shopCells(i),
+        ...SPEC_KEYS.map((k) => (specTypeFor(i.category) && i.specs && i.specs[k] !== undefined ? specInput(k, i.specs[k]) : '')),
     ].map(neutralizeFormula));
     return stringify([CSV_COLUMNS, ...rows]);
 }
@@ -283,7 +335,7 @@ export function toCsv(items, badges = new Map()) {
 export function templateCsv() {
     return stringify([
         CSV_COLUMNS,
-        ['WG-0001', 'Example tent, 1 person', 'Example Brand', 'Shelter', 'Single wall, trekking-pole pitched',
+        ['WG-0001', 'Example tent, 1 person', 'Example Brand', 'Tent', 'Single wall, trekking-pole pitched',
             '28', 'oz', '399.00', 'USD', 'https://example.com/tent', '', 'false', 'false', 'tent;1p', 'draft',
             // affiliate_url: the tracking link from your affiliate network,
             // optional. url above stays the normal product page.
@@ -292,7 +344,10 @@ export function templateCsv() {
             // (copied to Waymark; leave blank to use the shop's own icon), the
             // normal product link, then an affiliate link (optional).
             'Example Outdoor Store', 'https://example-store.com/logo.png', 'https://example-store.com/p/tent', 'https://example-store.sjv.io/c/1/2/3',
-            ...Array(SHOP_CSV_COLUMNS.length - 4).fill('')],
+            ...Array(SHOP_CSV_COLUMNS.length - 4).fill(''),
+            // Specs: only a type's own columns are read (this row is a Tent);
+            // see "Gear specs" in the catalog help for every column.
+            ...SPEC_KEYS.map((k) => ({ capacity: '1P', pitch: 'Trekking pole', trail_weight: '26 oz', min_weight: '24 oz', double_wall: 'no', vestibules: '1', floor_width: '30 in', floor_length: '90 in', peak_height: '48 in', packed_size: '14 x 5 x 5 in' }[k] || ''))],
     ]);
 }
 
@@ -308,7 +363,13 @@ function parseCsv(text) {
 }
 
 const COMPARED = ['sku', 'name', 'brand', 'category', 'description', 'weight_mg', 'unit', 'price', 'currency',
-    'url', 'image_url', 'worn_default', 'consumable_default', 'tags', 'status', 'affiliate_url', 'shops'];
+    'url', 'image_url', 'worn_default', 'consumable_default', 'tags', 'status', 'affiliate_url', 'shops', 'specs'];
+
+// Same specs, whatever order the keys are in.
+const sameSpecs = (a, b) => {
+    const norm = (o) => JSON.stringify(Object.keys(o || {}).sort().map((k) => [k, o[k]]));
+    return norm(a) === norm(b);
+};
 
 function differs(row, value) {
     return COMPARED.some((k) => {
@@ -316,6 +377,7 @@ function differs(row, value) {
         if (k === 'tags') return (row.tags || []).join('\u0000') !== value.tags.join('\u0000');
         if (k === 'affiliate_url' && value[k] === undefined) return false;
         if (k === 'shops') return value.shops !== undefined && JSON.stringify(row.shops || []) !== value.shops;
+        if (k === 'specs') return value.specs !== undefined && !sameSpecs(row.specs, JSON.parse(value.specs));
         return (row[k] ?? null) !== (value[k] ?? null);
     });
 }
