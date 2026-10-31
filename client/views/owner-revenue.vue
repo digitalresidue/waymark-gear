@@ -3,7 +3,7 @@
         <siteHeader active="owner" />
         <template v-if="isAdmin">
             <ownerNav active="revenue" />
-            <main class="wgPage wgOwner wgRevenue">
+            <main id="wgMain" tabindex="-1" class="wgPage wgOwner wgRevenue">
                 <h1 class="wgH2">
                     Revenue
                 </h1>
@@ -21,13 +21,13 @@
                     <label class="wgCheck"><input v-model="settings.enabled" type="checkbox" data-testid="affiliate-enabled"> Use affiliate links</label>
                     <table class="wgDevTable">
                         <thead>
-                            <tr><th>Shop domain</th><th>Parameter</th><th>Value</th><th /></tr>
+                            <tr><th>Shop domain</th><th>Parameter</th><th>Value</th><th><span class="wgVisuallyHidden">Actions</span></th></tr>
                         </thead>
                         <tbody>
                             <tr v-for="(r, i) in settings.rules" :key="i" data-testid="affiliate-rule">
-                                <td><input v-model.trim="r.domain" class="wgInput" placeholder="amazon.com" data-testid="rule-domain"></td>
-                                <td><input v-model.trim="r.param" class="wgInput" placeholder="tag" data-testid="rule-param"></td>
-                                <td><input v-model.trim="r.value" class="wgInput" placeholder="yourtag-20" data-testid="rule-value"></td>
+                                <td><input v-model.trim="r.domain" class="wgInput" placeholder="amazon.com" aria-label="Shop domain" data-testid="rule-domain"></td>
+                                <td><input v-model.trim="r.param" class="wgInput" placeholder="tag" aria-label="Link parameter" data-testid="rule-param"></td>
+                                <td><input v-model.trim="r.value" class="wgInput" placeholder="yourtag-20" aria-label="Parameter value" data-testid="rule-value"></td>
                                 <td>
                                     <button type="button" class="wgBtn wgBtnGhost wgBtnSmall" @click="settings.rules.splice(i, 1)">
                                         Remove
@@ -132,7 +132,7 @@
                 </section>
             </main>
         </template>
-        <main v-else class="wgPage wgOwner">
+        <main v-else id="wgMain" tabindex="-1" class="wgPage wgOwner">
             <div class="wgEmpty">
                 <p><strong>Owner access only.</strong></p>
             </div>

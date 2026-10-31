@@ -1,7 +1,7 @@
 <template>
     <div class="wgHome">
         <siteHeader active="explore" />
-        <main class="wgPage wgExplore">
+        <main id="wgMain" tabindex="-1" class="wgPage wgExplore">
             <div class="wgSectionHead">
                 <div>
                     <h1 class="wgH2">
@@ -65,6 +65,9 @@
                 {{ loaded ? `${total} ${total === 1 ? 'kit' : 'kits'}` : 'Loading…' }}
             </p>
 
+            <h2 class="wgVisuallyHidden">
+                Kits
+            </h2>
             <div v-if="kits.length" class="wgKitGrid">
                 <kitCard v-for="kit in kits" :key="kit.externalId" :kit="kit" />
             </div>

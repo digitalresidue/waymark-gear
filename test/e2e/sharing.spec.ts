@@ -63,7 +63,7 @@ test.describe('List Sharing', () => {
 
     await expect(page.getByRole('heading', { level: 1 })).toContainText('My Gear List');
     await expect(page.getByRole('heading', { name: 'Shelter' })).toBeVisible();
-    await expect(page.getByText('Tent')).toBeVisible();
+    await expect(page.getByText('Tent', { exact: true })).toBeVisible();
   });
 
   test('should have embed code', async ({ page }) => {

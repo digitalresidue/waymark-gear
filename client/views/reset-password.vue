@@ -2,8 +2,8 @@
     <authLayout card-id="resetPassword" title="Choose a new password" :google="false">
         <form class="resetPassword lpFields" data-testid="reset-password-form" @submit.prevent="submit">
             <div class="lpFields">
-                <input v-model="password" v-focus-on-create type="password" placeholder="New password" name="password" class="password">
-                <input v-model="passwordConfirm" type="password" placeholder="Confirm new password" name="passwordConfirm" class="passwordConfirm">
+                <input v-model="password" v-focus-on-create type="password" placeholder="New password" aria-label="New password" autocomplete="new-password" name="password" class="password">
+                <input v-model="passwordConfirm" type="password" placeholder="Confirm new password" aria-label="Confirm new password" autocomplete="new-password" name="passwordConfirm" class="passwordConfirm">
             </div>
 
             <errors :errors="errors" />

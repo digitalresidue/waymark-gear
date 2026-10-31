@@ -510,7 +510,7 @@
 }
 
 .wgHeaderBellCount {
-    background: var(--lp-accent-orange, #C4571F);
+    background: var(--lp-accent-orange, #B04E1B);
     border-radius: 99px;
     color: #fff;
     font-size: 10px;
@@ -716,4 +716,28 @@ button.wgCookieSettings,
     .wgConsentBtn {
         flex: 1 1 0;
     }
+}
+
+// "Skip to content": the first thing a keyboard reaches, shown only when focused.
+.wgSkipLink {
+    background: var(--lp-primary);
+    border-radius: 0 0 10px;
+    color: var(--lp-primary-ink);
+    font-weight: 650;
+    left: 0;
+    padding: 10px 16px;
+    position: absolute;
+    text-decoration: none;
+    top: 0;
+    transform: translateY(-120%);
+    z-index: 1000;
+
+    &:focus,
+    &:focus-visible {
+        transform: none;
+    }
+}
+
+main:focus {
+    outline: none;
 }

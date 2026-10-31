@@ -2,7 +2,7 @@
     <div class="lpSummaryMobile" :class="{lpSummaryMobileOpen: expanded}">
         <!-- Collapsed scoreboard (#18a). The numbers people actually check
              stay on screen; the chart is one tap away. -->
-        <div class="lpSummaryStrip" data-testid="summary-strip" @click="toggle">
+        <div class="lpSummaryStrip" data-testid="summary-strip" role="button" tabindex="0" :aria-expanded="String(expanded)" @click="toggle">
             <span v-if="donutStyle" class="lpSummaryDonut" :style="donutStyle" />
             <span class="lpSummaryStat">
                 <span class="lpSummaryStatLabel">Total</span>

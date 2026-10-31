@@ -31,7 +31,7 @@
                 paste rows
             </button>
         </p>
-        <input ref="file" type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain" class="wgVisuallyHidden" tabindex="-1" data-testid="import-file" @change="readFile">
+        <input ref="file" type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain" class="wgVisuallyHidden" tabindex="-1" aria-label="File to import" data-testid="import-file" @change="readFile">
 
         <div v-if="pasting" class="wgImportPaste">
             <label class="wgField">Rows copied from a spreadsheet, with the header row

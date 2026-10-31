@@ -135,6 +135,9 @@ test.describe('Account Dropdown', () => {
   });
 
   test('should display username in dropdown', async ({ page }) => {
+    // The name is inside the menu, which is hidden (not just transparent)
+    // until it opens.
+    await page.getByTestId('account-menu').hover();
     const usernameSpan = page.getByTestId('account-menu').locator('.username');
     await expect(usernameSpan).toBeVisible();
     const username = await usernameSpan.textContent();

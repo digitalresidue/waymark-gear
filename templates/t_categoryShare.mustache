@@ -3,7 +3,7 @@
         <li class="lpHeader lpItemsHeader">
             <span class="lpCategoryHead">
                 {{#displayColor}}<span class="lpCategorySwatch" style="background: {{displayColor}}"></span>{{/displayColor}}
-                <h2 class="lpCategoryName">{{name}}</h2>
+                <h2 class="lpCategoryName">{{name}}{{^name}}<span class="wgVisuallyHidden">Unnamed category</span>{{/name}}</h2>
             </span>
             {{#showPrices}}<span class="lpPriceCell lpNumber lpSubtotal">{{currencySymbol}}{{subtotalPriceDisplay}}</span>{{/showPrices}}
             <span class="lpWeightCell lpNumber lpSubtotal"><span class="lpDisplaySubtotal" mg="{{subtotalWeight}}">{{subtotalWeightDisplay}}</span> <span class="lpSubtotalUnit">{{subtotalUnit}}</span></span>

@@ -2,7 +2,7 @@
     <modal id="copyListDialog" :shown="shown" @hide="$emit('hide')">
         <h2>Choose the list to copy</h2>
         <div class="lpFields">
-            <select id="listToCopy" v-model="listId">
+            <select id="listToCopy" v-model="listId" aria-label="List to copy">
                 <option value="" disabled>
                     Select a list…
                 </option>

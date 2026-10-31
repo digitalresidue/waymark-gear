@@ -41,16 +41,16 @@
 
         <form id="accountForm" @submit.prevent="updateAccount()">
             <div class="lpFields">
-                <input type="text" name="username" class="username" disabled :value="username">
-                <input v-if="hasPassword" v-model="currentPassword" type="password" placeholder="Current Password" name="currentPassword" class="currentPassword">
+                <input type="text" name="username" class="username" aria-label="Username" disabled :value="username">
+                <input v-if="hasPassword" v-model="currentPassword" type="password" placeholder="Current Password" aria-label="Current password" autocomplete="current-password" name="currentPassword" class="currentPassword">
                 <p v-else class="wgMuted wgAccountNote">
                     You sign in with Google, so there's no current password to enter.
                 </p>
                 <hr>
-                <input v-model="newEmail" type="email" placeholder="New Email" name="newEmail" class="newEmail">
+                <input v-model="newEmail" type="email" placeholder="New Email" aria-label="New email" autocomplete="email" name="newEmail" class="newEmail">
                 <hr>
-                <input v-model="newPassword" type="password" :placeholder="hasPassword ? 'New Password' : 'Set a password (optional)'" name="newPassword" class="newPassword">
-                <input v-model="confirmNewPassword" type="password" placeholder="Confirm New Password" name="confirmNewPassword" class="confirmNewPassword">
+                <input v-model="newPassword" type="password" :placeholder="hasPassword ? 'New Password' : 'Set a password (optional)'" :aria-label="hasPassword ? 'New password' : 'Set a password (optional)'" autocomplete="new-password" name="newPassword" class="newPassword">
+                <input v-model="confirmNewPassword" type="password" placeholder="Confirm New Password" aria-label="Confirm new password" autocomplete="new-password" name="confirmNewPassword" class="confirmNewPassword">
             </div>
 
             <errors :errors="errors" />

@@ -32,6 +32,7 @@
                 <a href="/report" data-testid="footer-report">Report a problem</a>
                 <a href="/privacy">Privacy</a>
                 <a href="/terms">Terms</a>
+                <a href="/accessibility">Accessibility</a>
                 <button type="button" class="wgCookieSettings" data-cookie-settings>
                     Cookie settings
                 </button>
@@ -56,6 +57,8 @@
             <a class="lpHref" href="/privacy">Privacy</a>
             -
             <a class="lpHref" href="/terms">Terms</a>
+            -
+            <a class="lpHref" href="/accessibility">Accessibility</a>
             <span class="wgCookieSettings">
                 -
                 <button type="button" class="lpHref" data-cookie-settings>Cookie settings</button>
@@ -95,6 +98,13 @@ export default {
 
 <style lang="scss">
 @import "../css/_globals";
+
+// Links sitting in a line of text are underlined, not told apart by colour alone.
+.lpSiteFooterCredit .lpHref,
+.lpSiteFooterLinks .lpHref {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
 
 .lpSiteFooter {
     color: var(--lp-text-secondary);

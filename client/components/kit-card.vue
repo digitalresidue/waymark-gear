@@ -113,7 +113,7 @@ export default {
 }
 
 .wgKitShakedown {
-    color: #9A4312;
+    color: var(--lp-accent-orange);
     font-weight: 600;
 }
 

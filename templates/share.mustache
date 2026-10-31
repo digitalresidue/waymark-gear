@@ -38,7 +38,8 @@
     </head>
     <body>
         {{> siteHeader}}
-        <div id="main" class="lpShare">
+        <main id="main" class="lpShare">
+            <div id="wgMain" tabindex="-1"></div>
             <div class="lpList {{#optionalFields.images}}lpShowImages{{/optionalFields.images}} {{#optionalFields.worn}}lpShowWorn{{/optionalFields.worn}} {{#optionalFields.consumable}}lpShowConsumable{{/optionalFields.consumable}} {{#optionalFields.price}}lpShowPrices{{/optionalFields.price}}">
                 <div class="lpShareHeader">
                     <div class="wgShareTitle">
@@ -95,7 +96,7 @@
                 </section>
                 {{/published}}
             </div>
-        </div>
+        </main>
         <div class="lpDialog" id="lpImageDialog"></div>
         <div class="lpModalOverlay"></div>
         {{{scripts}}}

@@ -57,7 +57,7 @@ test.describe('Phase 4', () => {
         let done = saved(owner.page);
         await owner.page.getByTestId('trip-type-thru').click();
         await done;
-        await expect(owner.page.getByTestId('trip-type-thru')).toHaveAttribute('aria-pressed', 'true');
+        await expect(owner.page.getByTestId('trip-type-thru')).toHaveAttribute('aria-checked', 'true');
         const link = await publish(owner.page);
         const id = link.split('/r/')[1];
         expect((await owner.page.request.post(url(`/api/kits/${id}/vote`), { data: { value: 1 } })).status()).toBe(400);

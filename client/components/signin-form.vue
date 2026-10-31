@@ -4,8 +4,8 @@
             {{ message }}
         </p>
         <div class="lpFields">
-            <input v-model="username" v-focus-on-create="autofocus" type="text" placeholder="Username" name="username" class="username">
-            <input ref="passwordInput" v-model="password" type="password" placeholder="Password" name="password" class="password">
+            <input v-model="username" v-focus-on-create="autofocus" type="text" placeholder="Username" aria-label="Username" autocomplete="username" name="username" class="username">
+            <input ref="passwordInput" v-model="password" type="password" placeholder="Password" aria-label="Password" autocomplete="current-password" name="password" class="password">
         </div>
 
         <errors :errors="errors" />

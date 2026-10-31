@@ -1,5 +1,6 @@
 <template>
     <header class="wgSiteHeader" :class="{ wgSiteHeaderApp: app }">
+        <a class="wgSkipLink" href="#wgMain" data-testid="skip-link" @click.prevent="skipToContent">Skip to content</a>
         <div class="wgSiteHeaderInner wgPage">
             <router-link to="/welcome" class="wgSiteHeaderLogo" aria-label="Waymark Gear home" data-testid="site-logo">
                 <brandLogo />
@@ -182,6 +183,14 @@ export default {
         clearTimeout(this.hoverTimer);
     },
     methods: {
+        // Move keyboard focus past the header to the page's main content.
+        skipToContent() {
+            const main = document.getElementById('wgMain') || document.querySelector('main');
+            if (!main) return;
+            if (!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
+            main.focus();
+            main.scrollIntoView({ block: 'start' });
+        },
         toggle(id) {
             this.dropdown = this.dropdown === id ? '' : id;
         },

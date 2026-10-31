@@ -1,5 +1,5 @@
 <template>
-    <div class="wgOwnerBar">
+    <section class="wgOwnerBar" aria-label="Owner tools">
         <div class="wgPage wgOwnerBarInner">
             <span class="wgOwnerTag">Owner</span>
             <nav aria-label="Owner" class="wgOwnerNav">
@@ -23,7 +23,7 @@
                 </router-link>
             </nav>
         </div>
-    </div>
+    </section>
 </template>
 
 <script>
@@ -59,7 +59,7 @@ export default {
 .wgOwnerTag {
     background: var(--lp-accent);
     border-radius: 6px;
-    color: #fff;
+    color: var(--lp-text-invert);
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.08em;

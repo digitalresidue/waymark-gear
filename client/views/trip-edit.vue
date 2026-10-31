@@ -1,7 +1,7 @@
 <template>
     <div class="wgHome">
         <siteHeader active="trips" />
-        <main class="wgPage wgTripEdit">
+        <main id="wgMain" tabindex="-1" class="wgPage wgTripEdit">
             <p class="wgTripBack">
                 <router-link to="/trips">
                     ‹ All trips

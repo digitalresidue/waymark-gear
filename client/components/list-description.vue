@@ -7,13 +7,14 @@
             class="lpListDescriptionInput"
             data-testid="list-description-input"
             placeholder="Add a summary..."
+            aria-label="List summary"
             @input="onInput"
             @blur="finishEditing"
             @keydown.esc="$event.target.blur()"
         />
         <!-- eslint-disable-next-line vue/no-v-html -- output is sanitized by the shared marked renderer -->
-        <div v-else-if="hasDescription" class="lpListDescriptionRendered" data-testid="list-description-rendered" @click="edit" v-html="renderedDescription" />
-        <div v-else class="lpListDescriptionEmpty" data-testid="list-description-empty" role="button" tabindex="0" @click="edit" @keydown.enter.prevent="edit">
+        <div v-else-if="hasDescription" class="lpListDescriptionRendered" data-testid="list-description-rendered" tabindex="0" title="Edit the summary" @click="edit" @keydown.enter.self.prevent="edit" v-html="renderedDescription" />
+        <div v-else class="lpListDescriptionEmpty" data-testid="list-description-empty" role="button" tabindex="0" @click="edit">
             Add a summary...
         </div>
         <p v-if="editing" class="lpListDescriptionHint">

@@ -42,12 +42,12 @@
                         @click="setDefaultList(list)"
                     >
                         <div v-if="!filtering" class="lpHandle" title="Reorder this list" />
-                        <span class="lpLibraryListSwitch lpListName">{{ listName(list) }}</span>
+                        <span class="lpLibraryListSwitch lpListName" role="button" tabindex="0" :aria-current="library.defaultListId == list.id ? 'true' : null">{{ listName(list) }}</span>
                         <span class="wgListWeight wgMono">{{ baseWeight(list) }}</span>
                         <button type="button" class="wgListPin wgPinned" :aria-label="`Unpin ${listName(list)}`" title="Unpin" @click.stop="togglePin(list)">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 3l5 5-3 1-4 4 1 5-2 2-4-4-5 5-1-1 5-5-4-4 2-2 5 1 4-4z" /></svg>
                         </button>
-                        <a class="lpRemove" title="Remove this list" @click.stop="removeList(list)"><i class="lpSprite lpSpriteRemove" /></a>
+                        <a class="lpRemove" title="Remove this list" :aria-label="`Remove ${listName(list)}`" @click.stop="removeList(list)"><i class="lpSprite lpSpriteRemove" /></a>
                     </li>
                 </ul>
                 <p v-if="otherLists.length" class="wgListGroup">
@@ -64,12 +64,12 @@
                     @click="setDefaultList(list)"
                 >
                     <div v-if="!filtering" class="lpHandle" title="Reorder this list" />
-                    <span class="lpLibraryListSwitch lpListName">{{ listName(list) }}</span>
+                    <span class="lpLibraryListSwitch lpListName" role="button" tabindex="0" :aria-current="library.defaultListId == list.id ? 'true' : null">{{ listName(list) }}</span>
                     <span class="wgListWeight wgMono">{{ baseWeight(list) }}</span>
                     <button type="button" class="wgListPin" :aria-label="`Pin ${listName(list)}`" title="Pin to top" @click.stop="togglePin(list)">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 3l5 5-3 1-4 4 1 5-2 2-4-4-5 5-1-1 5-5-4-4 2-2 5 1 4-4z" /></svg>
                     </button>
-                    <a class="lpRemove" title="Remove this list" @click.stop="removeList(list)"><i class="lpSprite lpSpriteRemove" /></a>
+                    <a class="lpRemove" title="Remove this list" :aria-label="`Remove ${listName(list)}`" @click.stop="removeList(list)"><i class="lpSprite lpSpriteRemove" /></a>
                 </li>
             </ul>
             <p v-if="filtering && !pinnedLists.length && !otherLists.length" class="wgListNone">

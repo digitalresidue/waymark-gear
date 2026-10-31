@@ -61,7 +61,7 @@
     <div class="wgTrailHead"><h2>Trail vs trail</h2></div>
     <div class="wgTrailCompareWrap">
         <table class="wgTrailCompare" data-testid="trail-compare">
-            <thead><tr><th></th>{{#comparison}}<th {{#me}}class="wgOn"{{/me}}><a href="/trails/{{slug}}" data-trail="{{slug}}">{{label}}</a></th>{{/comparison}}</tr></thead>
+            <thead><tr><th><span class="wgVisuallyHidden">Measure</span></th>{{#comparison}}<th {{#me}}class="wgOn"{{/me}}><a href="/trails/{{slug}}" data-trail="{{slug}}">{{label}}</a></th>{{/comparison}}</tr></thead>
             <tbody>
                 {{#compareRows}}<tr><th>{{label}}</th>{{#cells}}<td {{#me}}class="wgOn"{{/me}}>{{value}}</td>{{/cells}}</tr>{{/compareRows}}
             </tbody>

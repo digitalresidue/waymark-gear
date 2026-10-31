@@ -1,7 +1,7 @@
 <template>
     <div class="wgHome">
         <siteHeader />
-        <main class="wgPage wgDevPage">
+        <main id="wgMain" tabindex="-1" class="wgPage wgDevPage">
             <h1 class="wgH2">
                 API and AI assistants
             </h1>
@@ -15,7 +15,7 @@
                 </h2>
                 <p>Add Waymark Gear as a custom connector (MCP server) with this address. Your assistant will ask you to sign in here and choose read-only or read-and-write.</p>
                 <div class="wgDevCopy">
-                    <input class="wgInput wgMono" :value="mcpUrl" readonly data-testid="mcp-url" @focus="$event.target.select()">
+                    <input class="wgInput wgMono" :value="mcpUrl" readonly aria-label="Connector address" data-testid="mcp-url" @focus="$event.target.select()">
                     <button type="button" class="wgBtn wgBtnGhost" @click="copy(mcpUrl)">
                         {{ copied === mcpUrl ? 'Copied' : 'Copy' }}
                     </button>
@@ -61,7 +61,7 @@
                 <div v-if="fresh" class="wgDevFresh" role="status">
                     <p><strong>Copy your token now.</strong> It won't be shown again.</p>
                     <div class="wgDevCopy">
-                        <input class="wgInput wgMono" :value="fresh" readonly data-testid="token-value" @focus="$event.target.select()">
+                        <input class="wgInput wgMono" :value="fresh" readonly aria-label="Your new token" data-testid="token-value" @focus="$event.target.select()">
                         <button type="button" class="wgBtn wgBtnGhost" @click="copy(fresh)">
                             {{ copied === fresh ? 'Copied' : 'Copy' }}
                         </button>
@@ -96,7 +96,7 @@
                         </tr>
                     </tbody>
                 </table>
-                <pre class="wgDevExample">curl -H "Authorization: Bearer $WAYMARK_TOKEN" {{ origin }}/api/v1/lists</pre>
+                <pre class="wgDevExample" tabindex="0" aria-label="Example request">curl -H "Authorization: Bearer $WAYMARK_TOKEN" {{ origin }}/api/v1/lists</pre>
             </section>
         </main>
     </div>

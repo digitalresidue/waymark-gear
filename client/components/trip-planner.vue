@@ -410,7 +410,7 @@ export default {
 }
 
 .wgTripFood {
-    background: #C4571F;
+    background: #B04E1B;
 }
 
 .wgTripWater {

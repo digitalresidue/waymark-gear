@@ -566,7 +566,22 @@ function initTrails() {
         .catch(() => {});
 }
 
+// "Skip to content" lands on the page's main landmark, whatever its id.
+function initSkipLink() {
+    const link = document.querySelector('[data-skip-link]');
+    if (!link) return;
+    link.addEventListener('click', (e) => {
+        const main = document.getElementById('wgMain') || document.querySelector('main');
+        if (!main) return;
+        e.preventDefault();
+        if (!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
+        main.focus();
+        main.scrollIntoView({ block: 'start' });
+    });
+}
+
 export function initSocial() {
+    initSkipLink();
     initTrails();
     initSiteHeader();
     initCompare();

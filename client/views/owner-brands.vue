@@ -3,7 +3,7 @@
         <siteHeader active="owner" />
         <template v-if="isAdmin">
             <ownerNav active="brands" />
-            <main class="wgPage wgOwner wgOwnerBrands">
+            <main id="wgMain" tabindex="-1" class="wgPage wgOwner wgOwnerBrands">
                 <div class="wgSectionHead">
                     <div>
                         <h1 class="wgH2">
@@ -22,11 +22,11 @@
                 </p>
 
                 <section class="wgCard wgDevCard">
-                    <input v-model="filter" class="wgInput wgOwnerTrailFilter" placeholder="Filter by name" data-testid="brand-filter">
+                    <input v-model="filter" class="wgInput wgOwnerTrailFilter" placeholder="Filter by name" aria-label="Filter brands by name" data-testid="brand-filter">
                     <div class="wgOwnerTableWrap">
                         <table class="wgDevTable" data-testid="brand-table">
                             <thead>
-                                <tr><th>Brand</th><th>Makes</th><th>Links</th><th>Visits, 30 days</th><th>Status</th><th /></tr>
+                                <tr><th>Brand</th><th>Makes</th><th>Links</th><th>Visits, 30 days</th><th>Status</th><th><span class="wgVisuallyHidden">Actions</span></th></tr>
                             </thead>
                             <tbody>
                                 <tr v-for="b in shown" :key="b.id" data-testid="brand-row">
@@ -113,7 +113,7 @@
                 </form>
             </modal>
         </template>
-        <main v-else class="wgPage wgOwner">
+        <main v-else id="wgMain" tabindex="-1" class="wgPage wgOwner">
             <div class="wgEmpty">
                 <p><strong>Owner access only.</strong></p>
             </div>

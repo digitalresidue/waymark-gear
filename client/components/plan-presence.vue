@@ -45,7 +45,7 @@ export default {
 .wgPresenceFace,
 .wgPresenceMore {
     align-items: center;
-    background: #C4571F;
+    background: #B04E1B;
     border: 2px solid var(--lp-bg, #fff);
     border-radius: 50%;
     color: #fff;

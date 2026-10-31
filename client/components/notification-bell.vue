@@ -120,7 +120,7 @@ export default {
 }
 
 .wgBellCount {
-    background: #C4571F;
+    background: #B04E1B;
     border: 2px solid var(--lp-surface);
     border-radius: 999px;
     color: #fff;
@@ -185,7 +185,7 @@ export default {
     }
 
     .wgBellNew a {
-        box-shadow: inset 3px 0 0 #C4571F;
+        box-shadow: inset 3px 0 0 #B04E1B;
     }
 }
 

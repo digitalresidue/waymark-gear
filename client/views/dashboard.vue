@@ -7,16 +7,19 @@
             <planSidebar v-if="planMode" />
             <sidebar v-else />
             <div class="lpDrawerScrim" data-testid="drawer-scrim" @click="closeDrawer" />
-            <div class="lpContentCol">
+            <main id="wgMain" class="lpContentCol" tabindex="-1">
+                <h1 class="wgVisuallyHidden">
+                    {{ list.name || 'Your list' }}
+                </h1>
                 <div id="header">
                     <!-- On the desktop the tools live in the sidebar's rail and the
                          account menu in the site header, so the title has the
                          row. Phones (and shared plans, which have their own
                          sidebar) keep them here. -->
                     <span v-if="!railTools" class="headerItem">
-                        <a id="hamburger" class="lpTransition" data-testid="toggle-sidebar" @click="toggleSidebar"><i class="lpSprite lpHamburger" /></a>
+                        <a id="hamburger" class="lpTransition" aria-label="Lists and gear" data-testid="toggle-sidebar" @click="toggleSidebar"><i class="lpSprite lpHamburger" /></a>
                     </span>
-                    <input id="lpListName" :value="list.name" type="text" class="lpListName lpSilent headerItem" placeholder="Name your list" autocomplete="off" name="lastpass-disable-search" @input="updateListName">
+                    <input id="lpListName" :value="list.name" type="text" class="lpListName lpSilent headerItem" placeholder="Name your list" aria-label="List name" autocomplete="off" name="lastpass-disable-search" @input="updateListName">
                     <router-link v-if="!railTools" to="/pack" class="headerItem wgPackLink" data-testid="open-pack">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8" /><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" /></svg>
                         Pack
@@ -34,7 +37,7 @@
                 <list />
 
                 <siteFooter id="lpFooter" />
-            </div>
+            </main>
             <div class="lpFrameFill lpFrameFillRight" />
 
             <globalAlerts />

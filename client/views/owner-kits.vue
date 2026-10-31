@@ -3,7 +3,7 @@
         <siteHeader active="owner" />
         <template v-if="isAdmin">
             <ownerNav active="kits" />
-            <main class="wgPage wgOwner">
+            <main id="wgMain" tabindex="-1" class="wgPage wgOwner">
                 <div class="wgSectionHead">
                     <div>
                         <h1 class="wgH2">
@@ -98,7 +98,7 @@
                 </div>
             </main>
         </template>
-        <main v-else class="wgPage wgOwner">
+        <main v-else id="wgMain" tabindex="-1" class="wgPage wgOwner">
             <div class="wgEmpty">
                 <p><strong>Owner access only.</strong></p>
                 <p class="wgMuted">

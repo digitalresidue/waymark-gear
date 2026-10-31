@@ -8,7 +8,6 @@
             role="radio"
             class="wgChip"
             :aria-checked="String(list.tripType === t.id)"
-            :aria-pressed="String(list.tripType === t.id)"
             :data-testid="`trip-type-${t.id}`"
             @click="pick(t.id)"
         >

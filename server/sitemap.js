@@ -38,7 +38,7 @@ const setting = (key, fallback) => (config.has(`sitemap.${key}`) ? config.get(`s
 export const sitemapDir = () => setting('dir', path.join(os.tmpdir(), `waymark-sitemaps-${config.get('port')}`));
 
 // Pages that are always there.
-export const FIXED_PAGES = ['/welcome', '/explore', '/kits', '/trails/all', '/brands', '/reviews', '/leaderboard', '/supporter', '/developers', '/privacy', '/terms'];
+export const FIXED_PAGES = ['/welcome', '/explore', '/kits', '/trails/all', '/brands', '/reviews', '/leaderboard', '/supporter', '/developers', '/privacy', '/terms', '/accessibility'];
 
 const xmlEscape = (v) => String(v).replace(/[<>&'"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c]));
 const urlTag = (loc, lastmod) => `<url><loc>${xmlEscape(loc)}</loc>${lastmod ? `<lastmod>${new Date(lastmod).toISOString()}</lastmod>` : ''}</url>\n`;

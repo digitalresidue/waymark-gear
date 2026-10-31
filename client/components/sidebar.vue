@@ -1,5 +1,5 @@
 <template>
-    <div id="sidebar" :class="{ wgSidebarDesk: !isMobile }">
+    <aside id="sidebar" aria-label="Your lists and gear" :class="{ wgSidebarDesk: !isMobile }">
         <div class="lpSidebarSticky">
             <!-- Phone: one drawer with the site links and the lists; the
                  closet has its own page. -->
@@ -147,7 +147,7 @@
                 </div>
             </template>
         </div>
-    </div>
+    </aside>
 </template>
 
 <script>
@@ -463,7 +463,7 @@ $panelWidth: 380px;
 
 .wgRailBtn.wgOn .wgRailCount {
     background: var(--lp-accent-green-deep);
-    color: #fff;
+    color: var(--lp-primary-ink);
 }
 
 .wgRailSep {
