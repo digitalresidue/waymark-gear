@@ -7,6 +7,10 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 25 — "Find us" on social, in the footer · 2026-10-30 · branch `footer-social`
+- The site footer (app pages and server-rendered pages alike) has a **Find us** row: round icon links to the Facebook group, YouTube channel and Instagram, opening in a new tab with a clear label for screen readers.
+- The accounts live in `client/brand.js` (`socialLinks`) beside the other site details, and the drawings in `client/social-icons.js`, so a fork can point them elsewhere or empty the list to hide the row.
+
 ### Phase 8, part 23 — Ready for Cloudflare's proxy · 2026-10-30 · branch `cloudflare-proxy`
 - "Too many redirects" with the orange cloud on was Cloudflare's *Flexible* SSL mode looping with Caddy's own HTTPS redirect; the fix is **Full (strict)** in Cloudflare, now in INSTALL.md ("Optional: put Cloudflare in front", plus a troubleshooting entry).
 - Behind Cloudflare the app would have seen Cloudflare's addresses as every visitor's, so per-IP limits would lump people together. Caddy now trusts Cloudflare's published ranges for `X-Forwarded-For` (`servers { trusted_proxies static … }`) and the app counts two proxies (`TRUST_PROXY: 2`): visitors' own IPs with the cloud orange or grey, and an address sent by anyone else is ignored. Tested with Caddy 2.10.2 in front of Express.

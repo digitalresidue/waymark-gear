@@ -3,6 +3,16 @@
         <div>
             <p class="wgSiteFooterMark">WAYMARK <span>GEAR</span></p>
             <p>waymarkgear.com · Based on <a href="{{chrome.upstream.url}}" target="_blank" rel="noopener noreferrer">{{chrome.upstream.name}}</a> by {{chrome.upstream.author}}</p>
+            {{#chrome.social.length}}
+            <div class="wgSiteFooterSocial" data-testid="footer-social">
+                <span>Find us</span>
+                <ul>
+                    {{#chrome.social}}
+                    <li><a href="{{url}}" target="_blank" rel="noopener noreferrer me" aria-label="{{label}}" title="{{name}}" data-testid="footer-social-link">{{{svg}}}</a></li>
+                    {{/chrome.social}}
+                </ul>
+            </div>
+            {{/chrome.social.length}}
         </div>
         <nav class="wgSiteFooterLinks" aria-label="Footer">
             <a href="/explore">Explore</a>

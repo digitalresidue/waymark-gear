@@ -432,6 +432,46 @@
     }
 }
 
+// "Find us": the site's social accounts, as round icon buttons.
+.wgSiteFooterSocial {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+
+    > span {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    ul {
+        display: flex;
+        gap: 8px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    a {
+        align-items: center;
+        border: 1px solid rgb(201 214 205 / 35%);
+        border-radius: 999px;
+        display: inline-flex;
+        height: 36px;
+        justify-content: center;
+        transition: background-color 0.15s, border-color 0.15s;
+        width: 36px;
+
+        &:hover,
+        &:focus-visible {
+            background: rgb(255 255 255 / 10%);
+            border-color: #fff;
+        }
+    }
+}
+
 .wgSiteFooterLinks {
     align-items: center;
     display: flex;

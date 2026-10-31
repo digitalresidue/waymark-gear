@@ -11,7 +11,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import Mustache from 'mustache';
 import { MENU, PHONE_EXTRAS, activeFor } from '../client/nav.js';
-import { contactEmail, sourceUrl, upstream } from '../client/brand.js';
+import { contactEmail, sourceUrl, upstream, socialLinks } from '../client/brand.js';
+import { withIcons } from '../client/social-icons.js';
 
 const partial = (name) => fs.readFileSync(path.join(import.meta.dirname, `../templates/${name}.mustache`), 'utf8');
 const PARTIALS = { siteHeader: partial('t_siteHeader'), siteFooter: partial('t_siteFooter') };
@@ -41,6 +42,7 @@ export function chromeModel(path) {
         contactEmail,
         sourceUrl,
         upstream,
+        social: withIcons(socialLinks),
     };
 }
 
