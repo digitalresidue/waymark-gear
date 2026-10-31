@@ -63,7 +63,7 @@ test.describe('Homepage and Explore', () => {
     });
 
     test('Explore lists published kits', async ({ page }) => {
-        await page.goto(url('/explore'));
+        await page.goto(url('/kits'));
         await expect(page.getByRole('heading', { name: 'Explore kits' })).toBeVisible();
         await expect(page.getByText(/\d+ kits?|Loading/)).toBeVisible();
     });

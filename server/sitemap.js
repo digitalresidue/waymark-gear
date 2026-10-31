@@ -25,6 +25,8 @@ import path from 'node:path';
 
 import config from 'config';
 
+import { exploreIndex } from '../client/utils/explore.js';
+
 // 40,000 links a file (the limit is 50,000); a setting so tests can check the split.
 const perFile = () => Number(setting('perFile', 40000)) || 40000;
 const BATCH = 5000;
@@ -36,7 +38,7 @@ const setting = (key, fallback) => (config.has(`sitemap.${key}`) ? config.get(`s
 export const sitemapDir = () => setting('dir', path.join(os.tmpdir(), `waymark-sitemaps-${config.get('port')}`));
 
 // Pages that are always there.
-export const FIXED_PAGES = ['/welcome', '/explore', '/trails/all', '/brands', '/reviews', '/leaderboard', '/supporter', '/developers', '/privacy', '/terms'];
+export const FIXED_PAGES = ['/welcome', '/explore', '/kits', '/trails/all', '/brands', '/reviews', '/leaderboard', '/supporter', '/developers', '/privacy', '/terms'];
 
 const xmlEscape = (v) => String(v).replace(/[<>&'"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c]));
 const urlTag = (loc, lastmod) => `<url><loc>${xmlEscape(loc)}</loc>${lastmod ? `<lastmod>${new Date(lastmod).toISOString()}</lastmod>` : ''}</url>\n`;
@@ -102,9 +104,14 @@ export async function buildSitemap(knex, { log = () => {} } = {}) {
         const trails = await knex('trails').where({ status: 'published' }).select('slug', 'updated_at').orderBy('slug')
             .catch(() => knex('trails').where({ status: 'published' }).select('slug').orderBy('slug'))
             .catch(() => []);
+        // Explore gear: each parent and category with published gear.
+        const categoryRows = await knex('catalog_items').where({ status: 'published' }).whereNot({ category: '' })
+            .groupBy('category').select('category as name').count({ count: '*' }).catch(() => []);
+        const sections = exploreIndex(categoryRows.map((r) => ({ name: r.name, count: Number(r.count) }))).filter((x) => x.count > 0);
         const pages = [
             ...FIXED_PAGES.map((p) => urlTag(`${base}${p}`)),
             ...trails.map((t) => urlTag(`${base}/trails/${t.slug}`, t.updated_at)),
+            ...sections.map((x) => urlTag(`${base}/explore/${x.slug}`)),
         ];
         fs.writeFileSync(path.join(fresh, 'pages.xml'), HEAD + pages.join('') + TAIL);
         urls += pages.length;

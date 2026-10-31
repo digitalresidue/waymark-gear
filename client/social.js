@@ -4,6 +4,7 @@
 import { initScrollRows } from './utils/scroll-row.js';
 import { bindLightboxLinks } from './utils/lightbox.js';
 import { canSee } from './nav.js';
+import { initExploreGear } from './explore-gear.js';
 
 async function call(url, options = {}) {
     const res = await fetch(url, {
@@ -573,6 +574,7 @@ export function initSocial() {
     initFollow();
     initReviews();
     initBrands();
+    initExploreGear();
     initBuyMenus();
     initScrollRows();
     bindLightboxLinks();

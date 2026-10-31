@@ -24,7 +24,10 @@ import { cachedPage, storePage, sendCachedPage, NONCE_PLACEHOLDER } from './page
 import { optionalUser } from './auth.js';
 import { viewTrip, tripsOnProfile } from './trips.js';
 import { reviewsFor, latestReviews } from './reviews.js';
-import { getById as catalogItem, isUuid, search as catalogSearch } from './catalog.js';
+import { getById as catalogItem, isUuid, search as catalogSearch, categories as catalogCategories, toApi as catalogToApi } from './catalog.js';
+import {
+    exploreIndex, resolveSection, filterItem, facetsFor, readFilters, matchesFilters, sortItems, rangeLabel, formatWeightG, activeFilterCount,
+} from '../client/utils/explore.js';
 import { priceHistory } from './prices.js';
 import * as trails from './trails.js';
 import { badgesFor, buyOptions } from './shops.js';
@@ -60,7 +63,7 @@ const vueRoutes = [ /* TODO - get this from same data source as Vue */
     { path: '/staff/tickets' },
     { path: '/gear' },
     { path: '/welcome' },
-    { path: '/explore' },
+    { path: '/kits' },
     { path: '/owner/catalog' },
     { path: '/owner/kits' },
     { path: '/register' },
@@ -437,6 +440,7 @@ const tripTemplate = fs.readFileSync(path.join(import.meta.dirname, '../template
 const gearTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/gear-item.mustache'), 'utf8');
 const compareTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/compare.mustache'), 'utf8');
 const trailsTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/trails.mustache'), 'utf8');
+const exploreGearTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/explore-gear.mustache'), 'utf8');
 const brandsTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/brands.mustache'), 'utf8');
 const VISIBILITY_LABELS = { followers: 'Followers only', private: 'Only you' };
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -739,6 +743,133 @@ function trailBodyModel(data, comparison) {
 // The Brands directory. Every published brand is in the page (there are
 // dozens, not thousands), with the ones the filters rule out hidden, so the
 // browser can filter in place and the URL still works without JavaScript.
+// ---- Explore gear: the catalog by category, then one category with filters ----
+
+// Links to the old Explore kits page (/explore?class=ul, ?q=...) go to /kits.
+const KIT_PARAMS = ['class', 'q', 'trip', 'sort', 'featured', 'shakedown', 'following', 'trail', 'year', 'page'];
+
+router.get('/explore', async (req, res) => {
+    if (KIT_PARAMS.some((k) => k in req.query)) {
+        const qs = new URLSearchParams(req.query).toString();
+        return res.redirect(301, `/kits${qs ? `?${qs}` : ''}`);
+    }
+    try {
+        const index = exploreIndex(await catalogCategories());
+        const label = (n) => `${n} ${n === 1 ? 'item' : 'items'}`;
+        const shape = (s) => ({ ...s, countLabel: s.count ? label(s.count) : 'Coming soon', children: s.children.map((c) => ({ ...c, parentSlug: s.slug })) });
+        const model = {
+            ...shareHead(),
+            cspNonce: NONCE_PLACEHOLDER,
+            path: '/explore',
+            canonicalPath: '/explore',
+            pageTitle: 'Explore gear',
+            metaDescription: 'Backpacking gear by category: packs, shelters, sleep systems, clothing and more, with weights, prices and specs to filter by.',
+            index: {
+                parents: index.filter((s) => s.children !== undefined && ['pack', 'shelter', 'sleep-system', 'clothing'].includes(s.slug)).map(shape),
+                others: index.filter((s) => !['pack', 'shelter', 'sleep-system', 'clothing'].includes(s.slug)).map(shape),
+            },
+        };
+        sendFresh(res, renderPage(exploreGearTemplate, model, {}, req.path));
+    } catch (err) {
+        logWithRequest(req, { message: 'error rendering explore', err });
+        res.status(500).send('An error occurred.');
+    }
+});
+
+const SORTS = [['weight', 'Lightest first'], ['price', 'Price, low to high'], ['name', 'Name']];
+// Enough for any one category; filtering happens on the page.
+const MAX_SECTION_ITEMS = 3000;
+
+router.get('/explore/:slug', async (req, res) => {
+    const slug = String(req.params.slug).toLowerCase();
+    if (!/^[a-z0-9-]{1,80}$/.test(slug)) return res.status(404).send('Not found.');
+    try {
+        const categories = await catalogCategories();
+        const section = resolveSection(slug, categories);
+        if (!section) return res.redirect(302, '/explore');
+        const rows = section.categories.length
+            ? await knex('catalog_items').where({ status: 'published' }).whereIn('category', section.categories).limit(MAX_SECTION_ITEMS)
+            : [];
+        const entries = rows.map(catalogToApi);
+        const items = entries.map(filterItem);
+        const facets = facetsFor(items);
+        const filters = readFilters(req.query);
+        const shown = items.filter((i) => matchesFilters(i, filters));
+        const byId = new Map(entries.map((e) => [e.id, e]));
+
+        const rangeOf = (key, label, facet, chosen, stops) => ({
+            key,
+            label,
+            min: facet.min,
+            max: facet.max,
+            step: stops ? (stops.every((n) => n % 50 === 0) ? 50 : 1) : facet.step,
+            stops: stops ? stops.join(',') : '',
+            lo: chosen.min ?? facet.min,
+            hi: chosen.max ?? facet.max,
+            text: rangeLabel(key, chosen.min, chosen.max, facet),
+        });
+        const ranges = [];
+        if (facets.weight) ranges.push(rangeOf('weight', 'Weight', facets.weight, filters.weight));
+        if (facets.price) ranges.push(rangeOf('price', 'Price', facets.price, filters.price));
+        for (const f of facets.specs.filter((x) => x.kind === 'range')) {
+            ranges.push(rangeOf(f.key, f.label, f, filters.specs[f.key] || {}, f.stops));
+        }
+        const on = (list, value) => list.includes(value);
+        const total = items.length;
+        const active = activeFilterCount(filters);
+        const model = {
+            ...shareHead(),
+            cspNonce: NONCE_PLACEHOLDER,
+            path: req.path,
+            canonicalPath: `/explore/${slug}`,
+            pageTitle: `${section.title}: compare by weight, price and specs`,
+            metaDescription: `${total} ${section.title.toLowerCase()} ${total === 1 ? 'item' : 'items'} on Waymark Gear. Filter by weight, price, brand and specs.`,
+            section: {
+                slug,
+                title: section.title,
+                note: section.note,
+                parent: section.parent,
+                activeLabel: active ? `(${active})` : '',
+                sort: filters.sort,
+                sorts: SORTS.map(([value, label]) => ({ value, label, on: value === filters.sort })),
+                facets: {
+                    cats: facets.cats.length > 1 ? facets.cats.map((c) => ({ ...c, on: on(filters.cats, c.value) })) : [],
+                    brands: facets.brands.length > 1 ? facets.brands.map((b) => ({ ...b, on: on(filters.brands, b.value) })) : [],
+                },
+                ranges,
+                matches: facets.specs.filter((x) => x.kind === 'match').map((f) => ({
+                    ...f,
+                    options: f.options.map((o) => ({ ...o, key: f.key, on: Boolean(filters.specs[f.key] && filters.specs[f.key].any.includes(o.value)) })),
+                })),
+                total,
+                anyShown: shown.length > 0,
+                countLabel: shown.length === total ? `${total} ${total === 1 ? 'item' : 'items'}` : `${shown.length} of ${total} items`,
+                items: sortItems(items, filters.sort).map((i) => {
+                    const e = byId.get(i.id);
+                    return {
+                        ...i,
+                        brand: e.brand,
+                        brandKey: i.brand.toLowerCase(),
+                        sortName: `${e.brand} ${e.name}`.trim(),
+                        initial: e.name.trim().charAt(0).toUpperCase(),
+                        thumbUrl: thumbnailUrl(e.imageUrl || ''),
+                        weightText: formatWeightG(i.weight),
+                        priceValue: i.price === null ? '' : String(i.price),
+                        priceText: i.price ? `$${Number(i.price).toFixed(0)}` : '',
+                        specsJson: JSON.stringify(i.specs),
+                        keySpecs: specRows(e.category, e.specs).slice(0, 3),
+                        shown: matchesFilters(i, filters),
+                    };
+                }),
+            },
+        };
+        sendFresh(res, renderPage(exploreGearTemplate, model, {}, req.path));
+    } catch (err) {
+        logWithRequest(req, { message: 'error rendering explore section', err });
+        res.status(500).send('An error occurred.');
+    }
+});
+
 router.get('/brands', async (req, res) => {
     try {
         const type = GEAR_TYPE_IDS.has(String(req.query.type)) ? String(req.query.type) : '';

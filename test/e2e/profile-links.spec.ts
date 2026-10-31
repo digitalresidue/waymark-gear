@@ -30,7 +30,7 @@ test('a kit card links its author to their profile, and the card to the list', a
     await publishFirstList(page, name, 'Tarp');
 
     const visitor = await (await browser.newContext()).newPage();
-    await visitor.goto(url('/explore'));
+    await visitor.goto(url('/kits'));
     await visitor.getByTestId('explore-search').fill(name);
     const card = visitor.getByTestId('kit-card').filter({ hasText: name });
     await expect(card).toBeVisible();

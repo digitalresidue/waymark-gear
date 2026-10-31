@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html class="lp" lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>{{pageTitle}} — Waymark Gear</title>
+        <meta name="description" content="{{metaDescription}}">
+        <link rel="canonical" href="{{deployUrl}}{{canonicalPath}}">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="Waymark Gear">
+        <meta property="og:title" content="{{pageTitle}}">
+        <meta property="og:description" content="{{metaDescription}}">
+        <meta property="og:url" content="{{deployUrl}}{{canonicalPath}}">
+        {{{styles}}}
+        <link rel="icon" href="/favicon.png" />
+        <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script nonce="{{{cspNonce}}}">
+            (function () {
+                try {
+                    var t = localStorage.getItem('lpTheme');
+                    if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+                } catch (e) { /* storage blocked; the media query decides */ }
+            }());
+        </script>
+    </head>
+    <body class="wgProfilePage wgExploreGearPage">
+        {{> siteHeader}}
+
+        <main class="wgPage wgExploreGear">
+            {{#index}}
+            <p class="wgTrailKicker">Explore</p>
+            <h1 class="wgH2">Explore gear</h1>
+            <p class="wgLede">Every piece of gear in the catalog, by category. Open one to filter by weight, price and specs. Looking for packed lists instead? <a href="/kits">Explore kits</a>.</p>
+
+            <ul class="wgExploreParents" data-testid="explore-parents">
+                {{#parents}}
+                <li class="wgCard wgExploreParent" data-testid="explore-section" data-slug="{{slug}}">
+                    <a class="wgExploreParentLink" href="/explore/{{slug}}">
+                        <h2>{{name}}</h2>
+                        <span class="wgMuted">{{note}}</span>
+                        <span class="wgExploreCount">{{countLabel}}</span>
+                    </a>
+                    {{#children.length}}
+                    <ul class="wgExploreChildren">
+                        {{#children}}<li><a href="/explore/{{parentSlug}}?cat={{slug}}" data-testid="explore-child">{{name}} <span class="wgMuted">{{count}}</span></a></li>{{/children}}
+                    </ul>
+                    {{/children.length}}
+                </li>
+                {{/parents}}
+            </ul>
+
+            {{#others.length}}
+            <h2 class="wgProfileSection">Everything else</h2>
+            <ul class="wgExploreOthers" data-testid="explore-others">
+                {{#others}}
+                <li><a class="wgCard" href="/explore/{{slug}}" data-testid="explore-section" data-slug="{{slug}}"><span>{{name}}</span> <span class="wgMuted">{{count}}</span></a></li>
+                {{/others}}
+            </ul>
+            {{/others.length}}
+            {{/index}}
+
+            {{#section}}
+            <nav class="wgCrumbs" aria-label="Breadcrumb">
+                <a href="/explore">Explore gear</a>{{#parent}} › <a href="/explore/{{slug}}">{{name}}</a>{{/parent}} › <span aria-current="page">{{title}}</span>
+            </nav>
+            <h1 class="wgH2" data-testid="explore-title">{{title}}</h1>
+            {{#note}}<p class="wgLede">{{note}}</p>{{/note}}
+
+            <div class="wgExploreLayout">
+                <details class="wgFiltersBox" open data-testid="explore-filters-box">
+                    <summary class="wgFiltersToggle">Filters <span data-filter-count>{{activeLabel}}</span></summary>
+                    <form id="wgGearFilters" class="wgFilters" method="get" action="/explore/{{slug}}" data-slug="{{slug}}" data-testid="explore-filters">
+                        {{#facets.cats.length}}
+                        <fieldset class="wgFilter">
+                            <legend>Category</legend>
+                            {{#facets.cats}}<label class="wgFilterCheck"><input type="checkbox" name="cat" value="{{value}}" {{#on}}checked{{/on}}> {{label}} <span class="wgMuted">{{count}}</span></label>{{/facets.cats}}
+                        </fieldset>
+                        {{/facets.cats.length}}
+
+                        {{#ranges}}
+                        <div class="wgFilter wgRange" data-range="{{key}}" data-min="{{min}}" data-max="{{max}}" data-step="{{step}}" {{#stops}}data-stops="{{stops}}"{{/stops}} data-testid="range-{{key}}">
+                            <div class="wgRangeHead"><span class="wgFilterLabel">{{label}}</span><output data-out>{{text}}</output></div>
+                            <div class="wgRangeTrack">
+                                <input type="range" class="wgRangeLo" name="{{key}}_min" min="{{min}}" max="{{max}}" step="{{step}}" value="{{lo}}" aria-label="{{label}}, at least" data-testid="range-{{key}}-min">
+                                <input type="range" class="wgRangeHi" name="{{key}}_max" min="{{min}}" max="{{max}}" step="{{step}}" value="{{hi}}" aria-label="{{label}}, at most" data-testid="range-{{key}}-max">
+                            </div>
+                        </div>
+                        {{/ranges}}
+
+                        {{#facets.brands.length}}
+                        <fieldset class="wgFilter">
+                            <legend>Brand</legend>
+                            {{#facets.brands}}<label class="wgFilterCheck"><input type="checkbox" name="brand" value="{{value}}" {{#on}}checked{{/on}}> {{label}} <span class="wgMuted">{{count}}</span></label>{{/facets.brands}}
+                        </fieldset>
+                        {{/facets.brands.length}}
+
+                        {{#matches}}
+                        <fieldset class="wgFilter" data-testid="filter-{{key}}">
+                            <legend>{{label}}</legend>
+                            {{#options}}<label class="wgFilterCheck"><input type="checkbox" name="{{key}}" value="{{value}}" {{#on}}checked{{/on}}> {{label}} <span class="wgMuted">{{count}}</span></label>{{/options}}
+                        </fieldset>
+                        {{/matches}}
+
+                        <input type="hidden" name="sort" value="{{sort}}">
+                        <div class="wgFilterActions">
+                            <noscript><button type="submit" class="wgBtn wgBtnPrimary wgBtnSmall">Apply</button></noscript>
+                            <a class="wgBtn wgBtnGhost wgBtnSmall" href="/explore/{{slug}}" data-clear-filters data-testid="explore-clear">Clear filters</a>
+                        </div>
+                    </form>
+                </details>
+
+                <section class="wgExploreResults">
+                    <div class="wgExploreBar">
+                        <p class="wgExploreCount" aria-live="polite" data-testid="explore-count">{{countLabel}}</p>
+                        <label class="wgExploreSort">Sort
+                            <select class="wgSelect" data-sort data-testid="explore-sort">
+                                {{#sorts}}<option value="{{value}}" {{#on}}selected{{/on}}>{{label}}</option>{{/sorts}}
+                            </select>
+                        </label>
+                    </div>
+                    <ul class="wgGearGrid" id="wgGearResults" data-testid="explore-results">
+                        {{#items}}
+                        <li class="wgCard wgGearCard" data-testid="explore-item" data-id="{{id}}" data-cat="{{cat}}" data-brand="{{brandKey}}" data-weight="{{weight}}" data-price="{{priceValue}}" data-name="{{sortName}}" data-specs="{{specsJson}}" {{^shown}}hidden{{/shown}}>
+                            <a href="/g/{{id}}" class="wgGearCardLink">
+                                <span class="wgGearCardImg">{{#thumbUrl}}<img src="{{thumbUrl}}" alt="" loading="lazy" width="96" height="96">{{/thumbUrl}}{{^thumbUrl}}<span aria-hidden="true">{{initial}}</span>{{/thumbUrl}}</span>
+                                <span class="wgGearCardBody">
+                                    <span class="wgMuted wgGearCardBrand">{{brand}}{{#catName}} · {{catName}}{{/catName}}</span>
+                                    <strong class="wgGearCardName">{{name}}</strong>
+                                    <span class="wgGearCardFacts"><span class="wgMono">{{weightText}}</span>{{#priceText}} · {{priceText}}{{/priceText}}</span>
+                                    {{#keySpecs.length}}<span class="wgGearCardSpecs">{{#keySpecs}}<span>{{text}}</span>{{/keySpecs}}</span>{{/keySpecs.length}}
+                                </span>
+                            </a>
+                        </li>
+                        {{/items}}
+                    </ul>
+                    <p class="wgProfileEmpty" data-testid="explore-empty" {{#anyShown}}hidden{{/anyShown}}>{{#total}}Nothing matches all of that. Try fewer filters.{{/total}}{{^total}}No gear in this category yet.{{/total}}</p>
+                </section>
+            </div>
+            {{/section}}
+        </main>
+        {{{scripts}}}
+        {{> siteFooter}}
+    </body>
+</html>

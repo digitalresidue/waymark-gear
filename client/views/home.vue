@@ -134,7 +134,7 @@
                         </p>
                     </div>
                     <p class="wgSectionMore">
-                        <router-link :to="`/explore?class=${activeClass}`">
+                        <router-link :to="`/kits?class=${activeClass}`">
                             See all {{ activeLabel.toLowerCase() }} kits →
                         </router-link>
                     </p>
@@ -250,7 +250,7 @@
                     </p>
                 </div>
                 <p class="wgSectionMore">
-                    <router-link to="/explore?shakedown=1">
+                    <router-link to="/kits?shakedown=1">
                         All shakedown requests →
                     </router-link>
                     <router-link to="/leaderboard">

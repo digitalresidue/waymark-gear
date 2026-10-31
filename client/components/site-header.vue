@@ -102,7 +102,7 @@ import { isMobile } from '../utils/viewport.js';
 
 // Pages the Vue app draws; anything else (Trails, reviews...) is a full
 // page load from the server.
-const APP_PATHS = /^\/(welcome|explore|leaderboard|trips|owner|moderation|staff|profile|notifications|supporter|signin|register|gear|developers|report)?(\/|$|[?#])/;
+const APP_PATHS = /^\/(welcome|kits|leaderboard|trips|owner|moderation|staff|profile|notifications|supporter|signin|register|gear|developers|report)?(\/|$|[?#])/;
 
 export default {
     name: 'SiteHeader',

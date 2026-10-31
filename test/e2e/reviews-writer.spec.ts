@@ -32,7 +32,7 @@ test.describe('Writing a gear review', () => {
         expect((await page.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } })).status()).toBe(200);
 
         // From the Owner menu.
-        await page.goto(url('/explore'));
+        await page.goto(url('/kits'));
         await page.getByTestId('nav-owner').click();
         await page.getByTestId('nav-owner-review').click();
         await expect(page).toHaveURL(/\/reviews#write$/);

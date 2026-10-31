@@ -176,7 +176,7 @@ test.describe('Phase 8: phone menus', () => {
     test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
 
     test('one header row with a menu, in the app and on public pages', async ({ page }) => {
-        await page.goto(url('/explore'));
+        await page.goto(url('/kits'));
         const header = page.locator('.wgSiteHeader');
         const box = await header.boundingBox();
         expect(box!.height).toBeLessThan(70);

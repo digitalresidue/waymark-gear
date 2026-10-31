@@ -19,8 +19,9 @@
                 </div>
             </div>
             <nav class="wgSiteFooterLinks" aria-label="Footer">
-                <router-link to="/explore">
-                    Explore
+                <a href="/explore">Explore gear</a>
+                <router-link to="/kits">
+                    Kits
                 </router-link>
                 <router-link to="/supporter" data-testid="footer-supporter">
                     Support Waymark
