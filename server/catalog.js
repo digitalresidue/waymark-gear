@@ -12,7 +12,7 @@ import knex from './db.js';
 import weightUtils from '../client/utils/weight.js';
 import { parseShops, shopsToApi, publicShops, SHOP_CSV_COLUMNS, MAX_SHOPS } from './shops.js';
 import { absoluteImageUrl, localImagePath } from './remote-image.js';
-import { readSpec, readSpecs, specInput, specTypeFor, filterKind, SPEC_KEYS } from '../client/utils/gear-specs.js';
+import { readSpec, readSpecs, specInput, specTypeFor, filterKind, matchKey, SPEC_FIELDS, SPEC_KEYS } from '../client/utils/gear-specs.js';
 
 export const UNITS = ['g', 'kg', 'oz', 'lb'];
 export const CSV_COLUMNS = [
@@ -205,7 +205,7 @@ export function specFilters(query = {}) {
         const kind = filterKind(key);
         if (kind === 'match' && query[`spec_${key}`] !== undefined) {
             const any = String(query[`spec_${key}`]).split(',').slice(0, 10).map((v) => readSpec(key, v).value).filter((v) => v !== undefined);
-            if (any.length) out.push({ key, any: any.map(String) });
+            if (any.length) out.push({ key, any: any.map((v) => matchKey(key, v)), text: SPEC_FIELDS[key].kind === 'text' });
         }
         if (kind === 'range') {
             const min = query[`spec_${key}_min`] !== undefined ? readSpec(key, query[`spec_${key}_min`]).value : undefined;
@@ -225,7 +225,8 @@ export async function search({ q = '', category = '', status = 'published', limi
     const query = knex('catalog_items');
     for (const f of specs) {
         if (!SPEC_KEYS.includes(f.key)) continue;
-        if (f.any) query.whereRaw('specs->>? = any(?)', [f.key, f.any]);
+        if (f.any && f.text) query.whereRaw('lower(specs->>?) = any(?)', [f.key, f.any]);
+        else if (f.any) query.whereRaw('specs->>? = any(?)', [f.key, f.any]);
         if (f.min !== undefined) query.whereRaw("jsonb_typeof(specs->?) = 'number' and (specs->>?)::numeric >= ?", [f.key, f.key, f.min]);
         if (f.max !== undefined) query.whereRaw("jsonb_typeof(specs->?) = 'number' and (specs->>?)::numeric <= ?", [f.key, f.key, f.max]);
     }

@@ -326,16 +326,18 @@ are shown in both; a bare number means the unit in brackets. Fill power and
 RDS are kept only for down. A spec column left empty clears that spec; a
 sheet without spec columns leaves specs as they are.
 
-**Pack** (category "Pack", "Backpack", "Rucksack", any spelling or plural)
+**Pack** (category "Pack", "Backpack", "Rucksack", "Fastpack", "Fast Pack", "Hydration Vest", "Running Vest", any spelling or plural)
 
 | Column | Field | Value |
 |---|---|---|
-| `volume` | Volume | `40 L` or `2440 cu in` (bare number: L) |
 | `max_carry` | Max carry weight | `14 oz` or `397 g` (bare number: lb) |
-| `frame` | Frame | Framed / Frameless |
+| `volume` | Volume | `40 L` or `2440 cu in` (bare number: L) |
+| `pack_type` | Pack type | Fastpack / Pack / Hydration vest |
 | `strap_type` | Shoulder straps | J-curve / S-curve / Vest / Other |
+| `frame` | Frame | Framed / Frameless |
 | `roll_top` | Roll top | yes / no |
 | `adjustable_torso` | Adjustable torso | yes / no |
+| `fabric` | Fabric | free text, up to 60 characters (filters ignore capitals) |
 
 **Tent** (category "Tent", any spelling or plural)
 

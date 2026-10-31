@@ -8,7 +8,7 @@
 // packs). Everything else follows A–Z.
 
 import { categoryKey, defaultGroupFor } from './gear-meta.js';
-import { specTypeFor, SPEC_FIELDS, SPEC_TYPES, filterKind, formatSpec } from './gear-specs.js';
+import { specTypeFor, SPEC_FIELDS, SPEC_TYPES, filterKind, formatSpec, matchKey } from './gear-specs.js';
 
 export const PARENTS = [
     { slug: 'pack', name: 'Pack', note: 'Backpacks, frameless to framed' },
@@ -162,7 +162,11 @@ export function facetsFor(items, { categories = [] } = {}) {
         const values = items.map((i) => i.specs[key]).filter((v) => v !== undefined && v !== null);
         if (!values.length && !always.has(key)) continue;
         const kind = filterKind(key);
-        if (kind === 'match') {
+        if (kind === 'match' && field.kind === 'text') {
+            // Free words (fabric): the ones the catalog has, however they're capitalised.
+            const opts = count(values.map((v) => [matchKey(key, v), String(v)])).sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+            if (opts.length) specs.push({ key, label: field.label, kind: 'match', options: opts });
+        } else if (kind === 'match') {
             const seen = new Map(
                 (field.kind === 'yesno' ? count(values.map((v) => [String(v), v ? 'Yes' : 'No'])) : count(values.map((v) => [String(v), optionLabel(field, v)])))
                     .map((o) => [o.value, o]),
@@ -209,7 +213,7 @@ export function readFilters(params) {
     const specs = {};
     for (const key of Object.keys(SPEC_FIELDS)) {
         const kind = filterKind(key);
-        if (kind === 'match' && list(key).length) specs[key] = { any: list(key) };
+        if (kind === 'match' && list(key).length) specs[key] = { any: list(key).map((v) => matchKey(key, v)) };
         if (kind === 'range' && (num(`${key}_min`) !== undefined || num(`${key}_max`) !== undefined)) specs[key] = { min: num(`${key}_min`), max: num(`${key}_max`) };
     }
     return {
@@ -250,7 +254,7 @@ export function matchesFilters(item, f) {
     if ((f.price.min !== undefined || f.price.max !== undefined) && !inRange(item.price, f.price)) return false;
     for (const [key, s] of Object.entries(f.specs)) {
         const v = item.specs[key];
-        if (s.any && !s.any.includes(String(v))) return false;
+        if (s.any && !s.any.includes(matchKey(key, v))) return false;
         if ((s.min !== undefined || s.max !== undefined) && !inRange(typeof v === 'number' ? v : null, s)) return false;
     }
     return true;
