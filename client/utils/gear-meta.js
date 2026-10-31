@@ -99,12 +99,17 @@ export const DEFAULT_GROUPS = [
         name: 'Sleep System',
         types: ['Sleeping Pad', 'Sleep Pad', 'Top Quilt', 'Backpacking Quilt', 'Quilt', 'Underquilt', 'Sleeping Bag'],
     },
+    {
+        name: 'Shelter',
+        types: ['Tent', 'Bivy', 'Bivvy', 'Bivy Sack', 'Hammock', 'Tarp'],
+    },
 ];
 const GROUP_BY_TYPE = new Map(DEFAULT_GROUPS.flatMap((g) => g.types.map((t) => [categoryKey(t), g.name])));
 export const CLOTHING_GROUP = 'Clothing';
 export const SLEEP_GROUP = 'Sleep System';
+export const SHELTER_GROUP = 'Shelter';
 
-/** The group a catalog type goes in by default ('Clothing', 'Sleep System'), or ''. */
+/** The group a catalog type goes in by default ('Clothing', 'Sleep System', 'Shelter'), or ''. */
 export function defaultGroupFor(type) {
     const k = categoryKey(type);
     if (!k) return '';

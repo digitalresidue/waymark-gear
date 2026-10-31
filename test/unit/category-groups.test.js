@@ -2,7 +2,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { Library } from '../../client/dataTypes.js';
-import { defaultGroupFor, CLOTHING_GROUP, SLEEP_GROUP } from '../../client/utils/gear-meta.js';
+import { defaultGroupFor, CLOTHING_GROUP, SLEEP_GROUP, SHELTER_GROUP } from '../../client/utils/gear-meta.js';
 
 // A list: Shelter, Base Layer, Sleep, Mid Layer, Shells.
 function setup() {
@@ -80,6 +80,7 @@ describe('defaultGroupFor', () => {
         for (const t of ['Base Layer', 'Mid Layer', 'mid-layers', 'Outer Layer', 'Shells', 'Rain Gear', 'Insulation']) {
             assert.equal(defaultGroupFor(t), CLOTHING_GROUP, t);
         }
+        // A category named like a group itself (Shelter) stays a category.
         for (const t of ['Shelter', 'Sleep', 'Footwear', 'Accessories', 'Cooking', 'Backpack', '']) {
             assert.equal(defaultGroupFor(t), '', t);
         }
@@ -88,6 +89,11 @@ describe('defaultGroupFor', () => {
         for (const t of ['Sleeping Pad', 'Sleeping Pads', 'sleep pad', 'Top Quilt', 'Top Quilts', 'Backpacking Quilt',
             'Backpacking Quilts', 'Underquilt', 'Under Quilt', 'Under-quilts', 'Sleeping Bag', 'Sleeping Bags', 'Quilt']) {
             assert.equal(defaultGroupFor(t), SLEEP_GROUP, t);
+        }
+    });
+    test('tents, bivies, hammocks and tarps go under Shelter', () => {
+        for (const t of ['Tent', 'Tents', 'Bivy', 'Bivies', 'Bivys', 'Bivvy', 'Bivy Sack', 'Hammock', 'Hammocks', 'Tarp', 'Tarps']) {
+            assert.equal(defaultGroupFor(t), SHELTER_GROUP, t);
         }
     });
 });
