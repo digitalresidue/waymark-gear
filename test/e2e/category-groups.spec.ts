@@ -21,7 +21,9 @@ async function seedLayers(browser: Browser, workerIndex: number, tag: string) {
     const csv = ['sku,name,brand,category,description,weight,unit,price,url,worn_default,consumable_default,tags,status',
         `${tag}-b,Merino top ${tag},Trailco,Base Layer,,7,oz,,,false,false,,published`,
         `${tag}-m,Grid fleece ${tag},Trailco,Mid Layer,,9,oz,,,false,false,,published`,
-        `${tag}-t,Trekking poles ${tag},Trailco,Accessories,,10,oz,,,false,false,,published`].join('\n');
+        `${tag}-t,Trekking poles ${tag},Trailco,Accessories,,10,oz,,,false,false,,published`,
+        `${tag}-q,Summit quilt ${tag},Trailco,Top Quilt,,20,oz,,,false,false,,published`,
+        `${tag}-p,Air pad ${tag},Trailco,Sleeping Pad,,13,oz,,,false,false,,published`].join('\n');
     expect((await page.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } })).ok()).toBe(true);
     await page.context().close();
 }
@@ -83,7 +85,7 @@ test('make a group, add to it, fold, rename, drag out, ungroup; it all survives 
     expect(await catNames(page)).toEqual(expect.arrayContaining(['Base Layer', 'Sleep', 'Mid Layer']));
 });
 
-test('catalog layers added by type land in a Clothing group; other types stay on their own', async ({ page, browser }, testInfo) => {
+test('catalog gear added by type lands in its parent group: layers in Clothing, pads and quilts in Sleep System', async ({ page, browser }, testInfo) => {
     const tag = `cg${Date.now().toString(36)}`;
     await seedLayers(browser, testInfo.workerIndex, tag);
     await page.setViewportSize({ width: 1440, height: 1000 });
@@ -93,15 +95,17 @@ test('catalog layers added by type land in a Clothing group; other types stay on
     await page.getByTestId('rail-catalog').click();
     const panel = page.getByTestId('panel-catalog');
     await panel.getByTestId('catalog-panel-search').fill(tag);
-    for (const name of ['Trekking poles', 'Merino top', 'Grid fleece']) {
+    for (const name of ['Trekking poles', 'Merino top', 'Summit quilt', 'Grid fleece', 'Air pad']) {
         await panel.getByTestId('catalog-panel-result').filter({ hasText: `${name} ${tag}` }).getByTestId('catalog-panel-add').click();
     }
-    await expect(page.getByTestId('group-head')).toHaveCount(1);
-    await expect(page.getByTestId('group-name')).toHaveValue('Clothing');
-    await expect(page.getByTestId('group-meta')).toHaveText('2 categories');
-    expect(await catNames(page)).toEqual(['Accessories', 'Base Layer', 'Mid Layer']);
-    const accessories = page.getByTestId('category').first();
-    await expect(accessories).not.toHaveClass(/wgInGroup/);
+    const heads = page.getByTestId('group-head');
+    await expect(heads).toHaveCount(2);
+    await expect(heads.nth(0).getByTestId('group-name')).toHaveValue('Clothing');
+    await expect(heads.nth(0).getByTestId('group-meta')).toHaveText('2 categories');
+    await expect(heads.nth(1).getByTestId('group-name')).toHaveValue('Sleep System');
+    await expect(heads.nth(1).getByTestId('group-meta')).toHaveText('2 categories');
+    expect(await catNames(page)).toEqual(['Accessories', 'Base Layer', 'Mid Layer', 'Top Quilt', 'Sleeping Pad']);
+    await expect(page.getByTestId('category').first()).not.toHaveClass(/wgInGroup/);
 });
 
 test('a shared list shows the group: its heading, its categories indented, one row in the totals', async ({ page, browser }) => {

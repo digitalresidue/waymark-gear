@@ -82,15 +82,33 @@ export function categoryKey(name) {
     return k.replace(/ies$/, 'y').replace(/(?<!s)s$/, '');
 }
 
-// Catalog types that belong in a Clothing group in a list: the layers and
-// shells you wear or carry to wear. Anything else stays a category of its own.
-const CLOTHING_LAYERS = new Set(['Base Layer', 'Mid Layer', 'Outer Layer', 'Insulation', 'Insulating Layer', 'Shell',
-    'Rain Gear', 'Rainwear', 'Rain Jacket', 'Rain Shell', 'Wind Shell', 'Wind Layer', 'Outerwear'].map(categoryKey));
+// Parent groups that catalog types go in by default when they're added to
+// a list: a new Mid Layer category lands under Clothing, a new Top Quilt
+// under Sleep System. Names match like categories do (categoryKey), so
+// "Under Quilt", "Underquilts" and "Underquilt" are one. Types not listed
+// stay categories of their own.
+export const DEFAULT_GROUPS = [
+    {
+        name: 'Clothing',
+        types: ['Base Layer', 'Mid Layer', 'Outer Layer', 'Insulation', 'Insulating Layer', 'Shell',
+            'Rain Gear', 'Rainwear', 'Rain Jacket', 'Rain Shell', 'Wind Shell', 'Wind Layer', 'Outerwear'],
+        // Any "... Layer" too.
+        also: (k) => /layer$/.test(k),
+    },
+    {
+        name: 'Sleep System',
+        types: ['Sleeping Pad', 'Sleep Pad', 'Top Quilt', 'Backpacking Quilt', 'Quilt', 'Underquilt', 'Sleeping Bag'],
+    },
+];
+const GROUP_BY_TYPE = new Map(DEFAULT_GROUPS.flatMap((g) => g.types.map((t) => [categoryKey(t), g.name])));
 export const CLOTHING_GROUP = 'Clothing';
+export const SLEEP_GROUP = 'Sleep System';
 
-/** The group a catalog type goes in by default ('Clothing'), or ''. */
+/** The group a catalog type goes in by default ('Clothing', 'Sleep System'), or ''. */
 export function defaultGroupFor(type) {
     const k = categoryKey(type);
-    return CLOTHING_LAYERS.has(k) || /layer$/.test(k) ? CLOTHING_GROUP : '';
+    if (!k) return '';
+    if (GROUP_BY_TYPE.has(k)) return GROUP_BY_TYPE.get(k);
+    const loose = DEFAULT_GROUPS.find((g) => g.also && g.also(k));
+    return loose ? loose.name : '';
 }
-
