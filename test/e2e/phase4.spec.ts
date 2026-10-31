@@ -81,7 +81,7 @@ test.describe('Phase 4', () => {
         const other = await (await voter.page.request.get(url(`/api/explore/kits?trip=dayhike&q=${encodeURIComponent(name)}`))).json();
         expect(other.total).toBe(0);
 
-        await voter.page.goto(url('/explore'));
+        await voter.page.goto(url('/kits'));
         await voter.page.getByTestId('trip-filter-thru').click();
         await voter.page.getByTestId('explore-search').fill(name);
         await expect(voter.page.getByTestId('kit-card').filter({ hasText: name })).toContainText('Thru-hike');

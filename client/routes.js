@@ -36,7 +36,7 @@ export default [
     { path: '/report', component: report },
     { path: '/staff/tickets', component: staffTickets },
     { path: '/welcome', component: home },
-    { path: '/explore', component: explore },
+    { path: '/kits', component: explore },
     { path: '/owner/catalog', component: ownerCatalog },
     { path: '/owner/kits', component: ownerKits },
     { path: '/signin', component: signin },

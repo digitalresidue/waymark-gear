@@ -16,7 +16,8 @@ export const MENU = [
         id: 'explore',
         label: 'Explore',
         items: [
-            { id: 'kits', label: 'Kits', href: '/explore', note: 'Packs people have published' },
+            { id: 'gear', label: 'Gear', href: '/explore', note: 'Browse and filter the gear catalog' },
+            { id: 'kits', label: 'Kits', href: '/kits', note: 'Packs people have published' },
             { id: 'trails', label: 'Trails', href: '/trails', note: 'What people carry, trail by trail' },
             { id: 'leaderboard', label: 'Leaderboards', href: '/leaderboard', note: 'Top-voted and lightest kits' },
             { id: 'reviews', label: 'Gear reviews', href: '/reviews', note: 'How gear held up out there' },

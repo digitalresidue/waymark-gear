@@ -7,6 +7,12 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 30 — Explore gear: the catalog by category, with filters · 2026-10-31 · branch `explore-gear`
+- **`/explore` is now Explore gear**: every catalog category, under **Pack, Shelter, Sleep System and Clothing** first (always, in that order; Shelter holds tents, tarps, bivies and hammocks, and so on), then everything else A–Z. Spellings and plurals of a category are one ("Tent" and "Tents").
+- **`/explore/<category>`** (`/explore/shelter`, `/explore/cooking`) lists its gear with a **filter column**: category, brand and choice specs as checkboxes with counts; weight, price and measured specs (ratings, fill power, R-value, sizes…) as two-thumb **sliders** that show both units. Filters apply instantly, re-sort (lightest, cheapest, name), and live in the URL, so a link like *over 750 fill and under 5 lb* reproduces on the server, before any script. On phones the filters fold above the results.
+- **Kits moved to `/kits`**; old `/explore?class=…`, `?q=…` links redirect there. The Explore menu has **Gear** and **Kits**; the footer, sidebar, homepage and gear pages link accordingly. Explore pages are in the sitemap.
+- Shared logic in `client/utils/explore.js` (index, sections, facets, filter matching), used by the server render and the page script (`client/explore-gear.js`).
+
 ### Phase 8, part 29 — Gear specs for packs, tents, quilts, pads, sleeping bags and insulated layers · 2026-10-31 · branch `gear-specs`
 - Catalog gear carries **specs by type**, from its category: **Pack** (volume, max carry, frame, shoulder straps, roll top, adjustable torso), **Tent** (size 1P–3P, pitch, trail and minimum weight, double wall, vestibules, floor width and length, peak height, packed size), **Quilt** (comfort and limit ratings, down or synthetic, fill power, RDS, footbox, draft collar, shape), **Sleeping pad** (R-value, type, thickness, width, length, packed size), **Sleeping bag** (ratings, insulation, fill power, RDS, fit for, width, shape) and **Outer layer** (insulation, fill power, fill weight, RDS, fit for, hooded, zipper, baffles). Definitions in `client/utils/gear-specs.js`.
 - Typed in either unit ("20F" or "-7C", "14 oz" or "397 g", "72 in" or "183 cm"), stored in one (°C, g, cm, L) so they compare, shown in both ("20°F (−7°C)"). Fill power and RDS are kept only for down.

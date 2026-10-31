@@ -123,7 +123,7 @@ test.describe('Account menu everywhere', () => {
         const u = generateTestUser('acctmenu');
         await registerUser(page, u.username, u.password, u.email);
         await expect(page.getByTestId('item-row').first()).toBeVisible();
-        await page.goto(url('/explore'));
+        await page.goto(url('/kits'));
         const header = page.locator('.wgSiteHeader');
         await expect(header.locator('.lpAvatar')).toHaveText(new RegExp(`^${u.username.charAt(0)}$`, 'i'));
         await expect(header.getByText('Open my lists')).toHaveCount(0);

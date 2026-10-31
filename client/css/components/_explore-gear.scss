@@ -1,0 +1,378 @@
+@import "../globals";
+
+// Explore gear (templates/explore-gear.mustache): the category index, then a
+// category with its filters in a left column (a folding panel on phones).
+
+.wgExploreGear {
+    padding-bottom: 56px;
+    padding-top: 28px;
+}
+
+// ---- the index -------------------------------------------------------------
+
+.wgExploreParents {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    list-style: none;
+    margin: 20px 0 32px;
+    padding: 0;
+
+    @media (width <= 1100px) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @media (width <= 560px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.wgExploreParent {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 0;
+    padding: 18px;
+}
+
+.wgExploreParentLink {
+    color: var(--lp-text);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-decoration: none;
+
+    h2 {
+        font-family: $font-display;
+        font-size: 22px;
+        margin: 0;
+    }
+
+    .wgMuted {
+        font-size: 14px;
+    }
+
+    &:hover h2 {
+        text-decoration: underline;
+    }
+}
+
+.wgExploreCount {
+    color: var(--lp-accent-green-deep);
+    font: 600 13px $font-mono;
+    margin: 0;
+}
+
+.wgExploreChildren {
+    border-top: 1px solid var(--lp-border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    list-style: none;
+    margin: 0;
+    padding: 12px 0 0;
+
+    a {
+        background: var(--lp-surface-sunken);
+        border-radius: 999px;
+        color: var(--lp-text);
+        display: inline-block;
+        font-size: 13px;
+        padding: 4px 10px;
+        text-decoration: none;
+
+        &:hover {
+            background: var(--lp-active-bg);
+        }
+    }
+}
+
+.wgExploreOthers {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+
+    a {
+        color: var(--lp-text);
+        display: flex;
+        font-weight: 600;
+        justify-content: space-between;
+        margin: 0;
+        padding: 12px 14px;
+        text-decoration: none;
+
+        &:hover {
+            border-color: var(--lp-primary);
+        }
+    }
+}
+
+// ---- a category ---------------------------------------------------------------
+
+.wgCrumbs {
+    color: var(--lp-text-secondary);
+    font-size: 14px;
+    margin: 0 0 6px;
+}
+
+.wgExploreLayout {
+    align-items: start;
+    display: grid;
+    gap: 28px;
+    grid-template-columns: 280px minmax(0, 1fr);
+    margin-top: 18px;
+
+    @media (width <= 720px) {
+        gap: 14px;
+        grid-template-columns: 1fr;
+    }
+}
+
+.wgFiltersBox {
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: 14px;
+    padding: 4px 16px 14px;
+    position: sticky;
+    top: 84px;
+
+    @media (width <= 720px) {
+        position: static;
+    }
+}
+
+.wgFiltersToggle {
+    cursor: pointer;
+    font-weight: 700;
+    padding: 10px 0;
+
+    // A heading on wide screens; a fold on phones.
+    @media (width > 720px) {
+        cursor: default;
+        list-style: none;
+        pointer-events: none;
+
+        &::-webkit-details-marker {
+            display: none;
+        }
+    }
+}
+
+.wgFilters {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.wgFilter {
+    border: 0;
+    margin: 0;
+    padding: 0;
+
+    legend,
+    .wgFilterLabel {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        margin-bottom: 6px;
+        padding: 0;
+        text-transform: uppercase;
+    }
+}
+
+.wgFilterCheck {
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+    font-size: 14px;
+    gap: 8px;
+    padding: 3px 0;
+
+    .wgMuted {
+        font-size: 12px;
+        margin-left: auto;
+    }
+}
+
+.wgRangeHead {
+    align-items: baseline;
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+
+    output {
+        color: var(--lp-accent-green-deep);
+        font-size: 13px;
+        font-weight: 600;
+        text-align: right;
+    }
+}
+
+// Two sliders on one track: only their thumbs take the pointer.
+.wgRangeTrack {
+    height: 28px;
+    margin-top: 4px;
+    position: relative;
+
+    &::before {
+        background: var(--lp-surface-sunken);
+        border-radius: 999px;
+        content: "";
+        height: 6px;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 11px;
+    }
+
+    input[type="range"] {
+        appearance: none;
+        background: transparent;
+        height: 28px;
+        left: 0;
+        margin: 0;
+        pointer-events: none;
+        position: absolute;
+        top: 0;
+        width: 100%;
+
+        &::-webkit-slider-thumb {
+            appearance: none;
+            background: var(--lp-primary);
+            border: 2px solid var(--lp-surface);
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgb(0 0 0 / 25%);
+            cursor: pointer;
+            height: 20px;
+            pointer-events: auto;
+            width: 20px;
+        }
+
+        &::-moz-range-thumb {
+            background: var(--lp-primary);
+            border: 2px solid var(--lp-surface);
+            border-radius: 50%;
+            cursor: pointer;
+            height: 18px;
+            pointer-events: auto;
+            width: 18px;
+        }
+
+        &:focus-visible::-webkit-slider-thumb {
+            outline: 2px solid var(--lp-primary);
+            outline-offset: 2px;
+        }
+    }
+}
+
+.wgFilterActions {
+    display: flex;
+    gap: 8px;
+}
+
+.wgExploreBar {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.wgExploreSort {
+    align-items: center;
+    display: flex;
+    font-size: 14px;
+    gap: 8px;
+}
+
+.wgGearGrid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    > li[hidden] {
+        display: none;
+    }
+}
+
+.wgGearCard {
+    margin: 0;
+    padding: 0;
+
+    &:hover {
+        border-color: var(--lp-primary);
+    }
+}
+
+.wgGearCardLink {
+    color: var(--lp-text);
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    text-decoration: none;
+}
+
+.wgGearCardImg {
+    align-items: center;
+    background: #fff;
+    border: 1px solid var(--lp-border);
+    border-radius: 10px;
+    display: flex;
+    flex: 0 0 72px;
+    height: 72px;
+    justify-content: center;
+    overflow: hidden;
+
+    img {
+        height: 100%;
+        object-fit: contain;
+        width: 100%;
+    }
+
+    span {
+        color: var(--lp-text-secondary);
+        font: 800 24px $font-display;
+    }
+}
+
+.wgGearCardBody {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.wgGearCardBrand {
+    font-size: 12px;
+}
+
+.wgGearCardName {
+    font-size: 15px;
+    line-height: 1.25;
+}
+
+.wgGearCardFacts {
+    font-size: 13px;
+    margin-top: 2px;
+}
+
+.wgGearCardSpecs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+
+    span {
+        background: var(--lp-surface-sunken);
+        border-radius: 999px;
+        color: var(--lp-text-secondary);
+        font-size: 11.5px;
+        padding: 2px 8px;
+    }
+}

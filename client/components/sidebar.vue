@@ -8,7 +8,8 @@
                     <brandLogo />
                 </router-link>
                 <nav class="wgDrawerNav" aria-label="Site">
-                    <router-link to="/explore">
+                    <a href="/explore">Explore gear</a>
+                    <router-link to="/kits">
                         Explore kits
                     </router-link>
                     <router-link v-if="$store.state.loggedIn" to="/profile" data-testid="drawer-profile">
