@@ -39,6 +39,10 @@ const HEADERS = {
     consumable: ['consumable', 'consumables', 'is consumable'],
     // One column saying worn / consumable / base, as some apps export.
     kind: ['type', 'weight type', 'weight class', 'carry type', 'kind'],
+    // The heading a category sits under (Clothing over Base Layer...), as
+    // Waymark exports it. Read after category: a sheet with only "Group"
+    // means its categories.
+    group: ['category group', 'group'],
 };
 const POSITIONAL = ['name', 'category', 'description', 'qty', 'weight', 'unit', 'url', 'price', 'worn', 'consumable'];
 
@@ -165,7 +169,7 @@ function columnsFor(header) {
 }
 
 // The header names a file's columns were read from, for the preview.
-const LABELS = { name: 'Name', brand: 'Brand', category: 'Category', description: 'Notes', qty: 'Qty', weight: 'Weight', unit: 'Unit', url: 'Link', price: 'Price', worn: 'Worn', consumable: 'Consumable', kind: 'Worn/consumable' };
+const LABELS = { name: 'Name', brand: 'Brand', category: 'Category', description: 'Notes', qty: 'Qty', weight: 'Weight', unit: 'Unit', url: 'Link', price: 'Price', worn: 'Worn', consumable: 'Consumable', kind: 'Worn/consumable', group: 'Group' };
 
 /**
  * → { name, description, categories: [{ name, items: [...] }], itemCount, skipped,
@@ -225,6 +229,8 @@ export function parseGearCsv(text, { name = '', unit: fallbackUnit = 'oz' } = {}
             byName.set(categoryName.toLowerCase(), category);
             categories.push(category);
         }
+        const groupName = cell(get('group')).slice(0, 100);
+        if (groupName && !category.group) category.group = groupName;
         category.items.push({
             name: itemName,
             description: cell(get('description')).slice(0, 1000),

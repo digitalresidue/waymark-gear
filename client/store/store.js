@@ -9,6 +9,9 @@ import { writeOfflineCache, readOfflineCache, clearOfflineCache, isNetworkError 
 import { isPlaceholder } from '../utils/closet.js';
 import { categoryKey } from '../utils/gear-meta.js';
 
+// The library's own copy of a list a component passed in.
+const listIn = (state, list) => state.library.getListById(list.id);
+
 const saveInterval = 5000;
 
 const store = createStore({
@@ -121,6 +124,68 @@ const store = createStore({
                 const category = state.library.getCategoryById(id);
                 if (category) category.collapsed = collapsed;
             });
+            for (const g of target.groups || []) g.collapsed = collapsed;
+        },
+        // ---- category groups (List.groups) ----
+        // Put a category in a group: an existing one (groupId), a new one
+        // (newGroupName), or none (both empty). It moves to the group's end.
+        setCategoryGroup(state, { category, groupId = null, newGroupName = '' }) {
+            const library = state.library;
+            const list = library.findListWithCategoryById(category.id);
+            if (!list) return;
+            let target = groupId ? list.getGroupById(groupId) : null;
+            const name = String(newGroupName || '').trim().slice(0, 100);
+            if (!target && name) {
+                target = { id: library.nextSequence(), name };
+                list.groups.push(target);
+            }
+            const ids = list.categoryIds.filter((id) => id !== category.id);
+            if (target) {
+                category.groupId = target.id;
+                const members = ids.filter((id) => (library.getCategoryById(id) || {}).groupId === target.id);
+                const at = members.length ? ids.indexOf(members[members.length - 1]) + 1 : list.categoryIds.indexOf(category.id);
+                ids.splice(at, 0, category.id);
+                target.collapsed = false;
+            } else {
+                delete category.groupId;
+                ids.splice(list.categoryIds.indexOf(category.id), 0, category.id);
+            }
+            list.categoryIds = ids;
+            list.normalizeGroups();
+            list.calculateTotals();
+        },
+        // A category dragged to a new place: the list's categories in their
+        // new order, and the group the moved one now belongs to (or none).
+        arrangeCategories(state, { list, order, movedId, groupId = null }) {
+            const target = listIn(state, list);
+            const ids = order.filter((id) => target.categoryIds.includes(id));
+            if (ids.length !== target.categoryIds.length) return;
+            target.categoryIds = ids;
+            const moved = state.library.getCategoryById(movedId);
+            if (moved) {
+                if (groupId && target.getGroupById(groupId)) moved.groupId = groupId;
+                else delete moved.groupId;
+            }
+            target.normalizeGroups();
+            target.calculateTotals();
+        },
+        renameGroup(state, { list, groupId, name }) {
+            const group = listIn(state, list).getGroupById(groupId);
+            if (group) group.name = String(name || '').slice(0, 100);
+        },
+        toggleGroupCollapsed(state, { list, groupId }) {
+            const group = listIn(state, list).getGroupById(groupId);
+            if (group) group.collapsed = !group.collapsed;
+        },
+        // The group goes; its categories stay where they are, ungrouped.
+        ungroup(state, { list, groupId }) {
+            const target = listIn(state, list);
+            target.categoryIds.forEach((id) => {
+                const c = state.library.getCategoryById(id);
+                if (c && c.groupId === groupId) delete c.groupId;
+            });
+            target.normalizeGroups();
+            target.calculateTotals();
         },
         setListPublished(state, { list, published }) {
             const target = state.library.getListById(list.id);
@@ -261,9 +326,17 @@ const store = createStore({
                     && c.categoryItems.every((ci) => isPlaceholder(library.getItemById(ci.itemId) || {})));
                 if (category) category.name = want;
             }
+            let made = false;
             if (!category) {
                 category = library.newCategory({ list });
                 category.name = want;
+                made = true;
+            }
+            // A new layer category (Base Layer, Mid Layer, Shells...) goes in
+            // the list's Clothing group. Categories the person already has
+            // stay where they put them.
+            if (made || !category.categoryItems.some((ci) => !isPlaceholder(library.getItemById(ci.itemId) || {}))) {
+                list.placeInDefaultGroup(category, want);
             }
             category.collapsed = false;
             library.newItemFromCatalog({ category, entry });
@@ -364,6 +437,23 @@ const store = createStore({
         reorderCategory(state, args) {
             const list = state.library.getListById(args.list.id);
             list.categoryIds = arrayMove(list.categoryIds, args.before, args.after);
+            // Dropped among a group's categories, it joins that group; dragged
+            // out past its group's ends, it leaves. A group's header sits
+            // above its first category, so a drop just before the first is
+            // outside the group.
+            const moved = state.library.getCategoryById(list.categoryIds[args.after]);
+            if (moved) {
+                const groupOf = (i) => {
+                    const c = state.library.getCategoryById(list.categoryIds[i]);
+                    return (c && c.groupId) || null;
+                };
+                const prev = groupOf(args.after - 1);
+                const next = groupOf(args.after + 1);
+                if (prev && prev === next) moved.groupId = prev;
+                else if (moved.groupId && prev === moved.groupId) moved.groupId = prev;
+                else delete moved.groupId;
+                list.normalizeGroups();
+            }
             state.library.getListById(state.library.defaultListId).calculateTotals();
         },
         reorderItem(state, args) {

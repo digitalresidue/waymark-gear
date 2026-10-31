@@ -116,7 +116,24 @@ function categoryRow(userId, category, listId, position) {
         name: str(category.name, 200),
         color: categoryColor(category.color),
         collapsed: bool(category.collapsed),
+        // Checked against the list's groups by listRow's caller; a stray id
+        // is harmless (the client drops it) but is cleared here too.
+        group_id: isId(category.groupId) ? category.groupId : null,
     };
+}
+
+// A list's category groups: [{ id, name, collapsed }], one level deep.
+const MAX_GROUPS = 100;
+function categoryGroups(groups) {
+    if (!Array.isArray(groups)) return [];
+    const seen = new Set();
+    const out = [];
+    for (const g of groups.slice(0, MAX_GROUPS)) {
+        if (!g || !isId(g.id) || seen.has(g.id)) continue;
+        seen.add(g.id);
+        out.push(bool(g.collapsed) ? { id: g.id, name: str(g.name, 100), collapsed: true } : { id: g.id, name: str(g.name, 100) });
+    }
+    return out;
 }
 
 function categoryItemRows(userId, category, knownItemIds) {
@@ -159,6 +176,7 @@ function listRow(userId, list, position) {
         trip_type: TRIP_TYPES.includes(list.tripType) ? list.tripType : '',
         trip: tripSettings(list.trip),
         not_needed: JSON.stringify(notNeeded(list.notNeeded)),
+        category_groups: JSON.stringify(categoryGroups(list.groups)),
         ...trailColumns(list.trail),
     };
 }
@@ -251,6 +269,7 @@ export async function loadLibrary(userId, db = knex) {
             const out = { id: c.id, name: c.name, categoryItems: itemsByCategory.get(c.id) || [] };
             if (c.color) out.color = { r: c.color.r, g: c.color.g, b: c.color.b };
             if (c.collapsed) out.collapsed = true;
+            if (c.group_id) out.groupId = Number(c.group_id);
             outCategories.push(out);
         }
         const out = {
@@ -267,6 +286,7 @@ export async function loadLibrary(userId, db = knex) {
         if (l.trip_type) out.tripType = l.trip_type;
         if (l.trip) out.trip = normalizeTrip(l.trip);
         if (Array.isArray(l.not_needed) && l.not_needed.length) out.notNeeded = l.not_needed;
+        if (Array.isArray(l.category_groups) && l.category_groups.length) out.groups = l.category_groups;
         if (l.trail_text) {
             const t = l.trail_id ? trailIndex().byId.get(l.trail_id) : null;
             out.trail = { name: l.trail_text };

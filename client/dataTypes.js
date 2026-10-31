@@ -2,6 +2,7 @@ import assignIn from 'lodash/assignIn.js';
 
 import colorUtils from './utils/color.js';
 import weightUtils from './utils/weight.js';
+import { categoryKey, defaultGroupFor } from './utils/gear-meta.js';
 
 const defaultOptionalFields = {
     images: false,
@@ -203,6 +204,10 @@ Category.prototype.save = function () {
     if (this.collapsed) {
         out.collapsed = true;
     }
+    // In one of its list's groups (List.groups), e.g. Mid Layer in Clothing.
+    if (this.groupId) {
+        out.groupId = this.groupId;
+    }
     return out;
 };
 
@@ -228,6 +233,11 @@ const List = function ({ id, library }) {
     this.id = id;
     this.name = '';
     this.categoryIds = [];
+    // Groups of categories, one level deep: [{ id, name, collapsed }]. A
+    // category joins one with its groupId; a group's categories always sit
+    // together in categoryIds, and a group with none left goes
+    // (normalizeGroups).
+    this.groups = [];
     this.chart = null;
     this.description = '';
     this.externalId = '';
@@ -264,6 +274,83 @@ List.prototype.removeCategory = function (categoryId) {
     return true;
 };
 
+List.prototype.getGroupById = function (id) {
+    return (this.groups || []).find((g) => g.id === id) || null;
+};
+
+/**
+ * Keep groups tidy: drop group ids that point nowhere and groups with no
+ * categories left, and keep each group's categories together, where its
+ * first one is. Returns true when something changed.
+ */
+List.prototype.normalizeGroups = function () {
+    if (!Array.isArray(this.groups)) this.groups = [];
+    const before = JSON.stringify([this.categoryIds, this.groups]);
+    const categories = this.categoryIds.map((id) => this.library.getCategoryById(id)).filter(Boolean);
+    const known = new Set(this.groups.map((g) => g.id));
+    for (const c of categories) {
+        if (c.groupId && !known.has(c.groupId)) delete c.groupId;
+    }
+    const order = [];
+    const placed = new Set();
+    for (const c of categories) {
+        if (!c.groupId) {
+            order.push(c.id);
+        } else if (!placed.has(c.groupId)) {
+            placed.add(c.groupId);
+            for (const m of categories) if (m.groupId === c.groupId) order.push(m.id);
+        }
+    }
+    // Ids with no category behind them keep their place at the end.
+    for (const id of this.categoryIds) if (!order.includes(id)) order.push(id);
+    this.categoryIds = order;
+    this.groups = this.groups.filter((g) => placed.has(g.id));
+    return before !== JSON.stringify([this.categoryIds, this.groups]);
+};
+
+/**
+ * File a new category of a catalog type under its default group: a layer
+ * (Base Layer, Mid Layer, Shells...) goes in the list's Clothing group,
+ * made if need be (client/utils/gear-meta.js). Other types stay put.
+ */
+List.prototype.placeInDefaultGroup = function (category, type) {
+    const groupName = defaultGroupFor(type);
+    if (!groupName || category.groupId) return;
+    let group = this.groups.find((g) => categoryKey(g.name) === categoryKey(groupName));
+    const ids = this.categoryIds.filter((id) => id !== category.id);
+    if (group) {
+        const members = ids.filter((id) => (this.library.getCategoryById(id) || {}).groupId === group.id);
+        ids.splice(ids.indexOf(members[members.length - 1]) + 1, 0, category.id);
+        this.categoryIds = ids;
+        group.collapsed = false;
+    } else {
+        group = { id: this.library.nextSequence(), name: groupName };
+        this.groups.push(group);
+    }
+    category.groupId = group.id;
+    this.normalizeGroups();
+};
+
+/** The list's categories in order, with each group's header before its first. */
+List.prototype.groupedCategories = function () {
+    const out = [];
+    let current = null;
+    for (const id of this.categoryIds) {
+        const category = this.library.getCategoryById(id);
+        if (!category) continue;
+        const group = category.groupId ? this.getGroupById(category.groupId) : null;
+        if (group && (!current || current.group !== group)) {
+            current = { group, categories: [] };
+            out.push(current);
+        } else if (!group) {
+            current = null;
+        }
+        if (current) current.categories.push(category);
+        else out.push({ group: null, categories: [category] });
+    }
+    return out;
+};
+
 List.prototype.renderChart = function (type, linkParent) {
     const chartData = { points: {} };
     let total = 0;
@@ -293,48 +380,66 @@ List.prototype.renderChart = function (type, linkParent) {
         return `${name}: ${weightUtils.MgToWeight(valueMg, unit)} ${unit}`;
     };
 
-    for (const i in this.categoryIds) {
-        const category = this.library.getCategoryById(this.categoryIds[i]);
-        if (category) {
-            const points = {};
+    const weightOf = (category) => {
+        if (type === 'consumable') return category.subtotalConsumableWeight;
+        if (type === 'worn') return category.subtotalWornWeight;
+        if (type === 'base') return category.subtotalWeight - (category.subtotalConsumableWeight + category.subtotalWornWeight);
+        return category.subtotalWeight;
+    };
 
-            let categoryTotal;
-            if (type === 'consumable') {
-                categoryTotal = category.subtotalConsumableWeight;
-            } else if (type === 'worn') {
-                categoryTotal = category.subtotalWornWeight;
-            } else if (type === 'base') {
-                categoryTotal = (category.subtotalWeight - (category.subtotalConsumableWeight + category.subtotalWornWeight));
-            } else { // total weight
-                categoryTotal = category.subtotalWeight;
-            }
+    // Every category keeps its own colour (the editor's swatches use it).
+    const colorOf = new Map();
+    this.categoryIds.forEach((id, i) => {
+        const category = this.library.getCategoryById(id);
+        if (!category) return;
+        const tempColor = category.color || colorUtils.getColor(i);
+        category.displayColor = colorUtils.rgbToString(tempColor);
+        colorOf.set(category.id, tempColor);
+    });
 
-            const tempColor = category.color || colorUtils.getColor(i);
-            category.displayColor = colorUtils.rgbToString(tempColor);
-            const tempCategory = {};
-
-            for (const j in category.categoryItems) {
-                const item = category.getExtendedItemByIndex(j);
+    // One slice per category, or per group (List.groups): Clothing is one
+    // slice, and opening it shows the gear of all its categories.
+    let slot = 0;
+    for (const block of this.groupedCategories()) {
+        const members = block.categories;
+        const lead = members[0];
+        const tempColor = colorOf.get(lead.id);
+        const blockTotal = members.reduce((sum, c) => sum + weightOf(c), 0);
+        const points = {};
+        const tempCategory = {};
+        let j = 0;
+        for (const category of members) {
+            for (const k in category.categoryItems) {
+                const item = category.getExtendedItemByIndex(k);
                 let value = item.weight * item.qty;
                 if (!value) value = 0;
                 let name = getTooltipText(item.name, value, item.authorUnit);
                 const color = colorUtils.getColor(j, tempColor);
                 if (item.qty > 1) name += ` x ${item.qty}`;
-                const percent = value / categoryTotal;
                 const tempItem = {
-                    value, id: item.id, name, color, percent,
+                    value, id: item.id, name, color, percent: value / blockTotal,
                 };
                 if (linkParent) tempItem.parent = tempCategory;
                 points[j] = tempItem;
+                j++;
             }
-            const percent = categoryTotal / total;
-            const tempCategoryData = {
-                points, color: category.color, displayColor: category.displayColor, id: category.id, name: getTooltipText(category.name, categoryTotal, this.library.totalUnit), total: categoryTotal, percent, visiblePoints: false,
-            };
-            if (linkParent) tempCategoryData.parent = chartData;
-            assignIn(tempCategory, tempCategoryData);
-            chartData.points[i] = tempCategory;
         }
+        const label = block.group ? (block.group.name || 'Group') : lead.name;
+        const tempCategoryData = {
+            points,
+            color: lead.color,
+            displayColor: lead.displayColor,
+            // A group's slice answers to the group (list-summary highlights its row).
+            id: block.group ? `group-${block.group.id}` : lead.id,
+            name: getTooltipText(label, blockTotal, this.library.totalUnit),
+            total: blockTotal,
+            percent: blockTotal / total,
+            visiblePoints: false,
+        };
+        if (linkParent) tempCategoryData.parent = chartData;
+        assignIn(tempCategory, tempCategoryData);
+        chartData.points[slot] = tempCategory;
+        slot++;
     }
     chartData.total = total;
 
@@ -396,6 +501,9 @@ List.prototype.save = function () {
         externalId: this.externalId,
         optionalFields: assignIn({}, this.optionalFields),
     };
+    if (this.groups && this.groups.length) {
+        out.groups = this.groups.map((g) => (g.collapsed ? { id: g.id, name: g.name, collapsed: true } : { id: g.id, name: g.name }));
+    }
     // Only written when set, so libraries that never use them keep the shape
     // older clients wrote.
     if (this.pinned) out.pinned = true;
@@ -419,6 +527,8 @@ List.prototype.load = function (input) {
     assignIn(this, input);
     // A list created by a pre-0.4 client may lack per-list settings.
     this.optionalFields = assignIn({}, defaultOptionalFields, input.optionalFields);
+    this.groups = Array.isArray(input.groups) ? input.groups.map((g) => ({ ...g })) : [];
+    this.normalizeGroups();
     this.calculateTotals();
 };
 
@@ -515,9 +625,21 @@ Library.prototype.importGearList = function (parsed) {
     list.name = parsed.name || 'Imported list';
     list.description = parsed.description || '';
     let reused = 0;
+    const groups = new Map();
     for (const source of parsed.categories || []) {
         const category = this.newCategory({ list });
         category.name = source.name || '';
+        // Category groups from a Waymark export's "group" column.
+        const groupName = String(source.group || '').trim().slice(0, 100);
+        if (groupName) {
+            const key = groupName.toLowerCase();
+            if (!groups.has(key)) {
+                const group = { id: this.nextSequence(), name: groupName };
+                list.groups.push(group);
+                groups.set(key, group);
+            }
+            category.groupId = groups.get(key).id;
+        }
         for (const s of source.items || []) {
             const weight = Math.max(0, Number(s.weightMg) || 0);
             let item = closet.get(key(s.name, weight));
@@ -542,6 +664,7 @@ Library.prototype.importGearList = function (parsed) {
             ci.consumable = Boolean(s.consumable);
         }
     }
+    list.normalizeGroups();
     list.calculateTotals();
     this.defaultListId = list.id;
     return { list, reused };
@@ -610,6 +733,8 @@ Library.prototype.removeCategory = function (id, force) {
 
     this.categories.splice(this.categories.indexOf(category), 1);
     delete this.idMap[id];
+    // The last category of a group takes the group with it.
+    if (list) list.normalizeGroups();
 
     return true;
 };
@@ -647,11 +772,20 @@ Library.prototype.copyList = function (id) {
 
     copiedList.name = `Copy of ${oldList.name}`;
     copiedList.optionalFields = assignIn({}, oldList.optionalFields);
+    // Its groups too, with new ids.
+    const groupIds = new Map();
+    copiedList.groups = (oldList.groups || []).map((g) => {
+        const copy = { id: this.nextSequence(), name: g.name };
+        if (g.collapsed) copy.collapsed = true;
+        groupIds.set(g.id, copy.id);
+        return copy;
+    });
     for (const i in oldList.categoryIds) {
         const oldCategory = this.getCategoryById(oldList.categoryIds[i]);
         const copiedCategory = this.newCategory({ list: copiedList });
 
         copiedCategory.name = oldCategory.name;
+        if (oldCategory.groupId && groupIds.has(oldCategory.groupId)) copiedCategory.groupId = groupIds.get(oldCategory.groupId);
 
         for (const j in oldCategory.categoryItems) {
             copiedCategory.addItem(oldCategory.categoryItems[j]);

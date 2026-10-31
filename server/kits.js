@@ -46,10 +46,16 @@ export function publishedKits(serializedLibrary) {
                 if (item.catalogId && isUuid(item.catalogId)) catalogIds.add(item.catalogId);
                 rows.push({ name: item.name, description: item.description });
             }
-            categories.push({
-                name: category.name || 'Untitled',
-                weightMg: Math.round(category.subtotalWeight - category.subtotalWornWeight - category.subtotalConsumableWeight),
-            });
+            // A category group (Clothing over its layers) is one entry, like
+            // the editor's chart: kit cards and the homepage hero show it whole.
+            const group = category.groupId ? list.getGroupById(category.groupId) : null;
+            const weightMg = Math.round(category.subtotalWeight - category.subtotalWornWeight - category.subtotalConsumableWeight);
+            const last = categories[categories.length - 1];
+            if (group && last && last.groupId === group.id) {
+                last.weightMg += weightMg;
+            } else {
+                categories.push({ name: (group ? group.name : category.name) || 'Untitled', weightMg, ...(group ? { groupId: group.id } : {}) });
+            }
         }
         kits.push({
             externalId: list.externalId,
@@ -60,7 +66,7 @@ export function publishedKits(serializedLibrary) {
             consumableWeightMg: Math.round(list.totalConsumableWeight),
             totalWeightMg: Math.round(list.totalWeight),
             itemCount,
-            categories,
+            categories: categories.map(({ groupId, ...c }) => c), // eslint-disable-line no-unused-vars
             catalogIds: [...catalogIds],
             shakedown: Boolean(list.shakedown),
             tripType: TRIP_TYPES.includes(list.tripType) ? list.tripType : '',

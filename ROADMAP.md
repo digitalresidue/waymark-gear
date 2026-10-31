@@ -7,6 +7,13 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 27 — Category groups: Clothing over its layers · 2026-10-30 · branch `category-groups`
+- A list can gather categories under a **group** heading, one level deep: Clothing over Base Layer, Mid Layer, Outer Layer, Shells. The heading shows the group's combined weight and a count, folds its categories away, renames in place, and **Ungroup** drops the heading but keeps the categories.
+- Each category has a group button (folder icon): put it in a group, start a new one, or take it out. Dragging a category under a group's heading or between its categories joins it; dragging it out leaves. A group's categories always stay together, and a group with none left goes, so the list stays tidy.
+- **Catalog gear groups itself**: added by type, a new Base Layer, Mid Layer, Outer Layer, Shells or rain-gear category goes in the list's **Clothing** group, a new Sleeping Pad, Top Quilt, Backpacking Quilt, Underquilt, Sleeping Bag or Pillow category in its **Sleep System** group, and a new Tent, Bivy, Hammock or Tarp category in its **Shelter** group (made if needed; `DEFAULT_GROUPS` in `client/utils/gear-meta.js`, spellings and plurals matched). The API's "put gear in a list" does the same, and matches category names forgivingly too.
+- **Everywhere**: the weight chart shows a group as one slice (opening it shows all its gear), the totals table and phone summary show the group's row over its categories, shared lists render the heading and indented categories, kit cards, the homepage hero and preview images count a group as one bar, the API says each category's `group`, and CSV export adds a `group` column (LighterPack's ten columns first) that import reads back.
+- Stored as `pack_lists.category_groups` and `pack_list_categories.group_id` (migration `20261104000000_category_groups`); lists without groups save exactly as before.
+
 ### Phase 8, part 26 — Catalog gear joins the category you already have · 2026-10-30 · branch `category-matching`
 - Adding catalog gear "by type" matched the list's categories by exact name, so a list with "Mid-layers" or "Midlayer" got a second "Mid Layer" category. Names now match ignoring case, spaces, hyphens, "&"/"and" and plurals (`categoryKey` in `client/utils/gear-meta.js`).
 

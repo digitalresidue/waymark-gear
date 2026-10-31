@@ -82,3 +82,38 @@ export function categoryKey(name) {
     return k.replace(/ies$/, 'y').replace(/(?<!s)s$/, '');
 }
 
+// Parent groups that catalog types go in by default when they're added to
+// a list: a new Mid Layer category lands under Clothing, a new Top Quilt
+// under Sleep System. Names match like categories do (categoryKey), so
+// "Under Quilt", "Underquilts" and "Underquilt" are one. Types not listed
+// stay categories of their own.
+export const DEFAULT_GROUPS = [
+    {
+        name: 'Clothing',
+        types: ['Base Layer', 'Mid Layer', 'Outer Layer', 'Insulation', 'Insulating Layer', 'Shell',
+            'Rain Gear', 'Rainwear', 'Rain Jacket', 'Rain Shell', 'Wind Shell', 'Wind Layer', 'Outerwear'],
+        // Any "... Layer" too.
+        also: (k) => /layer$/.test(k),
+    },
+    {
+        name: 'Sleep System',
+        types: ['Sleeping Pad', 'Sleep Pad', 'Top Quilt', 'Backpacking Quilt', 'Quilt', 'Underquilt', 'Sleeping Bag', 'Pillow'],
+    },
+    {
+        name: 'Shelter',
+        types: ['Tent', 'Bivy', 'Bivvy', 'Bivy Sack', 'Hammock', 'Tarp'],
+    },
+];
+const GROUP_BY_TYPE = new Map(DEFAULT_GROUPS.flatMap((g) => g.types.map((t) => [categoryKey(t), g.name])));
+export const CLOTHING_GROUP = 'Clothing';
+export const SLEEP_GROUP = 'Sleep System';
+export const SHELTER_GROUP = 'Shelter';
+
+/** The group a catalog type goes in by default ('Clothing', 'Sleep System', 'Shelter'), or ''. */
+export function defaultGroupFor(type) {
+    const k = categoryKey(type);
+    if (!k) return '';
+    if (GROUP_BY_TYPE.has(k)) return GROUP_BY_TYPE.get(k);
+    const loose = DEFAULT_GROUPS.find((g) => g.also && g.also(k));
+    return loose ? loose.name : '';
+}

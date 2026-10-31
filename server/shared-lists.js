@@ -155,6 +155,8 @@ export async function filterPlanChanges(ownerId, listId, changes) {
                 name: mine.name,
                 description: mine.description,
                 categoryIds,
+                // Arranging categories includes their groups (validated on save).
+                groups: Array.isArray(mine.groups) ? mine.groups : list.groups,
                 ...(mine.trip ? { trip: mine.trip } : { trip: undefined }),
                 tripType: mine.tripType,
             }],
