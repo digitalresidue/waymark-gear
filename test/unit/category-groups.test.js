@@ -87,7 +87,7 @@ describe('defaultGroupFor', () => {
     });
     test('pads, quilts, underquilts and bags go under Sleep System', () => {
         for (const t of ['Sleeping Pad', 'Sleeping Pads', 'sleep pad', 'Top Quilt', 'Top Quilts', 'Backpacking Quilt',
-            'Backpacking Quilts', 'Underquilt', 'Under Quilt', 'Under-quilts', 'Sleeping Bag', 'Sleeping Bags', 'Quilt']) {
+            'Backpacking Quilts', 'Underquilt', 'Under Quilt', 'Under-quilts', 'Sleeping Bag', 'Sleeping Bags', 'Quilt', 'Pillow', 'Pillows']) {
             assert.equal(defaultGroupFor(t), SLEEP_GROUP, t);
         }
     });

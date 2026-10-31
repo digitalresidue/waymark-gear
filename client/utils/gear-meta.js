@@ -97,7 +97,7 @@ export const DEFAULT_GROUPS = [
     },
     {
         name: 'Sleep System',
-        types: ['Sleeping Pad', 'Sleep Pad', 'Top Quilt', 'Backpacking Quilt', 'Quilt', 'Underquilt', 'Sleeping Bag'],
+        types: ['Sleeping Pad', 'Sleep Pad', 'Top Quilt', 'Backpacking Quilt', 'Quilt', 'Underquilt', 'Sleeping Bag', 'Pillow'],
     },
     {
         name: 'Shelter',
