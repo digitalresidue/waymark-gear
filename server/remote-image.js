@@ -170,6 +170,42 @@ export async function copyRemoteImage(url, owner) {
 // Already ours (uploaded or copied): leave it be.
 export const isLocalImage = (v) => /^\/userimages\//.test(String(v || ''));
 
+// Our copies as full links, for people and spreadsheets: the owner's editor
+// shows "https://waymarkgear.com/userimages/…", exports carry it, and either
+// form saves back as the same copy (never fetched again).
+const siteBase = () => String(config.get('deployUrl') || '').replace(/\/+$/, '');
+
+/** "/userimages/…" -> "https://<site>/userimages/…"; anything else as given. */
+export function absoluteImageUrl(v) {
+    const s = String(v || '');
+    return isLocalImage(s) ? `${siteBase()}${s}` : s;
+}
+
+/**
+ * One of our copies, from its path or its full link on this site (http or
+ * https, with or without www), as the stored "/userimages/…" path; null for
+ * anything else.
+ */
+export function localImagePath(v) {
+    const s = String(v || '').trim();
+    if (isLocalImage(s)) return s.split(/[?#]/)[0];
+    let url;
+    try {
+        url = new URL(s);
+    } catch {
+        return null;
+    }
+    const site = (() => {
+        try {
+            return new URL(siteBase()).host.replace(/^www\./, '');
+        } catch {
+            return '';
+        }
+    })();
+    if (!site || url.host.replace(/^www\./, '') !== site || !/^https?:$/.test(url.protocol)) return null;
+    return isLocalImage(url.pathname) ? url.pathname : null;
+}
+
 // ---- Catalog gear photos -------------------------------------------------
 
 /**
