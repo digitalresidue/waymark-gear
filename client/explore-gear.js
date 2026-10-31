@@ -15,6 +15,7 @@ export function initExploreGear() {
     const empty = document.querySelector('[data-testid="explore-empty"]');
     const sortSelect = document.querySelector('[data-sort]');
     const filterCount = document.querySelector('[data-filter-count]');
+    if (box) fitFilterColumn(box);
 
     const items = [...list.children].map((el) => ({
         el,
@@ -115,4 +116,24 @@ export function initExploreGear() {
     }
     // Phones: the filters start folded (unless a link set some), the results first.
     if (box && window.matchMedia('(max-width: 720px)').matches && !activeFilterCount(current())) box.open = false;
+}
+
+// The filter column scrolls on its own; keep its bottom on screen whether or
+// not the page has scrolled it up to its sticky spot.
+function fitFilterColumn(box) {
+    let queued = false;
+    const fit = () => {
+        queued = false;
+        const top = Math.max(box.getBoundingClientRect().top, 0);
+        box.style.setProperty('--wg-filters-max', `${Math.max(window.innerHeight - top - 16, 240)}px`);
+    };
+    const queue = () => {
+        if (!queued) {
+            queued = true;
+            requestAnimationFrame(fit);
+        }
+    };
+    fit();
+    window.addEventListener('scroll', queue, { passive: true });
+    window.addEventListener('resize', queue);
 }

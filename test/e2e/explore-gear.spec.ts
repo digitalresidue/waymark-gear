@@ -149,3 +149,27 @@ test('packs offer pack weight, max carry, volume, straps, frame, roll top and ad
     expect(await names(page)).toEqual(['Frameless 40']);
     await page.context().close();
 });
+
+test('a long filter column scrolls on its own, without scrolling the page', async ({ browser }) => {
+    const page = await (await browser.newContext({ viewport: { width: 1280, height: 600 } })).newPage();
+    await page.goto(url('/explore/pack'));
+    const box = page.getByTestId('explore-filters-box');
+    const m = await box.evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight, overflow: getComputedStyle(el).overflowY }));
+    expect(m.overflow).toBe('auto');
+    expect(m.scroll).toBeGreaterThan(m.client);
+    expect(m.client).toBeLessThanOrEqual(600);
+
+    // The wheel over the filters moves the filters, not the page.
+    const b = (await box.boundingBox())!;
+    await page.mouse.move(b.x + b.width / 2, b.y + Math.min(b.height, 400) / 2);
+    await page.mouse.wheel(0, 300);
+    await expect.poll(() => box.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+    // The last filter can be reached.
+    await box.evaluate((el) => { el.scrollTop = el.scrollHeight; });
+    await expect(page.getByTestId('explore-clear')).toBeInViewport();
+
+    // On a phone the filters are part of the page.
+    await page.setViewportSize({ width: 390, height: 800 });
+    expect(await box.evaluate((el) => getComputedStyle(el).overflowY)).toBe('visible');
+    await page.context().close();
+});
