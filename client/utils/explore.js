@@ -110,10 +110,14 @@ const niceStep = (span, steps = 60) => {
 };
 
 /**
- * The filters a set of items offers, with counts: categories, brands,
- * weight and price ranges, and every spec some of them have.
+ * The filters a section offers, with counts: categories, brands, weight and
+ * price ranges, and its gear types' specs. `categories` are the section's
+ * category names: their types' spec filters are always offered (every option
+ * of a choice, a slider over the field's usual span), so a section's filters
+ * don't wait for the catalog to fill in. Without them, only specs some items
+ * have are offered.
  */
-export function facetsFor(items) {
+export function facetsFor(items, { categories = [] } = {}) {
     const count = (list) => {
         const m = new Map();
         for (const [value, label] of list) {
@@ -123,46 +127,60 @@ export function facetsFor(items) {
         }
         return [...m.values()];
     };
+    const span = (min, max) => {
+        const step = niceStep(max - min);
+        return { min: Math.floor(min / step) * step, max: Math.ceil(max / step) * step, step };
+    };
     const range = (values) => {
         const v = values.filter((n) => Number.isFinite(n));
         if (v.length < 2) return null;
         const min = Math.min(...v);
         const max = Math.max(...v);
         if (min === max) return null;
-        const step = niceStep(max - min);
-        return { min: Math.floor(min / step) * step, max: Math.ceil(max / step) * step, step };
+        return span(min, max);
     };
 
     const cats = count(items.map((i) => [i.cat, i.catName])).sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
     const brands = count(items.filter((i) => i.brand).map((i) => [i.brand.toLowerCase(), i.brand])).sort((a, b) => a.label.localeCompare(b.label));
 
-    // Spec fields, in the order their types list them.
+    // Spec fields, in the order their types list them: the section's own
+    // types (always offered), then any other types its items have.
+    const sectionTypes = new Set(categories.map((c) => specTypeFor(c)).filter(Boolean));
     const keys = [];
+    const always = new Set();
     for (const type of SPEC_TYPES) {
-        if (!items.some((i) => specTypeFor(i.catName) === type)) continue;
-        for (const k of type.fields) if (!keys.includes(k)) keys.push(k);
+        const own = sectionTypes.has(type);
+        if (!own && !items.some((i) => specTypeFor(i.catName) === type)) continue;
+        for (const k of type.fields) {
+            if (!keys.includes(k)) keys.push(k);
+            if (own) always.add(k);
+        }
     }
     const specs = [];
     for (const key of keys) {
         const field = SPEC_FIELDS[key];
         const values = items.map((i) => i.specs[key]).filter((v) => v !== undefined && v !== null);
-        if (!values.length) continue;
+        if (!values.length && !always.has(key)) continue;
         const kind = filterKind(key);
         if (kind === 'match') {
-            const opts = field.kind === 'yesno'
-                ? count(values.map((v) => [String(v), v ? 'Yes' : 'No']))
-                : count(values.map((v) => [String(v), optionLabel(field, v)]));
-            const order = field.kind === 'yesno' ? ['true', 'false'] : field.options.map(([o]) => String(o));
-            opts.sort((a, b) => order.indexOf(a.value) - order.indexOf(b.value));
-            if (opts.length > 1 || values.length < items.length) specs.push({ key, label: field.label, kind: 'match', options: opts });
+            const seen = new Map(
+                (field.kind === 'yesno' ? count(values.map((v) => [String(v), v ? 'Yes' : 'No'])) : count(values.map((v) => [String(v), optionLabel(field, v)])))
+                    .map((o) => [o.value, o]),
+            );
+            // Every option, in the field's own order; ones nothing has yet count 0.
+            const all = field.kind === 'yesno' ? [['true', 'Yes'], ['false', 'No']] : field.options.map(([o, label]) => [String(o), label]);
+            const opts = all.map(([value, label]) => seen.get(value) || { value, label, count: 0 });
+            if (always.has(key) || opts.filter((o) => o.count).length > 1 || values.length < items.length) {
+                specs.push({ key, label: field.label, kind: 'match', options: opts });
+            }
         } else if (kind === 'range') {
-            const r = field.numeric ? null : range(values);
             if (field.numeric) {
-                // A choice in numbers (fill power): its own values are the stops.
-                const stops = [...new Set(values)].sort((a, b) => a - b);
+                // A choice in numbers (fill power): its options are the stops.
+                const stops = always.has(key) ? field.options.map(([o]) => Number(o)) : [...new Set(values)].sort((a, b) => a - b);
                 if (stops.length > 1) specs.push({ key, label: field.label, kind: 'range', min: stops[0], max: stops[stops.length - 1], step: 1, stops });
-            } else if (r) {
-                specs.push({ key, label: field.label, kind: 'range', ...r });
+            } else {
+                const r = range(values) || (always.has(key) && field.range ? span(field.range[0], field.range[1]) : null);
+                if (r) specs.push({ key, label: field.label, kind: 'range', ...r });
             }
         }
     }

@@ -77,7 +77,8 @@
                         </fieldset>
                         {{/facets.cats.length}}
 
-                        {{#ranges}}
+                        {{#blocks}}
+                        {{#range}}
                         <div class="wgFilter wgRange" data-range="{{key}}" data-min="{{min}}" data-max="{{max}}" data-step="{{step}}" {{#stops}}data-stops="{{stops}}"{{/stops}} data-testid="range-{{key}}">
                             <div class="wgRangeHead"><span class="wgFilterLabel">{{label}}</span><output data-out>{{text}}</output></div>
                             <div class="wgRangeTrack">
@@ -85,7 +86,14 @@
                                 <input type="range" class="wgRangeHi" name="{{key}}_max" min="{{min}}" max="{{max}}" step="{{step}}" value="{{hi}}" aria-label="{{label}}, at most" data-testid="range-{{key}}-max">
                             </div>
                         </div>
-                        {{/ranges}}
+                        {{/range}}
+                        {{#match}}
+                        <fieldset class="wgFilter" data-testid="filter-{{key}}">
+                            <legend>{{label}}</legend>
+                            {{#options}}<label class="wgFilterCheck{{#off}} wgFilterOff{{/off}}"><input type="checkbox" name="{{key}}" value="{{value}}" {{#on}}checked{{/on}} {{#off}}disabled{{/off}}> {{label}} <span class="wgMuted">{{count}}</span></label>{{/options}}
+                        </fieldset>
+                        {{/match}}
+                        {{/blocks}}
 
                         {{#facets.brands.length}}
                         <fieldset class="wgFilter">
@@ -93,13 +101,6 @@
                             {{#facets.brands}}<label class="wgFilterCheck"><input type="checkbox" name="brand" value="{{value}}" {{#on}}checked{{/on}}> {{label}} <span class="wgMuted">{{count}}</span></label>{{/facets.brands}}
                         </fieldset>
                         {{/facets.brands.length}}
-
-                        {{#matches}}
-                        <fieldset class="wgFilter" data-testid="filter-{{key}}">
-                            <legend>{{label}}</legend>
-                            {{#options}}<label class="wgFilterCheck"><input type="checkbox" name="{{key}}" value="{{value}}" {{#on}}checked{{/on}}> {{label}} <span class="wgMuted">{{count}}</span></label>{{/options}}
-                        </fieldset>
-                        {{/matches}}
 
                         <input type="hidden" name="sort" value="{{sort}}">
                         <div class="wgFilterActions">

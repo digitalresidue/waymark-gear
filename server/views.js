@@ -8,7 +8,7 @@ import { thumbnailUrl } from './images.js';
 import config from 'config';
 import { logWithRequest, logger } from './log.js';
 import weightUtils from '../client/utils/weight.js';
-import { specRows } from '../client/utils/gear-specs.js';
+import { specRows, specTypeFor } from '../client/utils/gear-specs.js';
 import { marked, isSafeHref } from '../client/utils/markdown.js';
 import { Library } from '../client/dataTypes.js';
 import { listToCsv } from './csv.js';
@@ -792,7 +792,9 @@ router.get('/explore/:slug', async (req, res) => {
             : [];
         const entries = rows.map(catalogToApi);
         const items = entries.map(filterItem);
-        const facets = facetsFor(items);
+        // The section's own gear types offer their filters even before
+        // the catalog has those specs filled in.
+        const facets = facetsFor(items, { categories: section.categories });
         const filters = readFilters(req.query);
         const shown = items.filter((i) => matchesFilters(i, filters));
         const byId = new Map(entries.map((e) => [e.id, e]));
@@ -808,13 +810,29 @@ router.get('/explore/:slug', async (req, res) => {
             hi: chosen.max ?? facet.max,
             text: rangeLabel(key, chosen.min, chosen.max, facet),
         });
-        const ranges = [];
-        if (facets.weight) ranges.push(rangeOf('weight', 'Weight', facets.weight, filters.weight));
-        if (facets.price) ranges.push(rangeOf('price', 'Price', facets.price, filters.price));
-        for (const f of facets.specs.filter((x) => x.kind === 'range')) {
-            ranges.push(rangeOf(f.key, f.label, f, filters.specs[f.key] || {}, f.stops));
-        }
         const on = (list, value) => list.includes(value);
+        // The filter column, in order: category, weight, the section's specs
+        // (in their type's order: a pack's max carry, volume, straps...),
+        // price, brand.
+        const packs = section.categories.length > 0 && section.categories.every((c) => (specTypeFor(c) || {}).id === 'pack');
+        const blocks = [];
+        if (facets.weight) blocks.push({ range: rangeOf('weight', packs ? 'Pack weight' : 'Weight', facets.weight, filters.weight) });
+        for (const f of facets.specs) {
+            if (f.kind === 'range') blocks.push({ range: rangeOf(f.key, f.label, f, filters.specs[f.key] || {}, f.stops) });
+            else {
+                blocks.push({
+                    match: {
+                        ...f,
+                        options: f.options.map((o) => {
+                            const checked = Boolean(filters.specs[f.key] && filters.specs[f.key].any.includes(o.value));
+                            // Nothing in the catalog has it yet: shown, not pickable.
+                            return { ...o, key: f.key, on: checked, off: !o.count && !checked };
+                        }),
+                    },
+                });
+            }
+        }
+        if (facets.price) blocks.push({ range: rangeOf('price', 'Price', facets.price, filters.price) });
         const total = items.length;
         const active = activeFilterCount(filters);
         const model = {
@@ -836,11 +854,7 @@ router.get('/explore/:slug', async (req, res) => {
                     cats: facets.cats.length > 1 ? facets.cats.map((c) => ({ ...c, on: on(filters.cats, c.value) })) : [],
                     brands: facets.brands.length > 1 ? facets.brands.map((b) => ({ ...b, on: on(filters.brands, b.value) })) : [],
                 },
-                ranges,
-                matches: facets.specs.filter((x) => x.kind === 'match').map((f) => ({
-                    ...f,
-                    options: f.options.map((o) => ({ ...o, key: f.key, on: Boolean(filters.specs[f.key] && filters.specs[f.key].any.includes(o.value)) })),
-                })),
+                blocks,
                 total,
                 anyShown: shown.length > 0,
                 countLabel: shown.length === total ? `${total} ${total === 1 ? 'item' : 'items'}` : `${shown.length} of ${total} items`,

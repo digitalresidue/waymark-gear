@@ -197,6 +197,12 @@
     }
 }
 
+.wgFilterOff {
+    color: var(--lp-text-secondary);
+    cursor: default;
+    opacity: 0.6;
+}
+
 .wgRangeHead {
     align-items: baseline;
     display: flex;
