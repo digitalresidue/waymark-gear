@@ -139,7 +139,16 @@
     position: sticky;
     top: 84px;
 
+    /* Long filter lists scroll inside the column, so every filter is reachable
+       without scrolling the whole results page. */
+    max-height: var(--wg-filters-max, calc(100vh - 100px));
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+
     @media (width <= 720px) {
+        max-height: none;
+        overflow: visible;
         position: static;
     }
 }
