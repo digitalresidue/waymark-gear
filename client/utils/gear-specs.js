@@ -76,12 +76,14 @@ const FILL_POWERS = [450, 550, 650, 750, 800, 850, 900, 950, 1000];
 /**
  * Every spec field. kind: temp | weight | length | volume | dims | number |
  * choice | yesno. unit: what a bare number means when typed or imported.
+ * range: a measured field's usual span (stored units), for Explore's slider
+ * before the catalog has enough values of its own.
  * options: [value, label] for a choice; `aliases` other ways it's written.
  */
 export const SPEC_FIELDS = {
     // Packs
-    max_carry: { label: 'Max carry weight', kind: 'weight', unit: 'lb', display: ['lb', 'kg'] },
-    volume: { label: 'Volume', kind: 'volume', unit: 'L', display: ['L'] },
+    max_carry: { label: 'Max carry weight', kind: 'weight', unit: 'lb', display: ['lb', 'kg'], range: [4500, 27500] },
+    volume: { label: 'Volume', kind: 'volume', unit: 'L', display: ['L'], range: [10, 90] },
     strap_type: { label: 'Shoulder straps', ...choice([['j_curve', 'J-curve'], ['s_curve', 'S-curve'], ['vest', 'Vest'], ['other', 'Other']]) },
     frame: { label: 'Frame', ...choice([['framed', 'Framed'], ['frameless', 'Frameless']]) },
     roll_top: { label: 'Roll top', ...yesNo },
@@ -90,21 +92,21 @@ export const SPEC_FIELDS = {
     // Tents
     capacity: { label: 'Size', ...choice([['1p', '1P'], ['1p_plus', '1P+'], ['2p', '2P'], ['2p_plus', '2P+'], ['3p', '3P']]), aliases: { '1': '1p', '2': '2p', '3': '3p', '1person': '1p', '2person': '2p', '3person': '3p' } },
     pitch: { label: 'Pitch', ...choice([['trekking_pole', 'Trekking pole'], ['semi_freestanding', 'Semi-freestanding'], ['freestanding', 'Freestanding']]) },
-    min_weight: { label: 'Minimum weight', kind: 'weight', unit: 'oz', display: ['oz', 'g'] },
-    trail_weight: { label: 'Trail weight', kind: 'weight', unit: 'oz', display: ['oz', 'g'] },
-    vestibules: { label: 'Vestibules', kind: 'number', min: 0, max: 4, integer: true },
+    min_weight: { label: 'Minimum weight', kind: 'weight', unit: 'oz', display: ['oz', 'g'], range: [200, 3000] },
+    trail_weight: { label: 'Trail weight', kind: 'weight', unit: 'oz', display: ['oz', 'g'], range: [200, 3000] },
+    vestibules: { label: 'Vestibules', kind: 'number', min: 0, max: 4, integer: true, range: [0, 4] },
     double_wall: { label: 'Double walled', ...yesNo },
-    floor_width: { label: 'Floor width', kind: 'length', unit: 'in', display: ['in', 'cm'] },
-    floor_length: { label: 'Floor length', kind: 'length', unit: 'in', display: ['in', 'cm'] },
-    peak_height: { label: 'Peak height', kind: 'length', unit: 'in', display: ['in', 'cm'] },
+    floor_width: { label: 'Floor width', kind: 'length', unit: 'in', display: ['in', 'cm'], range: [50, 150] },
+    floor_length: { label: 'Floor length', kind: 'length', unit: 'in', display: ['in', 'cm'], range: [180, 240] },
+    peak_height: { label: 'Peak height', kind: 'length', unit: 'in', display: ['in', 'cm'], range: [60, 140] },
     packed_size: { label: 'Packed size', kind: 'dims', unit: 'in', display: ['in', 'cm'] },
 
     // Quilts, sleeping bags, insulated layers
-    temp_comfort: { label: 'Comfort rating', kind: 'temp', unit: 'F', display: ['F', 'C'] },
-    temp_limit: { label: 'Limit rating', kind: 'temp', unit: 'F', display: ['F', 'C'] },
+    temp_comfort: { label: 'Comfort rating', kind: 'temp', unit: 'F', display: ['F', 'C'], range: [-20, 15] },
+    temp_limit: { label: 'Limit rating', kind: 'temp', unit: 'F', display: ['F', 'C'], range: [-25, 10] },
     insulation: { label: 'Insulation', ...choice([['down', 'Down'], ['synthetic', 'Synthetic']]) },
     fill_power: { label: 'Fill power', kind: 'choice', options: FILL_POWERS.map((n) => [String(n), `${n} fill`]), numeric: true, onlyWhen: { insulation: 'down' } },
-    fill_weight: { label: 'Fill weight', kind: 'weight', unit: 'oz', display: ['oz', 'g'] },
+    fill_weight: { label: 'Fill weight', kind: 'weight', unit: 'oz', display: ['oz', 'g'], range: [20, 600] },
     footbox: { label: 'Footbox', ...choice([['sewn', 'Sewn'], ['zippered', 'Zippered'], ['drawcord', 'Drawcord']]), aliases: { zipper: 'zippered', zip: 'zippered', sewnin: 'sewn', closed: 'sewn', drawstring: 'drawcord' } },
     draft_collar: { label: 'Draft collar', ...yesNo },
     quilt_shape: { label: 'Shape', ...choice([['tapered', 'Tapered'], ['rectangular', 'Rectangular'], ['other', 'Other']]) },
@@ -117,10 +119,10 @@ export const SPEC_FIELDS = {
     baffles: { label: 'Baffles', ...choice([['sewn_through', 'Sewn-through'], ['box', 'Box'], ['other', 'Other']]), aliases: { sewn: 'sewn_through', boxbaffle: 'box' } },
 
     // Sleeping pads
-    r_value: { label: 'R-value', kind: 'number', min: 0, max: 15 },
-    thickness: { label: 'Thickness', kind: 'length', unit: 'in', display: ['in', 'cm'] },
-    pad_width: { label: 'Width', kind: 'length', unit: 'in', display: ['in', 'cm'] },
-    pad_length: { label: 'Length', kind: 'length', unit: 'in', display: ['in', 'cm'] },
+    r_value: { label: 'R-value', kind: 'number', min: 0, max: 15, range: [0, 8] },
+    thickness: { label: 'Thickness', kind: 'length', unit: 'in', display: ['in', 'cm'], range: [0, 12] },
+    pad_width: { label: 'Width', kind: 'length', unit: 'in', display: ['in', 'cm'], range: [40, 80] },
+    pad_length: { label: 'Length', kind: 'length', unit: 'in', display: ['in', 'cm'], range: [100, 220] },
     pad_type: { label: 'Type', ...choice([['closed_cell', 'Closed-cell foam'], ['inflatable', 'Inflatable'], ['self_inflating', 'Self-inflating']]), aliases: { ccf: 'closed_cell', foam: 'closed_cell', closedcellfoam: 'closed_cell', air: 'inflatable' } },
 };
 
@@ -128,7 +130,7 @@ export const SPEC_FIELDS = {
 export const SPEC_TYPES = [
     {
         id: 'pack', label: 'Pack', categories: ['Pack', 'Backpack', 'Rucksack'],
-        fields: ['volume', 'max_carry', 'frame', 'strap_type', 'roll_top', 'adjustable_torso'],
+        fields: ['max_carry', 'volume', 'strap_type', 'frame', 'roll_top', 'adjustable_torso'],
     },
     {
         id: 'tent', label: 'Tent', categories: ['Tent'],
