@@ -26,7 +26,16 @@
         </div>
 
         <ul class="lpCategories">
-            <category v-for="category in categories" :key="category.id" :category="category" />
+            <template v-for="row in rows" :key="row.key">
+                <group-head v-if="row.group && row.head" :list="list" :group="row.group" :categories="row.categories" />
+                <category
+                    v-else
+                    v-show="!row.group || !row.group.collapsed"
+                    :category="row.category"
+                    :class="{ wgInGroup: row.group, wgGroupLast: row.last }"
+                    :data-group-id="row.group ? row.group.id : null"
+                />
+            </template>
         </ul>
 
         <a class="lpAdd addCategory" @click="newCategory"><i class="lpSprite lpSpriteAdd" />Add new category</a>
@@ -42,6 +51,7 @@ import gearInsights from './gear-insights.vue';
 import tripTypePicker from './trip-type-picker.vue';
 import trailTag from './trail-tag.vue';
 import groupGear from './group-gear.vue';
+import groupHead from './group-head.vue';
 import listSummary from './list-summary.vue';
 import listSummaryMobile from './list-summary-mobile.vue';
 
@@ -62,6 +72,7 @@ export default {
         gearInsights,
         tripTypePicker,
         groupGear,
+        groupHead,
         category,
     },
     setup() {
@@ -71,7 +82,6 @@ export default {
         return {
             itemDrake: null,
             itemTouchReorder: null,
-            categoryDragStartIndex: null,
             itemDragId: null,
         };
     },
@@ -90,6 +100,19 @@ export default {
         },
         categories() {
             return this.list.categoryIds.map(id => this.library.getCategoryById(id));
+        },
+        // What .lpCategories shows: each group's header, then its categories
+        // (hidden, not removed, while it's collapsed, so a drag still sees
+        // the whole order); categories outside groups as they are.
+        rows() {
+            const out = [];
+            for (const block of this.list.groupedCategories()) {
+                if (block.group) out.push({ key: `g${block.group.id}`, head: true, group: block.group, categories: block.categories });
+                block.categories.forEach((category, i) => out.push({
+                    key: `c${category.id}`, category, group: block.group, last: Boolean(block.group) && i === block.categories.length - 1,
+                }));
+            }
+            return out;
         },
         anyCollapsed() {
             return this.categories.some((c) => c && c.collapsed);
@@ -216,12 +239,22 @@ export default {
                     return $handle.classList.contains('lpCategoryHandle');
                 },
             });
-            drake.on('drag', ($el, _$target, _$source, _$sibling) => {
-                this.categoryDragStartIndex = getElementIndex($el);
-            });
-            drake.on('drop', ($el, _$target, _$source, _$sibling) => {
-                this.$store.commit('reorderCategory', { list: this.list, before: this.categoryDragStartIndex, after: getElementIndex($el) });
+            // The new order is read off the page (group headers sit among the
+            // categories, so positions alone don't say it), and so is the
+            // group: under a group's header or between two of its categories
+            // joins it, anywhere else leaves it.
+            drake.on('drop', ($el, $target) => {
+                const order = Array.from($target.children).filter((el) => el.classList.contains('lpCategory')).map((el) => parseInt(el.id));
+                const groupOf = (el) => (el && el.dataset && el.dataset.groupId ? parseInt(el.dataset.groupId) : null);
+                const prev = $el.previousElementSibling;
+                const next = $el.nextElementSibling;
+                const own = groupOf($el);
+                let groupId = null;
+                if (prev && prev.classList.contains('wgGroupHead')) groupId = groupOf(prev);
+                else if (groupOf(prev) && groupOf(prev) === groupOf(next)) groupId = groupOf(prev);
+                else if (own && (groupOf(prev) === own || groupOf(next) === own)) groupId = own;
                 drake.cancel(true);
+                this.$store.commit('arrangeCategories', { list: this.list, order, movedId: parseInt($el.id), groupId });
             });
         },
     },

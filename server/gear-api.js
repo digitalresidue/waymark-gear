@@ -12,6 +12,7 @@ import { diffLibrary } from '../client/utils/library-diff.js';
 import weightUtils from '../client/utils/weight.js';
 import { checkEssentials, listRows, readinessLabel } from '../client/utils/insights.js';
 import { tripEstimates } from '../client/utils/trip.js';
+import { categoryKey } from '../client/utils/gear-meta.js';
 import { loadLibrary, applyChanges } from './library-store.js';
 import { applyCatalog, search as catalogSearch, isUuid } from './catalog.js';
 import { listInsights } from './insights.js';
@@ -124,6 +125,8 @@ export async function listDetail(user, listId) {
         categories: list.categoryIds.map((id) => library.getCategoryById(id)).filter(Boolean).map((c) => ({
             id: c.id,
             name: c.name || '',
+            // The heading it sits under (e.g. Clothing), if any.
+            group: (c.groupId && (list.getGroupById(c.groupId) || {}).name) || '',
             items: c.categoryItems.map((ci) => {
                 const item = library.getItemById(ci.itemId);
                 if (!item || !(item.name || item.weight)) return null;
@@ -284,10 +287,13 @@ export async function addToList(user, listId, input = {}) {
     return change(user, 'api', (library) => {
         const list = findList(library, listId);
         const catName = text(input.category, 200) || 'Gear';
-        let category = list.categoryIds.map((id) => library.getCategoryById(id)).find((c) => c && (c.name || '').toLowerCase() === catName.toLowerCase());
+        // The list's category however it's spelled ("Mid-layers" for "Mid
+        // Layer"); a new one is filed like the editor files it (Clothing).
+        let category = list.categoryIds.map((id) => library.getCategoryById(id)).find((c) => c && categoryKey(c.name) === categoryKey(catName));
         if (!category) {
             category = library.newCategory({ list });
             category.name = catName;
+            list.placeInDefaultGroup(category, catName);
         }
         let item;
         if (input.gearId !== undefined) {

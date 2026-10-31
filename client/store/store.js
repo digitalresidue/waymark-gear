@@ -9,6 +9,9 @@ import { writeOfflineCache, readOfflineCache, clearOfflineCache, isNetworkError 
 import { isPlaceholder } from '../utils/closet.js';
 import { categoryKey } from '../utils/gear-meta.js';
 
+// The library's own copy of a list a component passed in.
+const listIn = (state, list) => state.library.getListById(list.id);
+
 const saveInterval = 5000;
 
 const store = createStore({
@@ -151,17 +154,32 @@ const store = createStore({
             list.normalizeGroups();
             list.calculateTotals();
         },
+        // A category dragged to a new place: the list's categories in their
+        // new order, and the group the moved one now belongs to (or none).
+        arrangeCategories(state, { list, order, movedId, groupId = null }) {
+            const target = listIn(state, list);
+            const ids = order.filter((id) => target.categoryIds.includes(id));
+            if (ids.length !== target.categoryIds.length) return;
+            target.categoryIds = ids;
+            const moved = state.library.getCategoryById(movedId);
+            if (moved) {
+                if (groupId && target.getGroupById(groupId)) moved.groupId = groupId;
+                else delete moved.groupId;
+            }
+            target.normalizeGroups();
+            target.calculateTotals();
+        },
         renameGroup(state, { list, groupId, name }) {
-            const group = library(state, list).getGroupById(groupId);
+            const group = listIn(state, list).getGroupById(groupId);
             if (group) group.name = String(name || '').slice(0, 100);
         },
         toggleGroupCollapsed(state, { list, groupId }) {
-            const group = library(state, list).getGroupById(groupId);
+            const group = listIn(state, list).getGroupById(groupId);
             if (group) group.collapsed = !group.collapsed;
         },
         // The group goes; its categories stay where they are, ungrouped.
         ungroup(state, { list, groupId }) {
-            const target = library(state, list);
+            const target = listIn(state, list);
             target.categoryIds.forEach((id) => {
                 const c = state.library.getCategoryById(id);
                 if (c && c.groupId === groupId) delete c.groupId;
@@ -308,9 +326,17 @@ const store = createStore({
                     && c.categoryItems.every((ci) => isPlaceholder(library.getItemById(ci.itemId) || {})));
                 if (category) category.name = want;
             }
+            let made = false;
             if (!category) {
                 category = library.newCategory({ list });
                 category.name = want;
+                made = true;
+            }
+            // A new layer category (Base Layer, Mid Layer, Shells...) goes in
+            // the list's Clothing group. Categories the person already has
+            // stay where they put them.
+            if (made || !category.categoryItems.some((ci) => !isPlaceholder(library.getItemById(ci.itemId) || {}))) {
+                list.placeInDefaultGroup(category, want);
             }
             category.collapsed = false;
             library.newItemFromCatalog({ category, entry });

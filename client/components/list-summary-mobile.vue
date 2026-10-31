@@ -54,17 +54,28 @@
                 </div>
 
                 <ul class="lpSummaryLegend">
-                    <li v-for="category in categories" :key="category.id" class="lpSummaryLegendRow">
-                        <span class="lpSummaryLegendSwatch">
-                            <colorPicker v-if="category.displayColor" :color="colorToHex(category.displayColor)" @color-change="updateColor(category, $event)" />
-                        </span>
-                        <span class="lpSummaryLegendName">{{ category.name }}</span>
-                        <span v-if="list.optionalFields['price']" class="lpSummaryLegendPrice">{{ displayPrice(category.subtotalPrice, library.currencySymbol) }}</span>
-                        <span class="lpSummaryLegendWeight">
-                            {{ displayWeight(category.subtotalWeight, library.totalUnit) }}
-                            <span class="lpSummaryLegendUnit">{{ library.totalUnit }}</span>
-                        </span>
-                    </li>
+                    <template v-for="row in totalRows" :key="row.key">
+                        <li v-if="row.group" class="lpSummaryLegendRow wgTotalGroup" data-testid="total-group">
+                            <span class="lpSummaryLegendSwatch"><span class="wgTotalGroupSwatch" :style="{ background: row.color }" /></span>
+                            <span class="lpSummaryLegendName">{{ row.group.name || 'Group' }}</span>
+                            <span v-if="list.optionalFields['price']" class="lpSummaryLegendPrice">{{ displayPrice(row.price, library.currencySymbol) }}</span>
+                            <span class="lpSummaryLegendWeight">
+                                {{ displayWeight(row.weight, library.totalUnit) }}
+                                <span class="lpSummaryLegendUnit">{{ library.totalUnit }}</span>
+                            </span>
+                        </li>
+                        <li v-else class="lpSummaryLegendRow" :class="{ wgTotalInGroup: row.inGroup }">
+                            <span class="lpSummaryLegendSwatch">
+                                <colorPicker v-if="row.category.displayColor" :color="colorToHex(row.category.displayColor)" @color-change="updateColor(row.category, $event)" />
+                            </span>
+                            <span class="lpSummaryLegendName">{{ row.category.name }}</span>
+                            <span v-if="list.optionalFields['price']" class="lpSummaryLegendPrice">{{ displayPrice(row.category.subtotalPrice, library.currencySymbol) }}</span>
+                            <span class="lpSummaryLegendWeight">
+                                {{ displayWeight(row.category.subtotalWeight, library.totalUnit) }}
+                                <span class="lpSummaryLegendUnit">{{ library.totalUnit }}</span>
+                            </span>
+                        </li>
+                    </template>
 
                     <li class="lpSummaryLegendRow lpSummaryLegendTotal">
                         <span class="lpSummaryLegendSwatch" />
@@ -121,6 +132,7 @@
 </template>
 
 <script>
+import { totalRowsFor } from '../utils/category-groups.js';
 import colorPicker from './colorpicker.vue';
 import unitSelect from './unit-select.vue';
 
@@ -155,6 +167,9 @@ export default {
         },
         categories() {
             return this.list.categoryIds.map(id => this.library.getCategoryById(id));
+        },
+        totalRows() {
+            return totalRowsFor(this.list);
         },
         hasBreakdown() {
             return !!(this.list.totalWornWeight || this.list.totalConsumableWeight);

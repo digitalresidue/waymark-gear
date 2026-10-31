@@ -269,8 +269,10 @@ router.get('/sitemaps/:name.xml', sendSitemap());
 
 // What a list's preview card shows. `library` must have `list` totals computed.
 function listCard(library, list, username, avatarUrl = '') {
-    const categories = list.categoryIds.map((cid) => library.getCategoryById(cid)).filter(Boolean)
-        .map((c) => ({ weightMg: c.subtotalWeight - c.subtotalWornWeight - c.subtotalConsumableWeight }));
+    // One bar per category, or per category group.
+    const categories = list.groupedCategories().map((block) => ({
+        weightMg: block.categories.reduce((sum, c) => sum + c.subtotalWeight - c.subtotalWornWeight - c.subtotalConsumableWeight, 0),
+    }));
     return {
         name: list.name,
         username,
@@ -1191,6 +1193,7 @@ const renderCategory = function (category, args) {
     let temp = Object.assign({}, category);
     Object.assign(temp, {
         items, subtotalUnit: args.totalUnit, currencySymbol: args.currencySymbol, showPrices: args.showPrices,
+        groupClass: args.groupClass || '', groupId: args.groupId || '',
     });
 
     return Mustache.render(args.categoryTemplate, temp);
@@ -1201,9 +1204,28 @@ const renderList = function (list, args) {
     args.showImages = list.optionalFields.images;
     args.listOptionalFields = list.optionalFields;
     let out = '';
-    for (const i in list.categoryIds) {
-        const category = list.library.getCategoryById(list.categoryIds[i]);
-        if (category) out += renderCategory(category, args);
+    // Category groups (List.groups): a heading over each group's categories.
+    for (const block of list.groupedCategories()) {
+        if (!block.group) {
+            out += renderCategory(block.categories[0], args);
+            continue;
+        }
+        let members = '';
+        block.categories.forEach((category, i) => {
+            members += renderCategory(category, {
+                ...args, groupId: block.group.id, groupClass: i === block.categories.length - 1 ? 'wgInGroup wgGroupLast' : 'wgInGroup',
+            });
+        });
+        const weight = block.categories.reduce((sum, c) => sum + c.subtotalWeight, 0);
+        out += Mustache.render(templates.t_groupShare, {
+            id: block.group.id,
+            name: block.group.name || 'Group',
+            count: block.categories.length,
+            countLabel: block.categories.length === 1 ? 'category' : 'categories',
+            weight,
+            weightDisplay: weightUtils.MgToDisplayWeight(weight, args.totalUnit),
+            unit: args.totalUnit,
+        }) + members;
     }
     return out;
 };
@@ -1244,6 +1266,31 @@ const renderListTotals = function (list, totalsTemplate, unitSelectTemplate, uni
 
     totalBaseWeight = totalWeight - (totalWornWeight + totalConsumableWeight);
     totalPackWeight = totalWeight - totalWornWeight;
+
+    // The table's rows: categories, with each group's row over its own.
+    const priceText = (n) => (n ? n.toFixed(2) : '0.00');
+    out.rows = [];
+    for (const block of list.groupedCategories()) {
+        if (block.group) {
+            const weight = block.categories.reduce((sum, c) => sum + c.subtotalWeight, 0);
+            const price = block.categories.reduce((sum, c) => sum + c.subtotalPrice, 0);
+            out.rows.push({
+                isGroup: true,
+                id: block.group.id,
+                name: block.group.name || 'Group',
+                displayColor: block.categories[0].displayColor,
+                subtotalWeight: weight,
+                subtotalWeightDisplay: weightUtils.MgToDisplayWeight(weight, unit),
+                subtotalUnit: unit,
+                subtotalPriceDisplay: priceText(price),
+            });
+        }
+        for (const category of block.categories) {
+            out.rows.push(Object.assign(Object.create(category), {
+                isGroup: false, inGroup: Boolean(block.group), subtotalPriceDisplay: priceText(category.subtotalPrice),
+            }));
+        }
+    }
 
     out.totalWeight = totalWeight;
     out.totalWeightDisplay = weightUtils.MgToDisplayWeight(totalWeight, unit);

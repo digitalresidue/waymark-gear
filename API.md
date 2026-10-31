@@ -22,7 +22,7 @@ the text in the owner's unit for showing.
 | PATCH | `/api/v1/gear/:id` | Change `name`, `description`, `weight` + `unit`, `closetCategory`, `condition` (`new`, `good`, `worn`, `replace`), `retired`, `wishlist` |
 | GET | `/api/v1/lists` | Your lists with base, worn, consumable and total weight |
 | POST | `/api/v1/lists` | Make a list: `{ "name", "description", "categories": ["Shelter", …] }` |
-| GET | `/api/v1/lists/:id` | One list in full |
+| GET | `/api/v1/lists/:id` | One list in full; each category says the `group` it sits under (e.g. `"Clothing"`), or `""` |
 | GET | `/api/v1/lists/:id/check` | The gear check: readiness score, missing essentials, lighter catalog options, popular gear, calorie estimate |
 | POST | `/api/v1/lists/:id/items` | Put gear in a list: `{ "category": "Sleep", "gearId": 12 }`, or `"catalogId"`, or a new item by `name`/`weight`/`unit`; optional `qty`, `worn`, `consumable` |
 | DELETE | `/api/v1/lists/:id/items/:gearId` | Take gear out of a list (it stays in your closet) |

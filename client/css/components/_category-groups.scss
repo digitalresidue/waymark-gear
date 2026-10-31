@@ -1,0 +1,148 @@
+@import "../globals";
+
+// Category groups (List.groups): a heading over a group's categories, which
+// sit indented on a rail. The editor's heading is client/components/
+// group-head.vue; shared lists render the same markup (server/views.js).
+// A group's heading, then its categories indented on a rail beneath it.
+.wgGroupHead {
+    align-items: center;
+    display: flex;
+    gap: 6px;
+    list-style: none;
+    margin: 18px 0 8px;
+    padding: 0 8px 0 4px;
+
+    .wgDrawerToggle svg {
+        transform: rotate(90deg);
+        transition: transform 0.15s;
+    }
+
+    &.wgGroupCollapsed {
+        margin-bottom: 12px;
+
+        .wgDrawerToggle svg {
+            transform: rotate(0deg);
+        }
+    }
+}
+
+.wgGroupIcon {
+    color: var(--lp-accent-green-deep);
+    flex: none;
+}
+
+.lp .wgGroupName {
+    flex: 1 1 auto;
+    font-family: $font-display;
+    font-size: 19px;
+    font-weight: 750;
+    min-width: 0;
+}
+
+.wgGroupMeta {
+    color: var(--lp-text-secondary);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.wgGroupWeight {
+    font: 600 15px $font-mono;
+    margin-left: 10px;
+    white-space: nowrap;
+}
+
+.wgGroupUngroup {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: var(--lp-text-secondary);
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    margin-left: 4px;
+    opacity: 0;
+    padding: 4px 8px;
+
+    .wgGroupHead:hover &,
+    &:focus-visible {
+        opacity: 1;
+    }
+
+    &:hover {
+        border-color: var(--lp-border);
+        color: var(--lp-text);
+    }
+
+    @media (hover: none) {
+        opacity: 1;
+    }
+}
+
+// Categories in a group: indented, with the group's rail on their left.
+.lpCategories > .lpCategory.wgInGroup {
+    margin-left: 22px;
+    position: relative;
+
+    &::before {
+        background: var(--lp-border-strong);
+        border-radius: 2px;
+        bottom: -12px;
+        content: "";
+        left: -14px;
+        position: absolute;
+        top: -8px;
+        width: 2px;
+    }
+
+    &.wgGroupLast::before {
+        bottom: 0;
+    }
+}
+
+@media (width <= $mobile) {
+    .wgGroupHead {
+        margin-top: 14px;
+        padding: 0;
+    }
+
+    .wgGroupMeta {
+        display: none;
+    }
+
+    .lpCategories > .lpCategory.wgInGroup {
+        margin-left: 12px;
+
+        &::before {
+            left: -9px;
+        }
+    }
+}
+
+// Shared lists: the heading is plain text.
+.wgGroupHead h2.wgGroupName {
+    margin: 0;
+}
+
+// The weight summary: a group's row, then its categories indented under it.
+.lpTotals .wgTotalGroup {
+    font-weight: 700;
+}
+
+.lpTotals .wgTotalInGroup .lpCategoryCell,
+.lpSummaryLegendRow.wgTotalInGroup .lpSummaryLegendName {
+    color: var(--lp-text-secondary);
+    padding-left: 14px;
+}
+
+.lpSummaryLegendRow.wgTotalGroup .lpSummaryLegendName {
+    font-weight: 700;
+}
+
+// A group's swatch: its first category's colour, as a plain square.
+.wgTotalGroupSwatch {
+    border-radius: 3px;
+    display: inline-block;
+    height: 11px;
+    width: 11px;
+}
+

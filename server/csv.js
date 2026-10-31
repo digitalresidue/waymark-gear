@@ -18,7 +18,10 @@ const escapeField = function (field) {
 };
 
 const listToCsv = function (library, list) {
-    let out = 'Item Name,Category,desc,qty,weight,unit,url,price,worn,consumable\n';
+    // LighterPack's ten columns; a list with category groups adds "group"
+    // after them (LighterPack ignores it; our import reads it back).
+    const grouped = Boolean(list.groups && list.groups.length);
+    let out = `Item Name,Category,desc,qty,weight,unit,url,price,worn,consumable${grouped ? ',group' : ''}\n`;
 
     for (const categoryId of list.categoryIds) {
         const category = library.getCategoryById(categoryId);
@@ -48,6 +51,7 @@ const listToCsv = function (library, list) {
                 categoryItem.worn ? 'Worn' : '',
                 categoryItem.consumable ? 'Consumable' : '',
             ];
+            if (grouped) itemRow.push(category.groupId ? ((list.getGroupById(category.groupId) || {}).name || '') : '');
 
             out += `${itemRow.map(escapeField).join(',')}\n`;
         }

@@ -18,21 +18,37 @@
         </div>
         <div class="lpTotalsContainer">
             <ul class="lpTotals lpTable lpDataTable" :class="{ lpHasPrice: list.optionalFields['price'] }">
-                <li v-for="category in categories" :key="category.id" :class="{'hover': category.id === hoveredCategoryId, 'lpTotalCategory lpRow': true}">
-                    <span class="lpCell lpLegendCell">
-                        <colorPicker v-if="category.displayColor" :color="colorToHex(category.displayColor)" @color-change="updateColor(category, $event)" />
-                    </span>
-                    <span class="lpCell lpCategoryCell">
-                        {{ category.name }}
-                    </span>
-                    <span v-if="list.optionalFields['price']" class="lpCell lpNumber">
-                        {{ displayPrice(category.subtotalPrice, library.currencySymbol) }}
-                    </span>
-                    <span class="lpCell lpNumber lpWeightVal">
-                        <span class="lpDisplaySubtotal" :mg="category.subtotalWeight">{{ displayWeight(category.subtotalWeight, library.totalUnit) }}</span>
-                    </span>
-                    <span class="lpCell lpUnitCell lpSubtotalUnit">{{ library.totalUnit }}</span>
-                </li>
+                <template v-for="row in totalRows" :key="row.key">
+                    <!-- A group (Clothing): its weight together, its categories under it. -->
+                    <li v-if="row.group" class="lpTotalCategory lpRow wgTotalGroup" :class="{ hover: row.chartId === hoveredCategoryId }" data-testid="total-group">
+                        <span class="lpCell lpLegendCell">
+                            <span class="wgTotalGroupSwatch" :style="{ background: row.color }" />
+                        </span>
+                        <span class="lpCell lpCategoryCell">{{ row.group.name || 'Group' }}</span>
+                        <span v-if="list.optionalFields['price']" class="lpCell lpNumber">
+                            {{ displayPrice(row.price, library.currencySymbol) }}
+                        </span>
+                        <span class="lpCell lpNumber lpWeightVal">
+                            <span class="lpDisplaySubtotal" :mg="row.weight">{{ displayWeight(row.weight, library.totalUnit) }}</span>
+                        </span>
+                        <span class="lpCell lpUnitCell lpSubtotalUnit">{{ library.totalUnit }}</span>
+                    </li>
+                    <li v-else :class="{'hover': row.category.id === hoveredCategoryId || (row.chartId && row.chartId === hoveredCategoryId), 'lpTotalCategory lpRow': true, wgTotalInGroup: row.inGroup}">
+                        <span class="lpCell lpLegendCell">
+                            <colorPicker v-if="row.category.displayColor" :color="colorToHex(row.category.displayColor)" @color-change="updateColor(row.category, $event)" />
+                        </span>
+                        <span class="lpCell lpCategoryCell">
+                            {{ row.category.name }}
+                        </span>
+                        <span v-if="list.optionalFields['price']" class="lpCell lpNumber">
+                            {{ displayPrice(row.category.subtotalPrice, library.currencySymbol) }}
+                        </span>
+                        <span class="lpCell lpNumber lpWeightVal">
+                            <span class="lpDisplaySubtotal" :mg="row.category.subtotalWeight">{{ displayWeight(row.category.subtotalWeight, library.totalUnit) }}</span>
+                        </span>
+                        <span class="lpCell lpUnitCell lpSubtotalUnit">{{ library.totalUnit }}</span>
+                    </li>
+                </template>
                 <li class="lpRow lpFooter lpTotal">
                     <span class="lpCell lpLegendCell" />
                     <span class="lpCell lpCategoryCell lpSubtotal" :title="list.totalQty +' items'">
@@ -104,6 +120,7 @@
 </template>
 
 <script>
+import { totalRowsFor } from '../utils/category-groups.js';
 import colorPicker from './colorpicker.vue';
 import unitSelect from './unit-select.vue';
 
@@ -132,6 +149,10 @@ export default {
         },
         categories() {
             return this.list.categoryIds.map(id => this.library.getCategoryById(id));
+        },
+        // The totals table: categories, with each group's row over its own.
+        totalRows() {
+            return totalRowsFor(this.list);
         },
         chartStyles() {
             return CHART_STYLES;

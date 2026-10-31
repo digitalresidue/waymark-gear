@@ -1,6 +1,7 @@
 <ul class="lpTotals lpTable lpDataTable">
-    {{#categories}}
-        <li class="lpTotalCategory lpRow" id="total_{{id}}" category="{{id}}">
+    {{#rows}}
+        {{#isGroup}}
+        <li class="lpTotalCategory lpRow wgTotalGroup" id="total_group-{{id}}">
             <span class="lpCell lpLegendCell">
                 <span class="lpLegend" style="background-color: {{displayColor}}"></span>
             </span>
@@ -14,7 +15,24 @@
                 <span class="lpDisplaySubtotal" mg="{{subtotalWeight}}">{{subtotalWeightDisplay}}</span> <span class="lpSubtotalUnit">{{subtotalUnit}}</span>
             </span>
         </li>
-    {{/categories}}
+        {{/isGroup}}
+        {{^isGroup}}
+        <li class="lpTotalCategory lpRow{{#inGroup}} wgTotalInGroup{{/inGroup}}" id="total_{{id}}" category="{{id}}">
+            <span class="lpCell lpLegendCell">
+                <span class="lpLegend" style="background-color: {{displayColor}}"></span>
+            </span>
+            <span class="lpCell lpCategoryCell">
+                {{name}}
+            </span>
+            {{#showPrices}}<span class="lpCell lpNumber">
+                {{currencySymbol}}{{subtotalPriceDisplay}}
+            </span>{{/showPrices}}
+            <span class="lpCell lpNumber lpWeightVal">
+                <span class="lpDisplaySubtotal" mg="{{subtotalWeight}}">{{subtotalWeightDisplay}}</span> <span class="lpSubtotalUnit">{{subtotalUnit}}</span>
+            </span>
+        </li>
+        {{/isGroup}}
+    {{/rows}}
     <li class="lpRow lpFooter lpTotal">
         <span class="lpCell lpLegendCell"></span>
         <span class="lpCell lpCategoryCell lpSubtotal" title="{{totalQty}} items">

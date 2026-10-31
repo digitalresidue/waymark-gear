@@ -19,6 +19,7 @@
                     <span v-if="swatchColor" class="lpCategorySwatch" :style="{background: swatchColor}" />
                     <input v-focus-on-create="!!category._isNew" type="text" :value="category.name" placeholder="Category Name" class="lpCategoryName lpSilent" @input="updateCategoryName">
                     <span v-if="category.collapsed" class="wgItemCount" data-testid="category-count">{{ itemCountLabel }}</span>
+                    <categoryGroupMenu :category="category" />
                 </span>
                 <span v-if="optionalFields['price']" class="lpPriceCell lpNumber lpSubtotal">
                     {{ displayPrice(category.subtotalPrice, library.currencySymbol) }}
@@ -53,6 +54,7 @@
 
 <script>
 import kitMenu from './kit-menu.vue';
+import categoryGroupMenu from './category-group-menu.vue';
 import item from './item.vue';
 import itemMobile from './item-mobile.vue';
 
@@ -63,6 +65,7 @@ export default {
     name: 'Category',
     components: {
         kitMenu,
+        categoryGroupMenu,
         item,
         itemMobile,
     },

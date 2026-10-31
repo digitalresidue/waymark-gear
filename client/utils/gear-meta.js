@@ -82,3 +82,15 @@ export function categoryKey(name) {
     return k.replace(/ies$/, 'y').replace(/(?<!s)s$/, '');
 }
 
+// Catalog types that belong in a Clothing group in a list: the layers and
+// shells you wear or carry to wear. Anything else stays a category of its own.
+const CLOTHING_LAYERS = new Set(['Base Layer', 'Mid Layer', 'Outer Layer', 'Insulation', 'Insulating Layer', 'Shell',
+    'Rain Gear', 'Rainwear', 'Rain Jacket', 'Rain Shell', 'Wind Shell', 'Wind Layer', 'Outerwear'].map(categoryKey));
+export const CLOTHING_GROUP = 'Clothing';
+
+/** The group a catalog type goes in by default ('Clothing'), or ''. */
+export function defaultGroupFor(type) {
+    const k = categoryKey(type);
+    return CLOTHING_LAYERS.has(k) || /layer$/.test(k) ? CLOTHING_GROUP : '';
+}
+
