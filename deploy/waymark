@@ -154,6 +154,8 @@ cmd_update() {
     [ -z "$added" ] || note "New settings you can use (see waymark settings):$added"
 
     "${COMPOSE[@]}" up -d --remove-orphans
+    # Caddy reads its file at start: restart it when the release changed it.
+    cmp -s "$tmp/Caddyfile" "$DIR/Caddyfile" || "${COMPOSE[@]}" restart caddy >/dev/null 2>&1 || true
     if wait_healthy 180; then
         ok "Updated and running"
         docker image prune -f >/dev/null 2>&1 || true
@@ -167,6 +169,7 @@ cmd_update() {
     install -m 755 "$tmp/waymark" "$SELF"
     [ -z "$old" ] || docker tag "$old" "$image"
     "${COMPOSE[@]}" up -d
+    "${COMPOSE[@]}" restart caddy >/dev/null 2>&1 || true
     if wait_healthy 120; then
         ok "Back on the previous version. Nothing was lost."
         note "Please report the messages above (INSTALL.md, \"Getting help\")."

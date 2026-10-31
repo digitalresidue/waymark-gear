@@ -170,8 +170,8 @@ after CI passes keeps security patches current.
 ## Security checklist
 
 - [ ] `NODE_ENV=production` (set in the compose file): secure cookies, HSTS.
-- [ ] `TRUST_PROXY=1` behind Caddy (set in the compose file). Use `2` if you
-      also proxy through Cloudflare.
+- [ ] `TRUST_PROXY=2` (set in the compose file): Caddy, plus Cloudflare when
+      proxied. Caddy only accepts forwarded addresses from Cloudflare's ranges.
 - [ ] Strong `POSTGRES_PASSWORD`; the database port is never published.
 - [ ] `.env` is `chmod 600` and never committed.
 - [ ] Firewall allows only 22, 80, 443; SSH keys only; unattended upgrades on.
@@ -190,10 +190,17 @@ the same page within minutes. The app handles that on its own:
   `/dist/` are content-hashed and cached by browsers for a day.
 - Every response sends ETags, so repeat visitors get a cheap `304`.
 
-To go further, proxy through Cloudflare (orange cloud). Set SSL mode to
-**Full (strict)**, set `TRUST_PROXY: 2` in the compose file, and keep the
-origin firewall as above. Cloudflare doesn't cache HTML by default, so add a
-**Cache Rule**:
+To go further, proxy through Cloudflare (orange cloud); INSTALL.md,
+"Optional: put Cloudflare in front", has the steps. In short: SSL/TLS mode
+**Full (strict)** (Flexible loops forever with "too many redirects", because
+Caddy already sends plain HTTP to HTTPS), and keep the origin firewall as
+above. Nothing changes on the server: Caddy trusts Cloudflare's published
+address ranges (`deploy/Caddyfile`) and the app counts two proxies
+(`TRUST_PROXY: 2`), so per-IP limits see each visitor's own address rather
+than Cloudflare's, and nobody else can supply a fake one. If Cloudflare ever
+publishes new ranges (cloudflare.com/ips), add them to the Caddyfile.
+
+Cloudflare doesn't cache HTML by default, so add a **Cache Rule**:
 
 - **When:** URI Path starts with `/r/`, or starts with `/@`, or starts with
   `/og/`, or starts with `/dist/`, or starts with `/api/explore/` (the
