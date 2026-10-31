@@ -340,7 +340,7 @@ import { api } from '../utils/format.js';
 import { specTypeFor, specInput, SPEC_FIELDS, SPEC_TYPES } from '../utils/gear-specs.js';
 
 // What a measurement box suggests, by kind.
-const SPEC_PLACEHOLDERS = { temp: '20F or -7C', weight: '14 oz or 397 g', length: '72 in or 183 cm', volume: '40 L', dims: '18 x 5 x 5 in', number: '' };
+const SPEC_PLACEHOLDERS = { temp: '20F or -7C', weight: '14 oz or 397 g', length: '72 in or 183 cm', volume: '40 L', dims: '18 x 5 x 5 in', number: '', text: 'e.g. Ultra 200, Robic 210D' };
 
 const PAGE = 100;
 const emptyForm = () => ({

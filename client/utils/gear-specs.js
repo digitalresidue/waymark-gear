@@ -75,7 +75,7 @@ const FILL_POWERS = [450, 550, 650, 750, 800, 850, 900, 950, 1000];
 
 /**
  * Every spec field. kind: temp | weight | length | volume | dims | number |
- * choice | yesno. unit: what a bare number means when typed or imported.
+ * choice | yesno | text (free words, up to `max` characters). unit: what a bare number means when typed or imported.
  * range: a measured field's usual span (stored units), for Explore's slider
  * before the catalog has enough values of its own.
  * options: [value, label] for a choice; `aliases` other ways it's written.
@@ -88,6 +88,9 @@ export const SPEC_FIELDS = {
     frame: { label: 'Frame', ...choice([['framed', 'Framed'], ['frameless', 'Frameless']]) },
     roll_top: { label: 'Roll top', ...yesNo },
     adjustable_torso: { label: 'Adjustable torso', ...yesNo },
+    pack_type: { label: 'Pack type', ...choice([['fastpack', 'Fastpack'], ['pack', 'Pack'], ['hydration_vest', 'Hydration vest']]), aliases: { backpack: 'pack', fast: 'fastpack', vest: 'hydration_vest', runningvest: 'hydration_vest', hydrationpack: 'hydration_vest' } },
+    // Free text: fabrics keep changing (Ultra 200, Robic 210D, ECOPAK...).
+    fabric: { label: 'Fabric', kind: 'text', max: 60 },
 
     // Tents
     capacity: { label: 'Size', ...choice([['1p', '1P'], ['1p_plus', '1P+'], ['2p', '2P'], ['2p_plus', '2P+'], ['3p', '3P']]), aliases: { '1': '1p', '2': '2p', '3': '3p', '1person': '1p', '2person': '2p', '3person': '3p' } },
@@ -129,8 +132,8 @@ export const SPEC_FIELDS = {
 /** Gear types with specs: which categories they cover and their fields, in order. */
 export const SPEC_TYPES = [
     {
-        id: 'pack', label: 'Pack', categories: ['Pack', 'Backpack', 'Rucksack'],
-        fields: ['max_carry', 'volume', 'strap_type', 'frame', 'roll_top', 'adjustable_torso'],
+        id: 'pack', label: 'Pack', categories: ['Pack', 'Backpack', 'Rucksack', 'Fastpack', 'Fast Pack', 'Hydration Vest', 'Running Vest'],
+        fields: ['max_carry', 'volume', 'pack_type', 'strap_type', 'frame', 'roll_top', 'adjustable_torso', 'fabric'],
     },
     {
         id: 'tent', label: 'Tent', categories: ['Tent'],
@@ -179,6 +182,11 @@ export function readSpec(key, raw) {
     if (raw === undefined || raw === null || String(raw).trim() === '') return { value: undefined };
     const text = String(raw).trim();
     switch (field.kind) {
+    case 'text': {
+        // Free words, tidied: no control characters, single spaces.
+        const clean = [...text].filter((ch) => ch.charCodeAt(0) >= 32 && ch.charCodeAt(0) !== 127).join('').replace(/\s+/g, ' ').trim().slice(0, field.max || 60);
+        return { value: clean || undefined };
+    }
     case 'yesno': {
         const k = optionKey(text);
         if (['yes', 'y', 'true', '1', 'x'].includes(k)) return { value: true };
@@ -263,6 +271,7 @@ export function formatSpec(key, value) {
     const field = SPEC_FIELDS[key];
     if (!field || value === undefined || value === null) return '';
     switch (field.kind) {
+    case 'text': return String(value);
     case 'yesno': return value ? 'Yes' : 'No';
     case 'choice': return optionLabel(field, value);
     case 'number': return String(value);
@@ -288,6 +297,7 @@ export function specInput(key, value) {
     const field = SPEC_FIELDS[key];
     if (!field || value === undefined || value === null) return '';
     switch (field.kind) {
+    case 'text': return String(value);
     case 'yesno': return value ? 'yes' : 'no';
     case 'choice': return optionLabel(field, value);
     case 'number': return String(value);
@@ -310,6 +320,12 @@ export function filterKind(key) {
     const field = SPEC_FIELDS[key];
     if (!field) return null;
     if (['temp', 'weight', 'length', 'volume', 'number'].includes(field.kind) || (field.kind === 'choice' && field.numeric)) return 'range';
-    if (field.kind === 'choice' || field.kind === 'yesno') return 'match';
+    if (field.kind === 'choice' || field.kind === 'yesno' || field.kind === 'text') return 'match';
     return null;
+}
+
+/** How a value compares in a filter: words without regard to case, the rest as written. */
+export function matchKey(key, value) {
+    const field = SPEC_FIELDS[key];
+    return field && field.kind === 'text' ? String(value ?? '').trim().toLowerCase() : String(value);
 }
