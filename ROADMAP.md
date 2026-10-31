@@ -7,6 +7,10 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 32 — Explore packs: pack weight, max carry, volume, straps, frame, roll top, adjustable torso · 2026-10-31 · branch `explore-type-filters`
+- A category page always offers its gear type's filters, even before the catalog's gear has those specs filled in: every option of a choice (ones nothing has yet are shown greyed out), and a slider over the field's usual span (`range` in `gear-specs.js`) until there are values of its own. Fill power offers every standard step.
+- The filter column follows the type's order: on **Pack**, *Pack weight* (the item's weight), *Max carry weight*, *Volume*, *Shoulder straps*, *Frame*, *Roll top*, *Adjustable torso*, then Price and Brand. Pack fields are in this order in the editor and on gear pages too.
+
 ### Phase 8, part 30 — Explore gear: the catalog by category, with filters · 2026-10-31 · branch `explore-gear`
 - **`/explore` is now Explore gear**: every catalog category, under **Pack, Shelter, Sleep System and Clothing** first (always, in that order; Shelter holds tents, tarps, bivies and hammocks, and so on), then everything else A–Z. Spellings and plurals of a category are one ("Tent" and "Tents").
 - **`/explore/<category>`** (`/explore/shelter`, `/explore/cooking`) lists its gear with a **filter column**: category, brand and choice specs as checkboxes with counts; weight, price and measured specs (ratings, fill power, R-value, sizes…) as two-thumb **sliders** that show both units. Filters apply instantly, re-sort (lightest, cheapest, name), and live in the URL, so a link like *over 750 fill and under 5 lb* reproduces on the server, before any script. On phones the filters fold above the results.

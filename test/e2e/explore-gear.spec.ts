@@ -72,14 +72,14 @@ test('filter a category in place: brand, category, spec checkboxes and sliders; 
     expect((await names(page)).sort()).toEqual(['Cheap quilt', 'Heavy quilt', 'Warm quilt']);
     await slide(page, 'range-fill_power-min', 750);
     expect((await names(page)).sort()).toEqual(['Heavy quilt', 'Warm quilt']);
-    await expect(page.getByTestId('range-fill_power').locator('output')).toContainText('At least 800 fill');
+    await expect(page.getByTestId('range-fill_power').locator('output')).toContainText('At least 750 fill');
     await slide(page, 'range-weight-max', 2268); // 5 lb in grams
     expect(await names(page)).toEqual(['Warm quilt']);
     await expect(page.getByTestId('range-weight').locator('output')).toContainText('Up to');
 
     // The link reproduces it on the server, before any script runs.
     const link = page.url();
-    expect(link).toMatch(/fill_power_min=800/);
+    expect(link).toMatch(/fill_power_min=750/);
     const fresh = await (await browser.newContext({ javaScriptEnabled: false })).newPage();
     await fresh.goto(link);
     expect(await names(fresh)).toEqual(['Warm quilt']);
@@ -101,4 +101,41 @@ test('kits moved to /kits; old Explore kit links still land there', async ({ pag
     await page.getByTestId('nav-explore').click();
     await expect(page.getByTestId('nav-gear')).toHaveAttribute('href', '/explore');
     await expect(page.getByTestId('nav-kits')).toHaveAttribute('href', '/kits');
+});
+
+test('packs offer pack weight, max carry, volume, straps, frame, roll top and adjustable torso, even before specs are filled in', async ({ browser }, testInfo) => {
+    const page = await (await browser.newContext()).newPage();
+    const username = `wge2eowner${testInfo.workerIndex}`;
+    const r = await page.request.post(url('/register'), { data: { username, email: `${username}@example.com`, password: 'testtest' } });
+    if (r.status() !== 200) expect((await page.request.post(url('/signin'), { data: { username, password: 'testtest' } })).status()).toBe(200);
+    const brand = `Pk${Date.now().toString(36)}`;
+    const csv = ['sku,name,brand,category,weight,unit,price,status,volume,max_carry,strap_type,frame,roll_top,adjustable_torso',
+        `${brand}-1,Frameless 40,${brand},Packs,20,oz,250,published,40 L,25 lb,J-curve,Frameless,yes,no`,
+        `${brand}-2,Framed 55,${brand},Packs,36,oz,320,published,55 L,40 lb,S-curve,Framed,no,yes`,
+        `${brand}-3,Mystery pack,${brand},Packs,28,oz,200,published,,,,,,`].join('\n');
+    expect((await page.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } })).ok()).toBe(true);
+
+    await page.goto(url(`/explore/pack?brand=${brand.toLowerCase()}`));
+    // In this order, after the category.
+    const labels = await page.locator('#wgGearFilters .wgFilter').evaluateAll((els) => els.map((e) => (e.querySelector('legend, .wgFilterLabel') || {}).textContent?.trim()));
+    expect(labels.slice(0, 8)).toEqual(['Pack weight', 'Max carry weight', 'Volume', 'Shoulder straps', 'Frame', 'Roll top', 'Adjustable torso', 'Price']);
+    // Every strap style is listed; ones nothing has yet can't be picked.
+    const straps = page.getByTestId('filter-strap_type');
+    await expect(straps.locator('input')).toHaveCount(4);
+    await expect(straps.locator('input[value="vest"]')).toBeDisabled();
+
+    await straps.locator('input[value="j_curve"]').check();
+    expect(await names(page)).toEqual(['Frameless 40']);
+    await straps.locator('input[value="j_curve"]').uncheck();
+    await page.getByTestId('filter-frame').locator('input[value="framed"]').check();
+    expect(await names(page)).toEqual(['Framed 55']);
+    await page.getByTestId('filter-frame').locator('input[value="framed"]').uncheck();
+    await slide(page, 'range-volume-min', 50);
+    expect(await names(page)).toEqual(['Framed 55']);
+    await expect(page.getByTestId('range-volume').locator('output')).toContainText('At least 50 L');
+    await page.getByTestId('explore-clear').click();
+    await page.locator(`input[name="brand"][value="${brand.toLowerCase()}"]`).check();
+    await page.getByTestId('filter-roll_top').locator('input[value="true"]').check();
+    expect(await names(page)).toEqual(['Frameless 40']);
+    await page.context().close();
 });

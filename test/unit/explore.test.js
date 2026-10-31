@@ -57,8 +57,24 @@ describe('filters', () => {
         assert.ok(f.weight.min <= 250 && f.weight.max >= 1400);
         assert.ok(f.price.min <= 449 && f.price.max >= 699);
         const pitch = f.specs.find((s) => s.key === 'pitch');
-        assert.deepEqual(pitch.options.map((o) => [o.label, o.count]), [['Trekking pole', 2], ['Freestanding', 1]]);
+        // Every option, in order; ones nothing has yet count 0.
+        assert.deepEqual(pitch.options.map((o) => [o.label, o.count]), [['Trekking pole', 2], ['Semi-freestanding', 0], ['Freestanding', 1]]);
         assert.equal(f.specs.find((s) => s.key === 'trail_weight').kind, 'range');
+    });
+
+    test('a section offers its gear type\'s filters before any gear has those specs', () => {
+        const packs = [
+            { id: 'p1', name: 'Arc', brand: 'Zpacks', category: 'Packs', weightMg: 600000, price: 300, specs: {} },
+            { id: 'p2', name: 'Mariposa', brand: 'Gossamer', category: 'Packs', weightMg: 900000, price: 280, specs: {} },
+        ].map(filterItem);
+        assert.deepEqual(facetsFor(packs).specs, [], 'without the section, nothing to offer');
+        const f = facetsFor(packs, { categories: ['Packs'] });
+        assert.deepEqual(f.specs.map((x) => x.key), ['max_carry', 'volume', 'strap_type', 'frame', 'roll_top', 'adjustable_torso']);
+        const volume = f.specs.find((x) => x.key === 'volume');
+        assert.equal(volume.kind, 'range');
+        assert.ok(volume.min <= 10 && volume.max >= 90);
+        assert.deepEqual(f.specs.find((x) => x.key === 'strap_type').options.map((o) => [o.label, o.count]), [['J-curve', 0], ['S-curve', 0], ['Vest', 0], ['Other', 0]]);
+        assert.deepEqual(f.specs.find((x) => x.key === 'roll_top').options.map((o) => o.label), ['Yes', 'No']);
     });
 
     test('a link\'s filters, matched and written back', () => {
