@@ -46,3 +46,21 @@ describe('isNewShakedown', async () => {
         assert.equal(isNewShakedown({ shakedown: false, shakedownAt: '2026-10-26T19:00:00Z' }, now), false);
     });
 });
+
+describe('categoryKey', async () => {
+    const { categoryKey } = await import('../../client/utils/gear-meta.js');
+    test('spellings of one category match', () => {
+        const one = ['Mid Layer', 'mid-layer', 'Midlayer', 'Mid Layers', ' MID  LAYER '].map(categoryKey);
+        assert.equal(new Set(one).size, 1);
+        assert.equal(categoryKey('Accessories'), categoryKey('Accessory'));
+        assert.equal(categoryKey('Lights & Electronics'), categoryKey('Lights and electronics'));
+        assert.equal(categoryKey('Shells'), categoryKey('Shell'));
+    });
+    test('different categories stay different', () => {
+        assert.notEqual(categoryKey('Base Layer'), categoryKey('Mid Layer'));
+        assert.notEqual(categoryKey('Sleep'), categoryKey('Shelter'));
+        assert.equal(categoryKey('Gas'), 'gas');
+        assert.equal(categoryKey(''), '');
+    });
+});
+

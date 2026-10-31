@@ -71,3 +71,14 @@ export function gearAge(item, now = new Date()) {
     const years = Math.floor(months / 12);
     return `${years} ${years === 1 ? 'year' : 'years'} old`;
 }
+
+// Two category names that mean the same thing: case, spaces, hyphens and a
+// plural "s" don't matter, so "Mid Layer", "Mid-layer", "Midlayer" and
+// "Mid Layers" are one category. Used to put catalog gear into the category
+// the person already has instead of making a near-duplicate.
+export function categoryKey(name) {
+    const k = String(name || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '');
+    if (k.length <= 3) return k;
+    return k.replace(/ies$/, 'y').replace(/(?<!s)s$/, '');
+}
+

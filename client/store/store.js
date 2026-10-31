@@ -7,6 +7,7 @@ import { themePreference, setThemePreference } from '../utils/theme.js';
 import { diffLibrary } from '../utils/library-diff.js';
 import { writeOfflineCache, readOfflineCache, clearOfflineCache, isNetworkError } from '../utils/offline-cache.js';
 import { isPlaceholder } from '../utils/closet.js';
+import { categoryKey } from '../utils/gear-meta.js';
 
 const saveInterval = 5000;
 
@@ -253,7 +254,8 @@ const store = createStore({
             const list = library.getListById(library.defaultListId);
             const want = String(entry.category || 'Gear').trim();
             const categories = list.categoryIds.map((id) => library.getCategoryById(id)).filter(Boolean);
-            let category = categories.find((c) => (c.name || '').trim().toLowerCase() === want.toLowerCase());
+            // The list's own category for this type, however it's spelled.
+            let category = categories.find((c) => categoryKey(c.name) === categoryKey(want));
             if (!category) {
                 category = categories.find((c) => !(c.name || '').trim()
                     && c.categoryItems.every((ci) => isPlaceholder(library.getItemById(ci.itemId) || {})));

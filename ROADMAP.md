@@ -7,6 +7,9 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 26 — Catalog gear joins the category you already have · 2026-10-30 · branch `category-matching`
+- Adding catalog gear "by type" matched the list's categories by exact name, so a list with "Mid-layers" or "Midlayer" got a second "Mid Layer" category. Names now match ignoring case, spaces, hyphens, "&"/"and" and plurals (`categoryKey` in `client/utils/gear-meta.js`).
+
 ### Phase 8, part 24 — Gear makers: a grid that ends on a full row · 2026-10-30 · branch `home-brands-grid`
 - The homepage's brand grid fitted as many columns as the width allowed (7) but got 12 brands: one row of 7 and one of 5. It's now a fixed **7 across × 2 rows (14 brands)**, 4 × 3 on tablets and 2 × 4 on phones, leaving out brands past the last full row at that width.
 
