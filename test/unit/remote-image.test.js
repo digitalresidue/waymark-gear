@@ -30,3 +30,25 @@ describe('Copying image links', () => {
         }
     });
 });
+
+describe('our own copies as full links and back', async () => {
+    const config = (await import('config')).default;
+    const { absoluteImageUrl, localImagePath } = await import('../../server/remote-image.js');
+    const base = String(config.get('deployUrl')).replace(/\/+$/, '');
+    const host = new URL(base).host;
+
+    test('a copy shows as a full link on this site; other links are left alone', () => {
+        assert.equal(absoluteImageUrl('/userimages/site/ab/cd.webp'), `${base}/userimages/site/ab/cd.webp`);
+        assert.equal(absoluteImageUrl('https://example.com/a.jpg'), 'https://example.com/a.jpg');
+        assert.equal(absoluteImageUrl(''), '');
+    });
+
+    test('a full link to a copy here, or its path, reads back as the path', () => {
+        assert.equal(localImagePath(`${base}/userimages/site/ab/cd.webp`), '/userimages/site/ab/cd.webp');
+        assert.equal(localImagePath(`https://www.${host}/userimages/site/ab/cd.webp?v=2`), '/userimages/site/ab/cd.webp');
+        assert.equal(localImagePath('/userimages/site/ab/cd.webp'), '/userimages/site/ab/cd.webp');
+        assert.equal(localImagePath('https://example.com/userimages/site/ab/cd.webp'), null, 'another site');
+        assert.equal(localImagePath(`${base}/images/logo.png`), null, 'not a copy');
+        assert.equal(localImagePath('javascript:alert(1)'), null);
+    });
+});
