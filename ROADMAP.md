@@ -7,6 +7,9 @@ the plan below it is what comes next. Last updated **2026-10-28** (Phase 8 part 
 
 ## Changelog
 
+### Phase 8, part 28 — Socks, shoes, hats and underwear under Clothing · 2026-10-30 · branch `clothing-basics`
+- New Socks, Shoes (and the catalog's Footwear), Hat and Underwear categories added from the catalog now go in the list's **Clothing** group, with the layers and shells (`DEFAULT_GROUPS` in `client/utils/gear-meta.js`; singulars and plurals both match).
+
 ### Phase 8, part 27 — Category groups: Clothing over its layers · 2026-10-30 · branch `category-groups`
 - A list can gather categories under a **group** heading, one level deep: Clothing over Base Layer, Mid Layer, Outer Layer, Shells. The heading shows the group's combined weight and a count, folds its categories away, renames in place, and **Ungroup** drops the heading but keeps the categories.
 - Each category has a group button (folder icon): put it in a group, start a new one, or take it out. Dragging a category under a group's heading or between its categories joins it; dragging it out leaves. A group's categories always stay together, and a group with none left goes, so the list stays tidy.

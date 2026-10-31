@@ -81,8 +81,13 @@ describe('defaultGroupFor', () => {
             assert.equal(defaultGroupFor(t), CLOTHING_GROUP, t);
         }
         // A category named like a group itself (Shelter) stays a category.
-        for (const t of ['Shelter', 'Sleep', 'Footwear', 'Accessories', 'Cooking', 'Backpack', '']) {
+        for (const t of ['Shelter', 'Sleep', 'Accessories', 'Cooking', 'Backpack', '']) {
             assert.equal(defaultGroupFor(t), '', t);
+        }
+    });
+    test('socks, shoes, hats and underwear go under Clothing too', () => {
+        for (const t of ['Socks', 'Sock', 'Shoes', 'Shoe', 'Footwear', 'Hat', 'Hats', 'Underwear']) {
+            assert.equal(defaultGroupFor(t), CLOTHING_GROUP, t);
         }
     });
     test('pads, quilts, underquilts and bags go under Sleep System', () => {
