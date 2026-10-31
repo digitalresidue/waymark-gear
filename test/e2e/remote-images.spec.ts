@@ -75,13 +75,48 @@ test.describe('Image links are copied, not hotlinked', () => {
         ].join('\n');
         expect((await o.page.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } })).ok()).toBe(true);
         const find = async (name: string) => (await (await o.page.request.get(url(`/api/admin/catalog?q=${encodeURIComponent(name)}`))).json()).items[0];
-        await expect.poll(async () => (await find(`Import quilt ${tag}`)).imageUrl, { timeout: 20000 }).toMatch(/^\/userimages\//);
+        // The owner's list shows copies as full links to this site.
+        await expect.poll(async () => (await find(`Import quilt ${tag}`)).imageUrl, { timeout: 20000 }).toMatch(/^https?:\/\/[^/]+\/userimages\//);
 
         await o.page.goto(url('/owner/catalog'));
         await expect(o.page.getByTestId('remote-images')).toContainText(/still loads? from other websites/);
         await o.page.getByTestId('remote-images-copy').click();
         await expect(o.page.getByTestId('remote-images-result')).toContainText('couldn\'t be copied');
         await expect(o.page.getByTestId('remote-images')).toContainText(`Dead link pad ${tag}`);
+        await o.context.close();
+    });
+
+    test('a copied photo shows as a full link, saves again as is, and exports and re-imports unchanged', async ({ browser }, testInfo) => {
+        test.setTimeout(60000);
+        const o = await owner(browser, testInfo.workerIndex);
+        const tag = `rl${Date.now().toString(36)}`;
+        const created = await (await o.page.request.post(url('/api/admin/catalog'), { data: { name: `Linked tent ${tag}`, category: 'Shelter', weight: '20', unit: 'oz', status: 'published', imageUrl: BIG(), sku: `${tag}-1` } })).json();
+        const stored = created.item.imageUrl;
+        expect(stored).toMatch(/^\/userimages\//);
+        const full = new URL(stored, testRoot).toString();
+
+        // The editor shows the full link and saves it without complaint.
+        await o.page.goto(url('/owner/catalog'));
+        await o.page.getByPlaceholder('Search name, brand, SKU').fill(`Linked tent ${tag}`);
+        await o.page.getByRole('button', { name: `Edit Linked tent ${tag}`, exact: true }).click();
+        await expect(o.page.getByTestId('catalog-image-url')).toHaveValue(full);
+        await o.page.getByTestId('field-weight').fill('21');
+        await o.page.getByRole('button', { name: 'Save' }).click();
+        await expect(o.page.getByText(`Saved “Linked tent ${tag}”`)).toBeVisible();
+        const after = (await (await o.page.request.get(url(`/api/catalog?q=${encodeURIComponent(`Linked tent ${tag}`)}`))).json()).items[0];
+        expect(after.imageUrl).toBe(stored);
+
+        // Export: the full link. Importing the export changes nothing.
+        const exported = await (await o.page.request.get(url('/api/admin/catalog/export.csv'))).text();
+        const line = exported.split('\n').find((l) => l.includes(`Linked tent ${tag}`))!;
+        expect(line).toContain(full);
+        const head = exported.split('\n')[0];
+        const plan = await (await o.page.request.post(url('/api/admin/catalog/import/preview'), { data: { csv: `${head}\n${line}` } })).json();
+        expect(plan.summary).toMatchObject({ unchanged: 1, error: 0 });
+
+        // Pasting that full link onto a list item reuses the copy.
+        const reused = await (await o.page.request.post(url('/api/images/copy'), { data: { url: full } })).json();
+        expect(reused.imageUrl).toBe(stored);
         await o.context.close();
     });
 

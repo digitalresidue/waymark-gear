@@ -13,7 +13,7 @@ import { destination, getSettings } from './affiliate.js';
 import { isSupporter } from './billing.js';
 import { isUuid } from './catalog.js';
 import { logWithRequest } from './log.js';
-import { copyRemoteImage, isLocalImage, RemoteImageError } from './remote-image.js';
+import { copyRemoteImage, isLocalImage, localImagePath, RemoteImageError } from './remote-image.js';
 
 const router = express.Router();
 
@@ -36,6 +36,9 @@ const logoUrl = (v) => {
     const s = String(v || '').trim();
     if (!s) return '';
     if (/^\/userimages\/[\w/.-]+$/.test(s)) return s;
+    // Our own copy by its full link: kept, not fetched again.
+    const own = localImagePath(s);
+    if (own && /^\/userimages\/[\w/.-]+$/.test(own)) return own;
     return httpUrl(s);
 };
 

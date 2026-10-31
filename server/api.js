@@ -36,7 +36,7 @@ import { googleEnabled } from './google.js';
 import { logWithRequest } from './log.js';
 import { importRateLimit, ImportError } from './lighterpack.js';
 import { importFromLink } from './import-links.js';
-import { copyRemoteImage, isLocalImage, localizeCatalogImages, remoteCatalogImageCount, RemoteImageError } from './remote-image.js';
+import { absoluteImageUrl, copyRemoteImage, isLocalImage, localImagePath, localizeCatalogImages, remoteCatalogImageCount, RemoteImageError } from './remote-image.js';
 import { saveBadges, fetchMissingBadges, badgesFor, domainOf } from './shops.js';
 
 const router = express.Router();
@@ -686,7 +686,9 @@ function copyAllowed(userId) {
 
 router.post('/api/images/copy', requireJson, signedIn(async (req, res, user) => {
     const url = String((req.body && req.body.url) || '').trim();
-    if (isLocalImage(url)) return res.json({ imageUrl: url });
+    // Already one of ours (its path, or its full link on this site).
+    const own = localImagePath(url);
+    if (own) return res.json({ imageUrl: own });
     if (!copyAllowed(user.user_id)) return res.status(429).json({ message: 'That\'s a lot of images at once; try again in a minute.' });
     try {
         res.json(await copyRemoteImage(url, user.user_id));
@@ -733,7 +735,12 @@ router.get('/api/admin/catalog', admin(async (req, res) => {
     });
     // Each shop's current badge, for the editor.
     const badges = await badgesFor(found.items.flatMap((x) => (x.shops || []).map((y) => y.domain)));
-    found.items = found.items.map((x) => ({ ...x, shops: (x.shops || []).map((y) => ({ ...y, badgeUrl: (badges.get(y.domain) || {}).badgeUrl || '' })) }));
+    // Photos copied here as full links, as the editor shows and saves them.
+    found.items = found.items.map((x) => ({
+        ...x,
+        imageUrl: absoluteImageUrl(x.imageUrl),
+        shops: (x.shops || []).map((y) => ({ ...y, badgeUrl: (badges.get(y.domain) || {}).badgeUrl || '' })),
+    }));
     res.json(found);
 }));
 

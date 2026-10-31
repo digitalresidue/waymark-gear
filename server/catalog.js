@@ -11,6 +11,7 @@ import { stringify } from 'csv-stringify/sync';
 import knex from './db.js';
 import weightUtils from '../client/utils/weight.js';
 import { parseShops, shopsToApi, publicShops, SHOP_CSV_COLUMNS, MAX_SHOPS } from './shops.js';
+import { absoluteImageUrl, localImagePath } from './remote-image.js';
 import { readSpec, readSpecs, specInput, specTypeFor, filterKind, SPEC_KEYS } from '../client/utils/gear-specs.js';
 
 export const UNITS = ['g', 'kg', 'oz', 'lb'];
@@ -127,8 +128,12 @@ export function validateEntry(input) {
     // say nothing about the product. The normal product link has to be there
     // too: Supporters always get it, and it's what the gear page shows.
     if (affiliateUrl && !url) errors.push('add the normal product link (url) too: Supporters get that one, never the affiliate link');
-    const imageUrl = str(get('imageUrl', 'image_url'), 2000);
-    if (!isSafeUrl(imageUrl)) errors.push('image_url must start with http:// or https://');
+    // A photo already copied here comes back as its path or its full link on
+    // this site; both are stored as the copy's path, never fetched again.
+    let imageUrl = str(get('imageUrl', 'image_url'), 2000);
+    const ownCopy = localImagePath(imageUrl);
+    if (ownCopy) imageUrl = ownCopy;
+    else if (!isSafeUrl(imageUrl)) errors.push('image_url must be a link starting with http:// or https://');
 
     const status = str(get('status'), 20).toLowerCase() || 'published';
     if (!['published', 'draft'].includes(status)) errors.push('status must be published or draft');
@@ -314,17 +319,18 @@ export function neutralizeFormula(value) {
 }
 
 // badges: domain -> { name, badgeUrl } (shops.badgesFor), for the badge
-// columns; an exported badge is our own copy's path, which imports back as is.
+// columns. Photos and badges copied here export as full links to this site,
+// which import back as the same copies.
 export function toCsv(items, badges = new Map()) {
     const shopCells = (i) => Array.from({ length: MAX_SHOPS }, (_, n) => {
         const shop = (i.shops || [])[n];
         if (!shop) return ['', '', '', ''];
         const b = badges.get(shop.domain) || {};
-        return [shop.name, b.badgeUrl || '', shop.url, shop.affiliateUrl || ''];
+        return [shop.name, absoluteImageUrl(b.badgeUrl || ''), shop.url, shop.affiliateUrl || ''];
     }).flat();
     const rows = items.map((i) => [
         i.sku, i.name, i.brand, i.category, i.description, i.weight, i.unit,
-        i.price === null ? '' : i.price.toFixed(2), i.currency, i.url, i.imageUrl,
+        i.price === null ? '' : i.price.toFixed(2), i.currency, i.url, absoluteImageUrl(i.imageUrl),
         i.wornDefault ? 'true' : 'false', i.consumableDefault ? 'true' : 'false',
         (i.tags || []).join(';'), i.status, i.affiliateUrl || '', ...shopCells(i),
         ...SPEC_KEYS.map((k) => (specTypeFor(i.category) && i.specs && i.specs[k] !== undefined ? specInput(k, i.specs[k]) : '')),

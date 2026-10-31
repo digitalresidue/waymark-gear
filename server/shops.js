@@ -8,7 +8,7 @@
 // letter tile when it has none we can use.
 
 import knex from './db.js';
-import { copyRemoteImage, isLocalImage, RemoteImageError } from './remote-image.js';
+import { copyRemoteImage, isLocalImage, localImagePath, RemoteImageError } from './remote-image.js';
 
 export const MAX_SHOPS = 4;
 export const SHOP_CSV_COLUMNS = Array.from({ length: MAX_SHOPS }, (_, i) => [
@@ -54,7 +54,9 @@ export function parseShops(input, productUrl = '') {
         const name = str(s && s.name, 60);
         const url = str(s && s.url, 2000);
         const affiliateUrl = str(s && (s.affiliateUrl ?? s.affiliate_url), 2000);
-        const badge = str(s && s.badge, 2000);
+        // Our own copy (its path, or its full link on this site) stays as is.
+        const rawBadge = str(s && s.badge, 2000);
+        const badge = localImagePath(rawBadge) || rawBadge;
         if (!name && !url && !affiliateUrl && !badge) return;
         const n = i + 1;
         if (!url) {
