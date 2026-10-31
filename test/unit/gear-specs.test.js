@@ -64,6 +64,19 @@ describe('reading values', () => {
         assert.ok(readSpec('pitch', 'floaty').error);
     });
 
+    test('pack type and fabric', () => {
+        assert.deepEqual(readSpec('pack_type', 'Fast pack'), { value: 'fastpack' });
+        assert.deepEqual(readSpec('pack_type', 'running vest'), { value: 'hydration_vest' });
+        assert.deepEqual(readSpec('fabric', '  Ultra   200 '), { value: 'Ultra 200' });
+        assert.equal(readSpec('fabric', 'x'.repeat(100)).value.length, 60);
+        assert.deepEqual(readSpec('fabric', ''), { value: undefined });
+        assert.equal(formatSpec('fabric', 'Robic 210D'), 'Robic 210D');
+        assert.equal(formatSpec('pack_type', 'hydration_vest'), 'Hydration vest');
+        assert.equal(specTypeFor('Hydration Vest').id, 'pack');
+        assert.equal(specTypeFor('Fastpacks').id, 'pack');
+        assert.deepEqual(readSpecs('Fastpack', { pack_type: 'Fastpack', fabric: 'ECOPAK', volume: '25 L' }).specs, { volume: 25, pack_type: 'fastpack', fabric: 'ECOPAK' });
+    });
+
     test('readSpecs keeps only the type\'s fields, and down-only fields only for down', () => {
         const quilt = readSpecs('Top Quilt', { temp_comfort: '30F', temp_limit: '20F', insulation: 'Down', fill_power: '850', rds: 'yes', volume: '40 L' });
         assert.deepEqual(quilt.errors, []);

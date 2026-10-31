@@ -811,12 +811,13 @@ router.get('/explore/:slug', async (req, res) => {
             text: rangeLabel(key, chosen.min, chosen.max, facet),
         });
         const on = (list, value) => list.includes(value);
-        // The filter column, in order: category, weight, the section's specs
-        // (in their type's order: a pack's max carry, volume, straps...),
-        // price, brand.
+        // The filter column, in order: category, weight, price, then the
+        // section's specs in their type's order (a pack's max carry, volume,
+        // pack type, straps...), then brand.
         const packs = section.categories.length > 0 && section.categories.every((c) => (specTypeFor(c) || {}).id === 'pack');
         const blocks = [];
         if (facets.weight) blocks.push({ range: rangeOf('weight', packs ? 'Pack weight' : 'Weight', facets.weight, filters.weight) });
+        if (facets.price) blocks.push({ range: rangeOf('price', 'Price', facets.price, filters.price) });
         for (const f of facets.specs) {
             if (f.kind === 'range') blocks.push({ range: rangeOf(f.key, f.label, f, filters.specs[f.key] || {}, f.stops) });
             else {
@@ -832,7 +833,6 @@ router.get('/explore/:slug', async (req, res) => {
                 });
             }
         }
-        if (facets.price) blocks.push({ range: rangeOf('price', 'Price', facets.price, filters.price) });
         const total = items.length;
         const active = activeFilterCount(filters);
         const model = {

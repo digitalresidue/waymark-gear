@@ -109,20 +109,30 @@ test('packs offer pack weight, max carry, volume, straps, frame, roll top and ad
     const r = await page.request.post(url('/register'), { data: { username, email: `${username}@example.com`, password: 'testtest' } });
     if (r.status() !== 200) expect((await page.request.post(url('/signin'), { data: { username, password: 'testtest' } })).status()).toBe(200);
     const brand = `Pk${Date.now().toString(36)}`;
-    const csv = ['sku,name,brand,category,weight,unit,price,status,volume,max_carry,strap_type,frame,roll_top,adjustable_torso',
-        `${brand}-1,Frameless 40,${brand},Packs,20,oz,250,published,40 L,25 lb,J-curve,Frameless,yes,no`,
-        `${brand}-2,Framed 55,${brand},Packs,36,oz,320,published,55 L,40 lb,S-curve,Framed,no,yes`,
-        `${brand}-3,Mystery pack,${brand},Packs,28,oz,200,published,,,,,,`].join('\n');
+    const csv = ['sku,name,brand,category,weight,unit,price,status,volume,max_carry,strap_type,frame,roll_top,adjustable_torso,pack_type,fabric',
+        `${brand}-1,Frameless 40,${brand},Packs,20,oz,250,published,40 L,25 lb,J-curve,Frameless,yes,no,Pack,Ultra 200`,
+        `${brand}-2,Framed 55,${brand},Packs,36,oz,320,published,55 L,40 lb,S-curve,Framed,no,yes,Pack,Robic 210D`,
+        `${brand}-3,Mystery pack,${brand},Packs,28,oz,200,published,,,,,,,,`,
+        `${brand}-4,Trail vest 12,${brand},Hydration Vest,9,oz,160,published,12 L,,Vest,Frameless,no,no,Hydration vest,ultra 200`].join('\n');
     expect((await page.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } })).ok()).toBe(true);
 
     await page.goto(url(`/explore/pack?brand=${brand.toLowerCase()}`));
     // In this order, after the category.
     const labels = await page.locator('#wgGearFilters .wgFilter').evaluateAll((els) => els.map((e) => (e.querySelector('legend, .wgFilterLabel') || {}).textContent?.trim()));
-    expect(labels.slice(0, 8)).toEqual(['Pack weight', 'Max carry weight', 'Volume', 'Shoulder straps', 'Frame', 'Roll top', 'Adjustable torso', 'Price']);
+    expect(labels.slice(0, 11)).toEqual(['Category', 'Pack weight', 'Price', 'Max carry weight', 'Volume', 'Pack type', 'Shoulder straps', 'Frame', 'Roll top', 'Adjustable torso', 'Fabric']);
     // Every strap style is listed; ones nothing has yet can't be picked.
     const straps = page.getByTestId('filter-strap_type');
     await expect(straps.locator('input')).toHaveCount(4);
-    await expect(straps.locator('input[value="vest"]')).toBeDisabled();
+    await expect(straps.locator('input[value="other"]')).toBeDisabled();
+
+    // Hydration vests sit under Pack, with a pack type of their own.
+    await page.getByTestId('filter-pack_type').locator('input[value="hydration_vest"]').check();
+    expect(await names(page)).toEqual(['Trail vest 12']);
+    await page.getByTestId('filter-pack_type').locator('input[value="hydration_vest"]').uncheck();
+    // Fabric: the ones the catalog has, whatever their capitals.
+    await page.getByTestId('filter-fabric').locator('input[value="ultra 200"]').check();
+    expect(await names(page)).toEqual(['Trail vest 12', 'Frameless 40']);
+    await page.getByTestId('filter-fabric').locator('input[value="ultra 200"]').uncheck();
 
     await straps.locator('input[value="j_curve"]').check();
     expect(await names(page)).toEqual(['Frameless 40']);

@@ -69,12 +69,30 @@ describe('filters', () => {
         ].map(filterItem);
         assert.deepEqual(facetsFor(packs).specs, [], 'without the section, nothing to offer');
         const f = facetsFor(packs, { categories: ['Packs'] });
-        assert.deepEqual(f.specs.map((x) => x.key), ['max_carry', 'volume', 'strap_type', 'frame', 'roll_top', 'adjustable_torso']);
+        // Fabric is free words: offered once some pack says one.
+        assert.deepEqual(f.specs.map((x) => x.key), ['max_carry', 'volume', 'pack_type', 'strap_type', 'frame', 'roll_top', 'adjustable_torso']);
+        assert.deepEqual(f.specs.find((x) => x.key === 'pack_type').options.map((o) => o.label), ['Fastpack', 'Pack', 'Hydration vest']);
         const volume = f.specs.find((x) => x.key === 'volume');
         assert.equal(volume.kind, 'range');
         assert.ok(volume.min <= 10 && volume.max >= 90);
         assert.deepEqual(f.specs.find((x) => x.key === 'strap_type').options.map((o) => [o.label, o.count]), [['J-curve', 0], ['S-curve', 0], ['Vest', 0], ['Other', 0]]);
         assert.deepEqual(f.specs.find((x) => x.key === 'roll_top').options.map((o) => o.label), ['Yes', 'No']);
+    });
+
+    test('fabric: the fabrics the catalog has, matched without regard to case', () => {
+        const packs = [
+            { id: 'f1', name: 'A', brand: 'X', category: 'Packs', weightMg: 600000, price: 1, specs: { fabric: 'Ultra 200' } },
+            { id: 'f2', name: 'B', brand: 'X', category: 'Fastpack', weightMg: 500000, price: 1, specs: { fabric: 'ultra 200' } },
+            { id: 'f3', name: 'C', brand: 'X', category: 'Hydration Vest', weightMg: 300000, price: 1, specs: { fabric: 'Robic 210D' } },
+        ].map(filterItem);
+        const fabric = facetsFor(packs, { categories: ['Packs', 'Fastpack', 'Hydration Vest'] }).specs.find((x) => x.key === 'fabric');
+        assert.deepEqual(fabric.options.map((o) => [o.value, o.count]), [['ultra 200', 2], ['robic 210d', 1]]);
+        const f = readFilters(new URLSearchParams('fabric=ULTRA 200'));
+        assert.deepEqual(packs.filter((i) => matchesFilters(i, f)).map((i) => i.id), ['f1', 'f2']);
+        // Fastpacks and hydration vests sit under Pack.
+        assert.equal(parentOf('Fastpack'), 'pack');
+        assert.equal(parentOf('Hydration Vests'), 'pack');
+        assert.equal(parentOf('Fast Pack'), 'pack');
     });
 
     test('a link\'s filters, matched and written back', () => {
