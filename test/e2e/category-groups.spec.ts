@@ -25,7 +25,8 @@ async function seedLayers(browser: Browser, workerIndex: number, tag: string) {
         `${tag}-q,Summit quilt ${tag},Trailco,Top Quilt,,20,oz,,,false,false,,published`,
         `${tag}-p,Air pad ${tag},Trailco,Sleeping Pad,,13,oz,,,false,false,,published`,
         `${tag}-n,Solo tent ${tag},Trailco,Tent,,24,oz,,,false,false,,published`,
-        `${tag}-r,Flat tarp ${tag},Trailco,Tarps,,8,oz,,,false,false,,published`].join('\n');
+        `${tag}-r,Flat tarp ${tag},Trailco,Tarps,,8,oz,,,false,false,,published`,
+        `${tag}-k,Wool socks ${tag},Trailco,Socks,,2,oz,,,false,false,,published`].join('\n');
     expect((await page.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } })).ok()).toBe(true);
     await page.context().close();
 }
@@ -97,18 +98,18 @@ test('catalog gear added by type lands in its parent group: Clothing, Sleep Syst
     await page.getByTestId('rail-catalog').click();
     const panel = page.getByTestId('panel-catalog');
     await panel.getByTestId('catalog-panel-search').fill(tag);
-    for (const name of ['Trekking poles', 'Merino top', 'Summit quilt', 'Grid fleece', 'Air pad', 'Solo tent', 'Flat tarp']) {
+    for (const name of ['Trekking poles', 'Merino top', 'Summit quilt', 'Grid fleece', 'Air pad', 'Solo tent', 'Flat tarp', 'Wool socks']) {
         await panel.getByTestId('catalog-panel-result').filter({ hasText: `${name} ${tag}` }).getByTestId('catalog-panel-add').click();
     }
     const heads = page.getByTestId('group-head');
     await expect(heads).toHaveCount(3);
     await expect(heads.nth(0).getByTestId('group-name')).toHaveValue('Clothing');
-    await expect(heads.nth(0).getByTestId('group-meta')).toHaveText('2 categories');
+    await expect(heads.nth(0).getByTestId('group-meta')).toHaveText('3 categories');
     await expect(heads.nth(1).getByTestId('group-name')).toHaveValue('Sleep System');
     await expect(heads.nth(1).getByTestId('group-meta')).toHaveText('2 categories');
     await expect(heads.nth(2).getByTestId('group-name')).toHaveValue('Shelter');
     await expect(heads.nth(2).getByTestId('group-meta')).toHaveText('2 categories');
-    expect(await catNames(page)).toEqual(['Accessories', 'Base Layer', 'Mid Layer', 'Top Quilt', 'Sleeping Pad', 'Tent', 'Tarps']);
+    expect(await catNames(page)).toEqual(['Accessories', 'Base Layer', 'Mid Layer', 'Socks', 'Top Quilt', 'Sleeping Pad', 'Tent', 'Tarps']);
     await expect(page.getByTestId('category').first()).not.toHaveClass(/wgInGroup/);
 });
 
