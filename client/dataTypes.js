@@ -203,6 +203,10 @@ Category.prototype.save = function () {
     if (this.collapsed) {
         out.collapsed = true;
     }
+    // In one of its list's groups (List.groups), e.g. Mid Layer in Clothing.
+    if (this.groupId) {
+        out.groupId = this.groupId;
+    }
     return out;
 };
 
@@ -228,6 +232,11 @@ const List = function ({ id, library }) {
     this.id = id;
     this.name = '';
     this.categoryIds = [];
+    // Groups of categories, one level deep: [{ id, name, collapsed }]. A
+    // category joins one with its groupId; a group's categories always sit
+    // together in categoryIds, and a group with none left goes
+    // (normalizeGroups).
+    this.groups = [];
     this.chart = null;
     this.description = '';
     this.externalId = '';
@@ -262,6 +271,60 @@ List.prototype.removeCategory = function (categoryId) {
 
     this.categoryIds.splice(index, 1);
     return true;
+};
+
+List.prototype.getGroupById = function (id) {
+    return (this.groups || []).find((g) => g.id === id) || null;
+};
+
+/**
+ * Keep groups tidy: drop group ids that point nowhere and groups with no
+ * categories left, and keep each group's categories together, where its
+ * first one is. Returns true when something changed.
+ */
+List.prototype.normalizeGroups = function () {
+    if (!Array.isArray(this.groups)) this.groups = [];
+    const before = JSON.stringify([this.categoryIds, this.groups]);
+    const categories = this.categoryIds.map((id) => this.library.getCategoryById(id)).filter(Boolean);
+    const known = new Set(this.groups.map((g) => g.id));
+    for (const c of categories) {
+        if (c.groupId && !known.has(c.groupId)) delete c.groupId;
+    }
+    const order = [];
+    const placed = new Set();
+    for (const c of categories) {
+        if (!c.groupId) {
+            order.push(c.id);
+        } else if (!placed.has(c.groupId)) {
+            placed.add(c.groupId);
+            for (const m of categories) if (m.groupId === c.groupId) order.push(m.id);
+        }
+    }
+    // Ids with no category behind them keep their place at the end.
+    for (const id of this.categoryIds) if (!order.includes(id)) order.push(id);
+    this.categoryIds = order;
+    this.groups = this.groups.filter((g) => placed.has(g.id));
+    return before !== JSON.stringify([this.categoryIds, this.groups]);
+};
+
+/** The list's categories in order, with each group's header before its first. */
+List.prototype.groupedCategories = function () {
+    const out = [];
+    let current = null;
+    for (const id of this.categoryIds) {
+        const category = this.library.getCategoryById(id);
+        if (!category) continue;
+        const group = category.groupId ? this.getGroupById(category.groupId) : null;
+        if (group && (!current || current.group !== group)) {
+            current = { group, categories: [] };
+            out.push(current);
+        } else if (!group) {
+            current = null;
+        }
+        if (current) current.categories.push(category);
+        else out.push({ group: null, categories: [category] });
+    }
+    return out;
 };
 
 List.prototype.renderChart = function (type, linkParent) {
@@ -396,6 +459,9 @@ List.prototype.save = function () {
         externalId: this.externalId,
         optionalFields: assignIn({}, this.optionalFields),
     };
+    if (this.groups && this.groups.length) {
+        out.groups = this.groups.map((g) => (g.collapsed ? { id: g.id, name: g.name, collapsed: true } : { id: g.id, name: g.name }));
+    }
     // Only written when set, so libraries that never use them keep the shape
     // older clients wrote.
     if (this.pinned) out.pinned = true;
@@ -419,6 +485,8 @@ List.prototype.load = function (input) {
     assignIn(this, input);
     // A list created by a pre-0.4 client may lack per-list settings.
     this.optionalFields = assignIn({}, defaultOptionalFields, input.optionalFields);
+    this.groups = Array.isArray(input.groups) ? input.groups.map((g) => ({ ...g })) : [];
+    this.normalizeGroups();
     this.calculateTotals();
 };
 
@@ -610,6 +678,8 @@ Library.prototype.removeCategory = function (id, force) {
 
     this.categories.splice(this.categories.indexOf(category), 1);
     delete this.idMap[id];
+    // The last category of a group takes the group with it.
+    if (list) list.normalizeGroups();
 
     return true;
 };
@@ -647,11 +717,20 @@ Library.prototype.copyList = function (id) {
 
     copiedList.name = `Copy of ${oldList.name}`;
     copiedList.optionalFields = assignIn({}, oldList.optionalFields);
+    // Its groups too, with new ids.
+    const groupIds = new Map();
+    copiedList.groups = (oldList.groups || []).map((g) => {
+        const copy = { id: this.nextSequence(), name: g.name };
+        if (g.collapsed) copy.collapsed = true;
+        groupIds.set(g.id, copy.id);
+        return copy;
+    });
     for (const i in oldList.categoryIds) {
         const oldCategory = this.getCategoryById(oldList.categoryIds[i]);
         const copiedCategory = this.newCategory({ list: copiedList });
 
         copiedCategory.name = oldCategory.name;
+        if (oldCategory.groupId && groupIds.has(oldCategory.groupId)) copiedCategory.groupId = groupIds.get(oldCategory.groupId);
 
         for (const j in oldCategory.categoryItems) {
             copiedCategory.addItem(oldCategory.categoryItems[j]);
