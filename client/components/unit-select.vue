@@ -1,13 +1,13 @@
 <template>
     <div class="lpUnitSelect" data-testid="unit-select" :class="{lpOpen: isOpen, lpHover: isFocused}" @click="toggle">
-        <select class="lpUnit lpInvisible" :value="unit" @keyup="keyup($event)" @focus="focusSelect" @blur="blurSelect">
+        <select class="lpUnit lpInvisible" aria-label="Weight unit" :value="unit" @keyup="keyup($event)" @focus="focusSelect" @blur="blurSelect">
             <option v-for="unit in units" :key="unit" :value="unit">
                 {{ unit }}
             </option>
         </select>
         <span class="lpDisplay">{{ unit }}</span>
         <i class="lpSprite lpExpand" />
-        <ul :class="'lpUnitDropdown ' + unit">
+        <ul :class="'lpUnitDropdown ' + unit" aria-hidden="true">
             <li v-for="unit in units" :key="unit" :class="unit" @click="select(unit)">
                 {{ unit }}
             </li>

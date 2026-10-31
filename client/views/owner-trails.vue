@@ -3,7 +3,7 @@
         <siteHeader active="owner" />
         <template v-if="isAdmin">
             <ownerNav active="trails" />
-            <main class="wgPage wgOwner wgOwnerTrails">
+            <main id="wgMain" tabindex="-1" class="wgPage wgOwner wgOwnerTrails">
                 <div class="wgSectionHead">
                     <div>
                         <h1 class="wgH2">
@@ -47,11 +47,11 @@
                     <h2 class="wgProfileEditH">
                         All trails <span class="wgMuted">({{ trails.length }})</span>
                     </h2>
-                    <input v-model="filter" class="wgInput wgOwnerTrailFilter" placeholder="Filter by name or region" data-testid="trail-filter">
+                    <input v-model="filter" class="wgInput wgOwnerTrailFilter" placeholder="Filter by name or region" aria-label="Filter trails by name or region" data-testid="trail-filter">
                     <div class="wgOwnerTableWrap">
                         <table class="wgDevTable" data-testid="trail-table">
                             <thead>
-                                <tr><th>Trail</th><th>Region</th><th>Length</th><th>Packs</th><th>Lists</th><th /></tr>
+                                <tr><th>Trail</th><th>Region</th><th>Length</th><th>Packs</th><th>Lists</th><th><span class="wgVisuallyHidden">Actions</span></th></tr>
                             </thead>
                             <tbody>
                                 <tr v-for="t in shown" :key="t.id" data-testid="trail-row">
@@ -108,7 +108,7 @@
                 </form>
             </modal>
         </template>
-        <main v-else class="wgPage wgOwner">
+        <main v-else id="wgMain" tabindex="-1" class="wgPage wgOwner">
             <div class="wgEmpty">
                 <p><strong>Owner access only.</strong></p>
             </div>

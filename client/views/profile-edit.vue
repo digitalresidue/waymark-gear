@@ -1,7 +1,7 @@
 <template>
     <div class="wgHome">
         <siteHeader />
-        <main class="wgPage wgProfileEdit">
+        <main id="wgMain" tabindex="-1" class="wgPage wgProfileEdit">
             <div class="wgSectionHead">
                 <div>
                     <h1 class="wgH2">
@@ -331,7 +331,7 @@ export default {
 .wgProfileBannerEdit {
     align-items: flex-end;
     aspect-ratio: 3 / 1;
-    background: linear-gradient(135deg, #1D3B30, #3F6B52 60%, #C4571F 160%);
+    background: linear-gradient(135deg, #1D3B30, #3F6B52 60%, #B04E1B 160%);
     background-position: center;
     background-size: cover;
     display: flex;
@@ -363,7 +363,7 @@ export default {
     background: var(--lp-primary);
     border: 4px solid var(--lp-surface);
     border-radius: 50%;
-    color: #fff;
+    color: var(--lp-primary-ink);
     display: flex;
     font-family: $font-display;
     font-size: 40px;

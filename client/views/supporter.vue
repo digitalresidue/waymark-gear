@@ -1,7 +1,7 @@
 <template>
     <div class="wgHome">
         <siteHeader />
-        <main class="wgPage wgSupporterPage">
+        <main id="wgMain" tabindex="-1" class="wgPage wgSupporterPage">
             <h1 class="wgH2">
                 Support Waymark Gear
             </h1>
@@ -155,7 +155,7 @@ export default {
 }
 
 .wgSupporterBadge {
-    background: linear-gradient(135deg, #C4571F, #E39B3B);
+    background: linear-gradient(135deg, #B04E1B, #E39B3B);
     border-radius: 999px;
     color: #fff;
     font-size: 12px;

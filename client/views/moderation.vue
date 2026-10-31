@@ -3,7 +3,7 @@
         <siteHeader active="owner" />
         <template v-if="isModerator">
             <ownerNav active="users" />
-            <main id="lp-moderation" class="wgPage wgOwner wgModeration">
+            <main id="wgMain" tabindex="-1" class="wgPage wgOwner wgModeration">
                 <h1 class="wgH2">
                     Users
                 </h1>
@@ -30,7 +30,9 @@
                                 v-for="result in searchResults"
                                 :key="result.username"
                                 :class="{ wgActive: userToInspect && userToInspect.username === result.username }"
+                                tabindex="0"
                                 @click="setUser(result)"
+                                @keydown.enter="setUser(result)"
                             >
                                 <lp-user-identity :user="result" :query="matchedQuery" />
                             </li>
@@ -89,7 +91,7 @@
                                     Library of
                                     <lp-user-identity :user="userToInspect" :query="matchedQuery" />
                                 </p>
-                                <textarea id="lp-moderation-user-library-json" v-model="editableLibrary" class="wgTextarea" readonly />
+                                <textarea id="lp-moderation-user-library-json" v-model="editableLibrary" class="wgTextarea" aria-label="Library JSON" readonly />
                             </details>
                         </div>
                     </div>
@@ -98,7 +100,7 @@
                 <reportedComments />
             </main>
         </template>
-        <main v-else class="wgPage wgOwner">
+        <main v-else id="wgMain" tabindex="-1" class="wgPage wgOwner">
             <div class="wgEmpty">
                 <p><strong>Moderators only.</strong></p>
             </div>
@@ -263,7 +265,7 @@ export default {
 @import "../css/_globals";
 
 
-#lp-moderation {
+.wgModeration {
     max-width: 1000px;
 
     .wgDevCard {

@@ -317,7 +317,7 @@ export default {
 
 .wgThreadBtnPrimary {
     background: var(--lp-primary);
-    color: #fff;
+    color: var(--lp-primary-ink);
     font-size: 14px;
     min-height: 38px;
     padding: 6px 18px;
@@ -368,7 +368,7 @@ export default {
     align-items: center;
     background: var(--lp-primary);
     border-radius: 50%;
-    color: #fff;
+    color: var(--lp-primary-ink);
     display: inline-flex;
     font-size: 12px;
     font-weight: 800;

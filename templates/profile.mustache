@@ -31,7 +31,7 @@
     <body class="wgProfilePage">
         {{> siteHeader}}
 
-        <main class="wgProfile" data-testid="profile">
+        <main id="wgMain" tabindex="-1" class="wgProfile" data-testid="profile">
             <div class="wgProfileBanner{{^bannerUrl}} wgProfileBannerPlain{{/bannerUrl}}">
                 {{#bannerUrl}}<img src="{{bannerUrl}}" alt="" width="1500" height="500">{{/bannerUrl}}
             </div>

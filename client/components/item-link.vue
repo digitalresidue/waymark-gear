@@ -3,7 +3,7 @@
         <h2>Add a link for this item</h2>
         <form id="itemLinkForm" @submit.prevent="addLink">
             <div class="lpFields">
-                <input id="itemLink" v-model="url" type="text" placeholder="Item Link">
+                <input id="itemLink" v-model="url" type="text" placeholder="Item Link" aria-label="Item link">
             </div>
             <div class="lpButtons">
                 <input type="submit" class="lpButton" value="Save">

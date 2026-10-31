@@ -23,7 +23,7 @@
     <body class="wgProfilePage wgComparePage">
         {{> siteHeader}}
 
-        <main class="wgCompare">
+        <main id="wgMain" tabindex="-1" class="wgCompare">
             <header class="wgJournalHead">
                 <p class="wgJournalKicker">Compare gear</p>
                 <h1>Side by side</h1>
@@ -58,7 +58,7 @@
                         <tr><th scope="row">In public lists</th>{{#items}}<td>{{uses}}</td>{{/items}}</tr>
                         <tr><th scope="row">Category</th>{{#items}}<td>{{category}}</td>{{/items}}</tr>
                         <tr><th scope="row">About</th>{{#items}}<td class="wgCompareAbout">{{description}}</td>{{/items}}</tr>
-                        <tr><th scope="row"></th>{{#items}}<td>{{> buy}} <a href="/gear?wish={{id}}" class="wgBtn wgBtnGhost wgBtnSmall" data-testid="compare-wish">Add to wishlist</a></td>{{/items}}</tr>
+                        <tr><th scope="row"><span class="wgVisuallyHidden">Buy</span></th>{{#items}}<td>{{> buy}} <a href="/gear?wish={{id}}" class="wgBtn wgBtnGhost wgBtnSmall" data-testid="compare-wish">Add to wishlist</a></td>{{/items}}</tr>
                     </tbody>
                 </table>
             </div>

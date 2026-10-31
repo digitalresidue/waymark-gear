@@ -428,7 +428,7 @@ export default {
     &[aria-pressed="true"] {
         background: var(--lp-primary);
         border-color: var(--lp-primary);
-        color: #fff;
+        color: var(--lp-primary-ink);
     }
 }
 

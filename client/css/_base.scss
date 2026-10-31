@@ -133,3 +133,15 @@
 // The site footer lives in client/components/site-footer.vue -- both its shared
 // styles and its fixed variant, so the share bundle (which compiles this file
 // too) does not carry rules for a footer it never renders.
+
+// Readers who ask their system for less motion get it everywhere.
+@media (prefers-reduced-motion: reduce) {
+    .lp *,
+    .lp *::before,
+    .lp *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+}

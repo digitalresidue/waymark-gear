@@ -1,7 +1,7 @@
 <template>
     <div class="wgHome">
         <siteHeader active="trips" />
-        <main class="wgPage wgTripsPage">
+        <main id="wgMain" tabindex="-1" class="wgPage wgTripsPage">
             <div class="wgSectionHead">
                 <div>
                     <h1 class="wgH2">

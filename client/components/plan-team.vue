@@ -32,7 +32,7 @@
         </p>
         <p v-if="link" class="wgTeamLink">
             <span class="wgMuted">Link for the people you invite:</span>
-            <input :value="link" class="wgInput" readonly data-testid="team-link" @focus="$event.target.select()">
+            <input :value="link" class="wgInput" readonly aria-label="Invite link" data-testid="team-link" @focus="$event.target.select()">
         </p>
         <div class="wgImportActions">
             <button type="button" class="wgBtn wgBtnGhost" @click="$emit('hide')">
@@ -154,7 +154,7 @@ export default {
     align-items: center;
     background: var(--lp-primary);
     border-radius: 50%;
-    color: #fff;
+    color: var(--lp-primary-ink);
     display: inline-flex;
     flex: none;
     font-size: 13px;

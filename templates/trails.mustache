@@ -26,7 +26,7 @@
     <body class="wgProfilePage wgTrailsPage">
         {{> siteHeader}}
 
-        <main class="wgTrails">
+        <main id="wgMain" tabindex="-1" class="wgTrails">
             <p class="wgTrailKicker">Trails</p>
             {{#trailView}}
             <h1 class="wgTrailTitle" data-testid="trails-heading">What people carry on the <span id="wgTrailTitleName">{{trail.shortOrName}}</span></h1>

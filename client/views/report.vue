@@ -1,7 +1,7 @@
 <template>
     <div class="wgHome">
         <siteHeader />
-        <main class="wgPage wgReportPage">
+        <main id="wgMain" tabindex="-1" class="wgPage wgReportPage">
             <h1 class="wgH2">
                 Report a problem
             </h1>

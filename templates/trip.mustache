@@ -29,7 +29,7 @@
     <body class="wgProfilePage wgTripPage">
         {{> siteHeader}}
 
-        <main class="wgJournal" data-testid="trip-page">
+        <main id="wgMain" tabindex="-1" class="wgJournal" data-testid="trip-page">
             {{#coverUrl}}<div class="wgJournalCover"><img src="{{coverUrl}}" alt="" width="512" height="512"></div>{{/coverUrl}}
             <header class="wgJournalHead">
                 <p class="wgJournalKicker">

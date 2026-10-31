@@ -1,10 +1,10 @@
 <template>
     <form class="lpRegister lpFields" data-testid="register-form" @submit.prevent="submit">
         <div class="lpFields">
-            <input v-model="username" v-focus-on-create="autofocus" type="text" placeholder="Username" name="username">
-            <input v-model="email" type="email" placeholder="Email" name="email">
-            <input v-model="password" type="password" placeholder="Password" name="password">
-            <input v-model="passwordConfirm" type="password" placeholder="Confirm password" name="passwordConfirm">
+            <input v-model="username" v-focus-on-create="autofocus" type="text" placeholder="Username" aria-label="Username" autocomplete="username" name="username">
+            <input v-model="email" type="email" placeholder="Email" aria-label="Email" autocomplete="email" name="email">
+            <input v-model="password" type="password" placeholder="Password" aria-label="Password" autocomplete="new-password" name="password">
+            <input v-model="passwordConfirm" type="password" placeholder="Confirm password" aria-label="Confirm password" autocomplete="new-password" name="passwordConfirm">
         </div>
         <errors :errors="errors" />
         <div class="lpButtons">

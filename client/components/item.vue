@@ -4,15 +4,15 @@
             <div class="lpItemHandle lpHandle" title="Reorder this item" />
         </span>
         <span v-if="optionalFields['images']" class="lpImageCell">
-            <img v-if="thumbnailImage" class="lpItemImage" :src="thumbnailImage" :alt="`Photo of ${item.name || 'this item'}`" title="View photo" data-testid="item-thumb" @click="viewItemImage()">
+            <img v-if="thumbnailImage" class="lpItemImage" :src="thumbnailImage" :alt="`Photo of ${item.name || 'this item'}`" title="View photo" role="button" tabindex="0" data-testid="item-thumb" @click="viewItemImage()">
         </span>
         <!-- !! matters: the directive treats undefined as "focus", and _isNew
              is undefined on rows loaded from a save. -->
-        <input v-model="item.name" v-focus-on-create="!!categoryItem._isNew" type="text" class="lpName lpSilent" placeholder="Name" @input="saveItem">
-        <input v-model="item.description" type="text" class="lpDescription lpSilent" placeholder="Description" @input="saveItem">
+        <input v-model="item.name" v-focus-on-create="!!categoryItem._isNew" type="text" class="lpName lpSilent" placeholder="Name" aria-label="Item name" @input="saveItem">
+        <input v-model="item.description" type="text" class="lpDescription lpSilent" placeholder="Description" aria-label="Item description" @input="saveItem">
         <span class="lpActionsCell">
-            <i class="lpSprite lpCamera" title="Upload a photo or use a photo from the web" @click="updateItemImage" />
-            <i class="lpSprite lpLink" :class="{lpActive: item.url}" title="Add a link for this item" @click="updateItemLink" />
+            <i class="lpSprite lpCamera" title="Upload a photo or use a photo from the web" role="button" tabindex="0" aria-label="Upload a photo or use a photo from the web" @click="updateItemImage" />
+            <i class="lpSprite lpLink" :class="{lpActive: item.url}" title="Add a link for this item" role="button" tabindex="0" aria-label="Add a link for this item" @click="updateItemLink" />
             <button
                 type="button"
                 class="wgItemDetails"
@@ -25,26 +25,26 @@
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="11" r="2" /><path d="m21 16-5-5-8 8" /></svg>
                 <span v-if="mediaCount" class="wgItemMediaCount">{{ mediaCount }}</span>
             </button>
-            <i v-if="optionalFields['worn']" class="lpSprite lpWorn" :class="{lpActive: categoryItem.worn}" title="Mark this item as worn" @click="toggleWorn" />
-            <i v-if="optionalFields['consumable']" class="lpSprite lpConsumable" :class="{lpActive: categoryItem.consumable}" title="Mark this item as a consumable" @click="toggleConsumable" />
-            <i :class="'lpSprite lpStar lpStar' + categoryItem.star" title="Star this item" @click="cycleStar" />
+            <i v-if="optionalFields['worn']" class="lpSprite lpWorn" :class="{lpActive: categoryItem.worn}" title="Mark this item as worn" role="button" tabindex="0" aria-label="Worn" :aria-pressed="String(!!categoryItem.worn)" @click="toggleWorn" />
+            <i v-if="optionalFields['consumable']" class="lpSprite lpConsumable" :class="{lpActive: categoryItem.consumable}" title="Mark this item as a consumable" role="button" tabindex="0" aria-label="Consumable" :aria-pressed="String(!!categoryItem.consumable)" @click="toggleConsumable" />
+            <i :class="'lpSprite lpStar lpStar' + categoryItem.star" title="Star this item" role="button" tabindex="0" aria-label="Star this item" @click="cycleStar" />
         </span>
         <span v-if="optionalFields['price']" class="lpPriceCell">
-            <input v-model="displayPrice" v-empty-if-zero data-testid="item-price" type="text" :class="{lpPrice: true, lpNumber: true, lpSilent: true, lpSilentError: priceError}" @input="savePrice" @keydown.up="incrementPrice($event)" @keydown.down="decrementPrice($event)" @blur="setDisplayPrice">
+            <input v-model="displayPrice" v-empty-if-zero data-testid="item-price" type="text" :aria-label="`Price of ${item.name || 'item'}`" :class="{lpPrice: true, lpNumber: true, lpSilent: true, lpSilentError: priceError}" @input="savePrice" @keydown.up="incrementPrice($event)" @keydown.down="decrementPrice($event)" @blur="setDisplayPrice">
         </span>
         <span class="lpWeightCell lpNumber">
-            <input v-model="displayWeight" v-empty-if-zero data-testid="item-weight" type="text" :class="{lpWeight: true, lpNumber: true, lpSilent: true, lpSilentError: weightError}" @input="saveWeight" @keydown.up="incrementWeight($event)" @keydown.down="decrementWeight($event)">
+            <input v-model="displayWeight" v-empty-if-zero data-testid="item-weight" type="text" :aria-label="`Weight of ${item.name || 'item'}`" :class="{lpWeight: true, lpNumber: true, lpSilent: true, lpSilentError: weightError}" @input="saveWeight" @keydown.up="incrementWeight($event)" @keydown.down="decrementWeight($event)">
             <unitSelect :unit="item.authorUnit" :on-change="setUnit" />
         </span>
         <span class="lpQtyCell">
-            <input v-model="displayQty" data-testid="item-qty" type="text" :class="{lpQty: true, lpNumber: true, lpSilent: true, lpSilentError: qtyError || ownedShort, lpQtyMany: categoryItem.qty > 1}" :title="ownedShort ? `More than you own (${item.qtyOwned})` : null" :data-owned-short="ownedShort ? 'true' : null" @input="saveQty" @keydown.up="incrementQty($event)" @keydown.down="decrementQty($event)">
-            <span class="lpArrows">
-                <span class="lpSprite lpUp" @click="incrementQty($event)" />
-                <span class="lpSprite lpDown" @click="decrementQty($event)" />
+            <input v-model="displayQty" data-testid="item-qty" type="text" :aria-label="`Quantity of ${item.name || 'item'}`" :class="{lpQty: true, lpNumber: true, lpSilent: true, lpSilentError: qtyError || ownedShort, lpQtyMany: categoryItem.qty > 1}" :title="ownedShort ? `More than you own (${item.qtyOwned})` : null" :data-owned-short="ownedShort ? 'true' : null" @input="saveQty" @keydown.up="incrementQty($event)" @keydown.down="decrementQty($event)">
+            <span class="lpArrows" aria-hidden="true">
+                <span class="lpSprite lpUp" aria-hidden="true" @click="incrementQty($event)" />
+                <span class="lpSprite lpDown" aria-hidden="true" @click="decrementQty($event)" />
             </span>
         </span>
         <span class="lpRemoveCell">
-            <a class="lpRemove lpRemoveItem" title="Remove this item" @click="removeItem"><i class="lpSprite lpSpriteRemove" /></a>
+            <a class="lpRemove lpRemoveItem" title="Remove this item" role="button" tabindex="0" aria-label="Remove this item" @click="removeItem"><i class="lpSprite lpSpriteRemove" /></a>
         </span>
         <div v-if="showSharedBubble" class="lpItemHints lpItemHintsLeft">
             <div class="lpHintBubble lpSharedBubble" data-testid="shared-item-bubble">

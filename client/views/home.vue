@@ -2,7 +2,7 @@
     <div class="wgHome">
         <siteHeader />
 
-        <main>
+        <main id="wgMain" tabindex="-1">
             <!-- Hero -->
             <section class="wgPage wgHero">
                 <div class="wgHeroCopy">
@@ -1363,7 +1363,7 @@ export default {
     overflow: hidden;
     position: relative;
     border: 1px solid var(--lp-border);
-    border-left: 4px solid #C4571F;
+    border-left: 4px solid #B04E1B;
     border-radius: 16px;
     color: var(--lp-text);
     display: flex;
@@ -1374,7 +1374,7 @@ export default {
     transition: border-color 0.15s, transform 0.15s;
 
     &:hover {
-        border-color: #C4571F;
+        border-color: #B04E1B;
         transform: translateY(-1px);
     }
 }
@@ -1400,7 +1400,7 @@ export default {
 }
 
 .wgShakeCta {
-    color: #9A4312;
+    color: var(--lp-accent-orange);
     font-size: 14px;
     font-weight: 700;
     margin-top: 4px;

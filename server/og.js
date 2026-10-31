@@ -34,7 +34,7 @@ const logo = `data:image/png;base64,${fs.readFileSync(path.join(publicDir, 'imag
 const FOREST = '#1D3B30';
 const CREAM = '#F5F2E8';
 const MUTED = '#B9C7BD';
-const ORANGE = '#C4571F';
+const ORANGE = '#B04E1B';
 const BAR_COLORS = ['#7FB08F', '#E39B5C', '#8CB3D1', '#D9C26B', '#B58BC4', '#6FA8A0', '#D98080', '#A7A7A7'];
 
 // A tiny hyperscript for satori's element objects. Every box with more than

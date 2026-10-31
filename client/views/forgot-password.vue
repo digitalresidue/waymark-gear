@@ -2,14 +2,14 @@
     <authLayout card-id="forgotPassword" title="Account recovery" :google="false" wide>
         <div class="columns">
             <div class="lpHalf">
-                <h3>
+                <h2 class="wgAuthSubhead">
                     Forgot Your Password?
-                </h3>
+                </h2>
 
                 <p>Enter your username and we'll email you a link to choose a new password.</p>
                 <form class="forgotPassword" @submit.prevent="requestPasswordReset">
                     <div class="lpFields">
-                        <input v-model="forgotPasswordUsername" type="text" placeholder="Username" name="username" class="username">
+                        <input v-model="forgotPasswordUsername" type="text" placeholder="Username" aria-label="Username" autocomplete="username" name="username" class="username">
                         <input type="submit" value="Submit" class="lpButton">
                     </div>
 
@@ -17,14 +17,14 @@
                 </form>
             </div>
             <div class="lpHalf">
-                <h3>
+                <h2 class="wgAuthSubhead">
                     Forgot Your Username?
-                </h3>
+                </h2>
 
                 <p>Please enter your email address.</p>
                 <form class="forgotUsername" @submit.prevent="forgotUsername">
                     <div class="lpFields">
-                        <input v-model="forgotUsernameEmail" type="text" placeholder="Email Address" name="email" class="email">
+                        <input v-model="forgotUsernameEmail" type="text" placeholder="Email Address" aria-label="Email address" autocomplete="email" name="email" class="email">
                         <input type="submit" value="Submit" class="lpButton">
                     </div>
 
@@ -113,6 +113,11 @@ export default {
 
 <style lang="scss">
 @import "../css/_globals";
+
+.wgAuthSubhead {
+    font-size: 17px;
+    margin: 0 0 8px;
+}
 
 // Two halves side by side need more room than a default dialog.
 @media only screen and (width > $mobile) {

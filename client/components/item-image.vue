@@ -6,7 +6,7 @@
                     <h2>Add image by URL</h2>
                     <form id="itemImageUrlForm" @submit.prevent="saveImageUrl()">
                         <div class="lpFields">
-                            <input id="itemImageUrl" v-model="imageUrl" type="text" placeholder="Image URL" :disabled="copying" data-testid="item-image-url">
+                            <input id="itemImageUrl" v-model="imageUrl" type="text" placeholder="Image URL" aria-label="Image URL" :disabled="copying" data-testid="item-image-url">
                         </div>
                         <!-- The photo is copied to Waymark (fit within 512px), so
                              your list never loads it from the shop's site. -->
@@ -45,8 +45,8 @@
                 </div>
             </div>
         </modal>
-        <form id="imageUpload" ref="imageUploadForm">
-            <input id="image" ref="imageInput" type="file" name="image" @change="uploadImage">
+        <form id="imageUpload" ref="imageUploadForm" hidden>
+            <input id="image" ref="imageInput" type="file" name="image" aria-label="Image to upload" tabindex="-1" @change="uploadImage">
         </form>
     </div>
 </template>

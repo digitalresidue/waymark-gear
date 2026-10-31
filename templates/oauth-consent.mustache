@@ -18,7 +18,7 @@
     </head>
     <body class="wgProfilePage">
         {{> siteHeader}}
-        <main class="wgJournal wgConsent" data-testid="oauth-consent">
+        <main id="wgMain" tabindex="-1" class="wgJournal wgConsent" data-testid="oauth-consent">
             <h1>Connect {{clientName}} to Waymark Gear?</h1>
             <p>Signed in as <strong>@{{username}}</strong>. {{clientName}} wants to use your gear through Waymark's AI connection (MCP).</p>
             <p class="wgMuted" data-testid="oauth-destination">After you choose, you'll be sent back to <strong>{{redirectHost}}</strong>. Only connect apps you set up yourself.</p>

@@ -161,7 +161,7 @@ index = index.replace('{{scripts}}', appScriptsHtml);
 // Social previews need an absolute image URL.
 index = index.replace('content="/images/og-image.png"', `content="${config.get('deployUrl')}/images/og-image.png"`);
 
-// Long-form document pages (/privacy, /terms) are rendered from markdown once
+// Long-form document pages (/privacy, /terms, /accessibility) are rendered from markdown once
 // at startup and served as static HTML — no JS, no database, nothing
 // per-request to get wrong. The shared marked renderer is hardened for
 // untrusted list descriptions: it drops inline HTML and stamps
@@ -181,6 +181,12 @@ const docPages = [
         file: 'TERMS.md',
         title: 'Terms of Use',
         description: 'The house rules for using Waymark Gear, in plain English.',
+    },
+    {
+        path: '/accessibility',
+        file: 'ACCESSIBILITY.md',
+        title: 'Accessibility',
+        description: 'How Waymark Gear works with keyboards, screen readers and other assistive technology, and how to report a problem.',
     },
 ];
 

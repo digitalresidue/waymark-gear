@@ -1,7 +1,7 @@
 <template>
     <div class="lpModalContainer">
         <transition name="lpModal">
-            <div v-if="shown" :id="id" class="lpModal">
+            <div v-if="shown" :id="id" ref="dialog" class="lpModal" role="dialog" aria-modal="true" tabindex="-1" @keydown.tab="trapTab">
                 <slot />
             </div>
         </transition>
@@ -35,6 +35,22 @@ export default {
         },
     },
     emits: ['hide'],
+    watch: {
+        // Keyboard and screen-reader users land inside the dialog when it
+        // opens, stay in it while it's open, and go back where they were.
+        shown(open) {
+            if (open) {
+                this.opener = document.activeElement;
+                this.$nextTick(() => this.focusDialog());
+            } else if (this.opener && document.contains(this.opener)) {
+                this.opener.focus();
+                this.opener = null;
+            }
+        },
+    },
+    mounted() {
+        if (this.shown) this.$nextTick(() => this.focusDialog());
+    },
     beforeMount() {
         this.bindEscape();
     },
@@ -42,6 +58,38 @@ export default {
         this.unbindEscape();
     },
     methods: {
+        focusables() {
+            const el = this.$refs.dialog;
+            if (!el) return [];
+            return [...el.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+                .filter((n) => n.offsetParent !== null || n === document.activeElement);
+        },
+        focusDialog() {
+            const el = this.$refs.dialog;
+            if (!el || el.contains(document.activeElement)) return;
+            const heading = el.querySelector('h1, h2, h3');
+            if (heading && !el.hasAttribute('aria-label')) {
+                if (!heading.id) heading.id = `lpModalTitle${Math.random().toString(36).slice(2, 8)}`;
+                el.setAttribute('aria-labelledby', heading.id);
+            }
+            el.focus();
+        },
+        trapTab(evt) {
+            const items = this.focusables();
+            if (!items.length) {
+                evt.preventDefault();
+                return;
+            }
+            const first = items[0];
+            const last = items[items.length - 1];
+            if (evt.shiftKey && (document.activeElement === first || document.activeElement === this.$refs.dialog)) {
+                evt.preventDefault();
+                last.focus();
+            } else if (!evt.shiftKey && document.activeElement === last) {
+                evt.preventDefault();
+                first.focus();
+            }
+        },
         hide() {
             this.$emit('hide');
         },
@@ -62,6 +110,12 @@ export default {
 
 <style lang="scss">
 @import "../css/_globals";
+
+.lpModal:focus,
+.lpModal:focus-visible {
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.25);
+    outline: none;
+}
 
 .lpModal {
     background: var(--lp-bg);

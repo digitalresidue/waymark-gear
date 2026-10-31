@@ -261,7 +261,7 @@
 
     .wgBadgeWarn {
         background: var(--lp-warning-bg);
-        color: var(--lp-warning-border);
+        color: var(--lp-warning-text);
     }
 
     // Segmented control (weight classes, tabs).
@@ -343,7 +343,7 @@
 }
 
 // Category/data colors for weight bars, in order.
-$wg-data-colors: #1D3B30, #4F7A5A, #9DB8A0, #C4571F, #D9C7A7, #6B756F;
+$wg-data-colors: #1D3B30, #4F7A5A, #9DB8A0, #B04E1B, #D9C7A7, #6B756F;
 @each $c in $wg-data-colors {
     $i: list.index($wg-data-colors, $c);
     .lp .wgData#{$i} {

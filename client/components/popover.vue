@@ -19,7 +19,19 @@
              around the whole popover: content and target share that wrapper, so
              taps on the controls inside an open menu were read as taps on the
              button that opens it. -->
-        <div class="lpTarget" @click="$emit('target-tap')">
+        <!-- Opens from the keyboard too: the target is a button unless it
+             already holds one of its own. -->
+        <div
+            ref="target"
+            class="lpTarget"
+            :role="ownControl ? null : 'button'"
+            :tabindex="ownControl ? null : 0"
+            :aria-expanded="ownControl ? null : String(shown)"
+            :aria-haspopup="ownControl ? null : 'true'"
+            @click="$emit('target-tap')"
+            @keydown.enter.self.prevent="$emit('target-key')"
+            @keydown.space.self.prevent="$emit('target-key')"
+        >
             <slot name="target" />
         </div>
         <div class="lpContent">
@@ -41,7 +53,22 @@ export default {
             required: true,
         },
     },
-    emits: ['hide', 'target-tap'],
+    emits: ['hide', 'target-tap', 'target-key'],
+    data() {
+        return { ownControl: false };
+    },
+    watch: {
+        // Closing with focus inside the menu would drop it on the page;
+        // hand it back to what opened the menu.
+        shown(open) {
+            if (open || this.ownControl) return;
+            const content = this.$el.querySelector('.lpContent');
+            if (content && content.contains(document.activeElement)) this.$refs.target.focus();
+        },
+    },
+    mounted() {
+        this.ownControl = !!this.$refs.target?.querySelector('button, a[href], input, select, textarea');
+    },
     beforeMount() {
         this.bindEscape();
     },
@@ -100,6 +127,10 @@ export default {
         top: 100%;
         transform: translateX(-50%);
         transition: all 0.15s;
+        // Hidden menus are out of the tab order and the accessibility tree,
+        // not just transparent. (visibility flips at the visible end of the
+        // fade, so the fade still plays both ways.)
+        visibility: hidden;
         white-space: nowrap;
         z-index: $dialog;
 
@@ -148,6 +179,7 @@ export default {
             margin-top: 10px;
             opacity: 1;
             pointer-events: all;
+            visibility: visible;
         }
     }
 }

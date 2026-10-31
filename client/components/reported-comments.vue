@@ -84,7 +84,7 @@ export default {
 }
 
 .wgReportsCount {
-    background: #C4571F;
+    background: #B04E1B;
     border-radius: 999px;
     color: #fff;
     font-size: 12px;

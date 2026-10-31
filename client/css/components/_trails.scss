@@ -14,7 +14,7 @@
 }
 
 .wgTrailKicker {
-    color: var(--lp-accent-orange, #C4571F);
+    color: var(--lp-accent-orange, #B04E1B);
     font: 700 12px/1 $font-mono;
     letter-spacing: 0.14em;
     margin: 0 0 6px;
@@ -90,11 +90,11 @@
 
     &[aria-current="true"] {
         background: var(--lp-primary);
-        color: #fff;
+        color: var(--lp-primary-ink);
 
         span {
-            background: rgba(255, 255, 255, 0.2);
-            color: #fff;
+            background: color-mix(in srgb, var(--lp-primary-ink) 18%, transparent);
+            color: var(--lp-primary-ink);
         }
     }
 }
@@ -341,7 +341,7 @@
 
 .wgTrailCarried ol li:first-child .wgTrailRank {
     background: var(--lp-primary);
-    color: #fff;
+    color: var(--lp-primary-ink);
 }
 
 .wgTrailCarriedItem {
@@ -430,7 +430,7 @@
 }
 
 .wgTrailShakedown {
-    color: var(--lp-accent-orange, #C4571F);
+    color: var(--lp-accent-orange, #B04E1B);
     font-weight: 650;
 }
 
@@ -447,7 +447,7 @@
 .wgBar0 { background: #1D3B30; }
 .wgBar1 { background: #4E7A5E; }
 .wgBar2 { background: #9DB8A4; }
-.wgBar3 { background: #C4571F; }
+.wgBar3 { background: #B04E1B; }
 .wgBar4 { background: #DCC6A0; }
 .wgBar5 { background: #6B6F6C; }
 

@@ -27,7 +27,7 @@
     <body class="wgProfilePage wgGearPage">
         {{> siteHeader}}
 
-        <main class="wgJournal">
+        <main id="wgMain" tabindex="-1" class="wgJournal">
             {{#item}}
             <section class="wgGearHero" data-testid="gear-page">
                 <div class="wgGearHeroImg">
@@ -99,6 +99,7 @@
                     <ul class="wgReviewSuggestList" data-testid="review-suggestions"></ul>
                 </div>
             </section>
+            <h2 class="wgVisuallyHidden">Latest reviews</h2>
             <ol class="wgReviewList" data-testid="latest-reviews">
                 {{#reviews}}{{> reviewCard}}{{/reviews}}
             </ol>

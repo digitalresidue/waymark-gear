@@ -1,5 +1,5 @@
 <template>
-    <div v-if="isLoaded" id="lpGear">
+    <main v-if="isLoaded" id="lpGear">
         <div class="lpGearHeader">
             <!-- An SVG rather than a ‹ glyph: the character's baseline sits
                  well off centre against the title, and where it lands varies
@@ -108,7 +108,7 @@
         />
         <gearDetails :shown="Boolean(detailsItem)" :item="detailsItem" @hide="detailsItem = null" />
         <globalAlerts />
-    </div>
+    </main>
 </template>
 
 <script>
@@ -456,7 +456,7 @@ export default {
 .lpGearChipActive {
     // The sidebar is white since the redesign, which left white text on white.
     background: var(--lp-primary);
-    color: #fff;
+    color: var(--lp-primary-ink);
 }
 
 .lpGearList {

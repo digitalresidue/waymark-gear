@@ -1,6 +1,6 @@
 <template>
     <div @mouseenter="onPointerEnter" @mouseleave="onPointerLeave">
-        <Popover :shown="shown" @hide="hide" @target-tap="toggleOnTap">
+        <Popover :shown="shown" @hide="hide" @target-tap="toggleOnTap" @target-key="toggle">
             <template #target>
                 <slot name="target" />
             </template>
@@ -61,6 +61,14 @@ export default {
             if (this.hasHover()) {
                 return;
             }
+            if (this.shown) {
+                this.hide();
+            } else {
+                this.show();
+            }
+        },
+        // Enter or Space on the focused target, whatever the pointer.
+        toggle() {
             if (this.shown) {
                 this.hide();
             } else {

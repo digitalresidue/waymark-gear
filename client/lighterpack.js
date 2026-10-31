@@ -11,6 +11,7 @@ import routes from './routes';
 import store from './store/store';
 import { writeOfflineCache } from './utils/offline-cache.js';
 import { connectLive, disconnectLive, watchKey } from './utils/live.js';
+import { initKeyboardClicks } from './utils/keyboard-clicks.js';
 import { selectOnFocus, focusOnCreate, emptyIfZero, clickOutside } from './utils/focus.js';
 
 import './utils/utils.js';
@@ -24,6 +25,7 @@ const router = createRouter({
 });
 
 const app = createApp(RouterView);
+initKeyboardClicks();
 
 // Planning a shared list (/plan/:owner/:listId) swaps in a one-list library;
 // leaving it for anything but Pack or Print brings your own back. The guard

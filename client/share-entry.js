@@ -154,31 +154,42 @@ function initEventHandlers() {
             }
 
             // Clicking a unit option
-            const unit = option.textContent.trim();
-            const displayEl = unitSelectEl.querySelector('.lpDisplay');
-            const unitInput = unitSelectEl.querySelector('.lpUnit');
-            if (displayEl) displayEl.textContent = unit;
-            if (unitInput) unitInput.value = unit;
+            applyUnit(unitSelectEl, option.textContent.trim());
+        });
 
-            if (unitSelectEl.closest('.lpTotalUnit')) {
-                const totalValue = unitSelectEl.closest('.lpTotal')?.querySelector('.lpTotalValue');
-                const mgInput = unitSelectEl.querySelector('.lpMG');
-                if (totalValue && mgInput) {
-                    totalValue.textContent = MgToWeight(parseFloat(mgInput.value), unit);
-                }
-                updateSubtotalsUnit(unit);
-            } else {
-                list.querySelectorAll('.lpWeight').forEach((weightEl) => {
-                    const weightCell = weightEl.parentElement;
-                    const mgInput = weightCell.querySelector('.lpMG');
-                    const displaySpan = weightCell.querySelector('.lpDisplay');
-                    if (mgInput) weightEl.textContent = MgToWeight(parseFloat(mgInput.value), unit);
-                    if (displaySpan) displaySpan.textContent = unit;
-                });
-            }
+        // The picker's real <select> is what a keyboard reaches; its change
+        // does what clicking an option does.
+        list.addEventListener('change', (evt) => {
+            const select = evt.target.closest('.lpUnitSelect select.lpUnit');
+            if (select) applyUnit(select.closest('.lpUnitSelect'), select.value);
         });
     }
 
+    function applyUnit(unitSelectEl, unit) {
+        const displayEl = unitSelectEl.querySelector('.lpDisplay');
+        const unitInput = unitSelectEl.querySelector('.lpUnit');
+        if (displayEl) displayEl.textContent = unit;
+        if (unitInput) unitInput.value = unit;
+
+        if (unitSelectEl.closest('.lpTotalUnit')) {
+            const totalValue = unitSelectEl.closest('.lpTotal')?.querySelector('.lpTotalValue');
+            const mgInput = unitSelectEl.querySelector('.lpMG');
+            if (totalValue && mgInput) {
+                totalValue.textContent = MgToWeight(parseFloat(mgInput.value), unit);
+            }
+            updateSubtotalsUnit(unit);
+        } else {
+            list.querySelectorAll('.lpWeight').forEach((weightEl) => {
+                const weightCell = weightEl.parentElement;
+                const mgInput = weightCell.querySelector('.lpMG');
+                const displaySpan = weightCell.querySelector('.lpDisplay');
+                if (mgInput) weightEl.textContent = MgToWeight(parseFloat(mgInput.value), unit);
+                if (displaySpan) displaySpan.textContent = unit;
+            });
+        }
+    }
+
+    let lastPhoto = null;
     if (categories && imageModal && modalOverlay) {
         categories.addEventListener('click', (evt) => {
             const link = evt.target.closest('.lpItemImage');
@@ -187,12 +198,28 @@ function initEventHandlers() {
             const imageUrl = link.getAttribute('href');
             const img = document.createElement('img');
             img.src = imageUrl;
+            img.alt = link.alt || 'Item photo';
             imageModal.innerHTML = '';
             imageModal.appendChild(img);
             img.addEventListener('load', () => {
                 imageModal.style.display = 'block';
                 modalOverlay.style.display = 'block';
             });
+        });
+
+        // Photos open from the keyboard too, and Escape closes them.
+        categories.addEventListener('keydown', (evt) => {
+            if ((evt.key === 'Enter' || evt.key === ' ') && evt.target.closest('.lpItemImage')) {
+                evt.preventDefault();
+                lastPhoto = evt.target.closest('.lpItemImage');
+                lastPhoto.click();
+            }
+        });
+        document.addEventListener('keydown', (evt) => {
+            if (evt.key !== 'Escape' || imageModal.style.display !== 'block') return;
+            imageModal.style.display = 'none';
+            modalOverlay.style.display = 'none';
+            if (lastPhoto) lastPhoto.focus();
         });
 
         modalOverlay.addEventListener('click', () => {

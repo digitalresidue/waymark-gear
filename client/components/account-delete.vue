@@ -13,9 +13,9 @@
                 If you want to delete your account, enter the text <strong>delete my account</strong>:
             </p>
             <div class="lpFields">
-                <input v-if="hasPassword" v-model="currentPassword" type="password" placeholder="Current password" name="currentPassword" class="currentPassword">
+                <input v-if="hasPassword" v-model="currentPassword" type="password" placeholder="Current password" aria-label="Current password" autocomplete="current-password" name="currentPassword" class="currentPassword">
 
-                <input v-model="confirmationText" type="text" name="confirmationText" placeholder="Confirmation text" autocapitalize="none" autocorrect="off" spellcheck="false">
+                <input v-model="confirmationText" type="text" name="confirmationText" placeholder="Confirmation text" aria-label="Confirmation text" autocapitalize="none" autocorrect="off" spellcheck="false">
             </div>
 
             <errors :errors="errors" />

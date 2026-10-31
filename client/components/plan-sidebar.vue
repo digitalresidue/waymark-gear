@@ -1,5 +1,5 @@
 <template>
-    <div id="sidebar" class="wgPlanSidebar" data-testid="plan-sidebar">
+    <aside id="sidebar" class="wgPlanSidebar" aria-label="Shared plan" data-testid="plan-sidebar">
         <div class="lpSidebarSticky">
             <router-link to="/" class="wgBtn wgBtnGhost wgBtnSmall wgPlanBack" data-testid="plan-back">
                 ‹ My lists
@@ -26,7 +26,7 @@
                 Gear you add here belongs to this list. “Add from catalog” fills in weights for you. Set who carries what under “Who carries what”.
             </p>
         </div>
-    </div>
+    </aside>
 </template>
 
 <script>

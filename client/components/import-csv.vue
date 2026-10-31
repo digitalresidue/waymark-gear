@@ -25,8 +25,8 @@
             <a id="importConfirm" class="lpButton" @click="importList">Import List</a>
             <a class="lpButton close" @click="shown = false">Cancel Import</a>
         </modal>
-        <form id="csvUpload">
-            <input id="csv" type="file" name="csv">
+        <form id="csvUpload" hidden>
+            <input id="csv" type="file" name="csv" aria-label="CSV file to import" tabindex="-1">
         </form>
     </div>
 </template>

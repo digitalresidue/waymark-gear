@@ -16,7 +16,7 @@ $forest-mid: #2E6B52;  // links and selected fills on light
 $moss: #4F7A5A;        // secondary data color
 $sage: #9DB8A0;        // tertiary data color, soft borders
 $mint: #E3EEE6;        // selected/active tint
-$ember: #C4571F;       // accent: calls to action, highlights
+$ember: #B04E1B;       // accent: calls to action, highlights
 $ember-light: #F0A27A; // accent on dark surfaces
 $sand: #D9C7A7;        // data color
 $ground: #F7F7F4;      // page background
@@ -143,6 +143,7 @@ $transitionDurationSlow: 0.4s;
     --lp-success: #{$forest-mid};
     --lp-warning-bg: #{$yellow2};
     --lp-warning-border: #{$darkYellow};
+    --lp-warning-text: #{$darkYellow};
     --lp-alert-bg: #{$yellow2};
     --lp-alert-border: #{$darkYellow};
     --lp-hover-bg: #{$mint};
@@ -214,6 +215,7 @@ $transitionDurationSlow: 0.4s;
     // Status / highlight
     --lp-warning-bg: #2E2610;
     --lp-warning-border: #7A5A12;
+    --lp-warning-text: #E8C46A; // the border's brown is too dim to read on the dark band
     --lp-alert-bg: #3A2E10; // louder than warning, mirroring light; inherited text stays legible on it
     --lp-alert-border: #{$darkYellow};
     --lp-hover-bg: #1F3A2E;

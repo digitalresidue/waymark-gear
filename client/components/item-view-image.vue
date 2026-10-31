@@ -1,6 +1,6 @@
 <template>
     <modal id="lpImageDialog" :shown="shown" @hide="$emit('hide')">
-        <img :src="imageUrl">
+        <img :src="imageUrl" alt="Item photo">
     </modal>
 </template>
 

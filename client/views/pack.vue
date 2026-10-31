@@ -13,12 +13,15 @@
         </header>
         <offlineBanner />
 
-        <main class="wgPackMain">
+        <main id="wgMain" tabindex="-1" class="wgPackMain">
+            <h1 class="wgVisuallyHidden">
+                Pack your list
+            </h1>
             <div class="wgPackModes" role="tablist" aria-label="Mode">
-                <button type="button" role="tab" class="wgChip" :aria-selected="String(mode === 'pack')" :aria-pressed="String(mode === 'pack')" data-testid="mode-pack" @click="mode = 'pack'">
+                <button type="button" role="tab" class="wgChip" :aria-selected="String(mode === 'pack')" data-testid="mode-pack" @click="mode = 'pack'">
                     Packing
                 </button>
-                <button type="button" role="tab" class="wgChip" :aria-selected="String(mode === 'review')" :aria-pressed="String(mode === 'review')" data-testid="mode-review" @click="mode = 'review'">
+                <button type="button" role="tab" class="wgChip" :aria-selected="String(mode === 'review')" data-testid="mode-review" @click="mode = 'review'">
                     After the trip
                 </button>
                 <button v-if="hasCarriers" type="button" class="wgChip wgPackMine" :aria-pressed="String(mineOnly)" data-testid="pack-mine" @click="mineOnly = !mineOnly">

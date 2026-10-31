@@ -53,6 +53,7 @@
                     type="text"
                     class="lpName lpSilent lpItemMobileField lpItemMobileFieldActive"
                     placeholder="Name"
+                    aria-label="Item name"
                     @input="saveItem"
                 >
             </div>
@@ -84,6 +85,7 @@
                     type="text"
                     class="lpDescription lpSilent lpItemMobileField"
                     placeholder="Description"
+                    aria-label="Item description"
                     @input="saveItem"
                 >
             </div>

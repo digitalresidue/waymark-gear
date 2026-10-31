@@ -45,7 +45,7 @@
     background:
         linear-gradient(170deg, transparent 58%, rgba(255, 255, 255, 0.06) 58.5%),
         linear-gradient(195deg, transparent 64%, rgba(0, 0, 0, 0.12) 64.5%),
-        linear-gradient(135deg, #1D3B30, #3F6B52 60%, #C4571F 160%);
+        linear-gradient(135deg, #1D3B30, #3F6B52 60%, #B04E1B 160%);
 }
 
 .wgProfileHead {
@@ -62,7 +62,7 @@
     background: var(--lp-primary);
     border: 5px solid var(--lp-bg);
     border-radius: 50%;
-    color: #fff;
+    color: var(--lp-primary-ink);
     display: flex;
     font-family: $font-display;
     font-size: 56px;
@@ -415,7 +415,7 @@
 
     &[aria-pressed="true"] {
         background: var(--lp-primary);
-        color: #fff;
+        color: var(--lp-primary-ink);
     }
 }
 
@@ -435,7 +435,7 @@
 }
 
 .wgSupporterBadge {
-    background: linear-gradient(135deg, #C4571F, #E39B3B);
+    background: linear-gradient(135deg, #B04E1B, #E39B3B);
     border-radius: 999px;
     color: #fff;
     font-size: 12px;

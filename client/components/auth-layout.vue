@@ -1,7 +1,7 @@
 <template>
     <div class="wgAuth">
         <siteHeader />
-        <main class="wgAuthMain">
+        <main id="wgMain" class="wgAuthMain" tabindex="-1">
             <div :id="cardId" class="wgAuthCard wgCard" :class="{ wgAuthWide: wide }">
                 <h1 class="wgAuthTitle">
                     {{ title }}

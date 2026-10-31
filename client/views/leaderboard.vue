@@ -1,7 +1,7 @@
 <template>
     <div class="wgHome">
         <siteHeader active="explore" />
-        <main class="wgPage wgBoard">
+        <main id="wgMain" tabindex="-1" class="wgPage wgBoard">
             <div class="wgSectionHead">
                 <div>
                     <h1 class="wgH2">
@@ -14,7 +14,7 @@
             </div>
 
             <div class="wgTripFilter" role="tablist" aria-label="Trip type">
-                <button v-for="t in tabs" :key="t.id" type="button" role="tab" class="wgChip" :aria-selected="String(trip === t.id)" :aria-pressed="String(trip === t.id)" :data-testid="`board-${t.id || 'all'}`" @click="pick(t.id)">
+                <button v-for="t in tabs" :key="t.id" type="button" role="tab" class="wgChip" :aria-selected="String(trip === t.id)" :data-testid="`board-${t.id || 'all'}`" @click="pick(t.id)">
                     {{ t.label }}
                 </button>
             </div>
@@ -128,6 +128,14 @@ export default {
     color: var(--lp-text);
     font-weight: 650;
     text-decoration: none;
+}
+
+// At least 24px tall each, so the two stacked links are easy to hit.
+.wgBoardName,
+.wgBoardBy {
+    justify-self: start;
+    line-height: 24px;
+    min-height: 24px;
 }
 
 .wgBoardBy {

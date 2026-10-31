@@ -17,7 +17,7 @@
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
                     </button>
                     <span v-if="swatchColor" class="lpCategorySwatch" :style="{background: swatchColor}" />
-                    <input v-focus-on-create="!!category._isNew" type="text" :value="category.name" placeholder="Category Name" class="lpCategoryName lpSilent" @input="updateCategoryName">
+                    <input v-focus-on-create="!!category._isNew" type="text" :value="category.name" placeholder="Category Name" aria-label="Category name" class="lpCategoryName lpSilent" @input="updateCategoryName">
                     <span v-if="category.collapsed" class="wgItemCount" data-testid="category-count">{{ itemCountLabel }}</span>
                     <categoryGroupMenu :category="category" />
                 </span>

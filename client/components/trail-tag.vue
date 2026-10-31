@@ -30,6 +30,7 @@
                     v-model="query"
                     class="wgInput"
                     placeholder="Which trail? e.g. PCT"
+                    aria-label="Trail"
                     autocomplete="off"
                     role="combobox"
                     :aria-expanded="String(open)"

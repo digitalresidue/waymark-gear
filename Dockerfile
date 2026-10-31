@@ -45,7 +45,7 @@ COPY --from=build --chown=node:node /app/scripts ./scripts
 # install.sh and `waymark update` copy them out of the image they ship with,
 # so the server's files always match the version it runs.
 COPY --from=build --chown=node:node /app/deploy ./deploy
-COPY --from=build --chown=node:node /app/_index.html /app/PRIVACY.md /app/TERMS.md /app/LICENSE ./
+COPY --from=build --chown=node:node /app/_index.html /app/PRIVACY.md /app/TERMS.md /app/ACCESSIBILITY.md /app/LICENSE ./
 
 # Uploaded photos live here; mount a volume so they survive redeploys.
 RUN mkdir -p /app/public/userimages /app/logs && chown node:node /app/public/userimages /app/logs

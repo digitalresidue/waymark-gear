@@ -1,7 +1,7 @@
 <template>
     <div class="wgHome">
         <siteHeader />
-        <main class="wgPage wgTickets">
+        <main id="wgMain" tabindex="-1" class="wgPage wgTickets">
             <div class="wgSectionHead">
                 <div>
                     <h1 class="wgH2">
@@ -140,7 +140,7 @@ export default {
 }
 
 .wgPri-high {
-    border-left-color: #C4571F;
+    border-left-color: #B04E1B;
 }
 
 .wgTicketHead {

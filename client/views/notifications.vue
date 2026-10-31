@@ -1,7 +1,7 @@
 <template>
     <div class="wgHome">
         <siteHeader />
-        <main class="wgPage wgNotices">
+        <main id="wgMain" tabindex="-1" class="wgPage wgNotices">
             <div class="wgSectionHead">
                 <div>
                     <h1 class="wgH2">
@@ -47,7 +47,7 @@
                     </p>
                     <table v-if="settings">
                         <thead>
-                            <tr><th /><th>In the app</th><th>Email</th></tr>
+                            <tr><th><span class="wgVisuallyHidden">Notification</span></th><th>In the app</th><th>Email</th></tr>
                         </thead>
                         <tbody>
                             <tr v-for="k in settings.kinds" :key="k.kind">
@@ -181,7 +181,7 @@ export default {
     }
 
     .wgNoticeNew a {
-        box-shadow: inset 3px 0 0 #C4571F;
+        box-shadow: inset 3px 0 0 #B04E1B;
     }
 }
 
