@@ -18,6 +18,8 @@ import brands from './server/brands.js';
 import headTags, { injectHeadTags, loadHeadTags } from './server/head-tags.js';
 import { scheduleImageCleanup } from './server/image-gc.js';
 import { scheduleSitemap } from './server/sitemap.js';
+import { backfillBoardChecks } from './server/kits.js';
+import { loadLibrary } from './server/library-store.js';
 import googleAuth from './server/google.js';
 import views, { hasBuiltAssets } from './server/views.js';
 import { authRateLimit, cspNonce, securityHeaders } from './server/security.js';
@@ -175,6 +177,11 @@ server.listen(config.get('port'), () => {
 
 // Once a day: delete stored images nothing refers to any more.
 scheduleImageCleanup(knex, logger);
+
+// Lists published before the Lightest board's Gear check: check them once.
+backfillBoardChecks(loadLibrary, logger)
+    .then((n) => n && logger.info({ message: `Lightest board: checked lists for ${n} owners` }))
+    .catch((err) => logger.error({ message: 'board check backfill failed', err }));
 
 // Once a day (and just after start): rebuild sitemap.xml.
 scheduleSitemap(knex, logger);

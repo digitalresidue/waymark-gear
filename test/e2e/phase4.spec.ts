@@ -88,7 +88,10 @@ test.describe('Phase 4', () => {
 
         await voter.page.goto(url('/leaderboard'));
         await voter.page.getByTestId('board-thru').click();
-        await expect(voter.page.getByTestId('board-light')).toContainText(name);
+        // A one-item list has no shelter or sleep system, so the Lightest
+        // board leaves it out (lightest-board.spec.ts covers the board).
+        await expect(voter.page.getByTestId('board-top')).toContainText(name);
+        await expect(voter.page.getByTestId('board-light')).not.toContainText(name);
         await owner.context.close();
         await voter.context.close();
     });

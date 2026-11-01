@@ -45,6 +45,21 @@
                                 : 'Ask other hikers what to cut, swap or rethink. Suggestions arrive as comments.' }}
                         </p>
                     </div>
+                    <div v-if="list.published && board" class="wgPublish wgBoardStatus" data-testid="board-status">
+                        <p class="wgPublishNote">
+                            <strong>Lightest board:</strong> {{ boardLine }}
+                        </p>
+                        <button
+                            v-if="board.reason !== 'gear-check'"
+                            type="button"
+                            class="wgBtn wgBtnGhost wgBtnSmall"
+                            data-testid="still-carrying"
+                            :disabled="confirming"
+                            @click="stillCarrying"
+                        >
+                            Still carrying this
+                        </button>
+                    </div>
                 </div>
             </template>
         </PopoverHover>
@@ -55,6 +70,7 @@
 import PopoverHover from './popover-hover.vue';
 import toggle from './toggle.vue';
 import { fetchJson } from '../utils/utils.js';
+import { updatedAgo } from '../utils/board-rules.js';
 
 export default {
     name: 'Share',
@@ -66,7 +82,22 @@ export default {
         // Drawn as a button in the editor's icon rail (desktop).
         rail: { type: Boolean, default: false },
     },
+    data() {
+        return { board: null, confirming: false };
+    },
     computed: {
+        // Where this list stands on the Lightest board, in a sentence.
+        boardLine() {
+            const b = this.board;
+            if (!b) return '';
+            if (b.reason === 'gear-check') return `not listed yet. Lists need a Gear check of ${b.rules.minReadiness} or more, and overnight lists need a shelter and a sleep system.`;
+            if (b.reason === 'stale') return 'off the board after a year without gear changes. Tap below if you still carry it.';
+            if (b.reason === 'downvoted') return 'off the board for now after too many downvotes.';
+            const when = `Updated ${updatedAgo(b.freshAt)}`;
+            return b.padPct > 0
+                ? `listed, sliding: ranks as ${b.padPct}% heavier. ${when}.`
+                : `listed. ${when}; it starts to slide after ${b.rules.graceDays / 30} months without changes.`;
+        },
         library() {
             return this.$store.state.library;
         },
@@ -104,10 +135,30 @@ export default {
         setShakedown(shakedown) {
             this.$store.commit('setListShakedown', { list: this.list, shakedown });
         },
+        loadBoard() {
+            this.board = null;
+            if (!this.list.published || !this.externalId) return;
+            fetchJson(`/api/kits/${encodeURIComponent(this.externalId)}/board`, { credentials: 'same-origin' })
+                .then((b) => { this.board = b; })
+                .catch(() => {});
+        },
+        stillCarrying() {
+            this.confirming = true;
+            fetchJson(`/api/kits/${encodeURIComponent(this.externalId)}/still-carrying`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: '{}',
+            })
+                .then((b) => { this.board = b; })
+                .catch(() => {})
+                .finally(() => { this.confirming = false; });
+        },
         setPublished(published) {
             this.$store.commit('setListPublished', { list: this.list, published });
         },
         focusShare(_evt) {
+            this.loadBoard();
             const selectShareInput = () => {
                 this.$nextTick(() => {
                     if (this.$refs.shareInput) this.$refs.shareInput.select();

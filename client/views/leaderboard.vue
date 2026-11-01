@@ -8,7 +8,7 @@
                         Leaderboards
                     </h1>
                     <p class="wgLede">
-                        Top lists by the community's votes in the last 30 days, and the lightest kits, for each kind of trip. Votes expire after 30 days, so the board keeps moving.
+                        Top lists by the community's votes in the last 30 days, and the lightest kits people are actually carrying, for each kind of trip.
                     </p>
                 </div>
             </div>
@@ -24,12 +24,19 @@
                     <h2 class="wgProfileEditH">
                         {{ col.title }}
                     </h2>
+                    <details v-if="col.sort === 'light'" class="wgBoardHow" data-testid="board-how">
+                        <summary>How this works</summary>
+                        <p v-for="(line, n) in explainer" :key="n">
+                            {{ line }}
+                        </p>
+                    </details>
                     <ol v-if="results[col.sort] && results[col.sort].length">
                         <li v-for="(k, i) in results[col.sort]" :key="k.externalId">
                             <span class="wgBoardRank">{{ i + 1 }}</span>
                             <a :href="`/r/${k.externalId}`" class="wgBoardName">{{ k.name }}</a>
                             <a :href="`/@${k.username}`" class="wgMuted wgBoardBy wgByLink" data-testid="board-author">@{{ k.username }}</a>
                             <span class="wgMono wgBoardStat">{{ col.sort === 'top' ? `▲ ${k.score}` : weight(k.baseWeightMg) }}</span>
+                            <span v-if="col.sort === 'light' && k.freshAt" class="wgMuted wgBoardFresh" data-testid="board-fresh">Updated {{ ago(k.freshAt) }}</span>
                         </li>
                     </ol>
                     <p v-else-if="results[col.sort]" class="wgMuted">
@@ -47,6 +54,7 @@ import siteHeader from '../components/site-header.vue';
 import siteFooter from '../components/site-footer.vue';
 import { api, formatWeightMg } from '../utils/format.js';
 import { TRIP_TYPES, TRIP_TYPE_LABELS } from '../utils/gear-meta.js';
+import { boardExplainer, updatedAgo } from '../utils/board-rules.js';
 
 export default {
     name: 'Leaderboard',
@@ -57,6 +65,7 @@ export default {
             results: {},
             tabs: [{ id: '', label: 'All trips' }, ...TRIP_TYPES.map((id) => ({ id, label: TRIP_TYPE_LABELS[id] }))],
             cols: [{ sort: 'top', title: 'Top this month' }, { sort: 'light', title: 'Lightest' }],
+            explainer: boardExplainer(),
         };
     },
     mounted() {
@@ -64,6 +73,9 @@ export default {
         this.load();
     },
     methods: {
+        ago(when) {
+            return updatedAgo(when);
+        },
         weight(mg) {
             return formatWeightMg(mg, 'lb');
         },
@@ -146,5 +158,28 @@ export default {
 .wgBoardStat {
     grid-column: 3;
     grid-row: 1;
+}
+
+.wgBoardFresh {
+    font-size: 12px;
+    grid-column: 3;
+    grid-row: 2;
+    justify-self: end;
+}
+
+.wgBoardHow {
+    color: var(--lp-text-secondary);
+    font-size: 13px;
+    margin: 6px 0 4px;
+
+    summary {
+        color: var(--lp-link-blue);
+        cursor: pointer;
+        min-height: 24px;
+    }
+
+    p {
+        margin: 6px 0;
+    }
 }
 </style>
