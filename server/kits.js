@@ -9,6 +9,9 @@ import { TRIP_TYPES } from '../client/utils/gear-meta.js';
 import { notifyFollowersOfNewKits } from './follows.js';
 import { packFeatures, normalizeTrailTag } from '../client/utils/trails.js';
 import { ensureTrails, resolveTrail } from './trails-index.js';
+import { createHash } from 'crypto';
+import { listRows } from '../client/utils/insights.js';
+import { boardGearCheck, boardStanding, BOARD_RULES } from '../client/utils/board-rules.js';
 
 const LB = 453592; // mg
 
@@ -72,9 +75,24 @@ export function publishedKits(serializedLibrary) {
             tripType: TRIP_TYPES.includes(list.tripType) ? list.tripType : '',
             trail: normalizeTrailTag(list.trail),
             features: packFeatures(rows),
+            ...boardFields(library, list),
         });
     }
     return kits;
+}
+
+// What the Lightest board needs to know about a list: a fingerprint of its
+// gear (items, weights, quantities, worn/consumable; not names or the
+// description, so tidying a list doesn't reset its clock) and its Gear check.
+function boardFields(library, list) {
+    const rows = listRows(library, list);
+    const gear = rows.map((r) => [r.itemId, r.weightMg, r.qty, r.worn ? 1 : 0, r.consumable ? 1 : 0].join(':')).sort();
+    const check = boardGearCheck(rows, list);
+    return {
+        gearHash: createHash('sha256').update(gear.join('|')).digest('hex').slice(0, 32),
+        boardOk: check.ok,
+        readiness: check.score,
+    };
 }
 
 // Bring public_kits in line with what this user has published. Featured
@@ -117,6 +135,9 @@ export async function syncPublishedKits(user, serializedLibrary, db = knex) {
                 trail_year: k.trail && k.trail.year ? k.trail.year : null,
                 trail_direction: k.trail && k.trail.direction ? k.trail.direction : '',
                 features: k.features,
+                board_ok: k.boardOk,
+                board_checked: true,
+                readiness: k.readiness,
                 updated_at: trx.fn.now(),
             };
             // When the shakedown was asked for: kept while it stays on, so
@@ -126,6 +147,14 @@ export async function syncPublishedKits(user, serializedLibrary, db = knex) {
                 'case when ? then coalesce(public_kits.shakedown_at, now()) else null end',
                 [Boolean(k.shakedown)],
             );
+            // The gear clock restarts only when the gear itself changed. A
+            // clock from before fingerprints existed adopts this one as is.
+            await trx.raw(`
+                insert into kit_clock (external_id, gear_hash) values (?, ?)
+                on conflict (external_id) do update set
+                    gear_changed_at = case when kit_clock.gear_hash is not null and kit_clock.gear_hash <> excluded.gear_hash
+                        then now() else kit_clock.gear_changed_at end,
+                    gear_hash = excluded.gear_hash`, [k.externalId, k.gearHash]);
             await trx('public_kits').insert({ ...row, shakedown_at: k.shakedown ? trx.fn.now() : null })
                 .onConflict('external_id').merge(merge);
         }
@@ -162,6 +191,10 @@ export function kitToApi(row) {
         score: row.score === undefined ? undefined : Number(row.score),
         commentCount: row.comment_count === undefined ? undefined : Number(row.comment_count),
         updatedAt: row.updated_at,
+        ...(row.rank_weight_mg !== undefined ? {
+            freshAt: row.fresh_at,
+            rankWeightMg: Number(row.rank_weight_mg),
+        } : {}),
     };
 }
 
@@ -234,6 +267,26 @@ const SORTS = {
     needsHelp: [{ column: 'comment_count', order: 'asc' }, { column: 'updated_at', order: 'desc' }],
 };
 
+// The Lightest board (client/utils/board-rules.js, which has the same rules
+// in plain JavaScript): rank by base weight padded 5% a month after a
+// 3-month grace and 5% per net downvote; drop lists untouched for a year,
+// net -5 or worse, or failing the board's Gear check.
+const R = BOARD_RULES;
+const BOARD_FRESH = `greatest(coalesce(kc.gear_changed_at, public_kits.updated_at), coalesce(kc.confirmed_at, kc.gear_changed_at, public_kits.updated_at))`;
+const BOARD_AGE = `(extract(epoch from now() - ${BOARD_FRESH}) / 86400.0)`;
+const BOARD_STEPS = `greatest(0, ceil((${BOARD_AGE} - ${R.graceDays}) / ${R.stepDays}.0))`;
+const BOARD_DOWNS = `(case when bv.n >= ${R.minVotes} and bv.net < 0 then -bv.net else 0 end)`;
+const BOARD_RANK = `round(public_kits.base_weight_mg * (1 + (${BOARD_STEPS} * ${R.stepPct} + ${BOARD_DOWNS} * ${R.downvotePct}) / 100.0))`;
+
+function boardFilter(query) {
+    query.leftJoin('kit_clock as kc', 'kc.external_id', 'public_kits.external_id')
+        .joinRaw(`left join lateral (select coalesce(sum(v.value), 0)::int as net, count(*)::int as n from list_votes v
+            where v.external_id = public_kits.external_id and v.created_at > now() - interval '${R.voteWindowDays} days') bv on true`)
+        .where('public_kits.board_ok', true)
+        .whereRaw(`${BOARD_AGE} <= ${R.maxAgeDays}`)
+        .whereRaw(`not (bv.n >= ${R.minVotes} and bv.net <= ${R.dropAtNet})`);
+}
+
 export async function listKits({
     weightClass, tripType, q = '', featuredOnly = false, shakedownOnly = false, followerId = null,
     sort = 'featured', limit = 24, offset = 0, trailIds = null, trailYear = null,
@@ -251,10 +304,17 @@ export async function listKits({
         const like = `%${term.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
         query.where((w) => w.whereILike('name', like).orWhereILike('username', like).orWhereILike('description', like));
     }
+    const extra = [];
+    let order = SORTS[sort] || SORTS.featured;
+    if (sort === 'light') {
+        boardFilter(query);
+        extra.push(knex.raw(`${BOARD_FRESH} as fresh_at`), knex.raw('bv.net as board_net'), knex.raw('bv.n as board_votes'), knex.raw(`${BOARD_RANK} as rank_weight_mg`));
+        order = [{ column: 'rank_weight_mg', order: 'asc' }, { column: 'base_weight_mg', order: 'asc' }];
+    }
     const [{ count }] = await query.clone().count({ count: '*' });
     const rows = await query
-        .select('public_kits.*', knex.raw(`${scoreSql} as score`), knex.raw(`${commentsSql} as comment_count`))
-        .orderBy(SORTS[sort] || SORTS.featured)
+        .select('public_kits.*', knex.raw(`${scoreSql} as score`), knex.raw(`${commentsSql} as comment_count`), ...extra)
+        .orderBy(order)
         .limit(Math.min(Number(limit) || 24, 100)).offset(Math.max(Number(offset) || 0, 0));
     return { total: Number(count), kits: rows.map(kitToApi) };
 }
@@ -344,4 +404,61 @@ export async function setFeatured(externalId, { featured, featuredRank }) {
     if (!Object.keys(patch).length) return null;
     const [row] = await knex('public_kits').where({ external_id: String(externalId) }).update(patch).returning('*');
     return row ? kitToApi(row) : null;
+}
+
+// ---- the Lightest board, for a list's owner ------------------------------------
+
+async function ownedKit(user, externalId) {
+    const kit = await knex('public_kits').where({ external_id: String(externalId) }).first();
+    if (!kit) return { error: 'Publish this list to Explore first.', status: 404 };
+    if (kit.user_id !== user.user_id) return { error: 'Only the list owner can do that.', status: 403 };
+    return { kit };
+}
+
+// Where the owner's list stands, and why.
+export async function boardStatus(user, externalId, now = Date.now()) {
+    const { kit, error, status } = await ownedKit(user, externalId);
+    if (error) return { error, status };
+    const clock = await knex('kit_clock').where({ external_id: kit.external_id }).first();
+    const [{ net, n }] = await knex('list_votes').where({ external_id: kit.external_id })
+        .whereRaw(`created_at > now() - interval '${BOARD_RULES.voteWindowDays} days'`)
+        .select(knex.raw('coalesce(sum(value), 0)::int as net'), knex.raw('count(*)::int as n'));
+    const changed = clock ? clock.gear_changed_at : kit.updated_at;
+    const confirmed = clock && clock.confirmed_at;
+    const freshAt = confirmed && new Date(confirmed) > new Date(changed) ? confirmed : changed;
+    const standing = boardStanding({ baseWeightMg: Number(kit.base_weight_mg), freshAt, votes: { net, count: n }, boardOk: kit.board_ok }, now);
+    return {
+        ...standing,
+        freshAt,
+        gearChangedAt: changed,
+        confirmedAt: confirmed || null,
+        readiness: kit.readiness,
+        rules: BOARD_RULES,
+    };
+}
+
+// "Still carrying this": the owner vouches for the list as it is, which
+// restarts the clock without an edit.
+export async function stillCarrying(user, externalId) {
+    const { kit, error, status } = await ownedKit(user, externalId);
+    if (error) return { error, status };
+    await knex.raw(`insert into kit_clock (external_id, confirmed_at) values (?, now())
+        on conflict (external_id) do update set confirmed_at = now()`, [kit.external_id]);
+    return boardStatus(user, externalId);
+}
+
+// Lists published before the board's Gear check existed: check them once.
+export async function backfillBoardChecks(loadLibrary, logger) {
+    const owners = await knex('public_kits').where({ board_checked: false }).distinct('user_id').pluck('user_id');
+    for (const userId of owners) {
+        try {
+            const user = await knex('users').where({ user_id: userId }).first();
+            const library = user && await loadLibrary(userId);
+            if (library) await syncPublishedKits(user, library);
+            else await knex('public_kits').where({ user_id: userId }).update({ board_checked: true });
+        } catch (err) {
+            if (logger) logger.error({ message: 'board check backfill failed', userId, err });
+        }
+    }
+    return owners.length;
 }

@@ -61,21 +61,63 @@ export default {
         // Closing with focus inside the menu would drop it on the page;
         // hand it back to what opened the menu.
         shown(open) {
-            if (open || this.ownControl) return;
+            if (open) {
+                this.$nextTick(() => this.fitToViewport());
+                return;
+            }
+            if (this.ownControl) return;
             const content = this.$el.querySelector('.lpContent');
             if (content && content.contains(document.activeElement)) this.$refs.target.focus();
         },
     },
     mounted() {
+        const content = this.$el.querySelector('.lpContent');
+        if (content && typeof ResizeObserver !== 'undefined') {
+            this.resizeObserver = new ResizeObserver(() => this.fitToViewport());
+            this.resizeObserver.observe(content);
+            // Content that changes inside a menu already at its height limit
+            // doesn't resize the box, so watch the content too.
+            let queued = false;
+            this.mutationObserver = new MutationObserver(() => {
+                if (queued || !this.shown) return;
+                queued = true;
+                requestAnimationFrame(() => {
+                    queued = false;
+                    this.fitToViewport();
+                });
+            });
+            this.mutationObserver.observe(content, { childList: true, subtree: true, characterData: true });
+        }
         this.ownControl = !!this.$refs.target?.querySelector('button, a[href], input, select, textarea');
     },
     beforeMount() {
         this.bindEscape();
     },
     beforeUnmount() {
+        if (this.resizeObserver) this.resizeObserver.disconnect();
+        if (this.mutationObserver) this.mutationObserver.disconnect();
         this.unbindEscape();
     },
     methods: {
+        // A long menu near the bottom of the window (Share in the editor's
+        // rail) moves up to fit, and scrolls if it's taller than the window.
+        fitToViewport() {
+            const el = this.$el.querySelector('.lpContent');
+            if (!el || !this.shown) return;
+            const margin = 8;
+            const shift = parseFloat((getComputedStyle(el).translate || '').split(' ')[1]) || 0;
+            const top = el.getBoundingClientRect().top - shift;
+            const room = window.innerHeight - margin * 2;
+            const height = Math.min(el.scrollHeight, room);
+            const maxHeight = el.scrollHeight > room ? `${room}px` : '';
+            if (el.style.maxHeight !== maxHeight) {
+                el.style.maxHeight = maxHeight;
+                el.style.overflowY = maxHeight ? 'auto' : '';
+            }
+            const over = top + height - (window.innerHeight - margin);
+            const translate = over > 0 ? `0px ${-Math.round(Math.min(over, top - margin))}px` : '';
+            if (el.style.translate !== translate) el.style.translate = translate;
+        },
         hide() {
             this.$emit('hide');
         },
@@ -126,7 +168,9 @@ export default {
         position: absolute;
         top: 100%;
         transform: translateX(-50%);
-        transition: all 0.15s;
+        // Fitting to the window (fitToViewport) moves it at once, so the
+        // menu can be measured while it fades in.
+        transition: all 0.15s, translate 0s, max-height 0s;
         // Hidden menus are out of the tab order and the accessibility tree,
         // not just transparent. (visibility flips at the visible end of the
         // fade, so the fade still plays both ways.)

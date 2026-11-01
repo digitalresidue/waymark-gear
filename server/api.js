@@ -216,6 +216,21 @@ router.post('/api/kits/:id/vote', requireJson, commentLimit, signedIn(async (req
     res.json(result);
 }));
 
+// The Lightest board, for a list's owner: where it stands, and "Still
+// carrying this".
+router.get('/api/kits/:id/board', signedIn(async (req, res, user) => {
+    res.set('Cache-Control', 'no-store');
+    const result = await kits.boardStatus(user, String(req.params.id));
+    if (result.error) return res.status(result.status).json({ message: result.error });
+    res.json(result);
+}));
+
+router.post('/api/kits/:id/still-carrying', requireJson, commentLimit, signedIn(async (req, res, user) => {
+    const result = await kits.stillCarrying(user, String(req.params.id));
+    if (result.error) return res.status(result.status).json({ message: result.error });
+    res.json(result);
+}));
+
 router.get('/api/notifications/settings', signedIn(async (req, res, user) => {
     res.set('Cache-Control', 'no-store');
     const prefs = notifyPreferences(user);
