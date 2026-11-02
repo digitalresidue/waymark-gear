@@ -6,9 +6,60 @@ import knex from './db.js';
 import { logWithRequest } from './log.js';
 
 const moderatorList = config.get('moderators');
-// Site owners: manage the gear catalog and featured kits. Owners can also
-// do everything a moderator can.
+// Roles, most to least:
+// - Owners: the `admins` server setting. Everything, including money, site
+//   scripts, Supporter grants, the users list and the team itself.
+// - Admins: added by an owner on the Team page. The catalog, brands,
+//   trails, featured kits and moderation. Deletes and big imports wait for
+//   an owner's OK (server/team.js).
+// - Moderators: the `moderators` setting or the Team page. Comments,
+//   reports and account help.
 const adminList = config.has('admins') ? config.get('admins') : [];
+
+// Team roles from the database, kept in memory so the checks below stay
+// synchronous. Refreshed on every change here and every 30 seconds, so
+// another server instance catches up quickly.
+let teamRoles = new Map();
+async function refreshTeam() {
+    try {
+        const rows = await knex('team_members as t').join('users as u', 'u.user_id', 't.user_id').select('u.username', 't.role');
+        teamRoles = new Map(rows.map((r) => [r.username, r.role]));
+    } catch {
+        // Before the migration runs, or the database is briefly away: keep what we had.
+    }
+    return teamRoles;
+}
+refreshTeam();
+setInterval(refreshTeam, 30_000).unref();
+
+function isOwner(username) {
+    return adminList.indexOf(username) > -1;
+}
+
+// 'owner' | 'admin' | 'moderator' | null
+function roleOf(username) {
+    if (!username) return null;
+    if (isOwner(username)) return 'owner';
+    const team = teamRoles.get(username);
+    if (team) return team;
+    return moderatorList.indexOf(username) > -1 ? 'moderator' : null;
+}
+
+// Every change made with admin powers goes in the activity log.
+function logChanges(req, res, user) {
+    if (req.method === 'GET' || req.method === 'HEAD') return;
+    res.on('finish', () => {
+        if (res.statusCode >= 400 || res.locals.loggedAction) return;
+        const body = req.body && typeof req.body === 'object' ? req.body : {};
+        const what = body.name || body.username || body.title || '';
+        knex('admin_actions').insert({
+            username: user.username,
+            action: `${req.method} ${req.originalUrl.split('?')[0]}`.slice(0, 300),
+            summary: String(what).slice(0, 200),
+            status: res.statusCode === 202 ? 'pending' : 'done',
+        }).catch(() => {});
+    });
+}
 
 const sessionCookieOptions = () => ({
     path: '/',
@@ -173,8 +224,10 @@ const generateSession = async function (req, res, user, callback) {
     await callback(req, res, user);
 };
 
+// Owners and admins: anyone who can use the admin tools.
 function isAdmin(username) {
-    return adminList.indexOf(username) > -1;
+    const role = roleOf(username);
+    return role === 'owner' || role === 'admin';
 }
 
 // The signed-in user behind this request's session cookie, or null. For
@@ -191,7 +244,7 @@ async function optionalUser(req) {
 }
 
 function isModerator(username) {
-    return moderatorList.indexOf(username) > -1 || isAdmin(username);
+    return Boolean(roleOf(username));
 }
 
 const authenticateAdmin = async function (req, res, callback) {
@@ -199,8 +252,19 @@ const authenticateAdmin = async function (req, res, callback) {
         if (!isAdmin(user.username)) {
             return res.status(403).json({ message: 'Denied.' });
         }
+        logChanges(req, res, user);
         callback(req, res, user);
     });
 };
 
-export { optionalUser, authenticateAdmin, isAdmin, authenticateModerator, authenticateUser, verifyPassword, generateSession, startSession, hashSessionToken, isModerator, sessionCookieOptions, issueResetToken, hashResetToken, resetPasswordUrl, RESET_TOKEN_TTL_MS };
+const authenticateOwner = async function (req, res, callback) {
+    authenticateUser(req, res, (req, res, user) => {
+        if (!isOwner(user.username)) {
+            return res.status(403).json({ message: 'Only the site owner can do that.' });
+        }
+        logChanges(req, res, user);
+        callback(req, res, user);
+    });
+};
+
+export { optionalUser, authenticateAdmin, authenticateOwner, isOwner, roleOf, refreshTeam, isAdmin, authenticateModerator, authenticateUser, verifyPassword, generateSession, startSession, hashSessionToken, isModerator, sessionCookieOptions, issueResetToken, hashResetToken, resetPasswordUrl, RESET_TOKEN_TTL_MS };

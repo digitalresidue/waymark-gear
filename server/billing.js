@@ -12,7 +12,7 @@ import express from 'express';
 import config from 'config';
 
 import knex from './db.js';
-import { authenticateUser, authenticateAdmin } from './auth.js';
+import { authenticateUser, authenticateOwner } from './auth.js';
 import { logWithRequest, logger } from './log.js';
 import { forgetUserPages } from './page-cache.js';
 
@@ -171,7 +171,8 @@ export async function webhookHandler(req, res) {
 
 // ---- owner: grant or end Supporter by hand ------------------------------------
 
-const admin = (handler) => (req, res) => authenticateAdmin(req, res, async (req, res, user) => {
+// Owner only: money, site-wide scripts and free Supporter time.
+const admin = (handler) => (req, res) => authenticateOwner(req, res, async (req, res, user) => {
     try {
         await handler(req, res, user);
     } catch (err) {

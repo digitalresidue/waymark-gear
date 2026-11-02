@@ -494,8 +494,8 @@ export default {
         async remove() {
             if (!window.confirm(`Delete “${this.editing.name}” from the catalog? Lists that already use it keep their copy.`)) return;
             try {
-                await api(`/api/admin/catalog/${this.editing.id}`, { method: 'DELETE' });
-                this.notice = `Deleted “${this.editing.name}”.`;
+                const r = await api(`/api/admin/catalog/${this.editing.id}`, { method: 'DELETE' });
+                this.notice = r && r.pending ? `Asked the site owner to delete “${this.editing.name}”. ${r.message}` : `Deleted “${this.editing.name}”.`;
                 this.editorOpen = false;
                 this.load(true);
                 this.loadCategories();
@@ -529,6 +529,13 @@ export default {
             this.applying = true;
             try {
                 const r = await api('/api/admin/catalog/import/apply', { method: 'POST', body: JSON.stringify({ csv: this.importText }) });
+                if (r && r.pending) {
+                    this.notice = `${this.importName} changes a lot of the catalog, so it went to the site owner to approve. ${r.message}`;
+                    this.importPlan = null;
+                    this.importText = '';
+                    this.applying = false;
+                    return;
+                }
                 const s = r.summary;
                 this.notice = `Imported ${this.importName}: ${s.new} added, ${s.update} updated, ${s.unchanged} unchanged${s.error ? `, ${s.error} skipped` : ''}.`;
                 this.importPlan = null;

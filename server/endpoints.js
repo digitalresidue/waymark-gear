@@ -10,7 +10,7 @@ import { logWithRequest } from './log.js';
 import { applyCatalog } from './catalog.js';
 import { syncPublishedKits } from './kits.js';
 import { applyChanges, LibraryError, loadLibrary, normalizeLibrary, replaceLibrary } from './library-store.js';
-import { authenticateUser, isAdmin, isModerator, verifyPassword, generateSession, startSession, hashSessionToken, sessionCookieOptions, issueResetToken, hashResetToken, resetPasswordUrl, RESET_TOKEN_TTL_MS } from './auth.js';
+import { authenticateUser, isAdmin, isModerator, isOwner, roleOf, verifyPassword, generateSession, startSession, hashSessionToken, sessionCookieOptions, issueResetToken, hashResetToken, resetPasswordUrl, RESET_TOKEN_TTL_MS } from './auth.js';
 import { sniffImage, storeImage, storeProfileImage, storeGearPhoto } from './images.js';
 import { deleteUserAccount } from './accounts.js';
 import { Library } from '../client/dataTypes.js';
@@ -171,6 +171,8 @@ function accountInfo(user) {
         googleLinked: Boolean(user.google_sub),
         isAdmin: isAdmin(user.username),
         isModerator: isModerator(user.username),
+        isOwner: isOwner(user.username),
+        role: roleOf(user.username),
         supporter: isSupporter(user),
         // The header shows it in place of the initial (Your profile → picture).
         avatarUrl: user.avatar_url || '',

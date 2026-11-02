@@ -11,7 +11,7 @@
 import express from 'express';
 
 import knex from './db.js';
-import { authenticateAdmin } from './auth.js';
+import { authenticateOwner } from './auth.js';
 import { logger, logWithRequest } from './log.js';
 
 const router = express.Router();
@@ -97,7 +97,8 @@ export function injectHeadTags(req, res, next) {
     next();
 }
 
-const admin = (handler) => (req, res) => authenticateAdmin(req, res, async (req, res, user) => {
+// Owner only: money, site-wide scripts and free Supporter time.
+const admin = (handler) => (req, res) => authenticateOwner(req, res, async (req, res, user) => {
     try {
         await handler(req, res, user);
     } catch (err) {

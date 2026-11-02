@@ -143,7 +143,7 @@ export default {
         },
         viewer() {
             const a = this.$store.state.account || {};
-            return { signedIn: Boolean(this.signedIn), hasLibrary: this.hasLibrary, isAdmin: Boolean(a.isAdmin), isModerator: Boolean(a.isModerator) };
+            return { signedIn: Boolean(this.signedIn), hasLibrary: this.hasLibrary, isOwner: Boolean(a.isOwner), isAdmin: Boolean(a.isAdmin), isModerator: Boolean(a.isModerator) };
         },
         menu() {
             return menuFor(this.viewer);

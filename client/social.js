@@ -355,7 +355,7 @@ function initSiteHeader() {
         .then((r) => (r.ok ? r.json() : null))
         .then((v) => {
             if (!v) return;
-            apply({ signedIn: Boolean(v.username), username: v.username, avatarUrl: v.avatarUrl, hasLibrary: hasLibrary || Boolean(v.username), isAdmin: v.isAdmin, isModerator: v.isModerator });
+            apply({ signedIn: Boolean(v.username), username: v.username, avatarUrl: v.avatarUrl, hasLibrary: hasLibrary || Boolean(v.username), isOwner: v.isOwner, isAdmin: v.isAdmin, isModerator: v.isModerator });
             initReviewWriter(v);
         })
         .catch(() => {});

@@ -9,6 +9,7 @@ import express from 'express';
 import knex from './db.js';
 import { GEAR_TYPE_IDS } from '../client/brand-types.js';
 import { optionalUser, authenticateAdmin } from './auth.js';
+import { needsApproval, requestApproval, registerAction } from './team.js';
 import { destination, getSettings } from './affiliate.js';
 import { isSupporter } from './billing.js';
 import { isUuid } from './catalog.js';
@@ -175,12 +176,21 @@ router.put('/api/admin/brands/:id', admin(async (req, res) => {
     res.json({ brand: brandEntry(updated) });
 }));
 
-router.delete('/api/admin/brands/:id', admin(async (req, res) => {
+router.delete('/api/admin/brands/:id', admin(async (req, res, user) => {
     const { id } = req.params;
     if (!isUuid(id)) return res.status(404).json({ message: 'No such brand.' });
+    if (needsApproval(user)) {
+        const brand = await knex('brands').where({ id }).first('id', 'name');
+        if (!brand) return res.status(404).json({ message: 'No such brand.' });
+        return requestApproval(req, res, user, 'brand.delete', { id }, `Delete brand: ${brand.name}`);
+    }
     await knex('brands').where({ id }).del();
     res.json({ ok: true });
 }));
+
+registerAction('brand.delete', async (p) => {
+    if (!(await knex('brands').where({ id: p.id }).del())) throw new Error('That brand is already gone.');
+}, (p) => `Brand ${p.id}`);
 
 router.get('/go/brand/:id', async (req, res) => {
     const id = String(req.params.id);

@@ -155,7 +155,7 @@ export default {
     },
     computed: {
         isAdmin() {
-            return Boolean(this.$store.state.account && this.$store.state.account.isAdmin);
+            return Boolean(this.$store.state.account && this.$store.state.account.isOwner);
         },
     },
     async mounted() {

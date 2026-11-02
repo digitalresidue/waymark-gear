@@ -137,11 +137,27 @@ first request, which can take a few seconds.
 1. The setup script creates your owner account. By hand: register on the
    site, put your username in `.env` as `ADMINS=["yourusername"]`, then
    `docker compose -f docker-compose.prod.yml up -d`.
-2. Sign in. **Owner → Gear catalog → Download CSV template**, fill it in
+   `ADMINS` is the list of site **owners**: keep it to yourself (and anyone
+   you'd trust with the money).
+2. Sign in. **Site → Gear catalog → Download CSV template**, fill it in
    (one row per product; weight with a unit of `g`, `kg`, `oz` or `lb`), then
    **Import CSV**. Review what will be added or changed, and **Apply**.
    Packs, tents, quilts, pads, sleeping bags and insulated layers can carry
    specs too (see "Gear specs" below).
+3. To get help running the site, add people on **Site → Team** rather than
+   to `ADMINS`:
+
+   | Role | Can | Can't |
+   | --- | --- | --- |
+   | **Owner** (`ADMINS`) | Everything | — |
+   | **Admin** (Team page) | Gear catalog and imports, brands, trails, featured kits, moderation | Revenue and affiliate settings, header tags, free Supporter time, Members, Team, Activity |
+   | **Moderator** (Team page, or `MODERATORS`) | Comments, reports, account help | Everything else |
+
+   An admin's deletes (catalog gear, brands, trails) and catalog imports that
+   change 25 or more rows wait on **Site → Activity** until an owner approves
+   them. Every change made with admin or owner powers is listed there too.
+   **Site → Members** lists everyone who signed up, with email and Supporter
+   status (owners only).
 4. Before launch, finish `PRIVACY.md` and `TERMS.md` (replace every
    `[bracketed]` item and remove the draft notes), and replace the remaining
    LighterPack artwork in `public/images/` (background images and the welcome
