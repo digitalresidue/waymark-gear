@@ -58,6 +58,9 @@ test.describe('Phase 4', () => {
         await owner.page.getByTestId('trip-type-thru').click();
         await done;
         await expect(owner.page.getByTestId('trip-type-thru')).toHaveAttribute('aria-checked', 'true');
+        // ...and looks picked: the chosen chip is filled, the others aren't.
+        const fill = (id: string) => owner.page.getByTestId(id).evaluate((el) => getComputedStyle(el).backgroundColor);
+        expect(await fill('trip-type-thru')).not.toBe(await fill('trip-type-dayhike'));
         const link = await publish(owner.page);
         const id = link.split('/r/')[1];
         expect((await owner.page.request.post(url(`/api/kits/${id}/vote`), { data: { value: 1 } })).status()).toBe(400);
