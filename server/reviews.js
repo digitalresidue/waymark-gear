@@ -11,6 +11,7 @@ import config from 'config';
 import knex from './db.js';
 import { isModerator } from './auth.js';
 import { isUuid } from './catalog.js';
+import { rate } from './ratings.js';
 
 export class ReviewError extends Error {
     constructor(message, status = 400) {
@@ -109,6 +110,8 @@ export async function saveReview(user, catalogId, input) {
         updated_at: knex.fn.now(),
     };
     await knex('gear_reviews').insert(row).onConflict(['catalog_id', 'author_id']).merge();
+    // A review's rating is the reviewer's star rating for the item.
+    await rate(user, catalogId, value.rating);
     return reviewsFor(catalogId, user);
 }
 
@@ -137,13 +140,13 @@ export async function latestReviews({ limit = 12 } = {}) {
     return rows.map((r) => present(r, null));
 }
 
-// Average rating and count for a set of catalog items (for the picker and kits).
+// Star rating (average and count, server/ratings.js) for a set of catalog
+// items, for the compare page and the like.
 export async function ratingsFor(ids) {
     const list = (ids || []).filter(isUuid);
     if (!list.length) return {};
-    const rows = await knex('gear_reviews').whereIn('catalog_id', list).whereNull('hidden_at')
-        .groupBy('catalog_id').select('catalog_id', knex.raw('avg(rating)::float as avg'), knex.raw('count(*)::int as n'));
-    return Object.fromEntries(rows.map((r) => [r.catalog_id, { average: Math.round(r.avg * 10) / 10, count: r.n }]));
+    const rows = await knex('catalog_items').whereIn('id', list).where('rating_count', '>', 0).select('id', 'rating_avg', 'rating_count');
+    return Object.fromEntries(rows.map((r) => [r.id, { average: Math.round(r.rating_avg * 10) / 10, count: r.rating_count }]));
 }
 
 // For a reviewer with nothing particular in mind: the catalog gear most

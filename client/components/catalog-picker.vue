@@ -69,6 +69,10 @@
                             </p>
                             <p class="wgMuted wgPickerSpec">
                                 {{ [entry.brand, entry.category].filter(Boolean).join(' · ') }}
+                                <span v-if="entry.rating && entry.rating.count" class="wgPickerRating" data-testid="catalog-rating">
+                                    · <span class="wgStars" aria-hidden="true">★</span> {{ entry.rating.average }}
+                                    <span class="wgVisuallyHidden"> out of 5 from </span><span aria-hidden="true">(</span>{{ entry.rating.count }}<span class="wgVisuallyHidden"> ratings</span><span aria-hidden="true">)</span>
+                                </span>
                             </p>
                         </div>
                         <span class="wgMono wgPickerWeight">{{ entry.weight }} {{ entry.unit }}</span>
@@ -214,7 +218,8 @@ export default {
             this.load(true);
         },
         async load(reset) {
-            const params = new URLSearchParams({ limit: String(PAGE), offset: String(reset ? 0 : this.results.length) });
+            // Gear members rate best first, browsing or searching.
+            const params = new URLSearchParams({ limit: String(PAGE), offset: String(reset ? 0 : this.results.length), sort: 'rating' });
             if (this.query.trim()) params.set('q', this.query.trim());
             if (this.category) params.set('category', this.category);
             try {
@@ -256,6 +261,10 @@ export default {
 
 <style lang="scss">
 @import "../css/_globals";
+
+.wgPickerRating .wgStars {
+    color: var(--lp-accent-orange);
+}
 
 .wgPicker {
     background: var(--lp-surface);

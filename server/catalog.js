@@ -57,6 +57,8 @@ export function toApi(row) {
         shops: shopsToApi(row.shops),
         // Stored units (gear-specs.js); formatSpec/specRows show them.
         specs: row.specs || {},
+        // Members' star ratings (server/ratings.js).
+        rating: { average: row.rating_count ? Math.round(Number(row.rating_avg) * 10) / 10 : null, count: Number(row.rating_count) || 0 },
         updatedAt: row.updated_at,
     };
 }
@@ -221,7 +223,10 @@ export function specFilters(query = {}) {
     return out;
 }
 
-export async function search({ q = '', category = '', status = 'published', limit = 50, offset = 0, ids, specs = [] } = {}) {
+// sort: 'rating' puts gear members rate highly first (then unrated, then
+// poorly rated: client/utils/ratings.js); anything else is by category and
+// name, as the owner's catalog table wants.
+export async function search({ q = '', category = '', status = 'published', limit = 50, offset = 0, ids, specs = [], sort = '' } = {}) {
     const query = knex('catalog_items');
     for (const f of specs) {
         if (!SPEC_KEYS.includes(f.key)) continue;
@@ -244,7 +249,7 @@ export async function search({ q = '', category = '', status = 'published', limi
     }
     const [{ count }] = await query.clone().count({ count: '*' });
     const rows = await query
-        .orderByRaw('lower(category), lower(name)')
+        .orderByRaw(sort === 'rating' ? 'rating_score desc, rating_count desc, lower(category), lower(name)' : 'lower(category), lower(name)')
         .limit(Math.min(Math.max(Number(limit) || 50, 1), 200))
         .offset(Math.max(Number(offset) || 0, 0));
     return { total: Number(count), items: rows.map(toApi) };

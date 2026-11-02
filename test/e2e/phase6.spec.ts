@@ -206,7 +206,7 @@ test.describe('Phase 6', () => {
         await signInFixed(reviewer, `wge2ereviewer${testInfo.workerIndex}`);
         await reviewer.goto(url(`/g/${id}`));
         await expect(reviewer.getByTestId('gear-name')).toHaveText(`Review quilt ${tag}`);
-        await expect(reviewer.getByTestId('gear-rating')).toContainText('No reviews yet');
+        await expect(reviewer.getByTestId('gear-rating')).toContainText('No ratings yet');
         await reviewer.getByTestId('review-rating-4').check();
         await reviewer.getByTestId('review-title').fill('Warm for the weight');
         await reviewer.getByTestId('review-used-for').fill('A month on the Colorado Trail');
@@ -215,7 +215,7 @@ test.describe('Phase 6', () => {
         await reviewer.getByTestId('review-submit').click();
         await expect(reviewer.getByTestId('review')).toHaveCount(1);
         await expect(reviewer.getByTestId('review-staff')).toBeVisible();
-        await expect(reviewer.getByTestId('gear-rating')).toContainText('4 / 5 from 1 review');
+        await expect(reviewer.getByTestId('gear-rating')).toContainText('4 / 5 from 1 rating');
         await expect(reviewer.getByTestId('review-toggle')).toHaveText('Edit your review');
 
         // Too short is refused.

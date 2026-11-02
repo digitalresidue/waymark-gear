@@ -21,6 +21,7 @@
         {{#url}}
             </a>
         {{/url}}
+        {{#rating}}<a href="{{href}}" class="wgItemRating" title="Rated {{average}} out of 5 by {{count}} Waymark members" data-testid="item-rating"><span aria-hidden="true">★</span> {{average}}<span class="wgVisuallyHidden"> out of 5 from {{count}} ratings</span></a>{{/rating}}
         {{#hasMedia}}<span class="wgMediaLinks">{{#photoCount}}<a href="#" class="wgMediaLink" data-photos="{{photosJson}}" data-title="{{name}}" data-testid="item-photos">Photos ({{photoCount}})</a>{{/photoCount}}{{#videoUrl}}<a href="{{videoUrl}}" class="wgMediaLink" data-video="{{videoUrl}}" data-title="{{name}}" data-testid="item-video">▶ Video</a>{{/videoUrl}}</span>{{/hasMedia}}
     </span>
     <span class="lpDescription">

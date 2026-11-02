@@ -7,6 +7,7 @@
 // Shelter, Sleep System, Clothing (the list groups from gear-meta.js, plus
 // packs). Everything else follows A–Z.
 
+import { ratingScore } from './ratings.js';
 import { categoryKey, defaultGroupFor } from './gear-meta.js';
 import { specTypeFor, SPEC_FIELDS, SPEC_TYPES, filterKind, formatSpec, matchKey } from './gear-specs.js';
 
@@ -94,6 +95,9 @@ export function filterItem(entry) {
         price: entry.price === null || entry.price === undefined ? null : Number(entry.price),
         specs: entry.specs || {},
         name: entry.name,
+        // Ranking score (client/utils/ratings.js) and how many rated it.
+        score: ratingScore(entry.rating && entry.rating.average, entry.rating && entry.rating.count),
+        ratings: (entry.rating && entry.rating.count) || 0,
     };
 }
 
@@ -201,7 +205,7 @@ export function facetsFor(items, { categories = [] } = {}) {
  * Filters from a query string (a link or the form):
  *   cat=tent,tarp  brand=zpacks  weight_min / weight_max (grams)
  *   price_min / price_max  <spec>=a,b  <spec>_min / <spec>_max (stored units)
- *   sort=weight|price|name
+ *   sort=rating|weight|price|name (rating, the default: what members rate best)
  */
 export function readFilters(params) {
     const get = (k) => (typeof params.get === 'function' ? params.get(k) : params[k]);
@@ -222,7 +226,7 @@ export function readFilters(params) {
         weight: { min: num('weight_min'), max: num('weight_max') },
         price: { min: num('price_min'), max: num('price_max') },
         specs,
-        sort: ['weight', 'price', 'name'].includes(get('sort')) ? get('sort') : 'weight',
+        sort: ['rating', 'weight', 'price', 'name'].includes(get('sort')) ? get('sort') : 'rating',
     };
 }
 
@@ -240,7 +244,7 @@ export function filtersToQuery(f) {
         if (s.min !== undefined) p.set(`${key}_min`, String(s.min));
         if (s.max !== undefined) p.set(`${key}_max`, String(s.max));
     }
-    if (f.sort && f.sort !== 'weight') p.set('sort', f.sort);
+    if (f.sort && f.sort !== 'rating') p.set('sort', f.sort);
     return p.toString();
 }
 
@@ -260,14 +264,15 @@ export function matchesFilters(item, f) {
     return true;
 }
 
-/** Sort for the results: lightest first, cheapest first, or by name. */
-export function sortItems(items, sort = 'weight') {
+/** Sort for the results: top rated, lightest, cheapest, or by name. */
+export function sortItems(items, sort = 'rating') {
     const by = {
+        rating: (a, b) => (b.score ?? 0) - (a.score ?? 0) || (b.ratings || 0) - (a.ratings || 0) || a.weight - b.weight,
         weight: (a, b) => a.weight - b.weight || a.name.localeCompare(b.name),
         price: (a, b) => (a.price ?? Infinity) - (b.price ?? Infinity) || a.weight - b.weight,
         name: (a, b) => `${a.brand} ${a.name}`.localeCompare(`${b.brand} ${b.name}`),
     };
-    return [...items].sort(by[sort] || by.weight);
+    return [...items].sort(by[sort] || by.rating);
 }
 
 /** How many filters are on (for "Clear 3 filters"). */

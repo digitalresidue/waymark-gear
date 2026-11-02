@@ -133,6 +133,69 @@ function initReviewWriter(viewer) {
     }).catch(() => {});
 }
 
+// Your star rating on a gear page: pick 1-5, change it any time, or take it
+// back. Saved as soon as it's picked.
+function initRating() {
+    const box = document.querySelector('[data-rate]');
+    const fieldset = box && box.querySelector('[data-rate-mine]');
+    if (!fieldset) return;
+    const id = box.dataset.rate;
+    const labels = [...fieldset.querySelectorAll('.wgRateStar')];
+    const note = fieldset.querySelector('[data-rate-note]');
+    const clear = fieldset.querySelector('[data-rate-clear]');
+    const summary = box.querySelector('[data-rating-summary]');
+    const words = ['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
+    let mine = Number(box.dataset.mine) || 0;
+    const paint = (n) => labels.forEach((l, i) => l.classList.toggle('wgOn', i < n));
+    const showSummary = (r) => {
+        if (!summary) return;
+        summary.textContent = '';
+        if (!r.count) {
+            const none = document.createElement('span');
+            none.className = 'wgMuted';
+            none.textContent = 'No ratings yet.';
+            summary.append(none);
+            return;
+        }
+        const st = document.createElement('span');
+        st.className = 'wgStars';
+        st.setAttribute('aria-hidden', 'true');
+        const k = Math.round(r.average);
+        st.textContent = '★'.repeat(k) + '☆'.repeat(5 - k);
+        const avg = document.createElement('strong');
+        avg.textContent = String(r.average);
+        summary.append(st, ' ', avg, ` / 5 from ${r.count} ${r.count === 1 ? 'rating' : 'ratings'}`);
+    };
+    const save = async (stars) => {
+        note.textContent = 'Saving…';
+        try {
+            const res = await fetch(`/api/catalog/${encodeURIComponent(id)}/rating`, {
+                method: 'POST', credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                body: JSON.stringify({ stars }),
+            });
+            const r = await res.json();
+            if (!res.ok) throw new Error(r.message || 'Could not save that.');
+            mine = r.mine || 0;
+            showSummary(r);
+            note.textContent = mine ? `Saved: ${mine} ${mine === 1 ? 'star' : 'stars'}, ${words[mine]}. Change it any time.` : 'Your rating is removed.';
+            clear.hidden = !mine;
+            if (!mine) fieldset.querySelectorAll('input').forEach((i) => { i.checked = false; });
+        } catch (err) {
+            note.textContent = err.message;
+        }
+        paint(mine);
+    };
+    fieldset.addEventListener('change', (e) => {
+        if (e.target.name === 'my-rating') save(Number(e.target.value));
+    });
+    labels.forEach((l, i) => {
+        l.addEventListener('mouseenter', () => paint(i + 1));
+        l.addEventListener('mouseleave', () => paint(mine));
+    });
+    clear.addEventListener('click', () => save(0));
+}
+
 function initReviews() {
     const box = document.getElementById('wgReviewForm');
     if (!box) return;
@@ -588,6 +651,7 @@ export function initSocial() {
     initVotes();
     initFollow();
     initReviews();
+    initRating();
     initBrands();
     initExploreGear();
     initBuyMenus();

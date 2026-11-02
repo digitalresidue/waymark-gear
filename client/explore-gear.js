@@ -25,6 +25,8 @@ export function initExploreGear() {
         weight: Number(el.dataset.weight) || 0,
         price: el.dataset.price === '' ? null : Number(el.dataset.price),
         name: el.dataset.name || '',
+        score: Number(el.dataset.score) || 0,
+        ratings: Number(el.dataset.ratings) || 0,
         specs: (() => {
             try {
                 return JSON.parse(el.dataset.specs || '{}');

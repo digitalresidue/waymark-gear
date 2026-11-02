@@ -21,6 +21,7 @@ import * as tickets from './tickets.js';
 import * as plans from './shared-lists.js';
 import * as trips from './trips.js';
 import * as reviews from './reviews.js';
+import * as ratings from './ratings.js';
 import { listInsights } from './insights.js';
 import * as tokens from './tokens.js';
 import * as trails from './trails.js';
@@ -550,9 +551,32 @@ router.get('/api/catalog', pub(async (req, res) => {
         ids,
         // spec_pitch=freestanding, spec_trail_weight_max=2lb... (catalog.specFilters)
         specs: catalog.specFilters(req.query),
+        // A search puts the gear members rate best first; ?sort=name keeps A-Z.
+        sort: req.query.sort === 'name' ? '' : (req.query.q || req.query.sort === 'rating' ? 'rating' : ''),
     });
     res.set('Cache-Control', 'public, max-age=60');
     res.json({ ...result, items: result.items.map(catalog.publicEntry) });
+}));
+
+// Star ratings: anyone can see them; signed-in members rate (1-5, or 0 to
+// take theirs back). One per person per item.
+router.get('/api/catalog/:id/rating', pub(async (req, res) => {
+    res.set('Cache-Control', 'private, no-store');
+    try {
+        res.json(await ratings.ratingFor(String(req.params.id), await optionalUser(req)));
+    } catch (err) {
+        if (err instanceof ratings.RatingError) return res.status(err.status).json({ message: err.message });
+        throw err;
+    }
+}));
+
+router.post('/api/catalog/:id/rating', requireJson, commentLimit, signedIn(async (req, res, user) => {
+    try {
+        res.json(await ratings.rate(user, String(req.params.id), req.body && req.body.stars));
+    } catch (err) {
+        if (err instanceof ratings.RatingError) return res.status(err.status).json({ message: err.message });
+        throw err;
+    }
 }));
 
 router.get('/api/catalog/categories', pub(async (req, res) => {
