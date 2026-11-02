@@ -7,6 +7,12 @@
 //     (e.g. amazon.com gets tag=yourtag-20), else the plain link.
 // Clicks are counted per item per day, so the owner can see what earns.
 // Affiliate links never change which gear is suggested or how it's ranked.
+//
+// Links that aren't affiliate links get standard UTM tags
+// (utm_source=waymarkgear.com&utm_medium=referral) so the shop's analytics
+// credit the visit to us even when the browser drops the referrer. Tags a
+// link already has are never replaced, and affiliate links are left exactly
+// as the network gave them.
 
 import express from 'express';
 
@@ -15,13 +21,15 @@ import { isUuid } from './catalog.js';
 import { optionalUser, authenticateOwner } from './auth.js';
 import { isSupporter } from './billing.js';
 import { logWithRequest } from './log.js';
+import config from 'config';
+import { brandReport } from './brand-report.js';
 
 const router = express.Router();
 const SOURCES = ['gear', 'compare', 'list', 'insights', 'review', ''];
 const CACHE_MS = 60 * 1000;
 let cached = null;
 
-export const DEFAULT_SETTINGS = { enabled: true, rules: [] };
+export const DEFAULT_SETTINGS = { enabled: true, rules: [], referralTags: true };
 
 export function cleanSettings(input = {}) {
     const rules = (Array.isArray(input.rules) ? input.rules : []).slice(0, 30).map((r) => ({
@@ -29,7 +37,37 @@ export function cleanSettings(input = {}) {
         param: String(r.param || '').trim().slice(0, 40),
         value: String(r.value || '').trim().slice(0, 200),
     })).filter((r) => /^[a-z0-9.-]+\.[a-z]{2,}$/.test(r.domain) && /^[A-Za-z0-9_.-]+$/.test(r.param) && r.value);
-    return { enabled: input.enabled !== false, rules };
+    return { enabled: input.enabled !== false, rules, referralTags: input.referralTags !== false };
+}
+
+// Our name as shops' analytics will show it: the site's host, without www.
+export function referralSource() {
+    try {
+        return new URL(config.get('deployUrl')).hostname.replace(/^www\./, '') || 'waymarkgear.com';
+    } catch {
+        return 'waymarkgear.com';
+    }
+}
+
+// A non-affiliate link with our UTM tags added, unless it carries any UTM
+// tag already (the brand's own campaign link wins).
+export function withReferral(url, source = referralSource()) {
+    let u;
+    try {
+        u = new URL(url);
+    } catch {
+        return url;
+    }
+    if (!/^https?:$/.test(u.protocol)) return url;
+    if ([...u.searchParams.keys()].some((k) => k.toLowerCase().startsWith('utm_'))) return url;
+    u.searchParams.set('utm_source', source);
+    u.searchParams.set('utm_medium', 'referral');
+    return u.toString();
+}
+
+// Where a click goes, tagged when the owner has that switched on.
+export function outboundUrl({ url, affiliate }, settings) {
+    return !affiliate && settings.referralTags !== false ? withReferral(url) : url;
 }
 
 export async function getSettings() {
@@ -88,8 +126,11 @@ router.get('/go/:id', async (req, res) => {
         if (req.query.shop && n >= 1 && !shop) return res.redirect(302, `/g/${id}`);
         const row = shop ? { url: shop.url, affiliate_url: shop.affiliate_url } : item;
         const viewer = await optionalUser(req);
-        const { url, affiliate } = destination(row, await getSettings(), isSupporter(viewer));
-        if (!/^https?:\/\//i.test(url)) return res.redirect(302, `/g/${id}`);
+        const settings = await getSettings();
+        const dest = destination(row, settings, isSupporter(viewer));
+        const { affiliate } = dest;
+        if (!/^https?:\/\//i.test(dest.url)) return res.redirect(302, `/g/${id}`);
+        const url = outboundUrl(dest, settings);
         const source = SOURCES.includes(req.query.from) ? req.query.from : '';
         knex('outbound_clicks').insert({ catalog_id: id, source, affiliate, shop: shop ? shop.domain : '', clicks: 1 })
             .onConflict(['catalog_id', 'day', 'source', 'affiliate', 'shop'])
@@ -131,7 +172,14 @@ const admin = (handler) => (req, res) => authenticateOwner(req, res, async (req,
 
 router.get('/api/admin/affiliate', admin(async (req, res) => {
     res.set('Cache-Control', 'no-store');
-    res.json({ settings: await getSettings(), clicks: await clickReport(req.query.days) });
+    res.json({ settings: await getSettings(), clicks: await clickReport(req.query.days), referralSource: referralSource() });
+}));
+
+// Visitors sent to each brand in a calendar month (?month=2026-10; default:
+// last month), with a summary to paste into an email.
+router.get('/api/admin/brand-report', admin(async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.json(await brandReport(req.query.month));
 }));
 
 router.put('/api/admin/affiliate', admin(async (req, res) => {

@@ -19,6 +19,10 @@
                         For product links on these shops, add your tracking parameter. An item's own affiliate link (set in the catalog) wins over these.
                     </p>
                     <label class="wgCheck"><input v-model="settings.enabled" type="checkbox" data-testid="affiliate-enabled"> Use affiliate links</label>
+                    <label class="wgCheck"><input v-model="settings.referralTags" type="checkbox" data-testid="referral-tags"> Tag other links as referrals from us</label>
+                    <p class="wgMuted wgProfileHint">
+                        Buy and brand links that aren't affiliate links get <code>utm_source={{ referralSource }}&amp;utm_medium=referral</code>, so shops see the visits in their analytics. Links that already carry UTM tags are left alone.
+                    </p>
                     <table class="wgDevTable">
                         <thead>
                             <tr><th>Shop domain</th><th>Parameter</th><th>Value</th><th><span class="wgVisuallyHidden">Actions</span></th></tr>
@@ -93,6 +97,47 @@
                     </table>
                 </section>
 
+                <section class="wgCard wgDevCard" data-testid="brand-report">
+                    <h2 class="wgProfileEditH">
+                        Visitors sent to brands
+                    </h2>
+                    <p class="wgMuted wgProfileHint">
+                        Clicks to each brand's products and to its own site, by calendar month. Copy a summary to send them: it's the easiest way to start a conversation about working together.
+                    </p>
+                    <label class="wgField wgReportMonth">Month
+                        <select v-model="reportMonth" class="wgSelect" data-testid="brand-report-month" @change="loadBrandReport">
+                            <option v-for="m in reportMonths" :key="m.month" :value="m.month">{{ m.label }}</option>
+                        </select>
+                    </label>
+                    <p v-if="report && !report.brands.length" class="wgMuted">
+                        No clicks to any brand in {{ report.period.label }}.
+                    </p>
+                    <table v-if="report && report.brands.length" class="wgDevTable wgBrandReport">
+                        <thead>
+                            <tr><th>Brand</th><th>Visitors</th><th>Products</th><th>Their site</th><th>Most clicked</th><th><span class="wgVisuallyHidden">Summary</span></th></tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="b in report.brands" :key="b.name" data-testid="brand-report-row">
+                                <td>{{ b.name }}</td>
+                                <td><strong>{{ b.total }}</strong></td>
+                                <td>{{ b.productVisits }}</td>
+                                <td>{{ b.siteVisits }}</td>
+                                <td class="wgMuted">
+                                    {{ b.items.slice(0, 2).map((i) => i.name).join(', ') }}
+                                </td>
+                                <td>
+                                    <button type="button" class="wgBtn wgBtnGhost wgBtnSmall" data-testid="brand-report-copy" :title="b.summary" @click="copySummary(b)">
+                                        {{ copied === b.name ? 'Copied' : 'Copy summary' }}
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p v-if="copiedText" class="wgBrandSummary" role="status" data-testid="brand-report-summary">
+                        {{ copiedText }}
+                    </p>
+                </section>
+
                 <section class="wgCard wgDevCard" data-testid="supporters-admin">
                     <h2 class="wgProfileEditH">
                         Supporters
@@ -151,7 +196,7 @@ export default {
     name: 'OwnerRevenue',
     components: { siteHeader, siteFooter, ownerNav },
     data() {
-        return { settings: { enabled: true, rules: [] }, clicks: null, supporters: [], planAvailable: false, saved: false, headTags: '', headTagsMax: 10, headTagsSaved: false, headTagsCount: 0, headTagsError: '', grantName: '', grantMonths: 12, error: '' };
+        return { settings: { enabled: true, rules: [] }, clicks: null, supporters: [], planAvailable: false, saved: false, headTags: '', headTagsMax: 10, headTagsSaved: false, headTagsCount: 0, headTagsError: '', grantName: '', grantMonths: 12, error: '', referralSource: 'waymarkgear.com', report: null, reportMonth: '', reportMonths: [], copied: '', copiedText: '' };
     },
     computed: {
         isAdmin() {
@@ -161,7 +206,7 @@ export default {
     async mounted() {
         document.title = 'Revenue — Waymark Gear';
         if (!this.isAdmin) return;
-        await Promise.all([this.loadAffiliate(), this.loadSupporters(), this.loadHeadTags()]);
+        await Promise.all([this.loadAffiliate(), this.loadSupporters(), this.loadHeadTags(), this.loadBrandReport()]);
         const plan = await api('/api/plan').catch(() => ({}));
         this.planAvailable = Boolean(plan.available);
     },
@@ -173,6 +218,26 @@ export default {
             const r = await api('/api/admin/affiliate');
             this.settings = r.settings;
             this.clicks = r.clicks;
+            if (r.referralSource) this.referralSource = r.referralSource;
+        },
+        async loadBrandReport() {
+            const q = this.reportMonth ? `?month=${encodeURIComponent(this.reportMonth)}` : '';
+            const r = await api(`/api/admin/brand-report${q}`);
+            this.report = r;
+            this.reportMonths = r.months;
+            this.reportMonth = r.period.month;
+            this.copied = '';
+            this.copiedText = '';
+        },
+        async copySummary(b) {
+            // Shown on the page as well, in case the clipboard isn't allowed.
+            this.copiedText = b.summary;
+            try {
+                await navigator.clipboard.writeText(b.summary);
+                this.copied = b.name;
+            } catch {
+                this.copied = '';
+            }
         },
         async loadHeadTags() {
             const r = await api('/api/admin/head-tags');
@@ -220,6 +285,17 @@ export default {
 
 <style lang="scss">
 @import "../css/_globals";
+
+.wgReportMonth {
+    max-width: 240px;
+}
+
+.wgBrandSummary {
+    background: var(--lp-surface-sunken);
+    border-radius: 10px;
+    margin: 12px 0 0;
+    padding: 10px 12px;
+}
 
 .wgHeadTags {
     font-family: $font-mono;

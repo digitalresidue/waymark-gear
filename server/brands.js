@@ -10,7 +10,7 @@ import knex from './db.js';
 import { GEAR_TYPE_IDS } from '../client/brand-types.js';
 import { optionalUser, authenticateAdmin } from './auth.js';
 import { needsApproval, requestApproval, registerAction } from './team.js';
-import { destination, getSettings } from './affiliate.js';
+import { destination, getSettings, outboundUrl } from './affiliate.js';
 import { isSupporter } from './billing.js';
 import { isUuid } from './catalog.js';
 import { logWithRequest } from './log.js';
@@ -201,8 +201,11 @@ router.get('/go/brand/:id', async (req, res) => {
         const row = await knex('brands').where({ id, status: 'published' }).first('id', 'url', 'affiliate_url');
         if (!row) return res.status(404).send('No such brand.');
         const viewer = await optionalUser(req);
-        const { url, affiliate } = destination(row, await getSettings(), isSupporter(viewer));
-        if (!/^https?:\/\//i.test(url)) return res.redirect(302, '/brands');
+        const settings = await getSettings();
+        const dest = destination(row, settings, isSupporter(viewer));
+        const { affiliate } = dest;
+        if (!/^https?:\/\//i.test(dest.url)) return res.redirect(302, '/brands');
+        const url = outboundUrl(dest, settings);
         knex('brand_clicks').insert({ brand_id: id, affiliate, clicks: 1 })
             .onConflict(['brand_id', 'day', 'affiliate'])
             .merge({ clicks: knex.raw('brand_clicks.clicks + 1') })
