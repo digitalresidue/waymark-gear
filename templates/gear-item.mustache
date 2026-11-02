@@ -38,10 +38,23 @@
                     <p class="wgJournalKicker">{{brand}}{{#category}} · {{category}}{{/category}}</p>
                     <h1 data-testid="gear-name">{{name}}</h1>
                     <p class="wgGearHeroWeight"><span class="wgMono">{{weight}}</span>{{#price}} · {{price}}{{/price}}</p>
-                    <p class="wgGearRating" data-testid="gear-rating">
-                        {{#average}}<span class="wgStars" aria-hidden="true">{{stars}}</span> <strong>{{average}}</strong> / 5 from {{countLabel}}{{/average}}
-                        {{^average}}<span class="wgMuted">No reviews yet.</span>{{/average}}
-                    </p>
+                    <div class="wgGearRating" data-testid="gear-rating" data-rate="{{id}}" data-mine="{{myRating}}">
+                        <p class="wgRatingSummary" data-rating-summary aria-live="polite">
+                            {{#average}}<span class="wgStars" aria-hidden="true">{{stars}}</span> <strong>{{average}}</strong> / 5 from {{countLabel}}{{/average}}
+                            {{^average}}<span class="wgMuted">No ratings yet.</span>{{/average}}
+                        </p>
+                        {{#signedIn}}
+                        <fieldset class="wgRateMine" data-rate-mine data-testid="rate-mine">
+                            <legend>Your rating</legend>
+                            <span class="wgRateStars">
+                                {{#rateOptions}}<label class="wgRateStar{{#on}} wgOn{{/on}}"><input type="radio" name="my-rating" value="{{value}}" {{#checked}}checked{{/checked}} data-testid="rate-{{value}}"><span aria-hidden="true">★</span><span class="wgVisuallyHidden">{{label}}</span></label>{{/rateOptions}}
+                            </span>
+                            <span class="wgMuted wgRateNote" data-rate-note>{{myRatingNote}}</span>
+                            <button type="button" class="wgLinkBtn" data-rate-clear data-testid="rate-clear" {{^myRating}}hidden{{/myRating}}>Remove my rating</button>
+                        </fieldset>
+                        {{/signedIn}}
+                        {{^signedIn}}<p class="wgMuted wgRateSignIn"><a href="/signin">Sign in</a> to rate it.</p>{{/signedIn}}
+                    </div>
                     {{#description}}<p>{{description}}</p>{{/description}}
                     {{#prices}}
                     <figure class="wgPriceHistory" data-testid="price-history">

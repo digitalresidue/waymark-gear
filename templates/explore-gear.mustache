@@ -121,13 +121,14 @@
                     </div>
                     <ul class="wgGearGrid" id="wgGearResults" data-testid="explore-results">
                         {{#items}}
-                        <li class="wgCard wgGearCard" data-testid="explore-item" data-id="{{id}}" data-cat="{{cat}}" data-brand="{{brandKey}}" data-weight="{{weight}}" data-price="{{priceValue}}" data-name="{{sortName}}" data-specs="{{specsJson}}" {{^shown}}hidden{{/shown}}>
+                        <li class="wgCard wgGearCard" data-testid="explore-item" data-id="{{id}}" data-cat="{{cat}}" data-brand="{{brandKey}}" data-weight="{{weight}}" data-price="{{priceValue}}" data-score="{{score}}" data-ratings="{{ratings}}" data-name="{{sortName}}" data-specs="{{specsJson}}" {{^shown}}hidden{{/shown}}>
                             <a href="/g/{{id}}" class="wgGearCardLink">
                                 <span class="wgGearCardImg">{{#thumbUrl}}<img src="{{thumbUrl}}" alt="" loading="lazy" width="96" height="96">{{/thumbUrl}}{{^thumbUrl}}<span aria-hidden="true">{{initial}}</span>{{/thumbUrl}}</span>
                                 <span class="wgGearCardBody">
                                     <span class="wgMuted wgGearCardBrand">{{brand}}{{#catName}} · {{catName}}{{/catName}}</span>
                                     <strong class="wgGearCardName">{{name}}</strong>
                                     <span class="wgGearCardFacts"><span class="wgMono">{{weightText}}</span>{{#priceText}} · {{priceText}}{{/priceText}}</span>
+                                    {{#ratingCount}}<span class="wgGearCardRating" data-testid="explore-rating"><span class="wgStars" aria-hidden="true">{{ratingStars}}</span> <span class="wgVisuallyHidden">{{ratingLabel}}</span><span aria-hidden="true">{{ratingAvg}} ({{ratingCount}})</span></span>{{/ratingCount}}
                                     {{#keySpecs.length}}<span class="wgGearCardSpecs">{{#keySpecs}}<span>{{text}}</span>{{/keySpecs}}</span>{{/keySpecs.length}}
                                 </span>
                             </a>

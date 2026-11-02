@@ -36,6 +36,8 @@ import { ensureSitemap, sitemapFile } from './sitemap.js';
 import { GEAR_TYPES, GEAR_TYPE_IDS, gearTypeLabel } from '../client/brand-types.js';
 import { PACK_FEATURES, DIRECTIONS } from '../client/utils/trails.js';
 import { ratingsFor } from './reviews.js';
+import { ratingFor } from './ratings.js';
+import { RATING_WORDS } from '../client/utils/ratings.js';
 import { renderPage } from './site-chrome.js';
 
 const router = express.Router();
@@ -571,7 +573,8 @@ router.get('/g/:id', async (req, res) => {
         const item = await catalogItem(id);
         if (!item || item.status !== 'published') return res.status(404).send('No such gear.');
         const viewer = await optionalUser(req);
-        const { reviews, summary } = await reviewsFor(id, viewer);
+        const { reviews } = await reviewsFor(id, viewer);
+        const mine = viewer ? (await ratingFor(id, viewer)).mine : null;
         const uses = await knex('public_kits').whereRaw('? = any(catalog_ids)', [id]).count({ n: '*' }).first();
         const kitCount = Number(uses.n);
         const fullName = [item.brand, item.name].filter(Boolean).join(' ');
@@ -582,7 +585,7 @@ router.get('/g/:id', async (req, res) => {
             cspNonce: NONCE_PLACEHOLDER,
             path: `/g/${id}`,
             pageTitle: `${fullName}: weight and reviews`,
-            metaDescription: `${fullName}, ${weightUtils.MgToDisplayWeight(item.weightMg, item.unit)} ${item.unit}.${summary.average ? ` Rated ${summary.average}/5 in ${summary.count} ${summary.count === 1 ? 'review' : 'reviews'} on Waymark Gear.` : ''}`,
+            metaDescription: `${fullName}, ${weightUtils.MgToDisplayWeight(item.weightMg, item.unit)} ${item.unit}.${item.rating.average ? ` Rated ${item.rating.average}/5 by ${item.rating.count} ${item.rating.count === 1 ? 'member' : 'members'} on Waymark Gear.` : ''}`,
             item: {
                 ...item,
                 initial: item.name.trim().charAt(0).toUpperCase(),
@@ -590,9 +593,13 @@ router.get('/g/:id', async (req, res) => {
                 price: item.price ? `${item.currency === 'USD' || !item.currency ? '$' : `${item.currency} `}${item.price}` : '',
                 url: /^https:\/\//.test(item.url) ? item.url : '',
                 buy: buyModel(item, badges, { from: 'gear', testid: 'gear-buy', btnClass: 'wgBtnGhost' }),
-                average: summary.average,
-                stars: summary.average ? STARS(Math.round(summary.average)) : '',
-                countLabel: `${summary.count} ${summary.count === 1 ? 'review' : 'reviews'}`,
+                average: item.rating.average,
+                stars: item.rating.average ? STARS(Math.round(item.rating.average)) : '',
+                countLabel: `${item.rating.count} ${item.rating.count === 1 ? 'rating' : 'ratings'}`,
+                signedIn: Boolean(viewer),
+                myRating: mine || '',
+                myRatingNote: mine ? `You gave it ${mine} ${mine === 1 ? 'star' : 'stars'}: ${RATING_WORDS[mine]}. Change it any time.` : 'One tap. You can change it later.',
+                rateOptions: [1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${n} ${n === 1 ? 'star' : 'stars'}, ${RATING_WORDS[n]}`, checked: mine === n, on: mine >= n })),
                 kitCount,
                 kitCountLabel: `${kitCount} public ${kitCount === 1 ? 'list' : 'lists'}`,
                 searchName: encodeURIComponent(item.name),
@@ -782,7 +789,7 @@ router.get('/explore', async (req, res) => {
     }
 });
 
-const SORTS = [['weight', 'Lightest first'], ['price', 'Price, low to high'], ['name', 'Name']];
+const SORTS = [['rating', 'Top rated'], ['weight', 'Lightest first'], ['price', 'Price, low to high'], ['name', 'Name']];
 // Enough for any one category; filtering happens on the page.
 const MAX_SECTION_ITEMS = 3000;
 
@@ -878,6 +885,10 @@ router.get('/explore/:slug', async (req, res) => {
                         priceText: i.price ? `$${Number(i.price).toFixed(0)}` : '',
                         specsJson: JSON.stringify(i.specs),
                         keySpecs: specRows(e.category, e.specs).slice(0, 3),
+                        ratingAvg: e.rating.average,
+                        ratingStars: e.rating.average ? STARS(Math.round(e.rating.average)) : '',
+                        ratingCount: e.rating.count,
+                        ratingLabel: e.rating.count ? `${e.rating.average} out of 5 from ${e.rating.count} ${e.rating.count === 1 ? 'rating' : 'ratings'}` : '',
                         shown: matchesFilters(i, filters),
                     };
                 }),
@@ -1059,6 +1070,7 @@ async function renderListView(req, res) {
         const chartData = escape(JSON.stringify(list.renderChart('total', false)));
         const renderedCategories = renderLibrary(library, {
             itemTemplate: templates.t_itemShare,
+            ratings: await listRatings(library, list),
             categoryTemplate: templates.t_categoryShare,
             optionalFields: list.optionalFields,
             unitSelectTemplate: templates.t_unitSelect,
@@ -1157,6 +1169,7 @@ async function renderEmberView(req, res) {
 
         const renderedCategories = renderLibrary(library, {
             itemTemplate: templates.t_itemShare,
+            ratings: await listRatings(library, list),
             categoryTemplate: templates.t_categoryShare,
             optionalFields: list.optionalFields,
             unitSelectTemplate: templates.t_unitSelect,
@@ -1287,6 +1300,19 @@ function init() {
     });
 }
 
+// Members' star ratings for the catalog gear in a list, by catalog id.
+async function listRatings(library, list) {
+    const ids = new Set();
+    for (const cid of list.categoryIds) {
+        const category = library.getCategoryById(cid);
+        for (const ci of (category && category.categoryItems) || []) {
+            const item = library.getItemById(ci.itemId);
+            if (item && item.catalogId && isUuid(item.catalogId)) ids.add(item.catalogId);
+        }
+    }
+    return ids.size ? ratingsFor([...ids]).catch(() => ({})) : {};
+}
+
 const renderItem = function (item, args) {
     let classes = '';
     if (args.classes) classes = args.classes;
@@ -1318,6 +1344,10 @@ const renderItem = function (item, args) {
         out.url = `${config.get('deployUrl')}/go/${item.catalogId}?from=list`;
         out.sponsored = true;
     }
+
+    // Catalog gear shows what members rate it, linking to its gear page.
+    const rating = args.ratings && item.catalogId && args.ratings[item.catalogId];
+    out.rating = rating ? { ...rating, href: `${config.get('deployUrl')}/g/${item.catalogId}` } : null;
 
     // Photos and videos open in a lightbox (client/utils/lightbox.js).
     const photos = Array.isArray(item.photos) ? item.photos.filter((p) => /^\/userimages\//.test(p)) : [];

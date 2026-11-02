@@ -162,3 +162,20 @@
     right: auto;
     transform: rotate(-45deg);
 }
+
+// A catalog item's member rating beside its name on a shared list.
+.wgItemRating {
+    color: var(--lp-text-secondary);
+    font-size: 12px;
+    margin-left: 6px;
+    text-decoration: none;
+    white-space: nowrap;
+
+    span[aria-hidden] {
+        color: var(--lp-accent-orange);
+    }
+
+    &:hover {
+        text-decoration: underline;
+    }
+}

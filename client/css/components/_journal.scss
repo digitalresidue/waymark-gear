@@ -595,3 +595,62 @@
         margin: 4px 0 0;
     }
 }
+
+// Your star rating on a gear page (client/social.js initRating).
+.wgGearRating {
+    margin: 6px 0 12px;
+
+    .wgRatingSummary {
+        margin: 0 0 6px;
+    }
+}
+
+.wgRateMine {
+    align-items: center;
+    border: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin: 0;
+    padding: 0;
+
+    legend {
+        float: left;
+        font-size: 14px;
+        font-weight: 600;
+        margin-right: 6px;
+        padding: 0;
+    }
+}
+
+.wgRateStars {
+    display: inline-flex;
+}
+
+.wgRateStar {
+    color: var(--lp-border-hover);
+    cursor: pointer;
+    font-size: 26px;
+    line-height: 1;
+    padding: 2px;
+
+    input {
+        height: 1px;
+        opacity: 0;
+        position: absolute;
+        width: 1px;
+    }
+
+    &.wgOn {
+        color: var(--lp-accent-orange);
+    }
+
+    &:has(input:focus-visible) {
+        border-radius: 6px;
+        box-shadow: var(--lp-focus-ring);
+    }
+}
+
+.wgRateNote {
+    font-size: 13px;
+}

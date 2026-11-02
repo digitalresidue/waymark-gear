@@ -391,3 +391,13 @@
         padding: 2px 8px;
     }
 }
+
+.wgGearCardRating {
+    font-size: 13px;
+    margin-top: 2px;
+
+    .wgStars {
+        color: var(--lp-accent-orange);
+        letter-spacing: 1px;
+    }
+}
