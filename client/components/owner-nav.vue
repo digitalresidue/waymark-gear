@@ -1,42 +1,82 @@
 <template>
-    <section class="wgOwnerBar" aria-label="Owner tools">
+    <section class="wgOwnerBar" aria-label="Site tools">
         <div class="wgPage wgOwnerBarInner">
-            <span class="wgOwnerTag">Owner</span>
-            <nav aria-label="Owner" class="wgOwnerNav">
-                <router-link to="/owner/catalog" :class="{ wgActive: active === 'catalog' }">
-                    Gear catalog
-                </router-link>
-                <router-link to="/owner/kits" :class="{ wgActive: active === 'kits' }">
-                    Featured kits
-                </router-link>
-                <router-link to="/owner/trails" :class="{ wgActive: active === 'trails' }" data-testid="owner-nav-trails">
-                    Trails
-                </router-link>
-                <router-link to="/owner/brands" :class="{ wgActive: active === 'brands' }" data-testid="owner-nav-brands">
-                    Brands
-                </router-link>
-                <router-link to="/owner/revenue" :class="{ wgActive: active === 'revenue' }" data-testid="owner-nav-revenue">
-                    Revenue
-                </router-link>
+            <span class="wgOwnerTag" data-testid="owner-role">{{ roleLabel }}</span>
+            <nav aria-label="Site tools" class="wgOwnerNav">
+                <template v-if="isAdmin">
+                    <router-link to="/owner/catalog" :class="{ wgActive: active === 'catalog' }">
+                        Gear catalog
+                    </router-link>
+                    <router-link to="/owner/kits" :class="{ wgActive: active === 'kits' }">
+                        Featured kits
+                    </router-link>
+                    <router-link to="/owner/trails" :class="{ wgActive: active === 'trails' }" data-testid="owner-nav-trails">
+                        Trails
+                    </router-link>
+                    <router-link to="/owner/brands" :class="{ wgActive: active === 'brands' }" data-testid="owner-nav-brands">
+                        Brands
+                    </router-link>
+                </template>
                 <router-link v-if="isModerator" to="/moderation" :class="{ wgActive: active === 'users' }" data-testid="owner-nav-users">
-                    Users
+                    Moderation
                 </router-link>
+                <template v-if="isOwner">
+                    <span class="wgOwnerNavSep" aria-hidden="true" />
+                    <router-link to="/owner/revenue" :class="{ wgActive: active === 'revenue' }" data-testid="owner-nav-revenue">
+                        Revenue
+                    </router-link>
+                    <router-link to="/owner/members" :class="{ wgActive: active === 'members' }" data-testid="owner-nav-members">
+                        Members
+                    </router-link>
+                    <router-link to="/owner/team" :class="{ wgActive: active === 'team' }" data-testid="owner-nav-team">
+                        Team
+                    </router-link>
+                    <router-link to="/owner/activity" :class="{ wgActive: active === 'activity' }" data-testid="owner-nav-activity">
+                        Activity<span v-if="pending" class="wgOwnerNavCount" data-testid="owner-nav-pending">{{ pending }}<span class="wgVisuallyHidden"> waiting for you</span></span>
+                    </router-link>
+                </template>
             </nav>
         </div>
     </section>
 </template>
 
 <script>
+import { api } from '../utils/format.js';
+
 export default {
     name: 'OwnerNav',
     props: {
         active: { type: String, default: '' },
     },
+    data() {
+        return { pending: 0 };
+    },
     computed: {
-        isModerator() {
-            const a = this.$store.state.account;
-            return Boolean(a && (a.isModerator || a.isAdmin));
+        account() {
+            return this.$store.state.account || {};
         },
+        isOwner() {
+            return Boolean(this.account.isOwner);
+        },
+        isAdmin() {
+            return Boolean(this.account.isAdmin);
+        },
+        isModerator() {
+            return Boolean(this.account.isModerator || this.account.isAdmin);
+        },
+        roleLabel() {
+            if (this.isOwner) return 'Owner';
+            return this.isAdmin ? 'Admin' : 'Moderator';
+        },
+    },
+    async mounted() {
+        // Requests from admins waiting for the owner.
+        if (!this.isOwner) return;
+        try {
+            this.pending = (await api('/api/owner/activity?status=pending&limit=1')).pending;
+        } catch {
+            this.pending = 0;
+        }
     },
 };
 </script>
@@ -65,6 +105,23 @@ export default {
     letter-spacing: 0.08em;
     padding: 5px 9px;
     text-transform: uppercase;
+}
+
+.wgOwnerNavSep {
+    align-self: center;
+    border-left: 1px solid var(--lp-border-strong);
+    height: 22px;
+    margin: 0 6px;
+}
+
+.wgOwnerNavCount {
+    background: var(--lp-accent);
+    border-radius: 99px;
+    color: var(--lp-text-invert);
+    font-size: 11px;
+    font-weight: 700;
+    margin-left: 6px;
+    padding: 1px 7px;
 }
 
 .wgOwnerNav {

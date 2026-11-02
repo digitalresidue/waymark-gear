@@ -7,7 +7,7 @@
 //
 // `show` says who sees an entry:
 //   all (default) · library (has lists, signed in or not) · signedIn · guest
-//   admin (site owner) · staff (owner or moderator)
+//   owner (site owner) · admin (owner or admin) · staff (anyone on the team)
 // `id` doubles as the test id: data-testid="nav-<id>".
 
 export const MENU = [
@@ -28,17 +28,20 @@ export const MENU = [
     { id: 'trips', label: 'Trips', href: '/trips', show: 'signedIn' },
     {
         id: 'owner',
-        label: 'Owner',
+        label: 'Site',
         show: 'staff',
         items: [
             { id: 'owner-catalog', label: 'Gear catalog', href: '/owner/catalog', show: 'admin' },
             { id: 'owner-kits', label: 'Featured kits', href: '/owner/kits', show: 'admin' },
             { id: 'owner-trails', label: 'Trails', href: '/owner/trails', show: 'admin' },
             { id: 'owner-brands', label: 'Brands', href: '/owner/brands', show: 'admin' },
-            { id: 'owner-revenue', label: 'Revenue', href: '/owner/revenue', show: 'admin' },
             { id: 'owner-review', label: 'Write a review', href: '/reviews#write', show: 'staff' },
-            { id: 'owner-users', label: 'Users', href: '/moderation', show: 'staff' },
+            { id: 'owner-users', label: 'Moderation', href: '/moderation', show: 'staff' },
             { id: 'tickets', label: 'Tickets', href: '/staff/tickets', show: 'staff' },
+            { id: 'owner-revenue', label: 'Revenue', href: '/owner/revenue', show: 'owner' },
+            { id: 'owner-members', label: 'Members', href: '/owner/members', show: 'owner' },
+            { id: 'owner-team', label: 'Team', href: '/owner/team', show: 'owner' },
+            { id: 'owner-activity', label: 'Activity', href: '/owner/activity', show: 'owner' },
         ],
     },
 ];
@@ -51,12 +54,13 @@ export const PHONE_EXTRAS = [
     { id: 'signin', label: 'Sign in', href: '/signin', show: 'guest', testid: 'menu-signin' },
 ];
 
-// viewer: { signedIn, hasLibrary, isAdmin, isModerator }
+// viewer: { signedIn, hasLibrary, isOwner, isAdmin, isModerator }
 export function canSee(entry, viewer) {
     switch (entry.show || 'all') {
     case 'library': return Boolean(viewer.hasLibrary || viewer.signedIn);
     case 'signedIn': return Boolean(viewer.signedIn);
     case 'guest': return !viewer.signedIn;
+    case 'owner': return Boolean(viewer.isOwner);
     case 'admin': return Boolean(viewer.isAdmin);
     case 'staff': return Boolean(viewer.isAdmin || viewer.isModerator);
     default: return true;

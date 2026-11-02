@@ -188,9 +188,9 @@ export default {
             }
         },
         async remove() {
-            await api(`/api/admin/trails/${this.form.id}`, { method: 'DELETE' });
+            const r = await api(`/api/admin/trails/${this.form.id}`, { method: 'DELETE' });
             this.editorOpen = false;
-            this.notice = `Deleted ${this.form.name}. Lists tagged with it keep the name as typed.`;
+            this.notice = r && r.pending ? `Asked the site owner to delete ${this.form.name}. ${r.message}` : `Deleted ${this.form.name}. Lists tagged with it keep the name as typed.`;
             await this.load();
         },
         async merge(s, trailId) {

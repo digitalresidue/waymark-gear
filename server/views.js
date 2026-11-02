@@ -79,6 +79,9 @@ const vueRoutes = [ /* TODO - get this from same data source as Vue */
     { path: '/owner/revenue' },
     { path: '/owner/trails' },
     { path: '/owner/brands' },
+    { path: '/owner/team' },
+    { path: '/owner/activity' },
+    { path: '/owner/members' },
 ];
 
 let index = fs.readFileSync(path.join(import.meta.dirname, '../_index.html'), 'utf8');

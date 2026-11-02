@@ -18,7 +18,7 @@ import express from 'express';
 
 import knex from './db.js';
 import { isUuid } from './catalog.js';
-import { optionalUser, authenticateAdmin } from './auth.js';
+import { optionalUser, authenticateOwner } from './auth.js';
 import { isSupporter } from './billing.js';
 import { logWithRequest } from './log.js';
 import config from 'config';
@@ -160,7 +160,8 @@ export async function clickReport(days = 30) {
     return { since, total, affiliate, items: rows.map((r) => ({ id: r.id, name: [r.brand, r.name].filter(Boolean).join(' '), clicks: r.clicks, affiliateClicks: r.affiliate_clicks })) };
 }
 
-const admin = (handler) => (req, res) => authenticateAdmin(req, res, async (req, res, user) => {
+// Owner only: money, site-wide scripts and free Supporter time.
+const admin = (handler) => (req, res) => authenticateOwner(req, res, async (req, res, user) => {
     try {
         await handler(req, res, user);
     } catch (err) {

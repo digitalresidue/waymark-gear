@@ -201,9 +201,9 @@ export default {
             }
         },
         async remove() {
-            await api(`/api/admin/brands/${this.form.id}`, { method: 'DELETE' });
+            const r = await api(`/api/admin/brands/${this.form.id}`, { method: 'DELETE' });
             this.editorOpen = false;
-            this.notice = `Deleted ${this.form.name}.`;
+            this.notice = r && r.pending ? `Asked the site owner to delete ${this.form.name}. ${r.message}` : `Deleted ${this.form.name}.`;
             await this.load();
         },
     },

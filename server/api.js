@@ -5,6 +5,7 @@
 // Owner:   /api/admin/catalog (CRUD, CSV import/export), /api/admin/kits
 
 import express from 'express';
+import { needsApproval, requestApproval, registerAction, BIG_IMPORT_ROWS } from './team.js';
 
 import * as catalog from './catalog.js';
 import { libraryForExternalId } from './library-store.js';
@@ -13,7 +14,7 @@ import * as kits from './kits.js';
 import config from 'config';
 import rateLimit from 'express-rate-limit';
 import {
-    authenticateAdmin, authenticateUser, authenticateModerator, optionalUser, isAdmin, isModerator,
+    authenticateAdmin, authenticateUser, authenticateModerator, optionalUser, isAdmin, isModerator, isOwner,
 } from './auth.js';
 import * as comments from './comments.js';
 import * as follows from './follows.js';
@@ -34,7 +35,7 @@ import knex from './db.js';
 import { youTubeId, TRIP_TYPES } from '../client/utils/gear-meta.js';
 import { profileForEditing, updateProfile, ProfileError } from './profiles.js';
 import { googleEnabled } from './google.js';
-import { logWithRequest } from './log.js';
+import { logWithRequest, logger } from './log.js';
 import { importRateLimit, ImportError } from './lighterpack.js';
 import { importFromLink } from './import-links.js';
 import { absoluteImageUrl, copyRemoteImage, isLocalImage, localImagePath, localizeCatalogImages, remoteCatalogImageCount, RemoteImageError } from './remote-image.js';
@@ -184,7 +185,7 @@ router.get('/api/viewer', publicJson(async (req, res) => {
     // Their chart style, so shared lists draw the way they chose in the app.
     const settings = await knex('library_settings').where({ user_id: user.user_id }).first('preferences').catch(() => null);
     const prefs = settings && settings.preferences ? (typeof settings.preferences === 'string' ? JSON.parse(settings.preferences) : settings.preferences) : {};
-    res.json({ username: user.username, avatarUrl: user.avatar_url || '', isAdmin: isAdmin(user.username), isModerator: isModerator(user.username), canReview: reviews.canReview(user), chartStyle: prefs.chartStyle || null });
+    res.json({ username: user.username, avatarUrl: user.avatar_url || '', isAdmin: isAdmin(user.username), isModerator: isModerator(user.username), isOwner: isOwner(user.username), canReview: reviews.canReview(user), chartStyle: prefs.chartStyle || null });
 }));
 
 router.get('/api/users/:username/follow', publicJson(async (req, res) => {
@@ -498,9 +499,15 @@ router.put('/api/admin/trails/:id', requireJson, trailAdmin(async (req, res) => 
     res.json({ id: await trails.updateTrail(req.params.id, req.body || {}) });
 }));
 
-router.delete('/api/admin/trails/:id', trailAdmin(async (req, res) => {
+router.delete('/api/admin/trails/:id', trailAdmin(async (req, res, user) => {
+    if (needsApproval(user)) {
+        const t = await knex('trails').where({ id: Number(req.params.id) || 0 }).first('id', 'name');
+        if (!t) return res.status(404).json({ message: 'No such trail.' });
+        return requestApproval(req, res, user, 'trail.delete', { id: t.id }, `Delete trail: ${t.name}`);
+    }
     res.json(await trails.deleteTrail(req.params.id));
 }));
+registerAction('trail.delete', (p) => trails.deleteTrail(p.id), (p) => `Trail #${p.id}`);
 
 router.post('/api/admin/trails/suggestions/:action', requireJson, trailAdmin(async (req, res) => {
     const name = String((req.body && req.body.name) || '').trim();
@@ -819,6 +826,11 @@ router.put('/api/admin/catalog/:id', requireJson, admin(async (req, res, user) =
 }));
 
 router.delete('/api/admin/catalog/:id', admin(async (req, res, user) => {
+    if (needsApproval(user)) {
+        const item = catalog.isUuid(req.params.id) && await knex('catalog_items').where({ id: req.params.id }).first('id', 'name', 'brand');
+        if (!item) return res.status(404).json({ message: 'Not found.' });
+        return requestApproval(req, res, user, 'catalog.delete', { id: item.id }, `Delete gear: ${[item.brand, item.name].filter(Boolean).join(' ')}`);
+    }
     const removed = await catalog.remove(req.params.id);
     if (!removed) return res.status(404).json({ message: 'Not found.' });
     logWithRequest(req, { message: 'catalog item deleted', id: req.params.id, username: user.username });
@@ -860,19 +872,41 @@ router.post('/api/admin/catalog/import/preview', requireJson, admin(async (req, 
     });
 }));
 
-router.post('/api/admin/catalog/import/apply', requireJson, admin(async (req, res, user) => {
-    const { badges, domains, ...result } = await catalog.applyImport(String(req.body?.csv || ''));
-    if (result.error) return res.status(400).json({ message: result.error });
-    // Shop badges and site icons from the sheet: in the background.
-    const shopLog = (err) => logWithRequest(req, { message: 'shop badge', err });
+// Apply a catalog CSV, then fetch shop badges and copy photos in the
+// background. Used directly, and when the owner approves an admin's import.
+async function applyCatalogImport(csv, log) {
+    const { badges, domains, ...result } = await catalog.applyImport(csv);
+    if (result.error) return result;
+    const shopLog = (err) => log({ message: 'shop badge', err });
     saveBadges(badges || [], { log: shopLog })
         .then(() => fetchMissingBadges(domains || [], { log: shopLog }))
         .catch(shopLog);
+    localizeCatalogImages(knex, { log: (err) => log({ message: 'catalog photo copy failed', err }) })
+        .catch((err) => log({ message: 'catalog photo copy failed', err }));
+    return result;
+}
+registerAction('catalog.import', async (p, owner) => {
+    const result = await applyCatalogImport(p.csv, (entry) => logger.error({ ...entry, username: owner.username }));
+    if (result.error) throw new Error(result.error);
+}, (p) => `${p.rows} rows changed: ${p.summary.new} new, ${p.summary.update} updated`);
+registerAction('catalog.delete', async (p) => {
+    if (!(await catalog.remove(p.id))) throw new Error('That gear is already gone.');
+}, (p) => `Gear ${p.id}`);
+
+router.post('/api/admin/catalog/import/apply', requireJson, admin(async (req, res, user) => {
+    const csv = String(req.body?.csv || '');
+    if (needsApproval(user)) {
+        const plan = await catalog.planImport(csv);
+        if (plan.error) return res.status(400).json({ message: plan.error });
+        const rows = plan.summary.new + plan.summary.update;
+        if (rows >= BIG_IMPORT_ROWS) {
+            return requestApproval(req, res, user, 'catalog.import', { csv, rows, summary: plan.summary },
+                `Catalog import: ${plan.summary.new} new, ${plan.summary.update} updated`);
+        }
+    }
+    const result = await applyCatalogImport(csv, (entry) => logWithRequest(req, entry));
+    if (result.error) return res.status(400).json({ message: result.error });
     logWithRequest(req, { message: 'catalog import applied', summary: result.summary, username: user.username });
-    // Photo links in the import are copied in the background; the catalog
-    // page shows how many are left and any that couldn't be copied.
-    localizeCatalogImages(knex, { log: (err) => logWithRequest(req, { message: 'catalog photo copy failed', err }) })
-        .catch((err) => logWithRequest(req, { message: 'catalog photo copy failed', err }));
     res.json(result);
 }));
 
