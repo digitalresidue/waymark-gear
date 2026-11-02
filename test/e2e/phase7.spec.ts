@@ -201,12 +201,12 @@ test.describe('Phase 7: affiliate links and the Supporter plan', () => {
         await expect(vp.getByTestId('gear-buy')).toHaveAttribute('rel', /sponsored/);
         await expect(vp.locator('.wgDisclosure')).toContainText('commission');
 
-        // A Supporter gets the plain link.
+        // A Supporter gets the plain link, tagged as a referral from us.
         const fan = await newUser(browser, 'p7sup');
         const grant = await owner.page.request.post(url('/api/admin/supporters'), { data: { username: fan.username, months: 12 } });
         expect(grant.status()).toBe(200);
-        expect(await go(fan.page.request, ruled)).toBe(`https://www.ruled-${t}.example.com/pack?id=1`);
-        expect(await go(fan.page.request, own)).toBe('https://shop.example.com/stove');
+        expect(await go(fan.page.request, ruled)).toBe(`https://www.ruled-${t}.example.com/pack?id=1&utm_source=localhost&utm_medium=referral`);
+        expect(await go(fan.page.request, own)).toBe('https://shop.example.com/stove?utm_source=localhost&utm_medium=referral');
         await fan.page.goto(url(`/@${fan.username}`));
         await expect(fan.page.getByTestId('supporter-badge')).toBeVisible();
 

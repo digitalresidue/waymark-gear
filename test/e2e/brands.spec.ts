@@ -95,7 +95,7 @@ test.describe('Brands', () => {
         const grant = await o.page.request.post(url('/api/admin/supporters'), { data: { username: s.username, months: 1 } });
         expect(grant.status(), await grant.text()).toBe(200);
         const viaSupporter = await supporter.request.get(url(visit!), { maxRedirects: 0 });
-        expect(viaSupporter.headers().location).toBe('https://ridgeline.example/');
+        expect(viaSupporter.headers().location).toBe('https://ridgeline.example/?utm_source=localhost&utm_medium=referral');
         await supporterContext.close();
 
         // The owner sees the visits.
