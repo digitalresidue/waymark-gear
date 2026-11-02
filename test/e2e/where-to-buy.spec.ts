@@ -56,10 +56,11 @@ test('shops from the import sheet: a Buy menu with badges, each link through its
     await visitor.keyboard.press('Escape');
     await expect(options.first()).toBeHidden();
 
-    // Each link: the shop's affiliate link if it has one, else its plain link.
+    // Each link: the shop's affiliate link if it has one, else its plain
+    // link tagged as a referral from us.
     const go = async (i: number) => (await visitor.request.get(url(`/go/${tent.id}?from=gear&shop=${i}`), { maxRedirects: 0 })).headers().location;
     expect(await go(1)).toBe(`https://bc-${tag}.example/aff`);
-    expect(await go(2)).toBe(`https://ggg-${tag}.example/p/tent`);
+    expect(await go(2)).toBe(`https://ggg-${tag}.example/p/tent?utm_source=localhost&utm_medium=referral`);
     expect((await visitor.request.get(url(`/go/${tent.id}?shop=9`), { maxRedirects: 0 })).headers().location).toBe(`/g/${tent.id}`);
 
     // One place to buy: a plain Buy link, as before.
