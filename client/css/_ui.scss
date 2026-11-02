@@ -240,7 +240,11 @@
         min-height: 36px;
         padding: 0 14px;
 
+        // On: a toggle (aria-pressed), a choice in a radio group such as
+        // Trip type (aria-checked), or the current tab (aria-selected).
         &[aria-pressed="true"],
+        &[aria-checked="true"],
+        &[aria-selected="true"],
         &.wgChipOn {
             background: var(--lp-primary);
             border-color: var(--lp-primary);
