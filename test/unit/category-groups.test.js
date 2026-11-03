@@ -2,7 +2,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { Library } from '../../client/dataTypes.js';
-import { defaultGroupFor, CLOTHING_GROUP, SLEEP_GROUP, SHELTER_GROUP } from '../../client/utils/gear-meta.js';
+import { defaultGroupFor, CLOTHING_GROUP, SLEEP_GROUP, SHELTER_GROUP, COOK_GROUP, WATER_GROUP } from '../../client/utils/gear-meta.js';
 
 // A list: Shelter, Base Layer, Sleep, Mid Layer, Shells.
 function setup() {
@@ -97,8 +97,19 @@ describe('defaultGroupFor', () => {
         }
     });
     test('tents, bivies, hammocks and tarps go under Shelter', () => {
-        for (const t of ['Tent', 'Tents', 'Bivy', 'Bivies', 'Bivys', 'Bivvy', 'Bivy Sack', 'Hammock', 'Hammocks', 'Tarp', 'Tarps']) {
+        for (const t of ['Tent', 'Tents', 'Bivy', 'Bivies', 'Bivys', 'Bivvy', 'Bivy Sack', 'Hammock', 'Hammocks', 'Tarp', 'Tarps',
+            'Suspension', 'Hammock Suspension', 'Ridgeline', 'Ridgelines', 'Stakes', 'Stake', 'Tent Stakes']) {
             assert.equal(defaultGroupFor(t), SHELTER_GROUP, t);
+        }
+    });
+    test('stoves, fuel, lighters, pots and utensils go under Cook Kit', () => {
+        for (const t of ['Stove', 'Stoves', 'Fuel', 'Lighter', 'Lighters', 'Pot', 'Pots', 'Cook Pot', 'Utensil', 'Utensils', 'Spork']) {
+            assert.equal(defaultGroupFor(t), COOK_GROUP, t);
+        }
+    });
+    test('bottles, bladders and filters go under Water', () => {
+        for (const t of ['Bottle', 'Bottles', 'Water Bottle', 'Bladder', 'Bladders', 'Hydration Bladder', 'Filter', 'Filters', 'Water Filter']) {
+            assert.equal(defaultGroupFor(t), WATER_GROUP, t);
         }
     });
 });

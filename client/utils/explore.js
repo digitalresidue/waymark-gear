@@ -3,9 +3,9 @@
 // and applies a link's filters on first load, and the browser
 // (client/explore-gear.js), which filters in place as you go.
 //
-// Categories sit under four parents, always first and in this order: Pack,
-// Shelter, Sleep System, Clothing (the list groups from gear-meta.js, plus
-// packs). Everything else follows A–Z.
+// Categories sit under six parents, always first and in this order: Pack,
+// Shelter, Sleep System, Clothing, Cook Kit, Water (the list groups from
+// gear-meta.js, plus packs). Everything else follows A–Z.
 
 import { ratingScore } from './ratings.js';
 import { categoryKey, defaultGroupFor } from './gear-meta.js';
@@ -16,8 +16,10 @@ export const PARENTS = [
     { slug: 'shelter', name: 'Shelter', note: 'Tents, tarps, bivies and hammocks' },
     { slug: 'sleep-system', name: 'Sleep System', note: 'Quilts, bags, pads and pillows' },
     { slug: 'clothing', name: 'Clothing', note: 'Layers, shells, socks and shoes' },
+    { slug: 'cook-kit', name: 'Cook Kit', note: 'Stoves, fuel, pots and utensils' },
+    { slug: 'water', name: 'Water', note: 'Bottles, bladders and filters' },
 ];
-const PARENT_BY_GROUP = { Shelter: 'shelter', 'Sleep System': 'sleep-system', Clothing: 'clothing' };
+const PARENT_BY_GROUP = { Shelter: 'shelter', 'Sleep System': 'sleep-system', Clothing: 'clothing', 'Cook Kit': 'cook-kit', Water: 'water' };
 
 export const slugify = (name) => String(name || '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
@@ -33,12 +35,14 @@ export function parentOf(category) {
     if (k === 'shelter') return 'shelter';
     if (k === 'sleep' || k === 'sleepsystem') return 'sleep-system';
     if (k === 'clothing' || k === 'clothe') return 'clothing';
+    if (k === 'cookkit' || k === 'cooking' || k === 'kitchen') return 'cook-kit';
+    if (k === 'water' || k === 'hydration') return 'water';
     return null;
 }
 
 /**
  * The /explore page: [{ slug, name, note, count, children: [{ slug, name, count }] }],
- * the four parents first (always, even while empty), then other categories A–Z.
+ * the parents first (always, even while empty), then other categories A–Z.
  * categories: [{ name, count }] (catalog.categories()).
  */
 export function exploreIndex(categories) {

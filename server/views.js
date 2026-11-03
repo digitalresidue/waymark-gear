@@ -26,8 +26,9 @@ import { viewTrip, tripsOnProfile } from './trips.js';
 import { reviewsFor, latestReviews } from './reviews.js';
 import { getById as catalogItem, isUuid, search as catalogSearch, categories as catalogCategories, toApi as catalogToApi } from './catalog.js';
 import {
-    exploreIndex, resolveSection, filterItem, facetsFor, readFilters, matchesFilters, sortItems, rangeLabel, formatWeightG, activeFilterCount,
+    exploreIndex, resolveSection, filterItem, facetsFor, readFilters, matchesFilters, sortItems, rangeLabel, formatWeightG, activeFilterCount, PARENTS,
 } from '../client/utils/explore.js';
+const PARENT_SLUGS = new Set(PARENTS.map((p) => p.slug));
 import { priceHistory } from './prices.js';
 import * as trails from './trails.js';
 import { badgesFor, buyOptions } from './shops.js';
@@ -781,8 +782,8 @@ router.get('/explore', async (req, res) => {
             pageTitle: 'Explore gear',
             metaDescription: 'Backpacking gear by category: packs, shelters, sleep systems, clothing and more, with weights, prices and specs to filter by.',
             index: {
-                parents: index.filter((s) => s.children !== undefined && ['pack', 'shelter', 'sleep-system', 'clothing'].includes(s.slug)).map(shape),
-                others: index.filter((s) => !['pack', 'shelter', 'sleep-system', 'clothing'].includes(s.slug)).map(shape),
+                parents: index.filter((s) => PARENT_SLUGS.has(s.slug)).map(shape),
+                others: index.filter((s) => !PARENT_SLUGS.has(s.slug)).map(shape),
             },
         };
         sendFresh(res, renderPage(exploreGearTemplate, model, {}, req.path));
