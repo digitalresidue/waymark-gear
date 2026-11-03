@@ -13,29 +13,31 @@ const CATS = [
 describe('the category index', () => {
     test('parents, in order, then everything else A–Z', () => {
         const index = exploreIndex(CATS);
-        assert.deepEqual(index.map((s) => s.name), ['Pack', 'Shelter', 'Sleep System', 'Clothing', 'Accessories', 'Cooking', 'Lights and Electronics']);
+        assert.deepEqual(index.map((s) => s.name), ['Pack', 'Shelter', 'Sleep System', 'Clothing', 'Cook Kit', 'Water', 'Accessories', 'Lights and Electronics']);
         const shelter = index[1];
         assert.equal(shelter.count, 10);
         // "Tent" and "Tents" are one.
         assert.deepEqual(shelter.children.map((c) => [c.name, c.count]), [['Shelter', 4], ['Tent', 4], ['Tarps', 2]]);
-        assert.equal(index.find((x) => x.name === 'Cooking').count, 8);
+        // A category named like a parent sits under it: "Cooking" (and "cooking") in Cook Kit.
+        assert.equal(index.find((x) => x.name === 'Cook Kit').count, 8);
         assert.deepEqual(index[2].children.map((c) => c.name), ['Top Quilt', 'Sleeping Pad', 'Sleep']);
         assert.equal(index[0].children[0].name, 'Backpack');
         // The parents stay even while empty.
-        assert.equal(exploreIndex([]).length, 4);
+        assert.equal(exploreIndex([]).length, 6);
     });
 
     test('parents and categories resolve from a slug', () => {
         assert.equal(parentOf('Tents'), 'shelter');
         assert.equal(parentOf('Pillow'), 'sleep-system');
         assert.equal(parentOf('Packs'), 'pack');
-        assert.equal(parentOf('Cooking'), null);
+        assert.equal(parentOf('Cooking'), 'cook-kit');
+        assert.equal(parentOf('Accessories'), null);
         const shelter = resolveSection('shelter', CATS);
         assert.deepEqual(shelter.categories.sort(), ['Shelter', 'Tarps', 'Tent', 'Tents']);
         assert.deepEqual(resolveSection('cooking', CATS).categories.sort(), ['Cooking', 'cooking']);
         const cooking = resolveSection('cooking', CATS);
         assert.equal(cooking.title, 'Cooking');
-        assert.equal(cooking.parent, null);
+        assert.equal(cooking.parent.slug, 'cook-kit');
         assert.equal(resolveSection('tent', CATS).parent.slug, 'shelter');
         assert.equal(resolveSection('nothing-here', CATS), null);
         assert.equal(slugify('Lights & Electronics'), 'lights-and-electronics');
@@ -90,6 +92,9 @@ describe('filters', () => {
         const f = readFilters(new URLSearchParams('fabric=ULTRA 200'));
         assert.deepEqual(packs.filter((i) => matchesFilters(i, f)).map((i) => i.id), ['f1', 'f2']);
         // Fastpacks and hydration vests sit under Pack.
+        for (const c of ['Stove', 'Stoves', 'Fuel', 'Lighter', 'Pot', 'Pots', 'Utensil', 'Utensils']) assert.equal(parentOf(c), 'cook-kit', c);
+        for (const c of ['Bottle', 'Water Bottles', 'Bladder', 'Filter', 'Filters']) assert.equal(parentOf(c), 'water', c);
+        for (const c of ['Suspension', 'Ridgeline', 'Stakes', 'Tent Stakes']) assert.equal(parentOf(c), 'shelter', c);
         assert.equal(parentOf('Fastpack'), 'pack');
         assert.equal(parentOf('Hydration Vests'), 'pack');
         assert.equal(parentOf('Fast Pack'), 'pack');

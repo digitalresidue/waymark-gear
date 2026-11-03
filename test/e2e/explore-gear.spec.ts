@@ -35,11 +35,11 @@ async function slide(page: Page, testid: string, value: number) {
 }
 const names = async (page: Page) => page.getByTestId('explore-item').filter({ visible: true }).locator('.wgGearCardName').allTextContents();
 
-test('the index: Pack, Shelter, Sleep System and Clothing first, then the rest A–Z', async ({ page, browser }, testInfo) => {
+test('the index: Pack, Shelter, Sleep System, Clothing, Cook Kit and Water first, then the rest A–Z', async ({ page, browser }, testInfo) => {
     await seed(browser, testInfo.workerIndex, `Ex${Date.now().toString(36)}`);
     await page.goto(url('/explore'));
     const sections = page.getByTestId('explore-section');
-    expect((await sections.evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.slug))).slice(0, 4)).toEqual(['pack', 'shelter', 'sleep-system', 'clothing']);
+    expect((await sections.evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.slug))).slice(0, 6)).toEqual(['pack', 'shelter', 'sleep-system', 'clothing', 'cook-kit', 'water']);
     const others = await page.getByTestId('explore-others').locator('a > span:first-child').allTextContents();
     expect(others).toEqual([...others].sort((a, b) => a.localeCompare(b)));
     // A child category opens its parent with that category ticked.

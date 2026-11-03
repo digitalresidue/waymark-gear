@@ -102,15 +102,26 @@ export const DEFAULT_GROUPS = [
     },
     {
         name: 'Shelter',
-        types: ['Tent', 'Bivy', 'Bivvy', 'Bivy Sack', 'Hammock', 'Tarp'],
+        types: ['Tent', 'Bivy', 'Bivvy', 'Bivy Sack', 'Hammock', 'Tarp',
+            'Suspension', 'Hammock Suspension', 'Ridgeline', 'Stakes', 'Tent Stakes'],
+    },
+    {
+        name: 'Cook Kit',
+        types: ['Stove', 'Fuel', 'Lighter', 'Pot', 'Cook Pot', 'Cookware', 'Utensil', 'Spoon', 'Spork'],
+    },
+    {
+        name: 'Water',
+        types: ['Bottle', 'Water Bottle', 'Bladder', 'Hydration Bladder', 'Reservoir', 'Filter', 'Water Filter'],
     },
 ];
 const GROUP_BY_TYPE = new Map(DEFAULT_GROUPS.flatMap((g) => g.types.map((t) => [categoryKey(t), g.name])));
 export const CLOTHING_GROUP = 'Clothing';
 export const SLEEP_GROUP = 'Sleep System';
 export const SHELTER_GROUP = 'Shelter';
+export const COOK_GROUP = 'Cook Kit';
+export const WATER_GROUP = 'Water';
 
-/** The group a catalog type goes in by default ('Clothing', 'Sleep System', 'Shelter'), or ''. */
+/** The group a catalog type goes in by default ('Clothing', 'Sleep System', 'Shelter', 'Cook Kit', 'Water'), or ''. */
 export function defaultGroupFor(type) {
     const k = categoryKey(type);
     if (!k) return '';
