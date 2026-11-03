@@ -77,10 +77,17 @@
                         </fieldset>
                         {{/facets.cats.length}}
 
+                        {{#facets.brands.length}}
+                        <fieldset class="wgFilter" data-testid="filter-brand">
+                            <legend>Brand</legend>
+                            {{#facets.brands}}<label class="wgFilterCheck"><input type="checkbox" name="brand" value="{{value}}" {{#on}}checked{{/on}}> {{label}} <span class="wgMuted">{{count}}</span></label>{{/facets.brands}}
+                        </fieldset>
+                        {{/facets.brands.length}}
+
                         {{#blocks}}
                         {{#range}}
                         <div class="wgFilter wgRange" data-range="{{key}}" data-min="{{min}}" data-max="{{max}}" data-step="{{step}}" {{#stops}}data-stops="{{stops}}"{{/stops}} data-testid="range-{{key}}">
-                            <div class="wgRangeHead"><span class="wgFilterLabel">{{label}}</span><output data-out>{{text}}</output></div>
+                            <div class="wgRangeHead"><span class="wgFilterLabel">{{label}}{{#appliesTo}}<span class="wgFilterFor"> · {{appliesTo}}</span>{{/appliesTo}}</span><output data-out>{{text}}</output></div>
                             <div class="wgRangeTrack">
                                 <input type="range" class="wgRangeLo" name="{{key}}_min" min="{{min}}" max="{{max}}" step="{{step}}" value="{{lo}}" aria-label="{{label}}, at least" data-testid="range-{{key}}-min">
                                 <input type="range" class="wgRangeHi" name="{{key}}_max" min="{{min}}" max="{{max}}" step="{{step}}" value="{{hi}}" aria-label="{{label}}, at most" data-testid="range-{{key}}-max">
@@ -89,18 +96,12 @@
                         {{/range}}
                         {{#match}}
                         <fieldset class="wgFilter" data-testid="filter-{{key}}">
-                            <legend>{{label}}</legend>
+                            <legend>{{label}}{{#appliesTo}}<span class="wgFilterFor"> · {{appliesTo}}</span>{{/appliesTo}}</legend>
                             {{#options}}<label class="wgFilterCheck{{#off}} wgFilterOff{{/off}}"><input type="checkbox" name="{{key}}" value="{{value}}" {{#on}}checked{{/on}} {{#off}}disabled{{/off}}> {{label}} <span class="wgMuted">{{count}}</span></label>{{/options}}
                         </fieldset>
                         {{/match}}
                         {{/blocks}}
 
-                        {{#facets.brands.length}}
-                        <fieldset class="wgFilter">
-                            <legend>Brand</legend>
-                            {{#facets.brands}}<label class="wgFilterCheck"><input type="checkbox" name="brand" value="{{value}}" {{#on}}checked{{/on}}> {{label}} <span class="wgMuted">{{count}}</span></label>{{/facets.brands}}
-                        </fieldset>
-                        {{/facets.brands.length}}
 
                         <input type="hidden" name="sort" value="{{sort}}">
                         <div class="wgFilterActions">
@@ -121,7 +122,7 @@
                     </div>
                     <ul class="wgGearGrid" id="wgGearResults" data-testid="explore-results">
                         {{#items}}
-                        <li class="wgCard wgGearCard" data-testid="explore-item" data-id="{{id}}" data-cat="{{cat}}" data-brand="{{brandKey}}" data-weight="{{weight}}" data-price="{{priceValue}}" data-score="{{score}}" data-ratings="{{ratings}}" data-name="{{sortName}}" data-specs="{{specsJson}}" {{^shown}}hidden{{/shown}}>
+                        <li class="wgCard wgGearCard" data-testid="explore-item" data-id="{{id}}" data-cat="{{cat}}" data-type="{{type}}" data-brand="{{brandKey}}" data-weight="{{weight}}" data-price="{{priceValue}}" data-score="{{score}}" data-ratings="{{ratings}}" data-name="{{sortName}}" data-specs="{{specsJson}}" {{^shown}}hidden{{/shown}}>
                             <a href="/g/{{id}}" class="wgGearCardLink">
                                 <span class="wgGearCardImg">{{#thumbUrl}}<img src="{{thumbUrl}}" alt="" loading="lazy" width="96" height="96">{{/thumbUrl}}{{^thumbUrl}}<span aria-hidden="true">{{initial}}</span>{{/thumbUrl}}</span>
                                 <span class="wgGearCardBody">

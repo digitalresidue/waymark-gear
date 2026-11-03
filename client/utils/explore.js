@@ -94,6 +94,8 @@ export function filterItem(entry) {
         id: entry.id,
         cat: categoryKey(entry.category),
         catName: entry.category,
+        // Its gear type ('pad', 'quilt'...), for which spec filters apply to it.
+        type: (specTypeFor(entry.category) || {}).id || '',
         brand: entry.brand || '',
         weight: Math.round((Number(entry.weightMg) || 0) / 1000 * 10) / 10, // grams
         price: entry.price === null || entry.price === undefined ? null : Number(entry.price),
@@ -109,6 +111,18 @@ const optionLabel = (field, v) => {
     const hit = field.options.find(([o]) => String(o) === String(v));
     return hit ? hit[1] : String(v);
 };
+
+// A number cleaned to the decimals its step has (0.05 → 2 places).
+export function toStep(n, step) {
+    const decimals = Math.max(0, Math.min(10, -Math.floor(Math.log10(step)) + 1));
+    return Number(n.toFixed(decimals));
+}
+
+// Has a slider end really moved off the end of its range? Less than half a
+// step is the slider's own rounding, not the reader's choice.
+export function movedFrom(value, end, step) {
+    return Math.abs(value - end) > (step || 0) / 2;
+}
 
 const niceStep = (span, steps = 60) => {
     if (!(span > 0)) return 1;
@@ -137,7 +151,9 @@ export function facetsFor(items, { categories = [] } = {}) {
     };
     const span = (min, max) => {
         const step = niceStep(max - min);
-        return { min: Math.floor(min / step) * step, max: Math.ceil(max / step) * step, step };
+        // Rounded to the step's decimals: 76 × 0.1 is 7.6000000000000005 in
+        // floating point, and a slider can't sit there, so it read as moved.
+        return { min: toStep(Math.floor(min / step) * step, step), max: toStep(Math.ceil(max / step) * step, step), step: toStep(step, step) };
     };
     const range = (values) => {
         const v = values.filter((n) => Number.isFinite(n));
@@ -254,13 +270,42 @@ export function filtersToQuery(f) {
 
 const inRange = (v, r) => (r.min === undefined || (v !== null && v !== undefined && v >= r.min)) && (r.max === undefined || (v !== null && v !== undefined && v <= r.max));
 
-/** Does an item pass the filters? Items without a filtered spec don't. */
+// Which gear types have a spec: R-value is a pad's, temperature limit a
+// quilt's and a bag's.
+const TYPES_BY_FIELD = new Map();
+for (const t of Object.values(SPEC_TYPES)) for (const key of t.fields) TYPES_BY_FIELD.set(key, [...(TYPES_BY_FIELD.get(key) || []), t.id]);
+
+/**
+ * In a section mixing gear types, what a spec filter covers ("sleeping pads",
+ * "quilts and sleeping bags"), or '' when it covers everything there.
+ */
+export function specAppliesLabel(key, categories) {
+    const types = TYPES_BY_FIELD.get(key);
+    if (!types) return '';
+    const all = categories.map((c) => (specTypeFor(c) || {}).id || '');
+    if (all.every((t) => types.includes(t))) return '';
+    const names = SPEC_TYPES.filter((t) => types.includes(t.id) && all.includes(t.id)).map((t) => `${t.label.toLowerCase()}s`);
+    return names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
+
+/** Does a spec filter apply to this item? Only to gear of a type that has the spec. */
+export function specApplies(item, key) {
+    const types = TYPES_BY_FIELD.get(key);
+    return !types || types.includes(item.type);
+}
+
+/**
+ * Does an item pass the filters? A spec filter only judges gear it's about:
+ * in Sleep System, an R-value filter narrows the pads and leaves quilts, bags
+ * and pillows alone. Gear of that type without the spec filled in doesn't pass.
+ */
 export function matchesFilters(item, f) {
     if (f.cats.length && !f.cats.includes(item.cat)) return false;
     if (f.brands.length && !f.brands.includes(item.brand.toLowerCase())) return false;
     if ((f.weight.min !== undefined || f.weight.max !== undefined) && !inRange(item.weight, f.weight)) return false;
     if ((f.price.min !== undefined || f.price.max !== undefined) && !inRange(item.price, f.price)) return false;
     for (const [key, s] of Object.entries(f.specs)) {
+        if (!specApplies(item, key)) continue;
         const v = item.specs[key];
         if (s.any && !s.any.includes(matchKey(key, v))) return false;
         if ((s.min !== undefined || s.max !== undefined) && !inRange(typeof v === 'number' ? v : null, s)) return false;

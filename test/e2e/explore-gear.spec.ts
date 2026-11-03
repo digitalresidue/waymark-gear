@@ -117,9 +117,9 @@ test('packs offer pack weight, max carry, volume, straps, frame, roll top and ad
     expect((await page.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } })).ok()).toBe(true);
 
     await page.goto(url(`/explore/pack?brand=${brand.toLowerCase()}`));
-    // In this order, after the category.
+    // In this order: category, brand, then weight, price and the specs.
     const labels = await page.locator('#wgGearFilters .wgFilter').evaluateAll((els) => els.map((e) => (e.querySelector('legend, .wgFilterLabel') || {}).textContent?.trim()));
-    expect(labels.slice(0, 11)).toEqual(['Category', 'Pack weight', 'Price', 'Max carry weight', 'Volume', 'Pack type', 'Shoulder straps', 'Frame', 'Roll top', 'Adjustable torso', 'Fabric']);
+    expect(labels.slice(0, 12)).toEqual(['Category', 'Brand', 'Pack weight', 'Price', 'Max carry weight', 'Volume', 'Pack type', 'Shoulder straps', 'Frame', 'Roll top', 'Adjustable torso', 'Fabric']);
     // Every strap style is listed; ones nothing has yet can't be picked.
     const straps = page.getByTestId('filter-strap_type');
     await expect(straps.locator('input')).toHaveCount(4);
@@ -172,4 +172,46 @@ test('a long filter column scrolls on its own, without scrolling the page', asyn
     await page.setViewportSize({ width: 390, height: 800 });
     expect(await box.evaluate((el) => getComputedStyle(el).overflowY)).toBe('visible');
     await page.context().close();
+});
+
+test('Sleep System: filters keep every kind of gear they should; spec filters only judge the gear they are about', async ({ page, browser }, testInfo) => {
+    const owner = await (await browser.newContext()).newPage();
+    const username = `wge2eowner${testInfo.workerIndex}`;
+    const r = await owner.request.post(url('/register'), { data: { username, email: `${username}@example.com`, password: 'testtest' } });
+    if (r.status() !== 200) expect((await owner.request.post(url('/signin'), { data: { username, password: 'testtest' } })).status()).toBe(200);
+    const b = `Ss${Date.now().toString(36)}`;
+    // Thickness 2.5 in / 3 in: a range whose end, worked out in floating
+    // point, was 7.6000000000000005 cm, so the slider read as moved.
+    const csv = ['sku,name,brand,category,weight,unit,price,status,r_value,thickness,temp_limit,fill_power',
+        `${b}-1,Pad A,${b},Sleeping Pad,12,oz,150,published,2.3,2.5 in,,`,
+        `${b}-2,Pad B,${b},Sleeping Pad,15,oz,200,published,4.2,3 in,,`,
+        `${b}-3,Quilt A,${b},Top Quilt,19.4,oz,300,published,,,20F,850`,
+        `${b}-4,Quilt B,${b},Top Quilt,23.7,oz,350,published,,,10F,950`,
+        `${b}-5,Bag A,${b},Sleeping Bag,31,oz,400,published,,,15F,800`,
+        `${b}-6,Pillow A,${b},Pillow,2.1,oz,40,published,,,,`].join('\n');
+    expect((await owner.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } })).ok()).toBe(true);
+    await owner.context().close();
+
+    await page.goto(url('/explore/sleep-system'));
+    // Brand sits right under Category.
+    const order = await page.locator('#wgGearFilters .wgFilter').evaluateAll((els) => els.slice(0, 2).map((e) => e.querySelector('legend')?.firstChild?.textContent?.trim()));
+    expect(order).toEqual(['Category', 'Brand']);
+    // No slider ends with floating-point noise.
+    for (const end of await page.locator('.wgRange').evaluateAll((els) => els.flatMap((e) => [(e as HTMLElement).dataset.min, (e as HTMLElement).dataset.max]))) {
+        expect(String(end).length, String(end)).toBeLessThan(10);
+    }
+
+    // A brand: all six, not just the pads.
+    await page.locator(`input[name="brand"][value="${b.toLowerCase()}"]`).check();
+    expect((await names(page)).sort()).toEqual(['Bag A', 'Pad A', 'Pad B', 'Pillow A', 'Quilt A', 'Quilt B']);
+    expect(page.url()).toMatch(new RegExp(`/explore/sleep-system\\?brand=${b.toLowerCase()}$`));
+
+    // Spec filters say what they're about, and only narrow that gear.
+    await expect(page.getByTestId('range-r_value')).toContainText('R-value · sleeping pads');
+    await expect(page.getByTestId('range-temp_limit')).toContainText('quilts and sleeping bags');
+    await slide(page, 'range-r_value-min', 4);
+    expect((await names(page)).sort()).toEqual(['Bag A', 'Pad B', 'Pillow A', 'Quilt A', 'Quilt B']);
+    // Pads only: tick the category.
+    await page.locator('input[name="cat"][value="sleepingpad"]').check();
+    expect(await names(page)).toEqual(['Pad B']);
 });

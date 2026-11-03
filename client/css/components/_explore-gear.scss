@@ -401,3 +401,10 @@
         letter-spacing: 1px;
     }
 }
+
+// "· sleeping pads": which gear a spec filter covers in a mixed section.
+.wgFilterFor {
+    color: var(--lp-text-secondary);
+    font-size: 12px;
+    font-weight: 400;
+}

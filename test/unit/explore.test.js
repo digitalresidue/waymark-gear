@@ -104,12 +104,46 @@ describe('filters', () => {
         const f = readFilters(new URLSearchParams('cat=tent&brand=Zpacks&weight_max=600&pitch=trekking_pole&sort=price'));
         assert.deepEqual(ITEMS.filter((i) => matchesFilters(i, f)).map((i) => i.id), ['a', 'c']);
         assert.equal(filtersToQuery(f), 'cat=tent&brand=zpacks&weight_max=600&pitch=trekking_pole&sort=price');
-        // A spec filter leaves out gear that doesn't say.
+        // A spec filter leaves out gear of its type that doesn't say (the
+        // Solo tent), and doesn't judge gear it isn't about (the tarp).
         const g = readFilters(new URLSearchParams('trail_weight_max=1000'));
-        assert.deepEqual(ITEMS.filter((i) => matchesFilters(i, g)).map((i) => i.id), ['a']);
+        assert.deepEqual(ITEMS.filter((i) => matchesFilters(i, g)).map((i) => i.id), ['a', 'd']);
         // Price filters leave out gear without a price.
         assert.deepEqual(ITEMS.filter((i) => matchesFilters(i, readFilters({ price_max: '1000' }))).map((i) => i.id), ['a', 'b', 'c']);
         assert.deepEqual(sortItems(ITEMS, 'price').map((i) => i.id), ['b', 'c', 'a', 'd']);
         assert.deepEqual(sortItems(ITEMS).map((i) => i.id), ['d', 'c', 'a', 'b']);
+    });
+});
+
+describe('mixed sections (Sleep System)', () => {
+    test('slider ends carry no floating-point noise, and rounding is not a move', async () => {
+        const { toStep, movedFrom } = await import('../../client/utils/explore.js');
+        assert.equal(toStep(76 * 0.1, 0.02), 7.6);
+        assert.equal(toStep(45 * 0.05, 0.05), 2.25);
+        assert.equal(toStep(450, 50), 450);
+        assert.equal(movedFrom(7.6, 7.6000000000000005, 0.02), false);
+        assert.equal(movedFrom(7.58, 7.6, 0.02), true);
+        const facets = facetsFor([
+            { cat: 'sleepingpad', catName: 'Sleeping Pad', brand: 'A', weight: 340, price: 150, specs: { thickness: 6.35 } },
+            { cat: 'sleepingpad', catName: 'Sleeping Pad', brand: 'A', weight: 425, price: 200, specs: { thickness: 7.62 } },
+        ], { categories: ['Sleeping Pad'] });
+        const thickness = facets.specs.find((f) => f.key === 'thickness');
+        for (const n of [thickness.min, thickness.max, thickness.step]) assert.ok(String(n).length < 10, String(n));
+    });
+    test('a spec filter only judges gear of a type that has the spec', async () => {
+        const { specAppliesLabel } = await import('../../client/utils/explore.js');
+        const item = (category, specs = {}) => filterItem({ id: category, category, brand: 'X', weightMg: 500000, price: 100, specs, name: category });
+        const pad = item('Sleeping Pad', { r_value: 4.5 });
+        const thinPad = item('Sleeping Pad', { r_value: 2 });
+        const quilt = item('Top Quilt', { temp_limit: -7 });
+        const pillow = item('Pillow');
+        const f = readFilters(new URLSearchParams('r_value_min=4'));
+        assert.deepEqual([pad, thinPad, quilt, pillow].filter((i) => matchesFilters(i, f)).map((i) => i.id), ['Sleeping Pad', 'Top Quilt', 'Pillow']);
+        const cold = readFilters(new URLSearchParams('temp_limit_max=-5'));
+        assert.deepEqual([pad, quilt, item('Top Quilt', { temp_limit: 0 }), item('Top Quilt')].filter((i) => matchesFilters(i, cold)).length, 2);
+        const sleep = ['Sleeping Pad', 'Top Quilt', 'Sleeping Bag', 'Pillow'];
+        assert.equal(specAppliesLabel('r_value', sleep), 'sleeping pads');
+        assert.equal(specAppliesLabel('temp_limit', sleep), 'quilts and sleeping bags');
+        assert.equal(specAppliesLabel('r_value', ['Sleeping Pad']), '');
     });
 });

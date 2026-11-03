@@ -26,7 +26,7 @@ import { viewTrip, tripsOnProfile } from './trips.js';
 import { reviewsFor, latestReviews } from './reviews.js';
 import { getById as catalogItem, isUuid, search as catalogSearch, categories as catalogCategories, toApi as catalogToApi } from './catalog.js';
 import {
-    exploreIndex, resolveSection, filterItem, facetsFor, readFilters, matchesFilters, sortItems, rangeLabel, formatWeightG, activeFilterCount, PARENTS,
+    exploreIndex, resolveSection, filterItem, facetsFor, readFilters, matchesFilters, sortItems, rangeLabel, formatWeightG, activeFilterCount, PARENTS, specAppliesLabel,
 } from '../client/utils/explore.js';
 const PARENT_SLUGS = new Set(PARENTS.map((p) => p.slug));
 import { priceHistory } from './prices.js';
@@ -828,19 +828,22 @@ router.get('/explore/:slug', async (req, res) => {
             text: rangeLabel(key, chosen.min, chosen.max, facet),
         });
         const on = (list, value) => list.includes(value);
-        // The filter column, in order: category, weight, price, then the
-        // section's specs in their type's order (a pack's max carry, volume,
-        // pack type, straps...), then brand.
+        // The filter column, in order: category, brand, weight, price, then
+        // the section's specs in their type's order (a pack's max carry,
+        // volume, pack type, straps...).
         const packs = section.categories.length > 0 && section.categories.every((c) => (specTypeFor(c) || {}).id === 'pack');
         const blocks = [];
         if (facets.weight) blocks.push({ range: rangeOf('weight', packs ? 'Pack weight' : 'Weight', facets.weight, filters.weight) });
         if (facets.price) blocks.push({ range: rangeOf('price', 'Price', facets.price, filters.price) });
         for (const f of facets.specs) {
-            if (f.kind === 'range') blocks.push({ range: rangeOf(f.key, f.label, f, filters.specs[f.key] || {}, f.stops) });
+            // In a mixed section (Sleep System), say which gear a spec is about.
+            const appliesTo = specAppliesLabel(f.key, section.categories);
+            if (f.kind === 'range') blocks.push({ range: { ...rangeOf(f.key, f.label, f, filters.specs[f.key] || {}, f.stops), appliesTo } });
             else {
                 blocks.push({
                     match: {
                         ...f,
+                        appliesTo,
                         options: f.options.map((o) => {
                             const checked = Boolean(filters.specs[f.key] && filters.specs[f.key].any.includes(o.value));
                             // Nothing in the catalog has it yet: shown, not pickable.
