@@ -3,7 +3,7 @@
 // in step so the view can be shared. The server applies the same rules
 // (client/utils/explore.js) for the first load and for links.
 
-import { readFilters, filtersToQuery, matchesFilters, sortItems, rangeLabel, activeFilterCount } from './utils/explore.js';
+import { readFilters, filtersToQuery, matchesFilters, sortItems, rangeLabel, activeFilterCount, movedFrom } from './utils/explore.js';
 
 export function initExploreGear() {
     const form = document.getElementById('wgGearFilters');
@@ -21,6 +21,7 @@ export function initExploreGear() {
         el,
         id: el.dataset.id,
         cat: el.dataset.cat,
+        type: el.dataset.type || '',
         brand: el.dataset.brand || '',
         weight: Number(el.dataset.weight) || 0,
         price: el.dataset.price === '' ? null : Number(el.dataset.price),
@@ -43,6 +44,7 @@ export function initExploreGear() {
         hi: el.querySelector('.wgRangeHi'),
         out: el.querySelector('[data-out]'),
         facet: { min: Number(el.dataset.min), max: Number(el.dataset.max) },
+        step: Number(el.dataset.step) || 0,
         stops: el.dataset.stops ? el.dataset.stops.split(',').map(Number) : null,
     }));
 
@@ -60,8 +62,8 @@ export function initExploreGear() {
         for (const r of ranges) {
             const lo = snap(r, Number(r.lo.value));
             const hi = snap(r, Number(r.hi.value));
-            if (lo > r.facet.min) params.set(`${r.key}_min`, String(lo));
-            if (hi < r.facet.max) params.set(`${r.key}_max`, String(hi));
+            if (lo > r.facet.min && movedFrom(lo, r.facet.min, r.step)) params.set(`${r.key}_min`, String(lo));
+            if (hi < r.facet.max && movedFrom(hi, r.facet.max, r.step)) params.set(`${r.key}_max`, String(hi));
         }
         if (sortSelect) params.set('sort', sortSelect.value);
         return readFilters(params);
