@@ -38,7 +38,7 @@ test.describe('Saving from two tabs', () => {
         // Tab B never saw that edit. Its own change must not undo it.
         const saveB = waitForSave(other);
         await other.getByText('Add new category', { exact: true }).click();
-        await other.getByTestId('category').last().getByPlaceholder('Category Name').fill('Added in tab B');
+        await other.getByTestId('category').last().getByPlaceholder('Category name').fill('Added in tab B');
         await saveB;
 
         const { library } = await signinData(page.request);

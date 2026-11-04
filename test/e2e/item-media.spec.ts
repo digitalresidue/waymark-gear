@@ -10,8 +10,8 @@ const LOCAL_IMAGE = () => new URL('/images/icon-512.png', testRoot).toString();
 const createCategoryAndItem = async (page, categoryName, itemName) => {
   await page.getByText('Add new category', { exact: true }).click();
   const category = page.getByTestId('category').last();
-  await category.getByPlaceholder('Category Name', { exact: true }).fill(categoryName);
-  await category.getByPlaceholder('Category Name', { exact: true }).blur();
+  await category.getByPlaceholder('Category name', { exact: true }).fill(categoryName);
+  await category.getByPlaceholder('Category name', { exact: true }).blur();
 
   await category.getByText('Add new item', { exact: true }).click();
   const itemRow = category.getByTestId('item-row').last();
