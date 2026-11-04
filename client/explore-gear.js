@@ -94,7 +94,7 @@ export function initExploreGear() {
         for (const item of sortItems(items, f.sort)) list.appendChild(item.el);
         for (const r of ranges) {
             const chosen = r.key === 'weight' ? f.weight : r.key === 'price' ? f.price : f.specs[r.key] || {};
-            r.out.textContent = rangeLabel(r.key, chosen.min, chosen.max, r.facet, rangeWords);
+            r.out.textContent = rangeLabel(r.key, chosen.min, chosen.max, r.facet, rangeWords, document.documentElement.dataset.units || null);
         }
         count.textContent = shown === items.length ? t('explore.items', { count: items.length }) : t('explore.itemsOf', { shown, total: items.length });
         if (empty) empty.hidden = shown > 0;

@@ -16,6 +16,19 @@ translated: it shows as they wrote it.
    not Traditional).
 3. **English** otherwise.
 
+## Units
+
+Separate from language: each reader sees **imperial** (oz, lb, in, °F) or
+**metric** (g, kg, cm, °C). The footer's Units picker or **Your profile →
+Units** chooses (a `wg_units` cookie, and `users.units` for members);
+without a choice, the browser's region decides: US, Liberia and Myanmar get
+imperial, everyone else metric, and a browser that names no region gets
+imperial. A member who switches also switches their lists (oz ↔ g, lb ↔ kg;
+weights are stored in mg, so nothing is lost). The code is
+`client/utils/units.js`; server pages read `currentUnits()` from
+`server/i18n.js`, the app `currentUnits()` and `bigWeightUnit()` from
+`client/utils/i18n-app.js`.
+
 ## The files
 
 `locales/en.json` is the source: every piece of text the site translates,
@@ -93,9 +106,9 @@ before promoting the site in it.
 
 | Translated now | Still English |
 | --- | --- |
-| Header, menus, footer, the language picker | Gear spec choices (e.g. "Freestanding"), units |
+| Header, menus, footer, the language and units pickers | Gear spec choices (e.g. "Freestanding") |
 | Sign in, register, password recovery | Trails, brands, reviews, kits and leaderboard pages |
-| Profile language setting | Trip journals, pack mode, notifications, settings dialogs |
+| Profile language and units settings | Trip journals, pack mode, notifications, settings dialogs |
 | Explore (index, filters, sort, counts, spec names) | Owner and moderation tools |
 | Gear page headings, ratings, buying | Emails, error messages, Privacy/Terms/Accessibility |
 | List editor basics, Share menu | |

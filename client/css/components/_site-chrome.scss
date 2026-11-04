@@ -742,11 +742,17 @@ main:focus {
     outline: none;
 }
 
-// The footer's language picker.
+// The footer's language and units pickers.
+.wgFooterPickers {
+    display: flex;
+    flex-basis: 100%;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+}
+
 .wgLangPicker {
     align-items: center;
     display: flex;
-    flex-basis: 100%;
     gap: 8px;
 
     .wgSelect {

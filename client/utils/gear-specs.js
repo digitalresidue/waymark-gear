@@ -13,6 +13,7 @@
 // named by its key), the gear page and the catalog API.
 
 import { categoryKey } from './gear-meta.js';
+import { unitSystemOf } from './units.js';
 
 // ---- kinds of value -----------------------------------------------------------
 
@@ -266,26 +267,37 @@ const optionLabel = (field, value) => {
     return hit ? hit[1] : String(value);
 };
 
-/** A stored value as people read it: "20°F (−7°C)", "40 L", "Yes". */
-export function formatSpec(key, value) {
+/**
+ * A stored value as people read it: "20°F (−7°C)", "40 L", "Yes". With a
+ * unit system ('imperial' or 'metric'), only that system's unit: "20°F" or
+ * "−7°C".
+ */
+export function formatSpec(key, value, system = null) {
     const field = SPEC_FIELDS[key];
     if (!field || value === undefined || value === null) return '';
+    // The field's units in the reader's system, when they have one.
+    const pick = (units) => {
+        if (!system) return units;
+        const mine = units.filter((u) => unitSystemOf(u) === system);
+        return mine.length ? mine : units;
+    };
     switch (field.kind) {
     case 'text': return String(value);
     case 'yesno': return value ? 'Yes' : 'No';
     case 'choice': return optionLabel(field, value);
     case 'number': return String(value);
     case 'dims': {
-        const [a, b] = field.display;
+        const [a, b] = pick(field.display);
         const show = (unit) => value.map((n) => trim1(n / KINDS.length.factor[unit])).join(' × ');
-        return `${show(a)} ${a} (${show(b)} ${b})`;
+        return b ? `${show(a)} ${a} (${show(b)} ${b})` : `${show(a)} ${a}`;
     }
     case 'temp': {
-        const [a, b] = field.display;
-        return `${minus(String(Math.round(inUnit('temp', value, a))))}${UNIT_LABEL[a]} (${minus(String(Math.round(inUnit('temp', value, b))))}${UNIT_LABEL[b]})`;
+        const deg = (u) => `${minus(String(Math.round(inUnit('temp', value, u))))}${UNIT_LABEL[u]}`;
+        const [a, b] = pick(field.display);
+        return b ? `${deg(a)} (${deg(b)})` : deg(a);
     }
     default: {
-        const units = field.display;
+        const units = pick(field.display);
         const shown = units.map((u) => `${trim1(inUnit(field.kind, value, u))} ${UNIT_LABEL[u]}`);
         return shown.length > 1 ? `${shown[0]} (${shown.slice(1).join(', ')})` : shown[0];
     }
@@ -308,11 +320,11 @@ export function specInput(key, value) {
 }
 
 /** A catalog item's specs as rows for its gear page: [{ key, label, text }]. */
-export function specRows(category, specs) {
+export function specRows(category, specs, system = null) {
     const type = specTypeFor(category);
     if (!type || !specs) return [];
     return type.fields.filter((k) => specs[k] !== undefined && specs[k] !== null)
-        .map((key) => ({ key, label: SPEC_FIELDS[key].label, text: formatSpec(key, specs[key]) }));
+        .map((key) => ({ key, label: SPEC_FIELDS[key].label, text: formatSpec(key, specs[key], system) }));
 }
 
 /** How a field is filtered in the API: 'range' for measures, 'match' for choices. */

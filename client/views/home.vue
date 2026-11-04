@@ -167,7 +167,7 @@
                                     <span class="wgTierBar" role="img" :aria-label="tierLabel(t)" :title="tierLabel(t)" data-testid="home-trail-tiers">
                                         <span v-for="c in weightClasses" v-show="t.classes[c.id]" :key="c.id" :class="`wgTier-${c.id}`" :style="{ flexGrow: t.classes[c.id] || 0 }" />
                                     </span>
-                                    <span v-if="t.avgBaseWeightMg" class="wgHomeTrailAvg" data-testid="home-trail-avg"><span class="wgMono">{{ formatWeight(t.avgBaseWeightMg, 'lb') }}</span> avg base<span class="wgHomeTrailAvgWord"> weight</span></span>
+                                    <span v-if="t.avgBaseWeightMg" class="wgHomeTrailAvg" data-testid="home-trail-avg"><span class="wgMono">{{ formatWeight(t.avgBaseWeightMg, $bigUnit()) }}</span> avg base<span class="wgHomeTrailAvgWord"> weight</span></span>
                                 </template>
                                 <span v-else class="wgMuted wgHomeTrailFirst">Be the first to share a pack</span>
                             </span>
@@ -239,7 +239,7 @@
                         <span class="wgShakeTag">{{ kit.commentCount ? `${kit.commentCount} ${kit.commentCount === 1 ? 'suggestion' : 'suggestions'}` : 'No suggestions yet' }}</span>
                         <a :href="`/r/${kit.externalId}#wgComments`" class="wgShakeName wgStretch">{{ kit.name }}</a>
                         <span class="wgMuted">by <a :href="`/@${kit.username}`" class="wgByLink" data-testid="shakedown-card-author">@{{ kit.username }}</a>{{ tripLabel(kit) ? ` · ${tripLabel(kit)}` : '' }}</span>
-                        <span class="wgShakeWeight wgMono">{{ formatWeight(kit.baseWeightMg, 'lb') }} <small class="wgMuted">base</small></span>
+                        <span class="wgShakeWeight wgMono">{{ formatWeight(kit.baseWeightMg, $bigUnit()) }} <small class="wgMuted">base</small></span>
                         <span class="wgShakeCta">Suggest a change →</span>
                     </article>
                 </div>
@@ -353,7 +353,7 @@
                                 <span class="wgMono wgMuted">{{ i + 1 }}</span>
                                 <a :href="`/r/${k.externalId}`" class="wgHomeLeaderName">{{ k.name }}</a>
                                 <a :href="`/@${k.username}`" class="wgByLink wgMuted">@{{ k.username }}</a>
-                                <span class="wgMono">{{ col.key === 'top' ? `▲ ${k.score}` : formatWeight(k.baseWeightMg, 'lb') }}</span>
+                                <span class="wgMono">{{ col.key === 'top' ? `▲ ${k.score}` : formatWeight(k.baseWeightMg, $bigUnit()) }}</span>
                             </li>
                         </ol>
                         <p v-if="!col.kits.length" class="wgMuted">
@@ -407,6 +407,7 @@
 </template>
 
 <script>
+import { bigWeightUnit } from '../utils/i18n-app.js';
 import { TRIP_TYPE_LABELS, isNewShakedown, hoursAgo } from '../utils/gear-meta.js';
 import siteHeader from '../components/site-header.vue';
 import siteFooter from '../components/site-footer.vue';
@@ -479,7 +480,7 @@ export default {
             const cats = (this.heroSource.categories || []).filter((c) => c.weightMg > 0)
                 .sort((a, b) => b.weightMg - a.weightMg).slice(0, 5);
             const total = cats.reduce((s, c) => s + c.weightMg, 0) || 1;
-            return cats.map((c) => ({ name: c.name, pct: (c.weightMg / total) * 100, weight: formatWeightMg(c.weightMg, 'lb') }));
+            return cats.map((c) => ({ name: c.name, pct: (c.weightMg / total) * 100, weight: formatWeightMg(c.weightMg, bigWeightUnit()) }));
         },
     },
     async mounted() {
@@ -515,7 +516,7 @@ export default {
             return TRIP_TYPE_LABELS[kit.tripType] || '';
         },
         heroStat(key) {
-            return formatWeightMg(this.heroSource[key] || 0, 'lb');
+            return formatWeightMg(this.heroSource[key] || 0, bigWeightUnit());
         },
         start() {
             this.$store.dispatch('startLocalLibrary');

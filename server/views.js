@@ -9,6 +9,7 @@ import config from 'config';
 import { logWithRequest, logger } from './log.js';
 import weightUtils from '../client/utils/weight.js';
 import { specRows, specTypeFor } from '../client/utils/gear-specs.js';
+import { unitFor } from '../client/utils/units.js';
 import { marked, isSafeHref } from '../client/utils/markdown.js';
 import { Library } from '../client/dataTypes.js';
 import { listToCsv } from './csv.js';
@@ -40,7 +41,7 @@ import { ratingsFor } from './reviews.js';
 import { ratingFor } from './ratings.js';
 import { RATING_WORDS } from '../client/utils/ratings.js';
 import { renderPage } from './site-chrome.js';
-import { localizeHtml, currentT } from './i18n.js';
+import { localizeHtml, currentT, currentUnits } from './i18n.js';
 
 const router = express.Router();
 
@@ -342,7 +343,7 @@ router.get('/og/@:file', async (req, res) => {
             username: profile.username,
             trailName: profile.trailName,
             kitCount: kits.length,
-            lightest: kits.length ? formatWeightMg(Math.min(...kits.map((k) => k.baseWeightMg)), 'lb') : '',
+            lightest: kits.length ? formatWeightMg(Math.min(...kits.map((k) => k.baseWeightMg)), bigUnit()) : '',
             initial: (profile.displayName || profile.username).trim().charAt(0).toUpperCase(),
             avatarUrl: profile.avatarUrl,
         }));
@@ -361,7 +362,7 @@ function kitCardModel(kit) {
     return {
         externalId: kit.externalId,
         name: kit.name,
-        baseWeight: formatWeightMg(kit.baseWeightMg, 'lb'),
+        baseWeight: formatWeightMg(kit.baseWeightMg, bigUnit()),
         weightClass: (WEIGHT_CLASSES.find((c) => c.id === kit.weightClass) || {}).label || '',
         itemCount: `${kit.itemCount} ${kit.itemCount === 1 ? 'item' : 'items'}`,
         description: kit.description ? kit.description.replace(/[#*_`>[\]()]/g, '').slice(0, 140) : '',
@@ -384,7 +385,7 @@ router.get('/@:username', async (req, res) => {
         const trips = tripsView ? await tripsOnProfile(found.userId, await optionalUser(req)) : [];
         const gear = await publicGear(found.userId, kits.map((k) => k.externalId));
         const name = profile.displayName || `@${profile.username}`;
-        const lightest = kits.length ? formatWeightMg(Math.min(...kits.map((k) => k.baseWeightMg)), 'lb') : '';
+        const lightest = kits.length ? formatWeightMg(Math.min(...kits.map((k) => k.baseWeightMg)), bigUnit()) : '';
         const links = Object.entries(profile.links)
             .filter(([network, url]) => NETWORK_LABELS[network] && /^https:\/\//.test(url))
             .map(([network, url]) => ({ network, url, label: NETWORK_LABELS[network] }));
@@ -472,6 +473,9 @@ export function tripDateRange(start, end) {
     return `${shortDate(start, !sameYear)} – ${shortDate(end)}`;
 }
 
+// Pack and kit weights in the reader's units: lb or kg (client/utils/units.js).
+const bigUnit = () => unitFor('weight', currentUnits(), true);
+
 const kmLabel = (km, imperial) => (imperial ? `${(km * 0.621371).toFixed(1)} mi` : `${km.toFixed(1)} km`);
 const plain = (md) => String(md || '').replace(/[#*_`>[\]()!]/g, '').replace(/\s+/g, ' ').trim();
 
@@ -494,7 +498,7 @@ router.get('/t/:id', async (req, res) => {
         const view = await viewTrip(req.params.id, viewer);
         if (!view) return res.status(404).send('That trip could not be found.');
         const { trip, author, list } = view;
-        const imperial = !list || !['g', 'kg'].includes(list.unit);
+        const imperial = currentUnits() === 'imperial';
         const totalKm = trip.entries.reduce((n, e) => n + (e.distanceKm || 0), 0);
         const days = trip.startDate && trip.endDate ? Math.round((Date.parse(trip.endDate) - Date.parse(trip.startDate)) / 86400000) + 1 : 0;
         const authorName = author.displayName || `@${author.username}`;
@@ -612,7 +616,7 @@ router.get('/g/:id', async (req, res) => {
                 reviews: reviews.map(reviewModel),
                 prices: priceModel(history),
                 // "Trail weight: 26 oz (737.1 g)"... (client/utils/gear-specs.js)
-                specs: specRows(item.category, item.specs).map((r) => ({ ...r, label: currentT()(`spec.${r.key}`, {}, r.label) })),
+                specs: specRows(item.category, item.specs, currentUnits()).map((r) => ({ ...r, label: currentT()(`spec.${r.key}`, {}, r.label) })),
             },
         };
         sendFresh(res, renderPage(gearTemplate, model, { reviewCard: templates.t_reviewCard || '', buy: templates.t_buy || '' }, req.path));
@@ -701,7 +705,7 @@ router.get('/compare', async (req, res) => {
 
 // ---- trails (Phase 8) ---------------------------------------------------------
 
-const lbLabel = (mg) => (mg || mg === 0 ? formatWeightMg(mg, 'lb') : '—');
+const lbLabel = (mg) => (mg || mg === 0 ? formatWeightMg(mg, bigUnit()) : '—');
 const pct = (v) => (v === undefined || v === null ? '—' : `${v}%`);
 // The three feature tiles worth showing for a trail: the ones that set it
 // apart, so the PCT shows bear canisters and the CDT ice axes.
@@ -841,7 +845,7 @@ router.get('/explore/:slug', async (req, res) => {
             stops: stops ? stops.join(',') : '',
             lo: chosen.min ?? facet.min,
             hi: chosen.max ?? facet.max,
-            text: rangeLabel(key, chosen.min, chosen.max, facet, rangeWords),
+            text: rangeLabel(key, chosen.min, chosen.max, facet, rangeWords, currentUnits()),
             ariaMin: t('explore.atLeastAria', { label }),
             ariaMax: t('explore.atMostAria', { label }),
         });
@@ -910,11 +914,11 @@ router.get('/explore/:slug', async (req, res) => {
                         sortName: `${e.brand} ${e.name}`.trim(),
                         initial: e.name.trim().charAt(0).toUpperCase(),
                         thumbUrl: thumbnailUrl(e.imageUrl || ''),
-                        weightText: formatWeightG(i.weight),
+                        weightText: formatWeightG(i.weight, currentUnits()),
                         priceValue: i.price === null ? '' : String(i.price),
                         priceText: i.price ? `$${Number(i.price).toFixed(0)}` : '',
                         specsJson: JSON.stringify(i.specs),
-                        keySpecs: specRows(e.category, e.specs).slice(0, 3),
+                        keySpecs: specRows(e.category, e.specs, currentUnits()).slice(0, 3),
                         ratingAvg: e.rating.average,
                         ratingStars: e.rating.average ? STARS(Math.round(e.rating.average)) : '',
                         ratingCount: e.rating.count,
@@ -1127,11 +1131,11 @@ async function renderListView(req, res) {
             trailLabel: list.trail ? [list.trail.short || list.trail.name, list.trail.year, DIRECTIONS[list.trail.direction]].filter(Boolean).join(' ') : '',
             trailSlug: list.trail && list.trail.slug ? list.trail.slug : '',
             ogImage: `${config.get('deployUrl')}/og/r/${id}.png?v=${listImageVersion(listCard(library, list, user.username, user.avatar_url))}`,
-            baseWeight: formatWeightMg(list.totalBaseWeight, 'lb'),
+            baseWeight: formatWeightMg(list.totalBaseWeight, bigUnit()),
             weightClass: (WEIGHT_CLASSES.find((c) => c.id === weightClassFor(list.totalBaseWeight)) || {}).label,
             itemCount: list.categoryIds.reduce((n, cid) => n + ((library.getCategoryById(cid) || { categoryItems: [] }).categoryItems.length), 0),
             deployUrl: config.get('deployUrl'),
-            metaDescription: `${list.name || 'A gear list'} by @${user.username}: ${formatWeightMg(list.totalBaseWeight, 'lb')} base weight. Built with Waymark Gear.`,
+            metaDescription: `${list.name || 'A gear list'} by @${user.username}: ${formatWeightMg(list.totalBaseWeight, bigUnit())} base weight. Built with Waymark Gear.`,
         };
 
         Object.assign(model, templates);

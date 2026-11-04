@@ -230,5 +230,9 @@
   "gear.shops": {
     "one": "{count} Shop",
     "other": "{count} Shops"
-  }
+  },
+  "units.label": "Einheiten",
+  "units.imperial": "Imperial (oz, lb, in, °F)",
+  "units.metric": "Metrisch (g, kg, cm, °C)",
+  "units.hint": "Gewichte, Maße und Temperaturen auf der ganzen Website und die Einheiten in deinen Listen."
 }

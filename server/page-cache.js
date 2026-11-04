@@ -17,7 +17,7 @@
 
 import crypto from 'node:crypto';
 
-import { currentLanguage } from './i18n.js';
+import { currentLanguage, currentUnits } from './i18n.js';
 
 export const NONCE_PLACEHOLDER = '__WG_CSP_NONCE__';
 const TTL_MS = 60 * 1000;
@@ -25,8 +25,8 @@ const MAX_ENTRIES = 2000;
 
 const pages = new Map();
 
-// One copy per language: the key carries the request's language.
-const withLang = (key) => `${currentLanguage()}|${key}`;
+// One copy per language and unit system: the key carries both.
+const withLang = (key) => `${currentLanguage()}|${currentUnits()}|${key}`;
 
 export function cachedPage(key) {
     key = withLang(key);

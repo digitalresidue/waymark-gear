@@ -50,6 +50,7 @@
 </template>
 
 <script>
+import { bigWeightUnit } from '../utils/i18n-app.js';
 import siteHeader from '../components/site-header.vue';
 import siteFooter from '../components/site-footer.vue';
 import { api, formatWeightMg } from '../utils/format.js';
@@ -77,7 +78,7 @@ export default {
             return updatedAgo(when);
         },
         weight(mg) {
-            return formatWeightMg(mg, 'lb');
+            return formatWeightMg(mg, bigWeightUnit());
         },
         pick(id) {
             this.trip = id;

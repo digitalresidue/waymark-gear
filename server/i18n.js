@@ -17,6 +17,7 @@ import express from 'express';
 import knex from './db.js';
 import { optionalUser } from './auth.js';
 import { LANGUAGES, DEFAULT_LANGUAGE, LANGUAGE_COOKIE, pickLanguage, translator, escapeHtml, languageInfo, matchLanguage } from '../client/utils/i18n.js';
+import { UNITS_COOKIE, DEFAULT_UNITS, pickUnits, matchUnits } from '../client/utils/units.js';
 
 export const LOCALES_DIR = path.join(import.meta.dirname, '..', 'locales');
 
@@ -46,6 +47,12 @@ export function currentLanguage() {
     return s ? s.lang : DEFAULT_LANGUAGE;
 }
 
+/** This request's unit system: 'imperial' or 'metric' (client/utils/units.js). */
+export function currentUnits() {
+    const s = store.getStore();
+    return s ? s.units : DEFAULT_UNITS;
+}
+
 /** This request's translate function. */
 export function currentT() {
     return translatorFor(currentLanguage());
@@ -58,13 +65,19 @@ export function languageFor(req) {
     });
 }
 
+export function unitsFor(req) {
+    return pickUnits({ chosen: req.cookies && req.cookies[UNITS_COOKIE], acceptLanguage: req.get('accept-language') });
+}
+
 export function languageMiddleware(req, res, next) {
     const lang = languageFor(req);
+    const units = unitsFor(req);
     res.locals.lang = lang;
+    res.locals.units = units;
     // Pages differ by language: caches in between must key on what chose it.
     res.vary('Accept-Language');
     res.vary('Cookie');
-    store.run({ lang }, next);
+    store.run({ lang, units }, next);
 }
 
 // Remember a choice for later visits (a year).
@@ -73,9 +86,10 @@ export function setLanguageCookie(res, code) {
 }
 
 // Pages' <html> tag carries the language and its direction.
-export function localizeHtml(html, lang = currentLanguage()) {
+export function localizeHtml(html, lang = currentLanguage(), units = currentUnits()) {
     const { dir } = languageInfo(lang);
-    return html.replace(/<html class="lp" lang="en">/, `<html class="lp" lang="${lang}"${dir === 'rtl' ? ' dir="rtl"' : ''}>`);
+    // data-units: the page's scripts and the app show weights the same way.
+    return html.replace(/<html class="lp" lang="en">/, `<html class="lp" lang="${lang}"${dir === 'rtl' ? ' dir="rtl"' : ''} data-units="${units}">`);
 }
 
 // For Mustache templates: {{#t}}nav.explore{{/t}} prints the translation,
@@ -85,6 +99,7 @@ export function templateHelpers() {
     return {
         t: () => (key) => escapeHtml(t(String(key).trim())),
         lang: t.locale,
+        units: currentUnits(),
     };
 }
 
@@ -125,4 +140,35 @@ languageRouter.post('/api/language', async (req, res) => {
     if (!code) return res.status(400).json({ message: 'Unknown language.' });
     await choose(req, res, code);
     res.json({ lang: code });
+});
+
+// ---- choosing units ------------------------------------------------------------------
+
+async function chooseUnits(req, res, system) {
+    res.cookie(UNITS_COOKIE, system, { path: '/', maxAge: 365 * 24 * 60 * 60 * 1000, sameSite: 'lax' });
+    const user = await optionalUser(req);
+    if (user) await knex('users').where({ user_id: user.user_id }).update({ units: system }).catch(() => {});
+}
+
+// The footer picker without JavaScript: /units?system=metric
+languageRouter.get('/units', async (req, res) => {
+    const system = matchUnits(req.query.system);
+    if (system) await chooseUnits(req, res, system);
+    let back = safeNext(req.query.next);
+    if (!back) {
+        try {
+            const ref = new URL(req.get('referer') || '');
+            if (ref.host === req.get('host')) back = ref.pathname + ref.search;
+        } catch {
+            back = null;
+        }
+    }
+    res.redirect(303, back || '/welcome');
+});
+
+languageRouter.post('/api/units', async (req, res) => {
+    const system = matchUnits(req.body && req.body.system);
+    if (!system) return res.status(400).json({ message: 'Pick imperial or metric.' });
+    await chooseUnits(req, res, system);
+    res.json({ units: system });
 });

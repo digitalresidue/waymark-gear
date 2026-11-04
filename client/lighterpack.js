@@ -12,7 +12,7 @@ import store from './store/store';
 import { writeOfflineCache } from './utils/offline-cache.js';
 import { connectLive, disconnectLive, watchKey } from './utils/live.js';
 import { initKeyboardClicks } from './utils/keyboard-clicks.js';
-import { installI18n, startLanguage, followAccountLanguage } from './utils/i18n-app.js';
+import { installI18n, startLanguage, followAccountLanguage, followAccountUnits } from './utils/i18n-app.js';
 import { selectOnFocus, focusOnCreate, emptyIfZero, clickOutside } from './utils/focus.js';
 
 import './utils/utils.js';
@@ -127,6 +127,7 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 Promise.all([store.dispatch('init'), languageReady])
     .then(async () => {
         await followAccountLanguage(store.state.account);
+        followAccountUnits(store.state.account);
         resolveReady();
         app.mount('#lp');
         window.LighterPack = { $store: store };
