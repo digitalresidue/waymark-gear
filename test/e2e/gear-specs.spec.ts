@@ -50,10 +50,15 @@ test('specs from the import sheet: stored, filterable, on the gear page, editabl
     expect(await names('spec_double_wall=yes')).toEqual([`Free tent ${tag}`, `Spec tent ${tag}`]);
 
     // The gear page.
-    const visitor = await (await browser.newContext()).newPage();
+    // In the reader's units only.
+    const metric = await (await browser.newContext({ locale: 'de-DE' })).newPage();
+    await metric.goto(url(`/g/${quilt.id}`));
+    await expect(metric.getByTestId('gear-specs').locator('[data-spec="temp_comfort"] dd')).toHaveText('−1°C');
+    await metric.context().close();
+    const visitor = await (await browser.newContext({ locale: 'en-US' })).newPage();
     await visitor.goto(url(`/g/${quilt.id}`));
     const specs = visitor.getByTestId('gear-specs');
-    await expect(specs.locator('[data-spec="temp_comfort"] dd')).toHaveText('30°F (−1°C)');
+    await expect(specs.locator('[data-spec="temp_comfort"] dd')).toHaveText('30°F');
     await expect(specs.locator('[data-spec="fill_power"] dd')).toHaveText('850 fill');
     await expect(specs.locator('[data-spec="footbox"] dd')).toHaveText('Zippered');
 

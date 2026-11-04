@@ -1,4 +1,5 @@
 import { createStore } from 'vuex';
+import { convertLibraryUnits } from '../utils/units.js';
 import debounce from 'lodash/debounce.js';
 
 import { Library } from '../dataTypes.js';
@@ -384,6 +385,12 @@ const store = createStore({
         },
         setTotalUnit(state, unit) {
             state.library.totalUnit = unit;
+        },
+        // Imperial or metric everywhere: every item's unit and the totals.
+        setUnitSystem(state, system) {
+            convertLibraryUnits(state.library, system);
+            const list = state.library.getListById(state.library.defaultListId);
+            if (list) list.calculateTotals();
         },
         toggleOptionalField(state, optionalField) {
             const list = state.library.getListById(state.library.defaultListId);

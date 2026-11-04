@@ -38,12 +38,21 @@
                 <a :href="sourceUrl" target="_blank" rel="noopener noreferrer">{{ $t('footer.source') }}</a>
                 <a v-if="contactEmail" :href="`mailto:${contactEmail}`">{{ $t('footer.contact') }}</a>
             </nav>
-            <label class="wgLangPicker">
-                <span>{{ $t('footer.language') }}</span>
-                <select class="wgSelect" :value="language" data-testid="language-picker" @change="pickLanguage($event.target.value)">
-                    <option v-for="l in languages" :key="l.code" :value="l.code" :lang="l.code">{{ l.name }}</option>
-                </select>
-            </label>
+            <div class="wgFooterPickers">
+                <label class="wgLangPicker">
+                    <span>{{ $t('footer.language') }}</span>
+                    <select class="wgSelect" :value="language" data-testid="language-picker" @change="pickLanguage($event.target.value)">
+                        <option v-for="l in languages" :key="l.code" :value="l.code" :lang="l.code">{{ l.name }}</option>
+                    </select>
+                </label>
+                <label class="wgLangPicker">
+                    <span>{{ $t('units.label') }}</span>
+                    <select class="wgSelect" :value="units" data-testid="units-picker" @change="pickUnits($event.target.value)">
+                        <option value="imperial">{{ $t('units.imperial') }}</option>
+                        <option value="metric">{{ $t('units.metric') }}</option>
+                    </select>
+                </label>
+            </div>
         </div>
     </footer>
     <div v-else class="lpSiteFooter" :class="{ lpSiteFooterFixed: fixed }">
@@ -76,7 +85,7 @@
 import { siteName, contactEmail, sourceUrl, upstream, socialLinks } from '../brand.js';
 import { withIcons } from '../social-icons.js';
 import { LANGUAGES, escapeHtml, tHtml } from '../utils/i18n.js';
-import { chooseLanguage, currentLanguage } from '../utils/i18n-app.js';
+import { chooseLanguage, currentLanguage, chooseUnits, currentUnits } from '../utils/i18n-app.js';
 
 export default {
     name: 'SiteFooter',
@@ -102,6 +111,9 @@ export default {
         language() {
             return currentLanguage();
         },
+        units() {
+            return currentUnits();
+        },
         basedOn() {
             return tHtml(this.$t, 'footer.basedOn', {
                 project: `<a href="${escapeHtml(upstream.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(upstream.name)}</a>`,
@@ -112,6 +124,9 @@ export default {
     methods: {
         async pickLanguage(code) {
             await chooseLanguage(code);
+        },
+        async pickUnits(system) {
+            await chooseUnits(system, this.$store);
         },
     },
 };

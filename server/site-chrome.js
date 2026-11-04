@@ -14,7 +14,7 @@ import { MENU, PHONE_EXTRAS, activeFor } from '../client/nav.js';
 import { contactEmail, sourceUrl, upstream, socialLinks } from '../client/brand.js';
 import { withIcons } from '../client/social-icons.js';
 import { localizeMenu, LANGUAGES, escapeHtml, tHtml } from '../client/utils/i18n.js';
-import { currentT, localizeHtml, templateHelpers } from './i18n.js';
+import { currentT, currentUnits, localizeHtml, templateHelpers } from './i18n.js';
 
 const partial = (name) => fs.readFileSync(path.join(import.meta.dirname, `../templates/${name}.mustache`), 'utf8');
 const PARTIALS = { siteHeader: partial('t_siteHeader'), siteFooter: partial('t_siteFooter') };
@@ -44,6 +44,8 @@ export function chromeModel(path) {
         ctaShort: t('header.startList'),
         // The footer's language picker.
         languages: LANGUAGES.map((l) => ({ code: l.code, name: l.name, on: l.code === t.locale })),
+        // ...and its units picker.
+        unitSystems: ['imperial', 'metric'].map((id) => ({ id, label: t(`units.${id}`), on: id === currentUnits() })),
         contactEmail,
         sourceUrl,
         upstream,

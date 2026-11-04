@@ -27,12 +27,21 @@
             <a href="{{chrome.sourceUrl}}" target="_blank" rel="noopener noreferrer">{{#t}}footer.source{{/t}}</a>
             {{#chrome.contactEmail}}<a href="mailto:{{chrome.contactEmail}}">{{#t}}footer.contact{{/t}}</a>{{/chrome.contactEmail}}
         </nav>
-        <form class="wgLangPicker" action="/language" method="get" data-lang-picker>
-            <label for="wgLang">{{#t}}footer.language{{/t}}</label>
-            <select id="wgLang" name="lang" class="wgSelect" data-testid="language-picker">
-                {{#chrome.languages}}<option value="{{code}}" lang="{{code}}" {{#on}}selected{{/on}}>{{name}}</option>{{/chrome.languages}}
-            </select>
-            <noscript><button type="submit" class="wgBtn wgBtnGhost wgBtnSmall">OK</button></noscript>
-        </form>
+        <div class="wgFooterPickers">
+            <form class="wgLangPicker" action="/language" method="get" data-picker="/api/language" data-picker-field="lang">
+                <label for="wgLang">{{#t}}footer.language{{/t}}</label>
+                <select id="wgLang" name="lang" class="wgSelect" data-testid="language-picker">
+                    {{#chrome.languages}}<option value="{{code}}" lang="{{code}}" {{#on}}selected{{/on}}>{{name}}</option>{{/chrome.languages}}
+                </select>
+                <noscript><button type="submit" class="wgBtn wgBtnGhost wgBtnSmall">OK</button></noscript>
+            </form>
+            <form class="wgLangPicker" action="/units" method="get" data-picker="/api/units" data-picker-field="system">
+                <label for="wgUnits">{{#t}}units.label{{/t}}</label>
+                <select id="wgUnits" name="system" class="wgSelect" data-testid="units-picker">
+                    {{#chrome.unitSystems}}<option value="{{id}}" {{#on}}selected{{/on}}>{{label}}</option>{{/chrome.unitSystems}}
+                </select>
+                <noscript><button type="submit" class="wgBtn wgBtnGhost wgBtnSmall">OK</button></noscript>
+            </form>
+        </div>
     </div>
 </footer>

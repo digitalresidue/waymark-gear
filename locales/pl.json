@@ -238,5 +238,9 @@
     "few": "{count} sklepy",
     "many": "{count} sklepów",
     "other": "{count} sklepu"
-  }
+  },
+  "units.label": "Jednostki",
+  "units.imperial": "Imperialne (oz, lb, in, °F)",
+  "units.metric": "Metryczne (g, kg, cm, °C)",
+  "units.hint": "Wagi, wymiary i temperatury w całym serwisie oraz jednostki na Twoich listach."
 }

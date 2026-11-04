@@ -94,8 +94,10 @@ const startSession = async function (res, userId) {
     res.cookie('lp', token, opts);
     res.cookie('lp_loggedin', '1', { ...opts, httpOnly: false });
     // Signing in on a new device brings the language they chose with them.
-    const { language } = (await knex('users').where({ user_id: userId }).first('language').catch(() => null)) || {};
+    const { language, units } = (await knex('users').where({ user_id: userId }).first('language', 'units').catch(() => null)) || {};
     if (language) res.cookie('wg_lang', language, { path: '/', maxAge: 365 * 24 * 60 * 60 * 1000, sameSite: 'lax' });
+    // ...and their units.
+    if (units) res.cookie('wg_units', units, { path: '/', maxAge: 365 * 24 * 60 * 60 * 1000, sameSite: 'lax' });
     return token;
 };
 

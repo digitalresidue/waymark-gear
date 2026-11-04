@@ -338,17 +338,21 @@ export function activeFilterCount(f) {
 // ---- showing values -------------------------------------------------------------
 
 /** A weight in grams as people read it: "21.6 oz (612 g)", "3.1 lb (1.4 kg)". */
-export function formatWeightG(g) {
+export function formatWeightG(g, system = null) {
     const oz = g / 28.349523125;
-    if (oz < 32) return `${Math.round(oz * 10) / 10} oz (${Math.round(g)} g)`;
-    return `${Math.round(oz / 16 * 10) / 10} lb (${Math.round(g / 100) / 10} kg)`;
+    const imperial = oz < 32 ? `${Math.round(oz * 10) / 10} oz` : `${Math.round(oz / 16 * 10) / 10} lb`;
+    const metric = g < 1000 ? `${Math.round(g)} g` : `${Math.round(g / 100) / 10} kg`;
+    if (system === 'imperial') return imperial;
+    if (system === 'metric') return metric;
+    // Both, for places that don't know the reader's choice.
+    return oz < 32 ? `${imperial} (${Math.round(g)} g)` : `${imperial} (${Math.round(g / 100) / 10} kg)`;
 }
 
 /** One end of a filter range, by what it filters: weight, price or a spec. */
-export function formatFilterValue(key, v) {
-    if (key === 'weight') return formatWeightG(v);
+export function formatFilterValue(key, v, system = null) {
+    if (key === 'weight') return formatWeightG(v, system);
     if (key === 'price') return `$${Math.round(v)}`;
-    return formatSpec(key, v);
+    return formatSpec(key, v, system);
 }
 
 /** "Any", "Up to 3.1 lb (1.4 kg)", "At least 850 fill", "$200 – $400". */
@@ -356,12 +360,13 @@ export function formatFilterValue(key, v) {
 // (server/i18n.js; the browser gets them from the page).
 export const RANGE_WORDS = { any: 'Any', upTo: 'Up to {value}', atLeast: 'At least {value}' };
 
-export function rangeLabel(key, lo, hi, facet, words = RANGE_WORDS) {
+export function rangeLabel(key, lo, hi, facet, words = RANGE_WORDS, system = null) {
     const atMin = lo === undefined || lo <= facet.min;
     const atMax = hi === undefined || hi >= facet.max;
+    const show = (v) => formatFilterValue(key, v, system);
     if (atMin && atMax) return words.any;
-    if (atMin) return words.upTo.replace('{value}', formatFilterValue(key, hi));
-    if (atMax) return words.atLeast.replace('{value}', formatFilterValue(key, lo));
-    return `${formatFilterValue(key, lo)} – ${formatFilterValue(key, hi)}`;
+    if (atMin) return words.upTo.replace('{value}', show(hi));
+    if (atMax) return words.atLeast.replace('{value}', show(lo));
+    return `${show(lo)} – ${show(hi)}`;
 }
 

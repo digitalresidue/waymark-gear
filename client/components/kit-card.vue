@@ -21,6 +21,7 @@
 </template>
 
 <script>
+import { bigWeightUnit } from '../utils/i18n-app.js';
 import { formatWeightMg } from '../utils/format.js';
 import { TRIP_TYPE_LABELS, isNewShakedown } from '../utils/gear-meta.js';
 
@@ -37,7 +38,7 @@ export default {
             return TRIP_TYPE_LABELS[this.kit.tripType] || '';
         },
         baseWeight() {
-            return formatWeightMg(this.kit.baseWeightMg, 'lb');
+            return formatWeightMg(this.kit.baseWeightMg, bigWeightUnit());
         },
         sorted() {
             return (this.kit.categories || []).filter((c) => c.weightMg > 0).sort((a, b) => b.weightMg - a.weightMg);

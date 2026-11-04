@@ -226,5 +226,9 @@
   "spec.types.outer": "外层衣物",
   "gear.shops": {
     "other": "{count} 家店"
-  }
+  },
+  "units.label": "单位",
+  "units.imperial": "英制 (oz, lb, in, °F)",
+  "units.metric": "公制 (g, kg, cm, °C)",
+  "units.hint": "全站的重量、尺寸和温度，以及你清单中的单位。"
 }

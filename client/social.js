@@ -643,30 +643,31 @@ function initSkipLink() {
     });
 }
 
-// The footer's language picker: remember the choice, then show the page in it.
-function initLanguagePicker() {
-    const form = document.querySelector('[data-lang-picker]');
-    if (!form) return;
-    const select = form.querySelector('select');
-    select.addEventListener('change', async () => {
-        try {
-            const res = await fetch('/api/language', {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-                body: JSON.stringify({ lang: select.value }),
-            });
-            if (!res.ok) throw new Error('language');
-            window.location.reload();
-        } catch {
-            form.submit();
-        }
-    });
+// The footer's language and units pickers: remember the choice, then show
+// the page with it.
+function initFooterPickers() {
+    for (const form of document.querySelectorAll('[data-picker]')) {
+        const select = form.querySelector('select');
+        select.addEventListener('change', async () => {
+            try {
+                const res = await fetch(form.dataset.picker, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                    body: JSON.stringify({ [form.dataset.pickerField]: select.value }),
+                });
+                if (!res.ok) throw new Error('picker');
+                window.location.reload();
+            } catch {
+                form.submit();
+            }
+        });
+    }
 }
 
 export function initSocial() {
     initSkipLink();
-    initLanguagePicker();
+    initFooterPickers();
     initTrails();
     initSiteHeader();
     initCompare();

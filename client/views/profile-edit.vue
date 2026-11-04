@@ -160,6 +160,24 @@
                     </p>
                 </section>
 
+                <section class="wgCard wgProfileFields" data-testid="profile-units">
+                    <h2 class="wgProfileEditH">
+                        {{ $t('units.label') }}
+                    </h2>
+                    <!-- Applies at once, like Language: your lists and every page switch now. -->
+                    <select class="wgSelect wgProfileLanguage" :value="units" :aria-label="$t('units.label')" data-testid="profile-units-select" @change="pickUnits($event.target.value)">
+                        <option value="imperial">
+                            {{ $t('units.imperial') }}
+                        </option>
+                        <option value="metric">
+                            {{ $t('units.metric') }}
+                        </option>
+                    </select>
+                    <p class="wgProfileHint">
+                        {{ $t('units.hint') }}
+                    </p>
+                </section>
+
                 <section class="wgCard wgProfileFields">
                     <label class="wgProfileCheck">
                         <input v-model="form.hidden" type="checkbox" data-testid="profile-hidden">
@@ -194,7 +212,7 @@ import { api, formatWeightMg } from '../utils/format.js';
 import { marked } from '../utils/markdown.js';
 import { SEASONS, ACTIVITIES } from '../utils/gear-meta.js';
 import { LANGUAGES } from '../utils/i18n.js';
-import { chooseLanguage, currentLanguage } from '../utils/i18n-app.js';
+import { chooseLanguage, currentLanguage, chooseUnits, currentUnits, bigWeightUnit } from '../utils/i18n-app.js';
 
 const NETWORKS = [
     { id: 'youtube', label: 'YouTube', placeholder: '@yourchannel or a link' },
@@ -228,6 +246,9 @@ export default {
         language() {
             return currentLanguage();
         },
+        units() {
+            return currentUnits();
+        },
         signedIn() {
             return Boolean(this.$store.state.loggedIn);
         },
@@ -254,8 +275,11 @@ export default {
         async pickLanguage(code) {
             await chooseLanguage(code);
         },
+        async pickUnits(system) {
+            await chooseUnits(system, this.$store);
+        },
         fmt(mg) {
-            return formatWeightMg(mg, 'lb');
+            return formatWeightMg(mg, bigWeightUnit());
         },
         setProfile(profile) {
             this.profile = profile;
