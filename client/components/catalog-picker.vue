@@ -31,11 +31,39 @@
                 <input ref="search" v-model="query" type="search" class="wgInput" :placeholder="source === 'closet' ? 'Search your closet' : 'Search tents, quilts, stoves…'" data-testid="catalog-picker-search" @input="queue">
             </label>
 
-            <scrollRow v-if="source === 'catalog' && catalogCategories.length" track-class="wgChips wgPickerChips" role="group" aria-label="Catalog category">
-                <button type="button" class="wgChip" :aria-pressed="String(category === '')" @click="pickCategory('')">
+            <!-- Every catalog category, reachable: the six parent groups first
+                 (as on Explore), each opening a row of its own categories,
+                 then everything else A–Z. -->
+            <scrollRow v-if="source === 'catalog' && sections.length" track-class="wgChips wgPickerChips" role="group" aria-label="Catalog category" data-testid="picker-sections">
+                <button type="button" class="wgChip" :aria-pressed="String(!section)" @click="pickSection('')">
                     All
                 </button>
-                <button v-for="c in catalogCategories" :key="c.name" type="button" class="wgChip" :aria-pressed="String(category === c.name)" @click="pickCategory(c.name)">
+                <button
+                    v-for="s in sections"
+                    :key="s.slug"
+                    type="button"
+                    class="wgChip"
+                    :class="{ wgPickerParent: s.parent }"
+                    :aria-pressed="String(section === s.slug || (s.parent && parentOfSection === s.slug))"
+                    :data-testid="`picker-section-${s.slug}`"
+                    @click="pickSection(s.slug)"
+                >
+                    {{ s.name }}
+                </button>
+            </scrollRow>
+            <scrollRow v-if="source === 'catalog' && openParent && openParent.children.length > 1" track-class="wgChips wgPickerChips wgPickerChildren" role="group" :aria-label="openParent.name" data-testid="picker-children">
+                <button type="button" class="wgChip" :aria-pressed="String(section === openParent.slug)" @click="pickSection(openParent.slug)">
+                    All {{ openParent.name }}
+                </button>
+                <button
+                    v-for="c in openParent.children"
+                    :key="c.slug"
+                    type="button"
+                    class="wgChip"
+                    :aria-pressed="String(section === c.slug)"
+                    :data-testid="`picker-child-${c.slug}`"
+                    @click="pickSection(c.slug)"
+                >
                     {{ c.name }}
                 </button>
             </scrollRow>
@@ -89,8 +117,8 @@
                         </button>
                     </li>
                 </ul>
-                <p v-else-if="loaded && (query || category)" class="wgMuted wgPickerEmpty">
-                    Nothing in the catalog matches “{{ query || category }}”.
+                <p v-else-if="loaded && (query || section)" class="wgMuted wgPickerEmpty">
+                    Nothing in the catalog matches “{{ query || sectionName }}”.
                 </p>
                 <p v-else-if="loaded" class="wgMuted wgPickerEmpty">
                     The gear catalog is empty for now. Create a custom item below.
@@ -121,6 +149,8 @@
 <script>
 import { api } from '../utils/format.js';
 import scrollRow from './scroll-row.vue';
+import { exploreIndex, resolveSection, parentOf, PARENTS } from '../utils/explore.js';
+import { categoryKey } from '../utils/gear-meta.js';
 import weightUtils from '../utils/weight.js';
 import { isPlaceholder } from '../utils/closet.js';
 
@@ -139,8 +169,11 @@ export default {
         return {
             targetId: null,
             query: '',
-            category: '',
+            // The catalog's categories as they're named ([{ name, count }]),
+            // and the one picked: a parent ('sleep-system'), one of its
+            // categories ('topquilt') or another category ('accessories').
             catalogCategories: [],
+            section: '',
             results: [],
             total: 0,
             loaded: false,
@@ -151,6 +184,35 @@ export default {
         };
     },
     computed: {
+        // Parents that have gear (in Explore's order), then the other categories.
+        index() {
+            return exploreIndex(this.catalogCategories).filter((x) => x.count > 0);
+        },
+        sections() {
+            const parentSlugs = new Set(PARENTS.map((p) => p.slug));
+            return this.index.map((x) => ({
+                slug: x.slug,
+                parent: parentSlugs.has(x.slug),
+                name: parentSlugs.has(x.slug) ? this.$t(`explore.parent.${x.slug}`, {}, x.name) : x.name,
+            }));
+        },
+        // The parent a pick belongs to: itself, or the parent of its category.
+        parentOfSection() {
+            if (!this.section) return '';
+            if (PARENTS.some((p) => p.slug === this.section)) return this.section;
+            const raw = this.catalogCategories.find((c) => categoryKey(c.name) === this.section);
+            return raw ? parentOf(raw.name) || '' : '';
+        },
+        sectionName() {
+            const hit = this.sections.find((x) => x.slug === this.section)
+                || (this.openParent && this.openParent.children.find((c) => c.slug === this.section));
+            return hit ? hit.name : this.section;
+        },
+        openParent() {
+            const slug = this.parentOfSection;
+            const p = slug && this.index.find((x) => x.slug === slug);
+            return p ? { ...p, name: this.$t(`explore.parent.${p.slug}`, {}, p.name) } : null;
+        },
         library() {
             return this.$store.state.library;
         },
@@ -189,7 +251,7 @@ export default {
             this.$nextTick(() => this.$refs.search && this.$refs.search.focus());
             if (!this.loaded) this.load(true);
             if (!this.catalogCategories.length) {
-                api('/api/catalog/categories').then((r) => { this.catalogCategories = r.categories.slice(0, 14); }).catch(() => {});
+                api('/api/catalog/categories').then((r) => { this.catalogCategories = r.categories; }).catch(() => {});
             }
         },
         close() {
@@ -213,15 +275,17 @@ export default {
             clearTimeout(this.timer);
             this.timer = setTimeout(() => this.load(true), 200);
         },
-        pickCategory(name) {
-            this.category = name;
+        pickSection(slug) {
+            this.section = slug;
             this.load(true);
         },
         async load(reset) {
             // Gear members rate best first, browsing or searching.
             const params = new URLSearchParams({ limit: String(PAGE), offset: String(reset ? 0 : this.results.length), sort: 'rating' });
             if (this.query.trim()) params.set('q', this.query.trim());
-            if (this.category) params.set('category', this.category);
+            // A parent or a category: every catalog name it covers ("Tent" and "Tents").
+            const names = this.section ? (resolveSection(this.section, this.catalogCategories) || { categories: [] }).categories : [];
+            if (names.length) params.set('categories', names.join(','));
             try {
                 const r = await api(`/api/catalog?${params}`);
                 this.results = reset ? r.items : this.results.concat(r.items);
