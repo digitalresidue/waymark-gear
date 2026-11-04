@@ -3,7 +3,8 @@
 // in step so the view can be shared. The server applies the same rules
 // (client/utils/explore.js) for the first load and for links.
 
-import { readFilters, filtersToQuery, matchesFilters, sortItems, rangeLabel, activeFilterCount, movedFrom } from './utils/explore.js';
+import { readFilters, filtersToQuery, matchesFilters, sortItems, rangeLabel, activeFilterCount, movedFrom, RANGE_WORDS } from './utils/explore.js';
+import { translator } from './utils/i18n.js';
 
 export function initExploreGear() {
     const form = document.getElementById('wgGearFilters');
@@ -15,6 +16,19 @@ export function initExploreGear() {
     const empty = document.querySelector('[data-testid="explore-empty"]');
     const sortSelect = document.querySelector('[data-sort]');
     const filterCount = document.querySelector('[data-filter-count]');
+    // The page's own words in the reader's language (server/views.js).
+    const words = (() => {
+        try {
+            return JSON.parse((count && count.dataset.words) || '{}');
+        } catch {
+            return {};
+        }
+    })();
+    const t = translator(document.documentElement.lang || 'en', words, {
+        'explore.items': { one: '{count} item', other: '{count} items' },
+        'explore.itemsOf': '{shown} of {total} items',
+    });
+    const rangeWords = { any: t('explore.any', {}, RANGE_WORDS.any), upTo: t('explore.upTo', {}, RANGE_WORDS.upTo), atLeast: t('explore.atLeast', {}, RANGE_WORDS.atLeast) };
     if (box) fitFilterColumn(box);
 
     const items = [...list.children].map((el) => ({
@@ -80,9 +94,9 @@ export function initExploreGear() {
         for (const item of sortItems(items, f.sort)) list.appendChild(item.el);
         for (const r of ranges) {
             const chosen = r.key === 'weight' ? f.weight : r.key === 'price' ? f.price : f.specs[r.key] || {};
-            r.out.textContent = rangeLabel(r.key, chosen.min, chosen.max, r.facet);
+            r.out.textContent = rangeLabel(r.key, chosen.min, chosen.max, r.facet, rangeWords);
         }
-        count.textContent = shown === items.length ? `${items.length} ${items.length === 1 ? 'item' : 'items'}` : `${shown} of ${items.length} items`;
+        count.textContent = shown === items.length ? t('explore.items', { count: items.length }) : t('explore.itemsOf', { shown, total: items.length });
         if (empty) empty.hidden = shown > 0;
         const active = activeFilterCount(f);
         if (filterCount) filterCount.textContent = active ? `(${active})` : '';

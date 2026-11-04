@@ -13,6 +13,8 @@ import Mustache from 'mustache';
 import { MENU, PHONE_EXTRAS, activeFor } from '../client/nav.js';
 import { contactEmail, sourceUrl, upstream, socialLinks } from '../client/brand.js';
 import { withIcons } from '../client/social-icons.js';
+import { localizeMenu, LANGUAGES, escapeHtml, tHtml } from '../client/utils/i18n.js';
+import { currentT, localizeHtml, templateHelpers } from './i18n.js';
 
 const partial = (name) => fs.readFileSync(path.join(import.meta.dirname, `../templates/${name}.mustache`), 'utf8');
 const PARTIALS = { siteHeader: partial('t_siteHeader'), siteFooter: partial('t_siteFooter') };
@@ -34,14 +36,22 @@ function entry(e, current) {
 // The `chrome` part of a page's model. `path` marks the current section.
 export function chromeModel(path) {
     const current = activeFor(path);
+    const t = currentT();
     return {
-        menu: MENU.map((e) => entry(e, current)),
-        extras: PHONE_EXTRAS.map((e) => entry(e, '')),
-        cta: 'Start a list',
-        ctaShort: 'Start a list',
+        menu: localizeMenu(MENU, t).map((e) => entry(e, current)),
+        extras: localizeMenu(PHONE_EXTRAS, t).map((e) => entry(e, '')),
+        cta: t('header.startList'),
+        ctaShort: t('header.startList'),
+        // The footer's language picker.
+        languages: LANGUAGES.map((l) => ({ code: l.code, name: l.name, on: l.code === t.locale })),
         contactEmail,
         sourceUrl,
         upstream,
+        // "Based on LighterPack by …", with the project linked.
+        basedOn: tHtml(t, 'footer.basedOn', {
+            project: `<a href="${escapeHtml(upstream.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(upstream.name)}</a>`,
+            author: escapeHtml(upstream.author),
+        }),
         social: withIcons(socialLinks),
     };
 }
@@ -49,5 +59,6 @@ export function chromeModel(path) {
 // Render a full server page with the site header and footer. `pagePath`
 // is the request path (marks the current section in the menu).
 export function renderPage(template, model, partials = {}, pagePath = '') {
-    return Mustache.render(template, { ...model, chrome: chromeModel(pagePath || model.path || '') }, { ...PARTIALS, ...partials });
+    const html = Mustache.render(template, { ...templateHelpers(), ...model, chrome: chromeModel(pagePath || model.path || '') }, { ...PARTIALS, ...partials });
+    return localizeHtml(html);
 }

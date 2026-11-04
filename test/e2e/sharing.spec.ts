@@ -19,8 +19,8 @@ test.describe('List Sharing', () => {
     // Create a category with items for a meaningful list
     await page.getByText('Add new category', { exact: true }).click();
     const category = page.getByTestId('category').first();
-    await category.getByPlaceholder('Category Name', { exact: true }).fill('Shelter');
-    await category.getByPlaceholder('Category Name', { exact: true }).blur();
+    await category.getByPlaceholder('Category name', { exact: true }).fill('Shelter');
+    await category.getByPlaceholder('Category name', { exact: true }).blur();
 
     await category.getByText('Add new item', { exact: true }).click();
     const itemRow = category.getByTestId('item-row').last();
@@ -101,8 +101,8 @@ test.describe('CSV Export', () => {
 
     await page.getByText('Add new category', { exact: true }).click();
     const category = page.getByTestId('category').first();
-    await category.getByPlaceholder('Category Name', { exact: true }).fill('Gear');
-    await category.getByPlaceholder('Category Name', { exact: true }).blur();
+    await category.getByPlaceholder('Category name', { exact: true }).fill('Gear');
+    await category.getByPlaceholder('Category name', { exact: true }).blur();
 
     await category.getByText('Add new item', { exact: true }).click();
     const itemRow = category.getByTestId('item-row').last();
@@ -325,8 +325,8 @@ test.describe('Share URL Persistence', () => {
     // Add some content
     await page.getByText('Add new category', { exact: true }).click();
     const category = page.getByTestId('category').first();
-    await category.getByPlaceholder('Category Name', { exact: true }).fill('New Category');
-    await category.getByPlaceholder('Category Name', { exact: true }).blur();
+    await category.getByPlaceholder('Category name', { exact: true }).fill('New Category');
+    await category.getByPlaceholder('Category name', { exact: true }).blur();
 
     // Check share URL again
     await page.getByText('Share', { exact: true }).hover();

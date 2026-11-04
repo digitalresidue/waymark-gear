@@ -145,6 +145,21 @@
                     </ul>
                 </section>
 
+                <section class="wgCard wgProfileFields" data-testid="profile-language">
+                    <h2 class="wgProfileEditH">
+                        {{ $t('profile.language') }}
+                    </h2>
+                    <!-- Applies at once (not with Save profile): menus and pages switch now. -->
+                    <select class="wgSelect wgProfileLanguage" :value="language" :aria-label="$t('profile.language')" data-testid="profile-language-select" @change="pickLanguage($event.target.value)">
+                        <option v-for="l in languages" :key="l.code" :value="l.code" :lang="l.code">
+                            {{ l.name }}
+                        </option>
+                    </select>
+                    <p class="wgProfileHint">
+                        {{ $t('profile.languageHint') }}
+                    </p>
+                </section>
+
                 <section class="wgCard wgProfileFields">
                     <label class="wgProfileCheck">
                         <input v-model="form.hidden" type="checkbox" data-testid="profile-hidden">
@@ -178,6 +193,8 @@ import globalAlerts from '../components/global-alerts.vue';
 import { api, formatWeightMg } from '../utils/format.js';
 import { marked } from '../utils/markdown.js';
 import { SEASONS, ACTIVITIES } from '../utils/gear-meta.js';
+import { LANGUAGES } from '../utils/i18n.js';
+import { chooseLanguage, currentLanguage } from '../utils/i18n-app.js';
 
 const NETWORKS = [
     { id: 'youtube', label: 'YouTube', placeholder: '@yourchannel or a link' },
@@ -191,6 +208,7 @@ export default {
     components: { siteHeader, globalAlerts },
     data() {
         return {
+            languages: LANGUAGES,
             profile: null,
             form: null,
             networks: NETWORKS,
@@ -207,6 +225,9 @@ export default {
         };
     },
     computed: {
+        language() {
+            return currentLanguage();
+        },
         signedIn() {
             return Boolean(this.$store.state.loggedIn);
         },
@@ -230,6 +251,9 @@ export default {
         }
     },
     methods: {
+        async pickLanguage(code) {
+            await chooseLanguage(code);
+        },
         fmt(mg) {
             return formatWeightMg(mg, 'lb');
         },

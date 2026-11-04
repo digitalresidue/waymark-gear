@@ -28,9 +28,9 @@
 
         <main id="wgMain" tabindex="-1" class="wgPage wgExploreGear">
             {{#index}}
-            <p class="wgTrailKicker">Explore</p>
-            <h1 class="wgH2">Explore gear</h1>
-            <p class="wgLede">Every piece of gear in the catalog, by category. Open one to filter by weight, price and specs. Looking for packed lists instead? <a href="/kits">Explore kits</a>.</p>
+            <p class="wgTrailKicker">{{#t}}explore.kicker{{/t}}</p>
+            <h1 class="wgH2">{{#t}}explore.title{{/t}}</h1>
+            <p class="wgLede">{{#t}}explore.lede{{/t}} <a href="/kits">{{#t}}explore.exploreKits{{/t}}</a></p>
 
             <ul class="wgExploreParents" data-testid="explore-parents">
                 {{#parents}}
@@ -50,7 +50,7 @@
             </ul>
 
             {{#others.length}}
-            <h2 class="wgProfileSection">Everything else</h2>
+            <h2 class="wgProfileSection">{{#t}}explore.everythingElse{{/t}}</h2>
             <ul class="wgExploreOthers" data-testid="explore-others">
                 {{#others}}
                 <li><a class="wgCard" href="/explore/{{slug}}" data-testid="explore-section" data-slug="{{slug}}"><span>{{name}}</span> <span class="wgMuted">{{count}}</span></a></li>
@@ -60,26 +60,26 @@
             {{/index}}
 
             {{#section}}
-            <nav class="wgCrumbs" aria-label="Breadcrumb">
-                <a href="/explore">Explore gear</a>{{#parent}} › <a href="/explore/{{slug}}">{{name}}</a>{{/parent}} › <span aria-current="page">{{title}}</span>
+            <nav class="wgCrumbs" aria-label="{{#t}}explore.breadcrumb{{/t}}">
+                <a href="/explore">{{#t}}explore.title{{/t}}</a>{{#parent}} › <a href="/explore/{{slug}}">{{name}}</a>{{/parent}} › <span aria-current="page">{{title}}</span>
             </nav>
             <h1 class="wgH2" data-testid="explore-title">{{title}}</h1>
             {{#note}}<p class="wgLede">{{note}}</p>{{/note}}
 
             <div class="wgExploreLayout">
                 <details class="wgFiltersBox" open data-testid="explore-filters-box">
-                    <summary class="wgFiltersToggle">Filters <span data-filter-count>{{activeLabel}}</span></summary>
+                    <summary class="wgFiltersToggle">{{#t}}explore.filters{{/t}} <span data-filter-count>{{activeLabel}}</span></summary>
                     <form id="wgGearFilters" class="wgFilters" method="get" action="/explore/{{slug}}" data-slug="{{slug}}" data-testid="explore-filters">
                         {{#facets.cats.length}}
                         <fieldset class="wgFilter">
-                            <legend>Category</legend>
+                            <legend>{{#t}}explore.category{{/t}}</legend>
                             {{#facets.cats}}<label class="wgFilterCheck"><input type="checkbox" name="cat" value="{{value}}" {{#on}}checked{{/on}}> {{label}} <span class="wgMuted">{{count}}</span></label>{{/facets.cats}}
                         </fieldset>
                         {{/facets.cats.length}}
 
                         {{#facets.brands.length}}
                         <fieldset class="wgFilter" data-testid="filter-brand">
-                            <legend>Brand</legend>
+                            <legend>{{#t}}explore.brand{{/t}}</legend>
                             {{#facets.brands}}<label class="wgFilterCheck"><input type="checkbox" name="brand" value="{{value}}" {{#on}}checked{{/on}}> {{label}} <span class="wgMuted">{{count}}</span></label>{{/facets.brands}}
                         </fieldset>
                         {{/facets.brands.length}}
@@ -89,8 +89,8 @@
                         <div class="wgFilter wgRange" data-range="{{key}}" data-min="{{min}}" data-max="{{max}}" data-step="{{step}}" {{#stops}}data-stops="{{stops}}"{{/stops}} data-testid="range-{{key}}">
                             <div class="wgRangeHead"><span class="wgFilterLabel">{{label}}{{#appliesTo}}<span class="wgFilterFor"> · {{appliesTo}}</span>{{/appliesTo}}</span><output data-out>{{text}}</output></div>
                             <div class="wgRangeTrack">
-                                <input type="range" class="wgRangeLo" name="{{key}}_min" min="{{min}}" max="{{max}}" step="{{step}}" value="{{lo}}" aria-label="{{label}}, at least" data-testid="range-{{key}}-min">
-                                <input type="range" class="wgRangeHi" name="{{key}}_max" min="{{min}}" max="{{max}}" step="{{step}}" value="{{hi}}" aria-label="{{label}}, at most" data-testid="range-{{key}}-max">
+                                <input type="range" class="wgRangeLo" name="{{key}}_min" min="{{min}}" max="{{max}}" step="{{step}}" value="{{lo}}" aria-label="{{ariaMin}}" data-testid="range-{{key}}-min">
+                                <input type="range" class="wgRangeHi" name="{{key}}_max" min="{{min}}" max="{{max}}" step="{{step}}" value="{{hi}}" aria-label="{{ariaMax}}" data-testid="range-{{key}}-max">
                             </div>
                         </div>
                         {{/range}}
@@ -105,16 +105,16 @@
 
                         <input type="hidden" name="sort" value="{{sort}}">
                         <div class="wgFilterActions">
-                            <noscript><button type="submit" class="wgBtn wgBtnPrimary wgBtnSmall">Apply</button></noscript>
-                            <a class="wgBtn wgBtnGhost wgBtnSmall" href="/explore/{{slug}}" data-clear-filters data-testid="explore-clear">Clear filters</a>
+                            <noscript><button type="submit" class="wgBtn wgBtnPrimary wgBtnSmall">{{#t}}explore.apply{{/t}}</button></noscript>
+                            <a class="wgBtn wgBtnGhost wgBtnSmall" href="/explore/{{slug}}" data-clear-filters data-testid="explore-clear">{{#t}}explore.clearFilters{{/t}}</a>
                         </div>
                     </form>
                 </details>
 
                 <section class="wgExploreResults">
                     <div class="wgExploreBar">
-                        <p class="wgExploreCount" aria-live="polite" data-testid="explore-count">{{countLabel}}</p>
-                        <label class="wgExploreSort">Sort
+                        <p class="wgExploreCount" aria-live="polite" data-testid="explore-count" data-words="{{wordsJson}}">{{countLabel}}</p>
+                        <label class="wgExploreSort">{{#t}}explore.sort{{/t}}
                             <select class="wgSelect" data-sort data-testid="explore-sort">
                                 {{#sorts}}<option value="{{value}}" {{#on}}selected{{/on}}>{{label}}</option>{{/sorts}}
                             </select>
@@ -136,7 +136,7 @@
                         </li>
                         {{/items}}
                     </ul>
-                    <p class="wgProfileEmpty" data-testid="explore-empty" {{#anyShown}}hidden{{/anyShown}}>{{#total}}Nothing matches all of that. Try fewer filters.{{/total}}{{^total}}No gear in this category yet.{{/total}}</p>
+                    <p class="wgProfileEmpty" data-testid="explore-empty" {{#anyShown}}hidden{{/anyShown}}>{{#total}}{{#t}}explore.emptyFiltered{{/t}}{{/total}}{{^total}}{{#t}}explore.emptyCategory{{/t}}{{/total}}</p>
                 </section>
             </div>
             {{/section}}

@@ -741,3 +741,18 @@ button.wgCookieSettings,
 main:focus {
     outline: none;
 }
+
+// The footer's language picker.
+.wgLangPicker {
+    align-items: center;
+    display: flex;
+    flex-basis: 100%;
+    gap: 8px;
+
+    .wgSelect {
+        max-width: 220px;
+        min-height: 36px;
+        padding: 6px 10px;
+        width: auto;
+    }
+}

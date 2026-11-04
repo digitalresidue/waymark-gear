@@ -12,6 +12,7 @@ import store from './store/store';
 import { writeOfflineCache } from './utils/offline-cache.js';
 import { connectLive, disconnectLive, watchKey } from './utils/live.js';
 import { initKeyboardClicks } from './utils/keyboard-clicks.js';
+import { installI18n, startLanguage, followAccountLanguage } from './utils/i18n-app.js';
 import { selectOnFocus, focusOnCreate, emptyIfZero, clickOutside } from './utils/focus.js';
 
 import './utils/utils.js';
@@ -26,6 +27,9 @@ const router = createRouter({
 
 const app = createApp(RouterView);
 initKeyboardClicks();
+installI18n(app);
+// The page's language (the server picked it), loaded before anything draws.
+const languageReady = startLanguage();
 
 // Planning a shared list (/plan/:owner/:listId) swaps in a one-list library;
 // leaving it for anything but Pack or Print brings your own back. The guard
@@ -120,13 +124,15 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
     });
 }
 
-store.dispatch('init')
-    .then(() => {
+Promise.all([store.dispatch('init'), languageReady])
+    .then(async () => {
+        await followAccountLanguage(store.state.account);
         resolveReady();
         app.mount('#lp');
         window.LighterPack = { $store: store };
     })
-    .catch((_error) => {
+    .catch(async (_error) => {
+        await languageReady.catch(() => {});
         resolveReady();
         if (!store.state.library) {
             router.push('/welcome');

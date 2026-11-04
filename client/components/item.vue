@@ -8,8 +8,8 @@
         </span>
         <!-- !! matters: the directive treats undefined as "focus", and _isNew
              is undefined on rows loaded from a save. -->
-        <input v-model="item.name" v-focus-on-create="!!categoryItem._isNew" type="text" class="lpName lpSilent" placeholder="Name" aria-label="Item name" @input="saveItem">
-        <input v-model="item.description" type="text" class="lpDescription lpSilent" placeholder="Description" aria-label="Item description" @input="saveItem">
+        <input v-model="item.name" v-focus-on-create="!!categoryItem._isNew" type="text" class="lpName lpSilent" :placeholder="$t('editor.itemName')" aria-label="Item name" @input="saveItem">
+        <input v-model="item.description" type="text" class="lpDescription lpSilent" :placeholder="$t('editor.itemDescription')" aria-label="Item description" @input="saveItem">
         <span class="lpActionsCell">
             <i class="lpSprite lpCamera" title="Upload a photo or use a photo from the web" role="button" tabindex="0" aria-label="Upload a photo or use a photo from the web" @click="updateItemImage" />
             <i class="lpSprite lpLink" :class="{lpActive: item.url}" title="Add a link for this item" role="button" tabindex="0" aria-label="Add a link for this item" @click="updateItemLink" />

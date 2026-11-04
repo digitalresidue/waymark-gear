@@ -39,6 +39,7 @@ COPY --from=build --chown=node:node /app/client ./client
 COPY --from=build --chown=node:node /app/config ./config
 COPY --from=build --chown=node:node /app/db ./db
 COPY --from=build --chown=node:node /app/templates ./templates
+COPY --from=build --chown=node:node /app/locales ./locales
 COPY --from=build --chown=node:node /app/public ./public
 COPY --from=build --chown=node:node /app/scripts ./scripts
 # Server set-up files (install.sh, the waymark command, compose, Caddyfile):

@@ -7,6 +7,7 @@
 // - Each page is tagged with its owner's user id. Saving, editing a profile
 //   or deleting an account drops that user's pages at once, so owners see
 //   their own changes immediately on this server.
+// - One copy per language (server/i18n.js).
 // - In-memory and per process. With several app instances, another
 //   instance may serve a page up to TTL old; keep TTL short.
 //
@@ -16,13 +17,19 @@
 
 import crypto from 'node:crypto';
 
+import { currentLanguage } from './i18n.js';
+
 export const NONCE_PLACEHOLDER = '__WG_CSP_NONCE__';
 const TTL_MS = 60 * 1000;
 const MAX_ENTRIES = 2000;
 
 const pages = new Map();
 
+// One copy per language: the key carries the request's language.
+const withLang = (key) => `${currentLanguage()}|${key}`;
+
 export function cachedPage(key) {
+    key = withLang(key);
     const hit = pages.get(key);
     if (!hit) return null;
     if (hit.expires < Date.now()) {
@@ -33,6 +40,7 @@ export function cachedPage(key) {
 }
 
 export function storePage(key, html, ownerId, status = 200) {
+    key = withLang(key);
     const page = {
         html,
         status,

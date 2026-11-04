@@ -18,10 +18,10 @@
 
         <div v-if="categories.length > 1" class="wgCategoryTools">
             <button type="button" class="wgBtn wgBtnGhost wgBtnSmall" data-testid="expand-all" :disabled="!anyCollapsed" @click="setCollapsed(false)">
-                Expand all
+                {{ $t('editor.expandAll') }}
             </button>
             <button type="button" class="wgBtn wgBtnGhost wgBtnSmall" data-testid="collapse-all" :disabled="allCollapsed" @click="setCollapsed(true)">
-                Collapse all
+                {{ $t('editor.collapseAll') }}
             </button>
         </div>
 
@@ -38,7 +38,7 @@
             </template>
         </ul>
 
-        <a class="lpAdd addCategory" @click="newCategory"><i class="lpSprite lpSpriteAdd" />Add new category</a>
+        <a class="lpAdd addCategory" @click="newCategory"><i class="lpSprite lpSpriteAdd" />{{ $t('editor.addCategory') }}</a>
     </div>
 </template>
 

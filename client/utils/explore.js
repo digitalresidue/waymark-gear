@@ -279,13 +279,16 @@ for (const t of Object.values(SPEC_TYPES)) for (const key of t.fields) TYPES_BY_
  * In a section mixing gear types, what a spec filter covers ("sleeping pads",
  * "quilts and sleeping bags"), or '' when it covers everything there.
  */
-export function specAppliesLabel(key, categories) {
+export function specAppliesLabel(key, categories, t = null) {
     const types = TYPES_BY_FIELD.get(key);
     if (!types) return '';
     const all = categories.map((c) => (specTypeFor(c) || {}).id || '');
-    if (all.every((t) => types.includes(t))) return '';
-    const names = SPEC_TYPES.filter((t) => types.includes(t.id) && all.includes(t.id)).map((t) => `${t.label.toLowerCase()}s`);
-    return names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+    if (all.every((x) => types.includes(x))) return '';
+    const ids = SPEC_TYPES.filter((x) => types.includes(x.id) && all.includes(x.id)).map((x) => x.id);
+    const english = (id) => `${SPEC_TYPES.find((x) => x.id === id).label.toLowerCase()}s`;
+    const names = ids.map((id) => (t ? t(`spec.types.${id}`, {}, english(id)) : english(id)));
+    const locale = (t && t.locale) || 'en';
+    return new Intl.ListFormat(locale, { type: 'conjunction' }).format(names);
 }
 
 /** Does a spec filter apply to this item? Only to gear of a type that has the spec. */
@@ -349,12 +352,16 @@ export function formatFilterValue(key, v) {
 }
 
 /** "Any", "Up to 3.1 lb (1.4 kg)", "At least 850 fill", "$200 – $400". */
-export function rangeLabel(key, lo, hi, facet) {
+// The words around a range, in English unless the page says otherwise
+// (server/i18n.js; the browser gets them from the page).
+export const RANGE_WORDS = { any: 'Any', upTo: 'Up to {value}', atLeast: 'At least {value}' };
+
+export function rangeLabel(key, lo, hi, facet, words = RANGE_WORDS) {
     const atMin = lo === undefined || lo <= facet.min;
     const atMax = hi === undefined || hi >= facet.max;
-    if (atMin && atMax) return 'Any';
-    if (atMin) return `Up to ${formatFilterValue(key, hi)}`;
-    if (atMax) return `At least ${formatFilterValue(key, lo)}`;
+    if (atMin && atMax) return words.any;
+    if (atMin) return words.upTo.replace('{value}', formatFilterValue(key, hi));
+    if (atMax) return words.atLeast.replace('{value}', formatFilterValue(key, lo));
     return `${formatFilterValue(key, lo)} – ${formatFilterValue(key, hi)}`;
 }
 

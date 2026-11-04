@@ -193,8 +193,8 @@ test.describe('Text Field Validation', () => {
   test('should handle empty item name', async ({ page }) => {
     await page.getByText('Add new category', { exact: true }).click();
     const category = page.getByTestId('category').last();
-    await category.getByPlaceholder('Category Name', { exact: true }).fill('Test Category');
-    await category.getByPlaceholder('Category Name', { exact: true }).blur();
+    await category.getByPlaceholder('Category name', { exact: true }).fill('Test Category');
+    await category.getByPlaceholder('Category name', { exact: true }).blur();
 
     await category.getByText('Add new item', { exact: true }).click();
     const itemRow = category.getByTestId('item-row').last();
@@ -214,7 +214,7 @@ test.describe('Text Field Validation', () => {
     const category = page.getByTestId('category').last();
 
     // Leave category name empty
-    await category.getByPlaceholder('Category Name', { exact: true }).blur();
+    await category.getByPlaceholder('Category name', { exact: true }).blur();
 
     // Add an item to this category
     await category.getByText('Add new item', { exact: true }).click();
@@ -233,8 +233,8 @@ test.describe('Text Field Validation', () => {
 
     await page.getByText('Add new category', { exact: true }).click();
     const category = page.getByTestId('category').last();
-    await category.getByPlaceholder('Category Name', { exact: true }).fill('Test');
-    await category.getByPlaceholder('Category Name', { exact: true }).blur();
+    await category.getByPlaceholder('Category name', { exact: true }).fill('Test');
+    await category.getByPlaceholder('Category name', { exact: true }).blur();
 
     await category.getByText('Add new item', { exact: true }).click();
     const itemRow = category.getByTestId('item-row').last();
@@ -252,8 +252,8 @@ test.describe('Text Field Validation', () => {
 
     await page.getByText('Add new category', { exact: true }).click();
     const category = page.getByTestId('category').last();
-    await category.getByPlaceholder('Category Name', { exact: true }).fill('Test');
-    await category.getByPlaceholder('Category Name', { exact: true }).blur();
+    await category.getByPlaceholder('Category name', { exact: true }).fill('Test');
+    await category.getByPlaceholder('Category name', { exact: true }).blur();
 
     await category.getByText('Add new item', { exact: true }).click();
     const itemRow = category.getByTestId('item-row').last();
@@ -279,8 +279,8 @@ test.describe('Text Field Validation', () => {
     // List should still function - add a category and item
     await page.getByText('Add new category', { exact: true }).click();
     const category = page.getByTestId('category').last();
-    await category.getByPlaceholder('Category Name', { exact: true }).fill('Test');
-    await category.getByPlaceholder('Category Name', { exact: true }).blur();
+    await category.getByPlaceholder('Category name', { exact: true }).fill('Test');
+    await category.getByPlaceholder('Category name', { exact: true }).blur();
 
     await category.getByText('Add new item', { exact: true }).click();
     const itemRow = category.getByTestId('item-row').last();
@@ -303,8 +303,8 @@ test.describe('Calculation Edge Cases', () => {
   test('should handle all items marked as worn', async ({ page }) => {
     await page.getByText('Add new category', { exact: true }).click();
     const category = page.getByTestId('category').last();
-    await category.getByPlaceholder('Category Name', { exact: true }).fill('Worn Items');
-    await category.getByPlaceholder('Category Name', { exact: true }).blur();
+    await category.getByPlaceholder('Category name', { exact: true }).fill('Worn Items');
+    await category.getByPlaceholder('Category name', { exact: true }).blur();
 
     // Add two worn items
     for (const name of ['Boots', 'Hat']) {
@@ -331,8 +331,8 @@ test.describe('Calculation Edge Cases', () => {
   test('should handle all items marked as consumable', async ({ page }) => {
     await page.getByText('Add new category', { exact: true }).click();
     const category = page.getByTestId('category').last();
-    await category.getByPlaceholder('Category Name', { exact: true }).fill('Consumables');
-    await category.getByPlaceholder('Category Name', { exact: true }).blur();
+    await category.getByPlaceholder('Category name', { exact: true }).fill('Consumables');
+    await category.getByPlaceholder('Category name', { exact: true }).blur();
 
     // Add two consumable items
     for (const name of ['Food', 'Water']) {
@@ -359,8 +359,8 @@ test.describe('Calculation Edge Cases', () => {
   test('should handle all items with zero weight', async ({ page }) => {
     await page.getByText('Add new category', { exact: true }).click();
     const category = page.getByTestId('category').last();
-    await category.getByPlaceholder('Category Name', { exact: true }).fill('Weightless');
-    await category.getByPlaceholder('Category Name', { exact: true }).blur();
+    await category.getByPlaceholder('Category name', { exact: true }).fill('Weightless');
+    await category.getByPlaceholder('Category name', { exact: true }).blur();
 
     // Add items with zero weight
     for (const name of ['Digital Map', 'Phone App']) {
@@ -380,8 +380,8 @@ test.describe('Calculation Edge Cases', () => {
   test('should unmark worn item and update base weight', async ({ page }) => {
     await page.getByText('Add new category', { exact: true }).click();
     const category = page.getByTestId('category').last();
-    await category.getByPlaceholder('Category Name', { exact: true }).fill('Test');
-    await category.getByPlaceholder('Category Name', { exact: true }).blur();
+    await category.getByPlaceholder('Category name', { exact: true }).fill('Test');
+    await category.getByPlaceholder('Category name', { exact: true }).blur();
 
     // Add item with weight
     await category.getByText('Add new item', { exact: true }).click();
@@ -421,8 +421,8 @@ test.describe('Calculation Edge Cases', () => {
 
     await page.getByText('Add new category', { exact: true }).click();
     const category = page.getByTestId('category').last();
-    await category.getByPlaceholder('Category Name', { exact: true }).fill('Test');
-    await category.getByPlaceholder('Category Name', { exact: true }).blur();
+    await category.getByPlaceholder('Category name', { exact: true }).fill('Test');
+    await category.getByPlaceholder('Category name', { exact: true }).blur();
 
     await category.getByText('Add new item', { exact: true }).click();
     const itemRow = category.getByTestId('item-row').last();
@@ -439,8 +439,8 @@ test.describe('Calculation Edge Cases', () => {
   test('should accumulate small decimals without precision errors', async ({ page }) => {
     await page.getByText('Add new category', { exact: true }).click();
     const category = page.getByTestId('category').last();
-    await category.getByPlaceholder('Category Name', { exact: true }).fill('Precision Test');
-    await category.getByPlaceholder('Category Name', { exact: true }).blur();
+    await category.getByPlaceholder('Category name', { exact: true }).fill('Precision Test');
+    await category.getByPlaceholder('Category name', { exact: true }).blur();
 
     // Add multiple items with decimal weights that could cause floating point issues
     // 0.1 + 0.2 = 0.30000000000000004 in JS if not handled properly

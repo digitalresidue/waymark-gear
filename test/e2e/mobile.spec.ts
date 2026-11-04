@@ -56,8 +56,8 @@ async function signUpWithList(page: Page) {
   await page.locator('#lpListName').fill('Denali');
 
   const carry = page.getByTestId('category').first();
-  await carry.getByPlaceholder('Category Name', { exact: true }).fill('Carry');
-  await carry.getByPlaceholder('Category Name', { exact: true }).blur();
+  await carry.getByPlaceholder('Category name', { exact: true }).fill('Carry');
+  await carry.getByPlaceholder('Category name', { exact: true }).blur();
   await fillFirstRow(carry, 'Duffel bag', 'REI XXL', '34');
   await addItem(carry, 'Backpack', { description: 'Mountain Hardwear BMG', weight: '83' });
 

@@ -1,9 +1,9 @@
 <template>
-    <authLayout card-id="signin" title="Sign in" subtitle="Welcome back.">
+    <authLayout card-id="signin" :title="$t('auth.signInTitle')" :subtitle="$t('auth.welcomeBack')">
         <SigninForm :message="message" />
         <template #after>
-            <span class="wgMuted">New here?</span> <router-link to="/register">
-                Create an account
+            <span class="wgMuted">{{ $t('auth.newHere') }}</span> <router-link to="/register">
+                {{ $t('auth.createAccount') }}
             </router-link>
         </template>
     </authLayout>

@@ -1,27 +1,27 @@
 <template>
-    <authLayout card-id="resetPassword" title="Choose a new password" :google="false">
+    <authLayout card-id="resetPassword" :title="$t('auth.resetTitle')" :google="false">
         <form class="resetPassword lpFields" data-testid="reset-password-form" @submit.prevent="submit">
             <div class="lpFields">
-                <input v-model="password" v-focus-on-create type="password" placeholder="New password" aria-label="New password" autocomplete="new-password" name="password" class="password">
-                <input v-model="passwordConfirm" type="password" placeholder="Confirm new password" aria-label="Confirm new password" autocomplete="new-password" name="passwordConfirm" class="passwordConfirm">
+                <input v-model="password" v-focus-on-create type="password" :placeholder="$t('auth.newPassword')" :aria-label="$t('auth.newPassword')" autocomplete="new-password" name="password" class="password">
+                <input v-model="passwordConfirm" type="password" :placeholder="$t('auth.confirmNewPassword')" :aria-label="$t('auth.confirmNewPassword')" autocomplete="new-password" name="passwordConfirm" class="passwordConfirm">
             </div>
 
             <errors :errors="errors" />
 
             <div class="lpButtons">
                 <button class="lpButton">
-                    Save new password
+                    {{ $t('auth.saveNewPassword') }}
                     <spinner v-if="saving" />
                 </button>
 
                 <router-link to="/forgot-password" class="lpHref">
-                    Request a new link
+                    {{ $t('auth.requestNewLink') }}
                 </router-link>
             </div>
         </form>
         <template #after>
             <router-link to="/signin">
-                Back to sign in
+                {{ $t('auth.backToSignIn') }}
             </router-link>
         </template>
     </authLayout>

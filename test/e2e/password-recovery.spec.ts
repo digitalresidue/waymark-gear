@@ -27,7 +27,7 @@ test.describe('Forgot Password Flow', () => {
   test('should have email input for username recovery', async ({ page }) => {
     const emailInput = page.locator('form.forgotUsername input.email');
     await expect(emailInput).toBeVisible();
-    await expect(emailInput).toHaveAttribute('placeholder', 'Email Address');
+    await expect(emailInput).toHaveAttribute('placeholder', 'Email address');
   });
 
   test('should have return to sign in link', async ({ page }) => {

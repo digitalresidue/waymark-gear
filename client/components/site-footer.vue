@@ -5,11 +5,10 @@
                 <p class="wgSiteFooterMark">
                     WAYMARK <span>GEAR</span>
                 </p>
-                <p>
-                    waymarkgear.com · Based on <a :href="upstream.url" target="_blank" rel="noopener noreferrer">{{ upstream.name }}</a> by {{ upstream.author }}
-                </p>
+                <!-- eslint-disable-next-line vue/no-v-html -- tHtml escapes the translation; only the link is HTML -->
+                <p v-html="`waymarkgear.com · ${basedOn}`" />
                 <div v-if="social.length" class="wgSiteFooterSocial" data-testid="footer-social">
-                    <span>Find us</span>
+                    <span>{{ $t('footer.findUs') }}</span>
                     <ul>
                         <li v-for="s in social" :key="s.url">
                             <!-- eslint-disable-next-line vue/no-v-html -- fixed drawings from client/social-icons.js -->
@@ -18,27 +17,33 @@
                     </ul>
                 </div>
             </div>
-            <nav class="wgSiteFooterLinks" aria-label="Footer">
-                <a href="/explore">Explore gear</a>
+            <nav class="wgSiteFooterLinks" :aria-label="$t('footer.label')">
+                <a href="/explore">{{ $t('footer.exploreGear') }}</a>
                 <router-link to="/kits">
-                    Kits
+                    {{ $t('footer.kits') }}
                 </router-link>
                 <router-link to="/supporter" data-testid="footer-supporter">
-                    Support Waymark
+                    {{ $t('footer.support') }}
                 </router-link>
                 <router-link to="/developers">
-                    API and AI
+                    {{ $t('footer.api') }}
                 </router-link>
-                <a href="/report" data-testid="footer-report">Report a problem</a>
-                <a href="/privacy">Privacy</a>
-                <a href="/terms">Terms</a>
-                <a href="/accessibility">Accessibility</a>
+                <a href="/report" data-testid="footer-report">{{ $t('footer.report') }}</a>
+                <a href="/privacy">{{ $t('footer.privacy') }}</a>
+                <a href="/terms">{{ $t('footer.terms') }}</a>
+                <a href="/accessibility">{{ $t('footer.accessibility') }}</a>
                 <button type="button" class="wgCookieSettings" data-cookie-settings>
-                    Cookie settings
+                    {{ $t('footer.cookies') }}
                 </button>
-                <a :href="sourceUrl" target="_blank" rel="noopener noreferrer">Source</a>
-                <a v-if="contactEmail" :href="`mailto:${contactEmail}`">Contact</a>
+                <a :href="sourceUrl" target="_blank" rel="noopener noreferrer">{{ $t('footer.source') }}</a>
+                <a v-if="contactEmail" :href="`mailto:${contactEmail}`">{{ $t('footer.contact') }}</a>
             </nav>
+            <label class="wgLangPicker">
+                <span>{{ $t('footer.language') }}</span>
+                <select class="wgSelect" :value="language" data-testid="language-picker" @change="pickLanguage($event.target.value)">
+                    <option v-for="l in languages" :key="l.code" :value="l.code" :lang="l.code">{{ l.name }}</option>
+                </select>
+            </label>
         </div>
     </footer>
     <div v-else class="lpSiteFooter" :class="{ lpSiteFooterFixed: fixed }">
@@ -70,6 +75,8 @@
 <script>
 import { siteName, contactEmail, sourceUrl, upstream, socialLinks } from '../brand.js';
 import { withIcons } from '../social-icons.js';
+import { LANGUAGES, escapeHtml, tHtml } from '../utils/i18n.js';
+import { chooseLanguage, currentLanguage } from '../utils/i18n-app.js';
 
 export default {
     name: 'SiteFooter',
@@ -86,11 +93,25 @@ export default {
         },
     },
     data() {
-        return { siteName, contactEmail, sourceUrl, upstream, social: withIcons(socialLinks) };
+        return { siteName, contactEmail, sourceUrl, upstream, social: withIcons(socialLinks), languages: LANGUAGES };
     },
     computed: {
         year() {
             return new Date().getFullYear();
+        },
+        language() {
+            return currentLanguage();
+        },
+        basedOn() {
+            return tHtml(this.$t, 'footer.basedOn', {
+                project: `<a href="${escapeHtml(upstream.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(upstream.name)}</a>`,
+                author: escapeHtml(upstream.author),
+            });
+        },
+    },
+    methods: {
+        async pickLanguage(code) {
+            await chooseLanguage(code);
         },
     },
 };

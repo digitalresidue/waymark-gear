@@ -40,6 +40,7 @@ import { ratingsFor } from './reviews.js';
 import { ratingFor } from './ratings.js';
 import { RATING_WORDS } from '../client/utils/ratings.js';
 import { renderPage } from './site-chrome.js';
+import { localizeHtml, currentT } from './i18n.js';
 
 const router = express.Router();
 
@@ -238,7 +239,8 @@ docPages.forEach((doc, i) => {
 
 for (let i = 0; i < vueRoutes.length; i++) {
     router.get(vueRoutes[i].path, (req, res) => {
-        res.send(index);
+        // The app reads its language from <html lang> (server/i18n.js picked it).
+        res.send(localizeHtml(index));
     });
 }
 
@@ -566,7 +568,7 @@ function buyModel(item, badges, { from, testid, btnClass }) {
         btnClass,
         any: options.length > 0,
         single: options.length === 1 ? { href: options[0].href } : null,
-        menu: options.length > 1 ? { count: options.length, options } : null,
+        menu: options.length > 1 ? { count: options.length, countLabel: currentT()('gear.shops', { count: options.length }), options } : null,
     };
 }
 
@@ -599,18 +601,18 @@ router.get('/g/:id', async (req, res) => {
                 buy: buyModel(item, badges, { from: 'gear', testid: 'gear-buy', btnClass: 'wgBtnGhost' }),
                 average: item.rating.average,
                 stars: item.rating.average ? STARS(Math.round(item.rating.average)) : '',
-                countLabel: `${item.rating.count} ${item.rating.count === 1 ? 'rating' : 'ratings'}`,
+                countLabel: currentT()('gear.ratingFrom', { count: item.rating.count }),
                 signedIn: Boolean(viewer),
                 myRating: mine || '',
                 myRatingNote: mine ? `You gave it ${mine} ${mine === 1 ? 'star' : 'stars'}: ${RATING_WORDS[mine]}. Change it any time.` : 'One tap. You can change it later.',
                 rateOptions: [1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${n} ${n === 1 ? 'star' : 'stars'}, ${RATING_WORDS[n]}`, checked: mine === n, on: mine >= n })),
                 kitCount,
-                kitCountLabel: `${kitCount} public ${kitCount === 1 ? 'list' : 'lists'}`,
+                kitCountLabel: currentT()('gear.inLists', { count: kitCount }),
                 searchName: encodeURIComponent(item.name),
                 reviews: reviews.map(reviewModel),
                 prices: priceModel(history),
                 // "Trail weight: 26 oz (737.1 g)"... (client/utils/gear-specs.js)
-                specs: specRows(item.category, item.specs),
+                specs: specRows(item.category, item.specs).map((r) => ({ ...r, label: currentT()(`spec.${r.key}`, {}, r.label) })),
             },
         };
         sendFresh(res, renderPage(gearTemplate, model, { reviewCard: templates.t_reviewCard || '', buy: templates.t_buy || '' }, req.path));
@@ -772,14 +774,21 @@ router.get('/explore', async (req, res) => {
     }
     try {
         const index = exploreIndex(await catalogCategories());
-        const label = (n) => `${n} ${n === 1 ? 'item' : 'items'}`;
-        const shape = (s) => ({ ...s, countLabel: s.count ? label(s.count) : 'Coming soon', children: s.children.map((c) => ({ ...c, parentSlug: s.slug })) });
+        const t = currentT();
+        // Parents' names and notes in the reader's language; categories keep
+        // the catalog's names.
+        const shape = (s) => ({
+            ...s,
+            ...(PARENT_SLUGS.has(s.slug) ? { name: t(`explore.parent.${s.slug}`, {}, s.name), note: t(`explore.parent.${s.slug}.note`, {}, s.note) } : {}),
+            countLabel: s.count ? t('explore.items', { count: s.count }) : t('explore.comingSoon'),
+            children: s.children.map((c) => ({ ...c, parentSlug: s.slug })),
+        });
         const model = {
             ...shareHead(),
             cspNonce: NONCE_PLACEHOLDER,
             path: '/explore',
             canonicalPath: '/explore',
-            pageTitle: 'Explore gear',
+            pageTitle: t('explore.title'),
             metaDescription: 'Backpacking gear by category: packs, shelters, sleep systems, clothing and more, with weights, prices and specs to filter by.',
             index: {
                 parents: index.filter((s) => PARENT_SLUGS.has(s.slug)).map(shape),
@@ -802,8 +811,15 @@ router.get('/explore/:slug', async (req, res) => {
     if (!/^[a-z0-9-]{1,80}$/.test(slug)) return res.status(404).send('Not found.');
     try {
         const categories = await catalogCategories();
-        const section = resolveSection(slug, categories);
-        if (!section) return res.redirect(302, '/explore');
+        const found = resolveSection(slug, categories);
+        if (!found) return res.redirect(302, '/explore');
+        const t = currentT();
+        // A parent's name and note, and its breadcrumb, in the reader's language.
+        const parentName = (p) => (p ? { ...p, name: t(`explore.parent.${p.slug}`, {}, p.name) } : p);
+        const section = PARENT_SLUGS.has(found.slug) && !found.parent
+            ? { ...found, title: t(`explore.parent.${found.slug}`, {}, found.title), note: t(`explore.parent.${found.slug}.note`, {}, found.note) }
+            : { ...found, parent: parentName(found.parent) };
+        const rangeWords = { any: t('explore.any'), upTo: t('explore.upTo'), atLeast: t('explore.atLeast') };
         const rows = section.categories.length
             ? await knex('catalog_items').where({ status: 'published' }).whereIn('category', section.categories).limit(MAX_SECTION_ITEMS)
             : [];
@@ -825,7 +841,9 @@ router.get('/explore/:slug', async (req, res) => {
             stops: stops ? stops.join(',') : '',
             lo: chosen.min ?? facet.min,
             hi: chosen.max ?? facet.max,
-            text: rangeLabel(key, chosen.min, chosen.max, facet),
+            text: rangeLabel(key, chosen.min, chosen.max, facet, rangeWords),
+            ariaMin: t('explore.atLeastAria', { label }),
+            ariaMax: t('explore.atMostAria', { label }),
         });
         const on = (list, value) => list.includes(value);
         // The filter column, in order: category, brand, weight, price, then
@@ -833,16 +851,18 @@ router.get('/explore/:slug', async (req, res) => {
         // volume, pack type, straps...).
         const packs = section.categories.length > 0 && section.categories.every((c) => (specTypeFor(c) || {}).id === 'pack');
         const blocks = [];
-        if (facets.weight) blocks.push({ range: rangeOf('weight', packs ? 'Pack weight' : 'Weight', facets.weight, filters.weight) });
-        if (facets.price) blocks.push({ range: rangeOf('price', 'Price', facets.price, filters.price) });
+        if (facets.weight) blocks.push({ range: rangeOf('weight', t(packs ? 'explore.packWeight' : 'explore.weight'), facets.weight, filters.weight) });
+        if (facets.price) blocks.push({ range: rangeOf('price', t('explore.price'), facets.price, filters.price) });
         for (const f of facets.specs) {
             // In a mixed section (Sleep System), say which gear a spec is about.
-            const appliesTo = specAppliesLabel(f.key, section.categories);
-            if (f.kind === 'range') blocks.push({ range: { ...rangeOf(f.key, f.label, f, filters.specs[f.key] || {}, f.stops), appliesTo } });
+            const appliesTo = specAppliesLabel(f.key, section.categories, t);
+            const label = t(`spec.${f.key}`, {}, f.label);
+            if (f.kind === 'range') blocks.push({ range: { ...rangeOf(f.key, label, f, filters.specs[f.key] || {}, f.stops), appliesTo } });
             else {
                 blocks.push({
                     match: {
                         ...f,
+                        label,
                         appliesTo,
                         options: f.options.map((o) => {
                             const checked = Boolean(filters.specs[f.key] && filters.specs[f.key].any.includes(o.value));
@@ -869,7 +889,7 @@ router.get('/explore/:slug', async (req, res) => {
                 parent: section.parent,
                 activeLabel: active ? `(${active})` : '',
                 sort: filters.sort,
-                sorts: SORTS.map(([value, label]) => ({ value, label, on: value === filters.sort })),
+                sorts: SORTS.map(([value, label]) => ({ value, label: t(`explore.sort.${value}`, {}, label), on: value === filters.sort })),
                 facets: {
                     cats: facets.cats.length > 1 ? facets.cats.map((c) => ({ ...c, on: on(filters.cats, c.value) })) : [],
                     brands: facets.brands.length > 1 ? facets.brands.map((b) => ({ ...b, on: on(filters.brands, b.value) })) : [],
@@ -877,7 +897,10 @@ router.get('/explore/:slug', async (req, res) => {
                 blocks,
                 total,
                 anyShown: shown.length > 0,
-                countLabel: shown.length === total ? `${total} ${total === 1 ? 'item' : 'items'}` : `${shown.length} of ${total} items`,
+                countLabel: shown.length === total ? t('explore.items', { count: total }) : t('explore.itemsOf', { shown: shown.length, total }),
+                // What the page's script needs to say as filters change.
+                wordsJson: JSON.stringify(Object.fromEntries(['explore.items', 'explore.itemsOf', 'explore.any', 'explore.upTo', 'explore.atLeast']
+                    .map((k) => [k, t.raw(k)]))),
                 items: sortItems(items, filters.sort).map((i) => {
                     const e = byId.get(i.id);
                     return {

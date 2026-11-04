@@ -10,12 +10,12 @@ test.describe('Drag and Drop', () => {
     await registerUser(page, username, password, email);
 
     await page.getByText('Add new category', { exact: true }).click();
-    await page.getByTestId('category').nth(0).getByPlaceholder('Category Name', { exact: true }).fill('Alpha');
-    await page.getByTestId('category').nth(0).getByPlaceholder('Category Name', { exact: true }).blur();
+    await page.getByTestId('category').nth(0).getByPlaceholder('Category name', { exact: true }).fill('Alpha');
+    await page.getByTestId('category').nth(0).getByPlaceholder('Category name', { exact: true }).blur();
 
     await page.getByText('Add new category', { exact: true }).click();
-    await page.getByTestId('category').nth(1).getByPlaceholder('Category Name', { exact: true }).fill('Beta');
-    await page.getByTestId('category').nth(1).getByPlaceholder('Category Name', { exact: true }).blur();
+    await page.getByTestId('category').nth(1).getByPlaceholder('Category name', { exact: true }).fill('Beta');
+    await page.getByTestId('category').nth(1).getByPlaceholder('Category name', { exact: true }).blur();
 
     const initialNames = await getCategoryNames(page);
     expect(initialNames.indexOf('Beta')).toBeGreaterThan(initialNames.indexOf('Alpha'));
@@ -40,8 +40,8 @@ test.describe('Drag and Drop', () => {
 
     await page.getByText('Add new category', { exact: true }).click();
     const category = page.getByTestId('category').nth(0);
-    await category.getByPlaceholder('Category Name', { exact: true }).fill('Gear');
-    await category.getByPlaceholder('Category Name', { exact: true }).blur();
+    await category.getByPlaceholder('Category name', { exact: true }).fill('Gear');
+    await category.getByPlaceholder('Category name', { exact: true }).blur();
 
     await category.getByText('Add new item', { exact: true }).click();
     await category.getByTestId('item-row').nth(0).getByPlaceholder('Name', { exact: true }).fill('Item One');
@@ -92,8 +92,8 @@ test.describe('Drag and Drop', () => {
 
     await page.getByText('Add new category', { exact: true }).click();
     const targetCategory = page.getByTestId('category').last();
-    await targetCategory.getByPlaceholder('Category Name', { exact: true }).fill('Target');
-    await targetCategory.getByPlaceholder('Category Name', { exact: true }).blur();
+    await targetCategory.getByPlaceholder('Category name', { exact: true }).fill('Target');
+    await targetCategory.getByPlaceholder('Category name', { exact: true }).blur();
 
     await showCloset(page);
     const libraryItem = page.locator('#library .lpLibraryItem').filter({ hasText: 'Library Item' });

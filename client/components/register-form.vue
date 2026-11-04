@@ -1,18 +1,18 @@
 <template>
     <form class="lpRegister lpFields" data-testid="register-form" @submit.prevent="submit">
         <div class="lpFields">
-            <input v-model="username" v-focus-on-create="autofocus" type="text" placeholder="Username" aria-label="Username" autocomplete="username" name="username">
-            <input v-model="email" type="email" placeholder="Email" aria-label="Email" autocomplete="email" name="email">
-            <input v-model="password" type="password" placeholder="Password" aria-label="Password" autocomplete="new-password" name="password">
-            <input v-model="passwordConfirm" type="password" placeholder="Confirm password" aria-label="Confirm password" autocomplete="new-password" name="passwordConfirm">
+            <input v-model="username" v-focus-on-create="autofocus" type="text" :placeholder="$t('auth.username')" :aria-label="$t('auth.username')" autocomplete="username" name="username">
+            <input v-model="email" type="email" :placeholder="$t('auth.email')" :aria-label="$t('auth.email')" autocomplete="email" name="email">
+            <input v-model="password" type="password" :placeholder="$t('auth.password')" :aria-label="$t('auth.password')" autocomplete="new-password" name="password">
+            <input v-model="passwordConfirm" type="password" :placeholder="$t('auth.confirmPassword')" :aria-label="$t('auth.confirmPassword')" autocomplete="new-password" name="passwordConfirm">
         </div>
         <errors :errors="errors" />
         <div class="lpButtons">
             <button class="lpButton">
-                Register
+                {{ $t('auth.register') }}
                 <spinner v-if="saving" />
             </button>
-            <a class="lpHref lpGetStarted" @click="loadLocal">Try it without an account</a>
+            <a class="lpHref lpGetStarted" @click="loadLocal">{{ $t('auth.tryWithout') }}</a>
         </div>
     </form>
 </template>
