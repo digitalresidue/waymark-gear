@@ -3,7 +3,7 @@
         <ul class="lpItems lpDataTable" :class="{lpHasPrice: optionalFields['price'], lpHasImages: showImages}">
             <li class="lpHeader lpItemsHeader">
                 <span class="lpHandleCell">
-                    <div class="lpHandle lpCategoryHandle" title="Reorder this category" />
+                    <div class="lpHandle lpCategoryHandle" :title="$t('editor.reorderCategory')" />
                 </span>
                 <span class="lpCategoryHead">
                     <button
@@ -17,7 +17,7 @@
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
                     </button>
                     <span v-if="swatchColor" class="lpCategorySwatch" :style="{background: swatchColor}" />
-                    <input v-focus-on-create="!!category._isNew" type="text" :value="category.name" placeholder="Category Name" aria-label="Category name" class="lpCategoryName lpSilent" @input="updateCategoryName">
+                    <input v-focus-on-create="!!category._isNew" type="text" :value="category.name" :placeholder="$t('editor.categoryName')" :aria-label="$t('editor.categoryName')" class="lpCategoryName lpSilent" @input="updateCategoryName">
                     <span v-if="category.collapsed" class="wgItemCount" data-testid="category-count">{{ itemCountLabel }}</span>
                     <categoryGroupMenu :category="category" />
                 </span>
@@ -33,16 +33,16 @@
                 <span class="lpQtyCell lpSubtotal">
                     <span class="lpQtySubtotal">{{ displayQty(category.subtotalQty) }}</span>
                 </span>
-                <span class="lpRemoveCell"><a class="lpRemove lpRemoveCategory" title="Remove this category" @click="removeCategory(category)"><i class="lpSprite lpSpriteRemove" /></a></span>
+                <span class="lpRemoveCell"><a class="lpRemove lpRemoveCategory" :title="$t('editor.removeCategory')" @click="removeCategory(category)"><i class="lpSprite lpSpriteRemove" /></a></span>
             </li>
             <template v-if="!category.collapsed">
                 <component :is="itemComponent" v-for="itemContainer in itemContainers" :key="itemContainer.item.id" :item-container="itemContainer" :category="category" />
                 <li class="lpFooter lpItemsFooter">
                     <span class="lpAddItemCell">
-                        <a class="lpAdd lpAddItem" @click="newItem"><i class="lpSprite lpSpriteAdd" />Add new item</a>
+                        <a class="lpAdd lpAddItem" @click="newItem"><i class="lpSprite lpSpriteAdd" />{{ $t('editor.addItem') }}</a>
                         <button type="button" class="wgAddCatalog" data-testid="add-from-catalog" @click="openCatalogPicker(category)">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
-                            Add from catalog
+                            {{ $t('editor.addFromCatalog') }}
                         </button>
                         <kitMenu v-if="!planMode" :category="category" />
                     </span>

@@ -16,6 +16,7 @@ import billing, { webhookHandler as stripeWebhook } from './server/billing.js';
 import affiliate from './server/affiliate.js';
 import brands from './server/brands.js';
 import team from './server/team.js';
+import { languageMiddleware, languageRouter } from './server/i18n.js';
 import headTags, { injectHeadTags, loadHeadTags } from './server/head-tags.js';
 import { scheduleImageCleanup } from './server/image-gc.js';
 import { scheduleSitemap } from './server/sitemap.js';
@@ -119,6 +120,9 @@ app.use(authRateLimit());
 
 app.use(express.static(`${import.meta.dirname}/public/`, { maxAge: oneDay }));
 
+// The reader's language, for the rest of the request (server/i18n.js).
+app.use(languageMiddleware);
+
 // The owner's verification <meta> tags (Owner → Revenue), in every page.
 await loadHeadTags();
 app.use(injectHeadTags);
@@ -145,6 +149,7 @@ app.use('/', billing);
 app.use('/', affiliate);
 app.use('/', brands);
 app.use('/', team);
+app.use('/', languageRouter);
 app.use('/', headTags);
 app.use('/', endpoints);
 app.use('/', moderationEndpoints);

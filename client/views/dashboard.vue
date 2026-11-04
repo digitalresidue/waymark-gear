@@ -19,7 +19,7 @@
                     <span v-if="!railTools" class="headerItem">
                         <a id="hamburger" class="lpTransition" aria-label="Lists and gear" data-testid="toggle-sidebar" @click="toggleSidebar"><i class="lpSprite lpHamburger" /></a>
                     </span>
-                    <input id="lpListName" :value="list.name" type="text" class="lpListName lpSilent headerItem" placeholder="Name your list" aria-label="List name" autocomplete="off" name="lastpass-disable-search" @input="updateListName">
+                    <input id="lpListName" :value="list.name" type="text" class="lpListName lpSilent headerItem" :placeholder="$t('editor.listName')" :aria-label="$t('editor.listName')" autocomplete="off" name="lastpass-disable-search" @input="updateListName">
                     <router-link v-if="!railTools" to="/pack" class="headerItem wgPackLink" data-testid="open-pack">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8" /><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" /></svg>
                         Pack

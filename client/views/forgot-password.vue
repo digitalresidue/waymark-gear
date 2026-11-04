@@ -1,16 +1,16 @@
 <template>
-    <authLayout card-id="forgotPassword" title="Account recovery" :google="false" wide>
+    <authLayout card-id="forgotPassword" :title="$t('auth.recoveryTitle')" :google="false" wide>
         <div class="columns">
             <div class="lpHalf">
                 <h2 class="wgAuthSubhead">
-                    Forgot Your Password?
+                    {{ $t('auth.forgotPasswordTitle') }}
                 </h2>
 
-                <p>Enter your username and we'll email you a link to choose a new password.</p>
+                <p>{{ $t('auth.forgotPasswordHelp') }}</p>
                 <form class="forgotPassword" @submit.prevent="requestPasswordReset">
                     <div class="lpFields">
-                        <input v-model="forgotPasswordUsername" type="text" placeholder="Username" aria-label="Username" autocomplete="username" name="username" class="username">
-                        <input type="submit" value="Submit" class="lpButton">
+                        <input v-model="forgotPasswordUsername" type="text" :placeholder="$t('auth.username')" :aria-label="$t('auth.username')" autocomplete="username" name="username" class="username">
+                        <input type="submit" :value="$t('auth.submit')" class="lpButton">
                     </div>
 
                     <errors :errors="forgotPasswordErrors" />
@@ -18,26 +18,26 @@
             </div>
             <div class="lpHalf">
                 <h2 class="wgAuthSubhead">
-                    Forgot Your Username?
+                    {{ $t('auth.forgotUsernameTitle') }}
                 </h2>
 
-                <p>Please enter your email address.</p>
+                <p>{{ $t('auth.forgotUsernameHelp') }}</p>
                 <form class="forgotUsername" @submit.prevent="forgotUsername">
                     <div class="lpFields">
-                        <input v-model="forgotUsernameEmail" type="text" placeholder="Email Address" aria-label="Email address" autocomplete="email" name="email" class="email">
-                        <input type="submit" value="Submit" class="lpButton">
+                        <input v-model="forgotUsernameEmail" type="text" :placeholder="$t('auth.emailAddress')" :aria-label="$t('auth.emailAddress')" autocomplete="email" name="email" class="email">
+                        <input type="submit" :value="$t('auth.submit')" class="lpButton">
                     </div>
 
                     <errors :errors="forgotUsernameErrors" />
                 </form>
             </div>
             <router-link to="/signin" class="lpHref">
-                &larr; Return to sign in
+                {{ $t('auth.returnToSignIn') }}
             </router-link>
         </div>
         <template #after>
             <router-link to="/signin">
-                Back to sign in
+                {{ $t('auth.backToSignIn') }}
             </router-link>
         </template>
     </authLayout>

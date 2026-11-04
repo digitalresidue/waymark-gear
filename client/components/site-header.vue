@@ -1,11 +1,11 @@
 <template>
     <header class="wgSiteHeader" :class="{ wgSiteHeaderApp: app }">
-        <a class="wgSkipLink" href="#wgMain" data-testid="skip-link" @click.prevent="skipToContent">Skip to content</a>
+        <a class="wgSkipLink" href="#wgMain" data-testid="skip-link" @click.prevent="skipToContent">{{ $t('header.skipToContent') }}</a>
         <div class="wgSiteHeaderInner wgPage">
-            <router-link to="/welcome" class="wgSiteHeaderLogo" aria-label="Waymark Gear home" data-testid="site-logo">
+            <router-link to="/welcome" class="wgSiteHeaderLogo" :aria-label="$t('header.home')" data-testid="site-logo">
                 <brandLogo />
             </router-link>
-            <nav id="wgSiteNav" class="wgSiteNav" :class="{ wgSiteNavOpen: menuOpen }" aria-label="Main" @click="onNavClick">
+            <nav id="wgSiteNav" class="wgSiteNav" :class="{ wgSiteNavOpen: menuOpen }" :aria-label="$t('header.mainNav')" @click="onNavClick">
                 <template v-for="entry in menu" :key="entry.id">
                     <div v-if="entry.items" class="wgNavGroup" :class="{ wgNavGroupOpen: dropdown === entry.id }" @mouseleave="dropdown === entry.id && hoverClose()">
                         <button
@@ -63,10 +63,10 @@
                 <accountDropdown v-if="signedIn && !(app && isMobile)" class="wgHeaderAccount" />
                 <template v-else>
                     <router-link to="/signin" class="wgBtn wgBtnGhost wgHideOnPhone" data-testid="header-signin">
-                        Sign in
+                        {{ $t('header.signIn') }}
                     </router-link>
                     <button type="button" class="wgBtn wgBtnPrimary" data-testid="header-start" @click="start">
-                        {{ hasLibrary ? 'My lists' : 'Start a list' }}
+                        {{ hasLibrary ? $t('header.myLists') : $t('header.startList') }}
                     </button>
                 </template>
             </div>
@@ -75,7 +75,7 @@
                 class="wgSiteMenuBtn"
                 :aria-expanded="String(menuOpen)"
                 aria-controls="wgSiteNav"
-                aria-label="Menu"
+                :aria-label="$t('header.menu')"
                 data-testid="site-menu"
                 @click.stop="menuOpen = !menuOpen"
             >
@@ -99,6 +99,7 @@ import account from './account.vue';
 import accountDelete from './account-delete.vue';
 import help from './help.vue';
 import { menuFor, activeFor, PHONE_EXTRAS, canSee } from '../nav.js';
+import { localizeMenu } from '../utils/i18n.js';
 import { isMobile } from '../utils/viewport.js';
 
 // Pages the Vue app draws; anything else (Trails, reviews...) is a full
@@ -146,10 +147,10 @@ export default {
             return { signedIn: Boolean(this.signedIn), hasLibrary: this.hasLibrary, isOwner: Boolean(a.isOwner), isAdmin: Boolean(a.isAdmin), isModerator: Boolean(a.isModerator) };
         },
         menu() {
-            return menuFor(this.viewer);
+            return localizeMenu(menuFor(this.viewer), this.$t);
         },
         extras() {
-            return PHONE_EXTRAS.filter((e) => canSee(e, this.viewer));
+            return localizeMenu(PHONE_EXTRAS.filter((e) => canSee(e, this.viewer)), this.$t);
         },
         current() {
             return activeFor(this.$route ? this.$route.path : '');

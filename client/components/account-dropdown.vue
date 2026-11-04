@@ -15,22 +15,22 @@
                     </div>
                     <hr>
                     <router-link to="/" class="lpHref wgMenuLists" data-testid="menu-lists" @click="hide()">
-                        My lists
+                        {{ $t('header.myLists') }}
                     </router-link><br>
                     <router-link to="/profile" class="lpHref" data-testid="menu-profile" @click="hide()">
-                        Your profile
+                        {{ $t('header.yourProfile') }}
                     </router-link><br>
                     <router-link to="/trips" class="lpHref" data-testid="menu-trips" @click="hide()">
-                        Trip journals
+                        {{ $t('header.tripJournals') }}
                     </router-link><br>
                     <router-link to="/developers" class="lpHref" data-testid="menu-developers" @click="hide()">
-                        AI assistants and API
+                        {{ $t('header.developers') }}
                     </router-link><br>
                     <router-link to="/supporter" class="lpHref" data-testid="menu-supporter" @click="hide()">
-                        {{ $store.state.account && $store.state.account.supporter ? 'Supporter ✓' : 'Become a Supporter' }}
+                        {{ $store.state.account && $store.state.account.supporter ? $t('account.supporter') : $t('account.becomeSupporter') }}
                     </router-link><br>
-                    <a class="lpHref accountSettings" @click="hide(); showAccount()">Account Settings</a><br>
-                    <a class="lpHref" @click="hide(); showHelp()">Help</a>
+                    <a class="lpHref accountSettings" @click="hide(); showAccount()">{{ $t('account.settings') }}</a><br>
+                    <a class="lpHref" @click="hide(); showHelp()">{{ $t('account.help') }}</a>
                     <hr>
                     <!-- No hide(): the switch is a setting, not an errand, so
                          the menu stays open to show it flip. -->
@@ -40,23 +40,23 @@
                         data-testid="dark-mode-toggle"
                         @update:model-value="toggleDarkMode"
                     >
-                        Dark mode
+                        {{ $t('account.darkMode') }}
                     </toggle>
                     <button v-if="themePref !== 'system'" type="button" class="lpHref wgMatchDevice" data-testid="theme-system" @click="matchDevice">
-                        Match my device
+                        {{ $t('account.matchDevice') }}
                     </button>
                     <hr>
-                    <a class="lpHref signout" @click="hide(); signout()">Sign Out</a>
+                    <a class="lpHref signout" @click="hide(); signout()">{{ $t('header.signOut') }}</a>
                 </div>
             </template>
         </PopoverHover>
         <div v-else class="signInRegisterButtons">
             <router-link to="/signin" class="lpHref">
-                Sign In
+                {{ $t('header.signIn') }}
             </router-link>
             <span class="lpAccountSep">·</span>
             <router-link to="/register" class="lpHref lpButton lpSmall">
-                Register
+                {{ $t('account.register') }}
             </router-link>
         </div>
     </div>

@@ -2,20 +2,20 @@
     <span v-if="isSignedIn" class="headerItem hasPopover" :class="{ wgRailTool: rail }">
         <PopoverHover id="share" @shown="focusShare">
             <template #target>
-                <span v-if="rail" class="wgRailBtn" title="Share this list"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7" /><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" /></svg><span class="wgRailLabel">Share</span></span>
-                <span v-else><i class="lpSprite lpLink" /> Share</span>
+                <span v-if="rail" class="wgRailBtn" :title="$t('editor.shareList')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7" /><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" /></svg><span class="wgRailLabel">{{ $t('editor.share') }}</span></span>
+                <span v-else><i class="lpSprite lpLink" /> {{ $t('editor.share') }}</span>
             </template>
             <template #content>
                 <div class="lpFields">
                     <div class="lpField">
-                        <label for="lpListUrl">Share your list</label>
+                        <label for="lpListUrl">{{ $t('editor.shareYourList') }}</label>
                         <input id="lpListUrl" ref="shareInput" v-select-on-focus type="text" :value="shareUrl">
                     </div>
                     <div class="lpField">
-                        <label for="embedUrl">Embed your list</label>
+                        <label for="embedUrl">{{ $t('editor.embedYourList') }}</label>
                         <textarea id="embedUrl" v-select-on-focus :value="embedCode" readonly />
                     </div>
-                    <a id="csvUrl" :href="csvUrl" target="_blank" class="lpHref"><i class="lpSprite lpSpriteDownload" />Export to CSV</a>
+                    <a id="csvUrl" :href="csvUrl" target="_blank" class="lpHref"><i class="lpSprite lpSpriteDownload" />{{ $t('editor.exportCsv') }}</a>
                     <div class="wgPublish">
                         <toggle
                             :model-value="!!list.published"
@@ -23,12 +23,10 @@
                             data-testid="publish-toggle"
                             @update:model-value="setPublished"
                         >
-                            Publish to Explore
+                            {{ $t('editor.publish') }}
                         </toggle>
                         <p class="wgPublishNote">
-                            {{ list.published
-                                ? 'Listed on Explore and eligible for the homepage. Anyone can find it.'
-                                : 'Only people with the link can see it. Publish to show it on Explore.' }}
+                            {{ list.published ? $t('editor.publishedNote') : $t('editor.unpublishedNote') }}
                         </p>
                     </div>
                     <div v-if="list.published" class="wgPublish">
@@ -37,12 +35,10 @@
                             data-testid="shakedown-toggle"
                             @update:model-value="setShakedown"
                         >
-                            Request a shakedown
+                            {{ $t('editor.shakedown') }}
                         </toggle>
                         <p class="wgPublishNote">
-                            {{ list.shakedown
-                                ? 'Asking for suggestions: your list is flagged on Explore and readers are invited to suggest swaps and cuts.'
-                                : 'Ask other hikers what to cut, swap or rethink. Suggestions arrive as comments.' }}
+                            {{ list.shakedown ? $t('editor.shakedownOn') : $t('editor.shakedownOff') }}
                         </p>
                     </div>
                     <div v-if="list.published && board" class="wgPublish wgBoardStatus" data-testid="board-status">

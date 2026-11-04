@@ -2,10 +2,10 @@
     <div class="wgPage wgSiteFooterInner">
         <div>
             <p class="wgSiteFooterMark">WAYMARK <span>GEAR</span></p>
-            <p>waymarkgear.com · Based on <a href="{{chrome.upstream.url}}" target="_blank" rel="noopener noreferrer">{{chrome.upstream.name}}</a> by {{chrome.upstream.author}}</p>
+            <p>waymarkgear.com · {{{chrome.basedOn}}}</p>
             {{#chrome.social.length}}
             <div class="wgSiteFooterSocial" data-testid="footer-social">
-                <span>Find us</span>
+                <span>{{#t}}footer.findUs{{/t}}</span>
                 <ul>
                     {{#chrome.social}}
                     <li><a href="{{url}}" target="_blank" rel="noopener noreferrer me" aria-label="{{label}}" title="{{name}}" data-testid="footer-social-link">{{{svg}}}</a></li>
@@ -14,18 +14,25 @@
             </div>
             {{/chrome.social.length}}
         </div>
-        <nav class="wgSiteFooterLinks" aria-label="Footer">
-            <a href="/explore">Explore gear</a>
-            <a href="/kits">Kits</a>
-            <a href="/supporter" data-testid="footer-supporter">Support Waymark</a>
-            <a href="/developers">API and AI</a>
-            <a href="/report" data-testid="footer-report">Report a problem</a>
-            <a href="/privacy">Privacy</a>
-            <a href="/terms">Terms</a>
-            <a href="/accessibility">Accessibility</a>
-            <button type="button" class="wgCookieSettings" data-cookie-settings>Cookie settings</button>
-            <a href="{{chrome.sourceUrl}}" target="_blank" rel="noopener noreferrer">Source</a>
-            {{#chrome.contactEmail}}<a href="mailto:{{chrome.contactEmail}}">Contact</a>{{/chrome.contactEmail}}
+        <nav class="wgSiteFooterLinks" aria-label="{{#t}}footer.label{{/t}}">
+            <a href="/explore">{{#t}}footer.exploreGear{{/t}}</a>
+            <a href="/kits">{{#t}}footer.kits{{/t}}</a>
+            <a href="/supporter" data-testid="footer-supporter">{{#t}}footer.support{{/t}}</a>
+            <a href="/developers">{{#t}}footer.api{{/t}}</a>
+            <a href="/report" data-testid="footer-report">{{#t}}footer.report{{/t}}</a>
+            <a href="/privacy">{{#t}}footer.privacy{{/t}}</a>
+            <a href="/terms">{{#t}}footer.terms{{/t}}</a>
+            <a href="/accessibility">{{#t}}footer.accessibility{{/t}}</a>
+            <button type="button" class="wgCookieSettings" data-cookie-settings>{{#t}}footer.cookies{{/t}}</button>
+            <a href="{{chrome.sourceUrl}}" target="_blank" rel="noopener noreferrer">{{#t}}footer.source{{/t}}</a>
+            {{#chrome.contactEmail}}<a href="mailto:{{chrome.contactEmail}}">{{#t}}footer.contact{{/t}}</a>{{/chrome.contactEmail}}
         </nav>
+        <form class="wgLangPicker" action="/language" method="get" data-lang-picker>
+            <label for="wgLang">{{#t}}footer.language{{/t}}</label>
+            <select id="wgLang" name="lang" class="wgSelect" data-testid="language-picker">
+                {{#chrome.languages}}<option value="{{code}}" lang="{{code}}" {{#on}}selected{{/on}}>{{name}}</option>{{/chrome.languages}}
+            </select>
+            <noscript><button type="submit" class="wgBtn wgBtnGhost wgBtnSmall">OK</button></noscript>
+        </form>
     </div>
 </footer>

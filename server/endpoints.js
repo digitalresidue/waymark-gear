@@ -173,6 +173,7 @@ function accountInfo(user) {
         isModerator: isModerator(user.username),
         isOwner: isOwner(user.username),
         role: roleOf(user.username),
+        language: user.language || '',
         supporter: isSupporter(user),
         // The header shows it in place of the initial (Your profile → picture).
         avatarUrl: user.avatar_url || '',

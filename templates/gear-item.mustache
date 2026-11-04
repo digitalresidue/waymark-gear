@@ -40,41 +40,41 @@
                     <p class="wgGearHeroWeight"><span class="wgMono">{{weight}}</span>{{#price}} · {{price}}{{/price}}</p>
                     <div class="wgGearRating" data-testid="gear-rating" data-rate="{{id}}" data-mine="{{myRating}}">
                         <p class="wgRatingSummary" data-rating-summary aria-live="polite">
-                            {{#average}}<span class="wgStars" aria-hidden="true">{{stars}}</span> <strong>{{average}}</strong> / 5 from {{countLabel}}{{/average}}
-                            {{^average}}<span class="wgMuted">No ratings yet.</span>{{/average}}
+                            {{#average}}<span class="wgStars" aria-hidden="true">{{stars}}</span> <strong>{{average}}</strong> {{countLabel}}{{/average}}
+                            {{^average}}<span class="wgMuted">{{#t}}gear.noRatings{{/t}}</span>{{/average}}
                         </p>
                         {{#signedIn}}
                         <fieldset class="wgRateMine" data-rate-mine data-testid="rate-mine">
-                            <legend>Your rating</legend>
+                            <legend>{{#t}}gear.yourRating{{/t}}</legend>
                             <span class="wgRateStars">
                                 {{#rateOptions}}<label class="wgRateStar{{#on}} wgOn{{/on}}"><input type="radio" name="my-rating" value="{{value}}" {{#checked}}checked{{/checked}} data-testid="rate-{{value}}"><span aria-hidden="true">★</span><span class="wgVisuallyHidden">{{label}}</span></label>{{/rateOptions}}
                             </span>
                             <span class="wgMuted wgRateNote" data-rate-note>{{myRatingNote}}</span>
-                            <button type="button" class="wgLinkBtn" data-rate-clear data-testid="rate-clear" {{^myRating}}hidden{{/myRating}}>Remove my rating</button>
+                            <button type="button" class="wgLinkBtn" data-rate-clear data-testid="rate-clear" {{^myRating}}hidden{{/myRating}}>{{#t}}gear.removeRating{{/t}}</button>
                         </fieldset>
                         {{/signedIn}}
-                        {{^signedIn}}<p class="wgMuted wgRateSignIn"><a href="/signin">Sign in</a> to rate it.</p>{{/signedIn}}
+                        {{^signedIn}}<p class="wgMuted wgRateSignIn"><a href="/signin">{{#t}}gear.signInToRate{{/t}}</a></p>{{/signedIn}}
                     </div>
                     {{#description}}<p>{{description}}</p>{{/description}}
                     {{#prices}}
                     <figure class="wgPriceHistory" data-testid="price-history">
                         <svg viewBox="0 0 240 48" width="240" height="48" aria-hidden="true"><polyline points="{{points}}" fill="none" stroke="currentColor" stroke-width="2" /></svg>
-                        <figcaption>Lowest seen <strong data-testid="price-lowest">{{lowest}}</strong> · {{#changes}}<span>{{price}} <span class="wgMuted">{{when}}</span></span> {{/changes}}</figcaption>
+                        <figcaption>{{#t}}gear.lowestSeen{{/t}} <strong data-testid="price-lowest">{{lowest}}</strong> · {{#changes}}<span>{{price}} <span class="wgMuted">{{when}}</span></span> {{/changes}}</figcaption>
                     </figure>
                     {{/prices}}
                     <p class="wgGearHeroLinks">
-                        <a href="/gear?wish={{id}}" class="wgBtn wgBtnPrimary wgBtnSmall" data-testid="gear-wish">Add to wishlist</a>
-                        <a href="/compare?ids={{id}}" class="wgBtn wgBtnGhost wgBtnSmall" data-testid="gear-compare">Compare</a>
+                        <a href="/gear?wish={{id}}" class="wgBtn wgBtnPrimary wgBtnSmall" data-testid="gear-wish">{{#t}}gear.addToWishlist{{/t}}</a>
+                        <a href="/compare?ids={{id}}" class="wgBtn wgBtnGhost wgBtnSmall" data-testid="gear-compare">{{#t}}gear.compare{{/t}}</a>
                         {{> buy}}
-                        {{#kitCount}}<a href="/kits?q={{searchName}}">In {{kitCountLabel}}</a>{{/kitCount}}
+                        {{#kitCount}}<a href="/kits?q={{searchName}}">{{kitCountLabel}}</a>{{/kitCount}}
                     </p>
-                    {{#buy.any}}<p class="wgDisclosure">Buy links may earn Waymark Gear a commission; it never changes what we suggest. <a href="/supporter">Supporters</a> get plain links.</p>{{/buy.any}}
+                    {{#buy.any}}<p class="wgDisclosure">{{#t}}gear.disclosure{{/t}} <a href="/supporter">{{#t}}gear.supportersPlain{{/t}}</a></p>{{/buy.any}}
                 </div>
             </section>
 
             {{#specs.length}}
             <section class="wgGearSpecs" data-testid="gear-specs">
-                <h2 class="wgProfileSection">Specs</h2>
+                <h2 class="wgProfileSection">{{#t}}gear.specs{{/t}}</h2>
                 <dl class="wgSpecList">
                     {{#specs}}
                     <div data-spec="{{key}}"><dt>{{label}}</dt><dd>{{text}}</dd></div>
@@ -84,7 +84,7 @@
             {{/specs.length}}
 
             <section class="wgReviews">
-                <h2 class="wgProfileSection">Reviews</h2>
+                <h2 class="wgProfileSection">{{#t}}gear.reviews{{/t}}</h2>
                 <div id="wgReviewForm" data-catalog-id="{{id}}"></div>
                 <ol class="wgReviewList" data-testid="review-list">
                     {{#reviews}}{{> reviewCard}}{{/reviews}}

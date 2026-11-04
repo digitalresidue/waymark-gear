@@ -1,13 +1,13 @@
 <template>
-    <authLayout card-id="register" title="Create your account" subtitle="Free. Your lists sync across devices.">
+    <authLayout card-id="register" :title="$t('auth.registerTitle')" :subtitle="$t('auth.registerSubtitle')">
         <p v-if="isLocalSaving" class="lpWarning">
             <strong>Note:</strong> Your existing data on your computer <strong>will</strong> be saved to your new account.
         </p>
 
         <registerForm />
         <template #after>
-            <span class="wgMuted">Already have an account?</span> <router-link to="/signin">
-                Sign in
+            <span class="wgMuted">{{ $t('auth.haveAccount') }}</span> <router-link to="/signin">
+                {{ $t('auth.signInTitle') }}
             </router-link>
         </template>
     </authLayout>

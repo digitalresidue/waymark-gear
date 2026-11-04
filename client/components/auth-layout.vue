@@ -15,7 +15,7 @@
                 <template v-if="google">
                     <googleButton class="wgAuthGoogle" @availability="googleOn = $event" />
                     <div v-if="googleOn" class="wgAuthDivider">
-                        <span>or with email</span>
+                        <span>{{ $t('auth.orEmail') }}</span>
                     </div>
                 </template>
                 <slot />
