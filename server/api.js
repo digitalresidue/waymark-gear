@@ -553,6 +553,8 @@ router.get('/api/catalog', pub(async (req, res) => {
     const result = await catalog.search({
         q: String(req.query.q || '').slice(0, 200),
         category: String(req.query.category || '').slice(0, 80),
+        // ?categories=Top Quilt,Underquilt,Sleeping Bag: any of them (a parent group).
+        categories: req.query.categories ? String(req.query.categories).split(',').map((c) => c.trim()).filter(Boolean).slice(0, 100) : null,
         limit: req.query.limit,
         offset: req.query.offset,
         ids,

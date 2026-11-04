@@ -226,7 +226,7 @@ export function specFilters(query = {}) {
 // sort: 'rating' puts gear members rate highly first (then unrated, then
 // poorly rated: client/utils/ratings.js); anything else is by category and
 // name, as the owner's catalog table wants.
-export async function search({ q = '', category = '', status = 'published', limit = 50, offset = 0, ids, specs = [], sort = '' } = {}) {
+export async function search({ q = '', category = '', categories = null, status = 'published', limit = 50, offset = 0, ids, specs = [], sort = '' } = {}) {
     const query = knex('catalog_items');
     for (const f of specs) {
         if (!SPEC_KEYS.includes(f.key)) continue;
@@ -237,6 +237,8 @@ export async function search({ q = '', category = '', status = 'published', limi
     }
     if (status && status !== 'all') query.where({ status });
     if (category) query.where({ category });
+    // A group of categories (a parent such as Sleep System).
+    if (Array.isArray(categories) && categories.length) query.whereIn('category', categories.slice(0, 100).map(String));
     if (ids) query.whereIn('id', ids.filter(isUuid));
     const term = String(q).trim();
     if (term) {
