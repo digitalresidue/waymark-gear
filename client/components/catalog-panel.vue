@@ -14,11 +14,38 @@
             </select>
         </label>
 
-        <scrollRow v-if="catalogCategories.length" track-class="wgCatalogChips" role="group" aria-label="Catalog category" data-testid="catalog-panel-chips">
-            <button type="button" class="wgChip" :aria-pressed="String(category === '')" @click="pickCategory('')">
+        <!-- Every catalog category, reachable: the six parent groups first
+             (as on Explore), each opening a row of its own categories, then
+             everything else A–Z (utils/catalog-sections.js). -->
+        <scrollRow v-if="sections.length" track-class="wgCatalogChips" role="group" aria-label="Catalog category" data-testid="catalog-panel-chips">
+            <button type="button" class="wgChip" :aria-pressed="String(!section)" @click="pickSection('')">
                 All
             </button>
-            <button v-for="c in catalogCategories" :key="c.name" type="button" class="wgChip" :aria-pressed="String(category === c.name)" @click="pickCategory(c.name)">
+            <button
+                v-for="s in sections"
+                :key="s.slug"
+                type="button"
+                class="wgChip"
+                :aria-pressed="String(section === s.slug || (s.parent && parentOfSection === s.slug))"
+                :data-testid="`catalog-panel-section-${s.slug}`"
+                @click="pickSection(s.slug)"
+            >
+                {{ s.name }}
+            </button>
+        </scrollRow>
+        <scrollRow v-if="openParent && openParent.children.length > 1" track-class="wgCatalogChips" role="group" :aria-label="openParent.name" data-testid="catalog-panel-children">
+            <button type="button" class="wgChip" :aria-pressed="String(section === openParent.slug)" @click="pickSection(openParent.slug)">
+                All {{ openParent.name }}
+            </button>
+            <button
+                v-for="c in openParent.children"
+                :key="c.slug"
+                type="button"
+                class="wgChip"
+                :aria-pressed="String(section === c.slug)"
+                :data-testid="`catalog-panel-child-${c.slug}`"
+                @click="pickSection(c.slug)"
+            >
                 {{ c.name }}
             </button>
         </scrollRow>
@@ -47,7 +74,7 @@
             </li>
         </ul>
         <p v-else-if="loaded" class="wgMuted wgCatalogEmpty">
-            {{ query ? `Nothing in the catalog matches “${query}”.` : 'The catalog is empty.' }}
+            {{ query || section ? `Nothing in the catalog matches “${query || sectionName}”.` : 'The catalog is empty.' }}
         </p>
         <button v-if="results.length < total" type="button" class="wgBtn wgBtnSmall wgCatalogMore" @click="load(false)">
             Show more
@@ -61,6 +88,7 @@
 <script>
 import { api } from '../utils/format.js';
 import scrollRow from './scroll-row.vue';
+import catalogSections from '../utils/catalog-sections.js';
 
 const PAGE = 30;
 const TARGET_KEY = 'wgCatalogTarget';
@@ -71,6 +99,7 @@ const TARGET_KEY = 'wgCatalogTarget';
 export default {
     name: 'CatalogPanel',
     components: { scrollRow },
+    mixins: [catalogSections],
     props: {
         // Load on first show, not with the page.
         active: { type: Boolean, default: false },
@@ -82,7 +111,7 @@ export default {
         } catch {
             // Storage blocked: sort by type.
         }
-        return { query: '', category: '', catalogCategories: [], results: [], total: 0, loaded: false, added: {}, timer: null, target, notice: '' };
+        return { query: '', results: [], total: 0, loaded: false, added: {}, timer: null, target, notice: '' };
     },
     computed: {
         library() {
@@ -102,7 +131,7 @@ export default {
                 if (!on) return;
                 if (!this.loaded) this.load(true);
                 if (!this.catalogCategories.length) {
-                    api('/api/catalog/categories').then((r) => { this.catalogCategories = r.categories.slice(0, 14); }).catch(() => {});
+                    api('/api/catalog/categories').then((r) => { this.catalogCategories = r.categories; }).catch(() => {});
                 }
             },
         },
@@ -126,14 +155,16 @@ export default {
             clearTimeout(this.timer);
             this.timer = setTimeout(() => this.load(true), 200);
         },
-        pickCategory(name) {
-            this.category = name;
+        pickSection(slug) {
+            this.section = slug;
             this.load(true);
         },
         async load(reset) {
             const params = new URLSearchParams({ limit: String(PAGE), offset: String(reset ? 0 : this.results.length) });
             if (this.query.trim()) params.set('q', this.query.trim());
-            if (this.category) params.set('category', this.category);
+            // A parent or a category: every catalog name it covers ("Tent" and "Tents").
+            const names = this.sectionParam();
+            if (names) params.set('categories', names);
             try {
                 const r = await api(`/api/catalog?${params}`);
                 this.results = reset ? r.items : this.results.concat(r.items);

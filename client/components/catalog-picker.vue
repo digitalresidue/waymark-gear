@@ -149,8 +149,7 @@
 <script>
 import { api } from '../utils/format.js';
 import scrollRow from './scroll-row.vue';
-import { exploreIndex, resolveSection, parentOf, PARENTS } from '../utils/explore.js';
-import { categoryKey } from '../utils/gear-meta.js';
+import catalogSections from '../utils/catalog-sections.js';
 import weightUtils from '../utils/weight.js';
 import { isPlaceholder } from '../utils/closet.js';
 
@@ -159,6 +158,7 @@ const PAGE = 30;
 export default {
     name: 'CatalogPicker',
     components: { scrollRow },
+    mixins: [catalogSections],
     props: {
         shown: { type: Boolean, required: true },
         // The category the picker was opened from; the target can be changed.
@@ -169,11 +169,6 @@ export default {
         return {
             targetId: null,
             query: '',
-            // The catalog's categories as they're named ([{ name, count }]),
-            // and the one picked: a parent ('sleep-system'), one of its
-            // categories ('topquilt') or another category ('accessories').
-            catalogCategories: [],
-            section: '',
             results: [],
             total: 0,
             loaded: false,
@@ -184,35 +179,6 @@ export default {
         };
     },
     computed: {
-        // Parents that have gear (in Explore's order), then the other categories.
-        index() {
-            return exploreIndex(this.catalogCategories).filter((x) => x.count > 0);
-        },
-        sections() {
-            const parentSlugs = new Set(PARENTS.map((p) => p.slug));
-            return this.index.map((x) => ({
-                slug: x.slug,
-                parent: parentSlugs.has(x.slug),
-                name: parentSlugs.has(x.slug) ? this.$t(`explore.parent.${x.slug}`, {}, x.name) : x.name,
-            }));
-        },
-        // The parent a pick belongs to: itself, or the parent of its category.
-        parentOfSection() {
-            if (!this.section) return '';
-            if (PARENTS.some((p) => p.slug === this.section)) return this.section;
-            const raw = this.catalogCategories.find((c) => categoryKey(c.name) === this.section);
-            return raw ? parentOf(raw.name) || '' : '';
-        },
-        sectionName() {
-            const hit = this.sections.find((x) => x.slug === this.section)
-                || (this.openParent && this.openParent.children.find((c) => c.slug === this.section));
-            return hit ? hit.name : this.section;
-        },
-        openParent() {
-            const slug = this.parentOfSection;
-            const p = slug && this.index.find((x) => x.slug === slug);
-            return p ? { ...p, name: this.$t(`explore.parent.${p.slug}`, {}, p.name) } : null;
-        },
         library() {
             return this.$store.state.library;
         },
@@ -284,8 +250,8 @@ export default {
             const params = new URLSearchParams({ limit: String(PAGE), offset: String(reset ? 0 : this.results.length), sort: 'rating' });
             if (this.query.trim()) params.set('q', this.query.trim());
             // A parent or a category: every catalog name it covers ("Tent" and "Tents").
-            const names = this.section ? (resolveSection(this.section, this.catalogCategories) || { categories: [] }).categories : [];
-            if (names.length) params.set('categories', names.join(','));
+            const names = this.sectionParam();
+            if (names) params.set('categories', names);
             try {
                 const r = await api(`/api/catalog?${params}`);
                 this.results = reset ? r.items : this.results.concat(r.items);
