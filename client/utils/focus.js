@@ -51,19 +51,32 @@ export const emptyIfZero = {
     },
 };
 
+// Close something (a menu) when you click or tap elsewhere.
+//
+// Clicks alone miss taps on an iPad or iPhone: Safari only sends a click for
+// a tap on something it thinks is clickable (a link, a button, an element
+// with its own click handler), so tapping the page's background never got
+// here and menus stayed open. A touch or pen press is caught as it starts
+// instead; mouse clicks still close on the click, as before.
 export const clickOutside = {
     mounted(el, binding) {
-        const handler = (evt) => {
+        const close = (evt) => {
             if (el.contains(evt.target)) return;
             if (typeof binding.value === 'function') binding.value();
         };
-        clickOutsideHandlers.set(el, handler);
-        window.addEventListener('click', handler);
+        const press = (evt) => {
+            if (evt.pointerType === 'mouse') return;
+            close(evt);
+        };
+        clickOutsideHandlers.set(el, { close, press });
+        window.addEventListener('click', close);
+        window.addEventListener('pointerdown', press);
     },
     unmounted(el) {
-        const handler = clickOutsideHandlers.get(el);
-        if (handler) {
-            window.removeEventListener('click', handler);
+        const handlers = clickOutsideHandlers.get(el);
+        if (handlers) {
+            window.removeEventListener('click', handlers.close);
+            window.removeEventListener('pointerdown', handlers.press);
             clickOutsideHandlers.delete(el);
         }
     },

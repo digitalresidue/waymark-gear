@@ -91,7 +91,10 @@ export default {
 }
 
 .lpGetStartedText {
-    flex: 0 0 450px;
+    // Up to 450px, narrower when the list is (an iPad in portrait leaves it
+    // ~660px, which a fixed 450px column beside the chart overran).
+    flex: 0 1 450px;
+    min-width: 0;
 
     h2 {
         font-size: 24px;
@@ -110,6 +113,18 @@ export default {
 
     ol {
         padding-left: 18px;
+    }
+}
+
+// Tablets: a smaller chart, so the text keeps its room.
+@media only screen and (width > $mobile) and (width <= $tablet) {
+    #getStarted {
+        gap: 32px;
+    }
+
+    .lpGetStartedChart .lpDecorChart {
+        height: 180px;
+        width: 180px;
     }
 }
 

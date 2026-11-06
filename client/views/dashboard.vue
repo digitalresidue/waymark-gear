@@ -2,7 +2,7 @@
     <div v-if="isLoaded" class="wgApp">
         <siteHeader app active="lists" />
         <offlineBanner />
-        <div id="main" :class="{lpHasSidebar: library.showSidebar, lpDrawerOpen: drawerOpen}">
+        <div id="main" :class="{lpHasSidebar: panelOpen, lpDrawerOpen: drawerOpen, wgTablet: isTablet}">
             <div class="lpFrameFill lpFrameFillLeft" />
             <planSidebar v-if="planMode" />
             <sidebar v-else />
@@ -93,7 +93,7 @@ import siteFooter from '../components/site-footer.vue';
 import siteHeader from '../components/site-header.vue';
 import catalogPicker from '../components/catalog-picker.vue';
 
-import { isMobile } from '../utils/viewport.js';
+import { isMobile, isTablet } from '../utils/viewport.js';
 import { api } from '../utils/format.js';
 import offlineBanner from '../components/offline-banner.vue';
 
@@ -149,7 +149,7 @@ export default {
         };
     },
     setup() {
-        return { isMobile };
+        return { isMobile, isTablet };
     },
     data() {
         return {
@@ -177,6 +177,11 @@ export default {
         };
     },
     computed: {
+        // The sidebar's panel: the account's choice on the desktop, an unsaved
+        // floating panel on a tablet (sidebar.vue).
+        panelOpen() {
+            return this.isTablet ? this.$store.state.tabletPanel : Boolean(this.library.showSidebar);
+        },
         library() {
             return this.$store.state.library;
         },
@@ -284,7 +289,7 @@ export default {
             if (this.isMobile) {
                 this.drawerOpen = !this.drawerOpen;
             } else {
-                this.$store.commit('toggleSidebar');
+                this.$store.commit(this.isTablet ? 'toggleTabletPanel' : 'toggleSidebar');
             }
         },
         closeDrawer() {
@@ -371,7 +376,8 @@ export default {
         flex: 0 1 calc(1318px - 440px);
     }
 
-    #main:not(.lpHasSidebar) .lpContentCol {
+    #main:not(.lpHasSidebar) .lpContentCol,
+    #main.wgTablet .lpContentCol {
         flex-basis: calc(1318px - 60px);
     }
 

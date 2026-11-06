@@ -63,6 +63,10 @@ $radius-lg: 16px;
    which drives the component swaps (mobile item rows, mobile summary) that
    a media query can't express. Change one, change the other. */
 $mobile: 720px;
+// Tablets (an iPad in portrait) and small laptop windows: the sidebar's panel
+// floats over the list instead of beside it. Must match tabletBreakpoint in
+// client/utils/viewport.js.
+$tablet: 1099px;
 
 /* spacing */
 $spacingSmall: 10px;
