@@ -14,24 +14,29 @@
                 <div id="header">
                     <!-- On the desktop the tools live in the sidebar's rail and the
                          account menu in the site header, so the title has the
-                         row. Phones (and shared plans, which have their own
-                         sidebar) keep them here. -->
-                    <span v-if="!railTools" class="headerItem">
-                        <a id="hamburger" class="lpTransition" aria-label="Lists and gear" data-testid="toggle-sidebar" @click="toggleSidebar"><i class="lpSprite lpHamburger" /></a>
-                    </span>
-                    <input id="lpListName" :value="list.name" type="text" class="lpListName lpSilent headerItem" :placeholder="$t('editor.listName')" :aria-label="$t('editor.listName')" autocomplete="off" name="lastpass-disable-search" @input="updateListName">
-                    <router-link v-if="!railTools" to="/pack" class="headerItem wgPackLink" data-testid="open-pack">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8" /><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" /></svg>
-                        Pack
-                    </router-link>
-                    <router-link v-if="!railTools" to="/print" class="headerItem wgPackLink wgPrintLink" data-testid="open-print" title="Print a paper checklist">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6" /><rect x="3" y="9" width="18" height="8" rx="2" /><path d="M7 14h10v7H7z" /></svg>
-                        Print
-                    </router-link>
-                    <planPresence v-if="canPlan" :team="!railTools" @team="showTeam = true" />
-                    <share v-if="!planMode && !railTools" />
-                    <listSettings v-if="!planMode && !railTools" />
-                    <accountDropdown v-if="isMobile" />
+                         row (shared plans, which have their own sidebar, keep
+                         their tools beside it). On a phone the site header stays
+                         on top, the title gets a line of its own under it, and
+                         the tools sit in a labelled row under that. -->
+                    <div class="wgListTitleRow">
+                        <input id="lpListName" :value="list.name" type="text" class="lpListName lpSilent headerItem" :placeholder="$t('editor.listName')" :aria-label="$t('editor.listName')" autocomplete="off" name="lastpass-disable-search" @input="updateListName">
+                    </div>
+                    <div v-if="!railTools || canPlan" class="wgListTools" data-testid="list-tools">
+                        <span v-if="!railTools" class="headerItem wgListsTool">
+                            <a id="hamburger" class="lpTransition" role="button" tabindex="0" :aria-label="$t('editor.listsAndGear')" data-testid="toggle-sidebar" @click="toggleSidebar"><i class="lpSprite lpHamburger" /><span class="wgToolLabel">{{ $t('editor.lists') }}</span></a>
+                        </span>
+                        <router-link v-if="!railTools" to="/pack" class="headerItem wgPackLink" data-testid="open-pack">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8" /><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" /></svg>
+                            Pack
+                        </router-link>
+                        <router-link v-if="!railTools" to="/print" class="headerItem wgPackLink wgPrintLink" data-testid="open-print" title="Print a paper checklist">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6" /><rect x="3" y="9" width="18" height="8" rx="2" /><path d="M7 14h10v7H7z" /></svg>
+                            Print
+                        </router-link>
+                        <planPresence v-if="canPlan" :team="!railTools" @team="showTeam = true" />
+                        <share v-if="!planMode && !railTools" />
+                        <listSettings v-if="!planMode && !railTools" />
+                    </div>
                 </div>
 
                 <list />
@@ -84,7 +89,6 @@ import planTeam from '../components/plan-team.vue';
 import planPresence from '../components/plan-presence.vue';
 import planSidebar from '../components/plan-sidebar.vue';
 import speedbump from '../components/speedbump.vue';
-import accountDropdown from '../components/account-dropdown.vue';
 import siteFooter from '../components/site-footer.vue';
 import siteHeader from '../components/site-header.vue';
 import catalogPicker from '../components/catalog-picker.vue';
@@ -116,7 +120,6 @@ export default {
         itemViewImage,
         speedbump,
         globalAlerts,
-        accountDropdown,
         siteFooter,
         siteHeader,
         catalogPicker,
@@ -401,6 +404,27 @@ export default {
     }
 }
 
+// Desktop: one row, as before: the title takes what's left and the tools
+// (shared plans only) sit beside it, the drawer button first.
+.wgListTitleRow {
+    align-items: center;
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.wgListTools {
+    display: contents;
+}
+
+.wgListsTool {
+    order: -1;
+}
+
+.wgToolLabel {
+    display: none;
+}
+
 .wgPackLink {
     align-items: center;
     color: var(--lp-text);
@@ -470,21 +494,6 @@ export default {
             color: var(--lp-link-blue);
         }
     }
-
-    &.lpAccount {
-        padding-left: 20px;
-
-        &:before {
-            content: "";
-            display: block;
-            position: absolute;
-            top: 2px;
-            bottom: 0px;
-            width: 1px;
-            background: var(--lp-border-strong);
-            left: 0;
-        }
-    }
 }
 
 // Layout and type come from the shared footer; the app only places it -- last
@@ -501,7 +510,7 @@ export default {
 }
 
 // ============================================================
-// Phone layout — app bar (#18a) and drawer (#11f)
+// Phone layout — title and tools rows (#18a) and drawer (#11f)
 //
 // The three-region desktop frame (dark filler | rail | content | light
 // filler) collapses to one column: the fillers have nothing to bleed to at
@@ -521,103 +530,120 @@ export default {
         width: auto;
     }
 
-    // The header stops being page chrome and becomes the app bar: dark, full
-    // bleed, and stuck to the top so the list title and the drawer stay
-    // reachable well down a long list.
+    // Three rows: the site header (logo, menu, bell, account; sticky), the
+    // list's title on a line of its own so it's readable, and the tools in a
+    // labelled row under it. The tools row sticks under the site header, so
+    // Lists, Pack, Share and the rest stay in reach down a long list.
     #header {
-        background: var(--lp-sidebar-bg);
-        color: var(--lp-sidebar-text);
-        gap: 12px;
-        padding: 11px 14px;
-        position: sticky;
-        top: 0;
-        z-index: $mobileHeader;
+        display: contents;
     }
 
-    #hamburger {
-        color: var(--lp-sidebar-text);
-        opacity: 1;
-    }
-
-    // On the desktop the hamburger rotates with the rail; here it tracks the
-    // drawer instead, so the saved rail state must stop driving it.
-    #main.lpHasSidebar #hamburger {
-        transform: none;
-    }
-
-    #main.lpDrawerOpen #hamburger {
-        transform: rotate(90deg);
+    .wgListTitleRow {
+        padding: 14px 14px 8px;
     }
 
     #lpListName {
-        color: var(--lp-sidebar-text);
-        font-size: 17px;
+        font-size: 22px;
+        line-height: 1.2;
         margin-left: -5px;
-        padding: 3px 5px;
+        padding: 4px 5px;
+        width: 100%;
 
         // The desktop rename affordance outlines on hover, which a phone can't
         // do; the field is still tappable, it just stays quiet until focused.
         &:hover {
             border-color: transparent;
         }
+    }
 
-        &:focus {
-            background: var(--lp-sidebar-inset);
-            border-color: var(--lp-sidebar-border);
+    .wgListTools {
+        align-items: stretch;
+        background: var(--lp-surface);
+        border-bottom: 1px solid var(--lp-border);
+        border-top: 1px solid var(--lp-border);
+        display: flex;
+        padding: 2px 4px;
+        position: sticky;
+        // Just under the site header (sticky itself, 57px tall on a phone).
+        top: 57px;
+        z-index: $mobileHeader;
+
+        // Every tool an equal share of the row: icon over a short label.
+        > * {
+            display: flex;
+            flex: 1 1 0;
+            justify-content: center;
+            min-width: 0;
         }
     }
 
-    // Share / Settings / account collapse to their icons — the labels don't fit
-    // beside a list title at 390px. font-size: 0 drops the label text node
-    // without touching the sprite, which carries its own px dimensions.
-    // Centred with flex rather than left to inline layout: font-size: 0
-    // collapses the line box these icons would otherwise sit on the baseline
-    // of, which hung them 2px above the app bar's centre.
-    .headerItem .lpTarget,
-    .headerItem .lpTarget > span {
+    #hamburger,
+    .wgListTools .wgPackLink,
+    .wgListTools .wgTeamButton,
+    .wgListTools .headerItem .lpTarget,
+    .wgListTools .headerItem .lpTarget > span {
         align-items: center;
+        color: var(--lp-text);
         display: flex;
-    }
-
-    .headerItem .lpTarget {
-        color: var(--lp-sidebar-text);
-        font-size: 0;
+        flex-direction: column;
+        font-size: 11px;
+        font-weight: 650;
+        gap: 4px;
+        justify-content: center;
+        line-height: 1;
+        min-height: 48px;
+        min-width: 44px;
+        opacity: 1;
         padding: 0;
+        white-space: nowrap;
+
+        // Every icon in a 20px box, so the labels line up under them.
+        svg {
+            height: 19px;
+            margin: 0.5px 0;
+            width: 19px;
+        }
 
         .lpSprite {
             height: 17px;
+            margin: 1.5px 0;
             top: 0;
             width: 17px;
         }
 
         &:hover {
-            color: var(--lp-sidebar-text);
+            color: var(--lp-text);
         }
     }
 
-    // Pack keeps its icon and drops its label like the others, but stays a
-    // full 44px tap target.
-    .wgPackLink {
-        color: var(--lp-sidebar-text);
-        font-size: 0;
-        justify-content: center;
-        min-height: 44px;
-        min-width: 36px;
-
-        svg {
-            height: 19px;
-            width: 19px;
-        }
+    // The menus' own targets wrap the icon and label in a span: lay that
+    // out, not the target around it.
+    .wgListTools .headerItem .lpTarget {
+        gap: 0;
     }
 
-    // The rule dividing the avatar from the other actions is desktop chrome;
-    // at this width the gap reads on its own.
-    .headerItem.lpAccount {
-        padding-left: 0;
+    .wgToolLabel {
+        display: block;
+    }
 
-        &:before {
-            display: none;
-        }
+    // The faces of who's here sit over the Team button.
+    .wgListTools .wgPresence {
+        align-items: center;
+        gap: 4px;
+    }
+
+    // On the desktop the hamburger rotates with the rail; here its icon
+    // tracks the drawer instead, so the saved rail state must stop driving it.
+    #main.lpHasSidebar #hamburger {
+        transform: none;
+    }
+
+    #hamburger .lpSprite {
+        transition: transform $transitionDurationSlow;
+    }
+
+    #main.lpDrawerOpen #hamburger .lpSprite {
+        transform: rotate(90deg);
     }
 
     // Header menus hang off the viewport: they're anchored to a control a few
@@ -625,9 +651,9 @@ export default {
     // that control — which put the Share menu 19px past the left edge.
     //
     // Dropping the popover's own positioning context lets the content resolve
-    // against the sticky header instead. That's full-bleed, so the menu can
-    // span the screen with a margin either side and sit directly under the app
-    // bar, which is where a phone expects it.
+    // against the sticky tools row instead. That's full-bleed, so the menu can
+    // span the screen and sit directly under the row, which is where a phone
+    // expects it.
     // Both of these are positioned on the desktop, and either one would
     // capture the menu as its containing block.
     .headerItem,
@@ -635,7 +661,7 @@ export default {
         position: static;
     }
 
-    // Full bleed, flush to the app bar, rounded only where it ends: the menu
+    // Full bleed, flush to the tools row, rounded only where it ends: the menu
     // reads as a panel pulled down out of the header rather than a card
     // floating under it. #main raises specificity over popover.vue's own
     // .lpPopoverShown rules, whose injection order isn't guaranteed.
@@ -645,7 +671,7 @@ export default {
         margin-top: 0;
         // Settings can outgrow a short screen once every optional field and
         // the currency box are in it.
-        max-height: calc(100vh - 80px);
+        max-height: calc(100vh - 140px);
         overflow-y: auto;
         right: 0;
         // Slides the last few pixels into place as it fades in.
@@ -660,7 +686,7 @@ export default {
 
     // The bridge that lets a mouse travel from target to menu across the gap.
     // There's no travelling on a touch screen, and the padding it adds pushes
-    // the avatar off the app bar's centre.
+    // the icons off the row's centre.
     .headerItem .lpPopover .lpTarget {
         margin-bottom: 0;
         padding-bottom: 0;

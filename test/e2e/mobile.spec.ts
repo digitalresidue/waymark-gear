@@ -387,28 +387,49 @@ test.describe('Phone header', () => {
 });
 
 test.describe('Phone chrome fits the viewport', () => {
-  // Two rounds of review caught misaligned app-bar controls by eye: the avatar
-  // carried a desktop baseline nudge, and font-size: 0 (which drops the action
-  // labels) collapsed the line box the icons sat on, hanging them 2px high.
-  test('every app bar control sits on the header centre', async ({ page }) => {
+  // The list's name used to share one row with seven controls and the
+  // account menu, leaving it 12–24px: unreadable. Now the site header is on
+  // top, the name has a line of its own, and the tools a labelled row under it.
+  test('the list name gets its own line, with the tools labelled under it', async ({ page }) => {
     await signUpWithList(page);
+    await page.locator('#lpListName').fill('PCT 2026 Thru-hike Kit');
+    await page.locator('#lpListName').blur();
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 
-    const centreOf = async (selector: string) => {
-      const box = await page.locator(selector).boundingBox();
-      expect(box, `${selector} has no box`).not.toBeNull();
-      return box!.y + box!.height / 2;
+    const box = async (selector: string) => {
+      const b = await page.locator(selector).first().boundingBox();
+      expect(b, `${selector} has no box`).not.toBeNull();
+      return b!;
     };
+    const site = await box('.wgSiteHeader');
+    const name = await box('#lpListName');
+    const tools = await box('[data-testid="list-tools"]');
+    expect(site.height).toBeGreaterThan(40);
+    expect(name.y).toBeGreaterThanOrEqual(site.y + site.height - 1);
+    expect(tools.y).toBeGreaterThanOrEqual(name.y + name.height);
+    expect(name.width).toBeGreaterThan(PHONE.width * 0.8);
+    // The account menu and the bell are in the site header.
+    await expect(page.locator('.wgSiteHeader').getByTestId('account-menu')).toBeVisible();
 
-    const header = await centreOf('#header');
-    for (const control of [
-      '#hamburger',
-      '#lpListName',
-      '#share .lpTarget .lpSprite',
-      '#settings .lpTarget .lpSprite',
-      '.lpAvatar',
+    // Every tool has its label, and they share one row, centred on it.
+    const row = tools.y + tools.height / 2;
+    for (const [selector, label] of [
+      ['#hamburger', 'Lists'],
+      ['[data-testid="open-pack"]', 'Pack'],
+      ['[data-testid="open-print"]', 'Print'],
+      ['#share .lpTarget', 'Share'],
+      ['#settings .lpTarget', 'Settings'],
     ]) {
-      expect(Math.abs(await centreOf(control) - header), `${control} off centre`).toBeLessThanOrEqual(1);
+      await expect(page.locator(selector)).toContainText(label);
+      const b = await box(selector);
+      expect(Math.abs(b.y + b.height / 2 - row), `${selector} off the row's centre`).toBeLessThanOrEqual(1);
+      expect(b.height, `${selector} tap target`).toBeGreaterThanOrEqual(44);
     }
+
+    // Down a long list, the tools stay in reach just under the site header.
+    await page.evaluate(() => window.scrollTo(0, 600));
+    await expect.poll(async () => Math.round((await box('[data-testid="list-tools"]')).y)).toBe(Math.round(site.height));
   });
 
   // Header menus centre themselves on their control, which sits a few pixels
@@ -446,14 +467,14 @@ test.describe('Phone chrome fits the viewport', () => {
     await expect(page.getByTestId('item-editor')).toHaveCount(0);
   });
 
-  test('an open menu dims the page but not the app bar', async ({ page }) => {
+  test('an open menu dims the page but not the tools row', async ({ page }) => {
     await signUpWithList(page);
     await page.locator('#settings .lpTarget').tap();
     await expect(page.getByTestId('popover-scrim')).toBeVisible();
 
     const layers = await page.evaluate(() => {
       const scrim = document.querySelector('.lpPopoverScrim') as HTMLElement;
-      const header = document.querySelector('#header') as HTMLElement;
+      const header = document.querySelector('[data-testid="list-tools"]') as HTMLElement;
       return {
         insideHeader: header.contains(scrim),
         scrimZ: Number(getComputedStyle(scrim).zIndex),

@@ -234,5 +234,7 @@
   "units.label": "Unités",
   "units.imperial": "Impériales (oz, lb, in, °F)",
   "units.metric": "Métriques (g, kg, cm, °C)",
-  "units.hint": "Poids, dimensions et températures sur tout le site, et les unités de vos listes."
+  "units.hint": "Poids, dimensions et températures sur tout le site, et les unités de vos listes.",
+  "editor.lists": "Listes",
+  "editor.listsAndGear": "Listes et équipement"
 }

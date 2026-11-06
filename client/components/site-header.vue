@@ -58,9 +58,7 @@
             <div class="wgSiteHeaderActions">
                 <!-- Signed in: notifications and the account menu, on every
                      page (My lists is in the menu). -->
-                <!-- Not in the phone editor, whose own app bar has the menu
-                     (this header is hidden there). -->
-                <accountDropdown v-if="signedIn && !(app && isMobile)" class="wgHeaderAccount" />
+                <accountDropdown v-if="signedIn" class="wgHeaderAccount" />
                 <template v-else>
                     <router-link to="/signin" class="wgBtn wgBtnGhost wgHideOnPhone" data-testid="header-signin">
                         {{ $t('header.signIn') }}
@@ -100,7 +98,6 @@ import accountDelete from './account-delete.vue';
 import help from './help.vue';
 import { menuFor, activeFor, PHONE_EXTRAS, canSee } from '../nav.js';
 import { localizeMenu } from '../utils/i18n.js';
-import { isMobile } from '../utils/viewport.js';
 
 // Pages the Vue app draws; anything else (Trails, reviews...) is a full
 // page load from the server.
@@ -128,9 +125,6 @@ export default {
         app: { type: Boolean, default: false },
         // Kept for callers; the current section now comes from the route.
         active: { type: String, default: '' },
-    },
-    setup() {
-        return { isMobile };
     },
     data() {
         return { menuOpen: false, dropdown: '', showAccount: false, showHelp: false, showDeleteAccount: false };

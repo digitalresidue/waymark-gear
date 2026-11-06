@@ -242,5 +242,7 @@
   "units.label": "Jednostki",
   "units.imperial": "Imperialne (oz, lb, in, °F)",
   "units.metric": "Metryczne (g, kg, cm, °C)",
-  "units.hint": "Wagi, wymiary i temperatury w całym serwisie oraz jednostki na Twoich listach."
+  "units.hint": "Wagi, wymiary i temperatury w całym serwisie oraz jednostki na Twoich listach.",
+  "editor.lists": "Listy",
+  "editor.listsAndGear": "Listy i sprzęt"
 }
