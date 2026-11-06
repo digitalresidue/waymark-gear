@@ -230,5 +230,7 @@
   "units.label": "単位",
   "units.imperial": "ヤード・ポンド法 (oz, lb, in, °F)",
   "units.metric": "メートル法 (g, kg, cm, °C)",
-  "units.hint": "サイト全体の重さ・サイズ・温度と、リストの単位に反映されます。"
+  "units.hint": "サイト全体の重さ・サイズ・温度と、リストの単位に反映されます。",
+  "editor.lists": "リスト",
+  "editor.listsAndGear": "リストと装備"
 }

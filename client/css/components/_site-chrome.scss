@@ -221,9 +221,11 @@
 // On a phone: logo, bell, one button and a menu. The links open as a sheet
 // under the header instead of wrapping into rows above the page.
 @media (max-width: $mobile) {
-    // The editor has its own app bar and drawer.
+    // In the editor too: the list's title and tools are rows of their own
+    // under it (dashboard.vue). Under the drawer (20) and its scrim (19), so
+    // the open drawer covers the whole screen.
     .wgSiteHeaderApp {
-        display: none;
+        z-index: $mobileHeader;
     }
 
     .wgSiteHeader {

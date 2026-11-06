@@ -230,5 +230,7 @@
   "units.label": "单位",
   "units.imperial": "英制 (oz, lb, in, °F)",
   "units.metric": "公制 (g, kg, cm, °C)",
-  "units.hint": "全站的重量、尺寸和温度，以及你清单中的单位。"
+  "units.hint": "全站的重量、尺寸和温度，以及你清单中的单位。",
+  "editor.lists": "清单",
+  "editor.listsAndGear": "清单和装备"
 }
