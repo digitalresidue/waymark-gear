@@ -169,11 +169,18 @@ export default {
                 this.dropdown = '';
             }
         };
+        // Taps too: Safari on an iPad sends no click for a tap on the page's
+        // background (utils/focus.js, clickOutside).
+        this.pressOutside = (e) => {
+            if (e.pointerType !== 'mouse') this.closeOutside(e);
+        };
         document.addEventListener('click', this.closeOutside);
+        document.addEventListener('pointerdown', this.pressOutside);
         document.addEventListener('keydown', this.closeOnEscape);
     },
     beforeUnmount() {
         document.removeEventListener('click', this.closeOutside);
+        document.removeEventListener('pointerdown', this.pressOutside);
         document.removeEventListener('keydown', this.closeOnEscape);
         clearTimeout(this.hoverTimer);
     },

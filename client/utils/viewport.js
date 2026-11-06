@@ -22,3 +22,17 @@ query.addEventListener('change', (evt) => {
 });
 
 export default isMobile;
+
+// Tablets and small laptop windows: wider than a phone but too narrow for
+// the sidebar's panel to sit beside the list (an iPad in portrait leaves the
+// list ~420px). Here the panel floats over the list instead, and starts put
+// away. Must match $tablet in client/css/_globals.scss.
+export const tabletBreakpoint = 1099;
+
+const tabletQuery = window.matchMedia(`(min-width: ${mobileBreakpoint + 1}px) and (max-width: ${tabletBreakpoint}px)`);
+
+export const isTablet = ref(tabletQuery.matches);
+
+tabletQuery.addEventListener('change', (evt) => {
+    isTablet.value = evt.matches;
+});

@@ -388,3 +388,32 @@
 .wgScrollBtnRight {
     right: 0;
 }
+
+// ============================================================
+// Touch screens in the desktop layout (an iPad, a touch laptop)
+//
+// Row controls — remove ✕, drag handles, the worn/consumable/star flags, gear
+// details, the unit picker's arrow — wait for the mouse to hover their row.
+// A finger can't hover: on an iPad they stayed hidden, and a tap where they
+// should be landed on whatever was underneath. With no hover to wait for,
+// they're always there, still faint until used. (Phones have their own
+// tap-to-edit rows.) :root outranks the components' own hidden rules, which
+// load after this file.
+// ============================================================
+@media only screen and (width > $mobile) and (hover: none) {
+    :root .lpItem .lpRemove,
+    :root .lpItem .lpHandle,
+    :root .lpItem .lpArrows,
+    :root .lpItem .lpActionsCell i,
+    :root .lpItem .lpActionsCell .wgItemDetails,
+    :root .lpItem .lpUnitSelect i.lpExpand,
+    :root .lpCategory .lpHeader .lpRemove,
+    :root .lpCategory .lpHeader .lpHandle,
+    :root .lpLibraryItem .lpRemove,
+    :root .lpLibraryItem .lpHandle,
+    :root .lpLibraryList .lpRemove,
+    :root .lpLibraryList .lpHandle,
+    :root .lpLibraryList .wgListPin {
+        visibility: visible;
+    }
+}

@@ -17,6 +17,10 @@ const saveInterval = 5000;
 
 const store = createStore({
     state: {
+        // Tablet widths: whether the sidebar's floating panel is open. Not
+        // saved: library.showSidebar is the desktop's (and the account's)
+        // choice, and a tablet always starts with the panel put away.
+        tabletPanel: false,
         library: false,
         isSaving: false,
         syncToken: false,
@@ -375,6 +379,9 @@ const store = createStore({
         },
         clearLibraryData(state) {
             state.library = false;
+        },
+        toggleTabletPanel(state, open) {
+            state.tabletPanel = typeof open === 'boolean' ? open : !state.tabletPanel;
         },
         toggleSidebar(state) {
             state.library.showSidebar = !state.library.showSidebar;
@@ -789,6 +796,7 @@ const store = createStore({
             // (a presence update, say) would be "the last call" and the
             // edit would never be saved.
             const ignore = new Set([
+                'toggleTabletPanel',
                 'setIsSaving',
                 'setSaveType',
                 'setSyncToken',

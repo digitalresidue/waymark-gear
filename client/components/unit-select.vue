@@ -63,10 +63,12 @@ export default {
         bindCloseListeners() {
             window.addEventListener('keyup', this.closeOnEscape);
             window.addEventListener('click', this.closeOnClick);
+            window.addEventListener('pointerdown', this.closeOnPress);
         },
         unbindCloseListeners() {
             window.removeEventListener('keyup', this.closeOnEscape);
             window.removeEventListener('click', this.closeOnClick);
+            window.removeEventListener('pointerdown', this.closeOnPress);
         },
         closeOnEscape(evt) {
             if (evt.keyCode === 27) {
@@ -85,6 +87,11 @@ export default {
                 return;
             }
             this.close();
+        },
+        // Taps too: Safari on an iPad sends no click for a tap on the page's
+        // background (utils/focus.js, clickOutside).
+        closeOnPress(evt) {
+            if (evt.pointerType !== 'mouse') this.closeOnClick(evt);
         },
         focusSelect() {
             this.isFocused = true;

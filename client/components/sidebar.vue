@@ -49,7 +49,7 @@
                         :aria-expanded="String(open)"
                         aria-controls="wgSidebarPanel"
                         data-testid="toggle-sidebar"
-                        @click="$store.commit('toggleSidebar')"
+                        @click="toggleOpen"
                     >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path v-if="open" d="m15 6-6 6 6 6" /><path v-else d="m9 6 6 6-6 6" /></svg>
                     </button>
@@ -158,7 +158,7 @@ import brandLogo from './brand-logo.vue';
 import share from './share.vue';
 import listSettings from './list-settings.vue';
 
-import { isMobile } from '../utils/viewport.js';
+import { isMobile, isTablet } from '../utils/viewport.js';
 
 // Which panel the desktop sidebar shows. A per-browser convenience, so
 // localStorage (whether it's open at all is library.showSidebar, which
@@ -185,7 +185,7 @@ export default {
     },
     inject: { openTeam: { default: () => () => {} } },
     setup() {
-        return { isMobile };
+        return { isMobile, isTablet };
     },
     data() {
         const panel = readPanel();
@@ -195,8 +195,10 @@ export default {
         library() {
             return this.$store.state.library;
         },
+        // On a tablet the panel floats over the list and isn't saved; on the
+        // desktop it's the account's choice (library.showSidebar).
         open() {
-            return Boolean(this.library.showSidebar);
+            return this.isTablet ? this.$store.state.tabletPanel : Boolean(this.library.showSidebar);
         },
         // Planning together needs a signed-in, saved list (as in dashboard.vue).
         canPlan() {
@@ -225,13 +227,16 @@ export default {
         },
         // A rail button: show that panel, or put the sidebar away if it's
         // the one already showing.
+        toggleOpen() {
+            this.$store.commit(this.isTablet ? 'toggleTabletPanel' : 'toggleSidebar');
+        },
         show(panel) {
             if (this.open && this.panel === panel) {
-                this.$store.commit('toggleSidebar');
+                this.toggleOpen();
                 return;
             }
             this.setPanel(panel);
-            if (!this.open) this.$store.commit('toggleSidebar');
+            if (!this.open) this.toggleOpen();
         },
         // A list was chosen: the lists go back into the rail and the closet
         // (or the catalog, if that's where you came from) takes the column,
@@ -268,6 +273,9 @@ export default {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    // Safari on iPad and iPhone counts its toolbars into 100vh, hiding the
+    // bottom of the panel; dvh is the part you can actually see.
+    height: 100dvh;
     opacity: 1;
     padding-right: 1px;
     position: sticky;
@@ -652,6 +660,23 @@ $panelWidth: 380px;
 
     .wgSidebarPanel {
         flex-basis: 270px;
+    }
+}
+
+// Tablets (an iPad in portrait) and small laptop windows: beside the list,
+// the panel left it ~420px, too narrow for its columns. Here the column is
+// just the rail and the panel floats over the list, put away by default
+// (sidebar.vue's open, dashboard.vue's #main class).
+@media only screen and (width > $mobile) and (width <= $tablet) {
+    #sidebar.wgSidebarDesk,
+    #main:not(.lpHasSidebar) #sidebar.wgSidebarDesk {
+        flex-basis: $railWidth;
+    }
+
+    #main.lpHasSidebar #sidebar.wgSidebarDesk .lpSidebarSticky {
+        background: var(--lp-sidebar-bg);
+        border-right: 1px solid var(--lp-sidebar-border);
+        box-shadow: 8px 0 24px rgba(0, 0, 0, 0.16);
     }
 }
 
