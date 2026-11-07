@@ -89,14 +89,16 @@ test.describe('Phase 7: gear check, wishlist, compare, prices', () => {
         await expect(panel.getByTestId('skipped-rain')).toBeVisible();
         expect(Number(await panel.getByTestId('insights-score').innerText())).toBeGreaterThan(before);
 
-        // A lighter tent from the catalog, with the weight it saves.
-        const alt = panel.getByTestId('alternative').filter({ hasText: `Heavy tent ${t}` });
+        // A lighter tent from the catalog, with the weight it saves: a tent
+        // is big-three gear (shelter).
+        const alt = panel.getByTestId('big-three-item').filter({ hasText: `Heavy tent ${t}` });
         await expect(alt).toContainText(`Light tent ${t}`);
         await expect(alt).toContainText('saves');
+        const option = alt.getByTestId('big-three-option').filter({ hasText: `Light tent ${t}` });
         done = saved(page);
-        await alt.getByTestId('alternative-wish').first().click();
+        await option.getByTestId('alternative-wish').click();
         await done;
-        await expect(alt.getByTestId('alternative-wish').first()).toHaveText('On wishlist');
+        await expect(option.getByTestId('alternative-wish')).toHaveText('On wishlist');
 
         await page.reload();
         const l = await lib(page);
