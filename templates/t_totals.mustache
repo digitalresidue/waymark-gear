@@ -36,7 +36,7 @@
     <li class="lpRow lpFooter lpTotal">
         <span class="lpCell lpLegendCell"></span>
         <span class="lpCell lpCategoryCell lpSubtotal">
-            Total{{#tips.total}}<span class="wgInfoTip"><button type="button" class="wgInfoTipBtn" aria-label="{{about}}" aria-describedby="{{id}}" aria-expanded="false" data-info-tip data-testid="info-tip-total"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.01"/></svg></button><span id="{{id}}" role="tooltip" class="wgInfoTipText">{{text}}</span></span>{{/tips.total}}
+            <span class="wgTotalLabel">Total</span>{{#tips.total}}<span class="wgInfoTip"><button type="button" class="wgInfoTipBtn" aria-label="{{about}}" aria-describedby="{{id}}" aria-expanded="false" data-info-tip data-testid="info-tip-total"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.01"/></svg></button><span id="{{id}}" role="tooltip" class="wgInfoTipText">{{text}}</span></span>{{/tips.total}}
         </span>
         {{#showPrices}}<span class="lpCell lpNumber items">{{currencySymbol}}{{totalPriceDisplay}}</span>{{/showPrices}}
         <span class="lpCell lpNumber lpWeightVal lpSubtotal">
@@ -47,7 +47,7 @@
         <li data-weight-type="consumable" class="lpRow lpFooter lpBreakdown lpConsumableWeight">
             <span class="lpCell lpLegendCell"></span>
             <span class="lpCell lpCategoryCell">
-                Consumable{{#tips.consumable}}<span class="wgInfoTip"><button type="button" class="wgInfoTipBtn" aria-label="{{about}}" aria-describedby="{{id}}" aria-expanded="false" data-info-tip data-testid="info-tip-consumable"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.01"/></svg></button><span id="{{id}}" role="tooltip" class="wgInfoTipText">{{text}}</span></span>{{/tips.consumable}}
+                <span class="wgTotalLabel">Consumable</span>{{#tips.consumable}}<span class="wgInfoTip"><button type="button" class="wgInfoTipBtn" aria-label="{{about}}" aria-describedby="{{id}}" aria-expanded="false" data-info-tip data-testid="info-tip-consumable"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.01"/></svg></button><span id="{{id}}" role="tooltip" class="wgInfoTipText">{{text}}</span></span>{{/tips.consumable}}
             </span>
             {{#showPrices}}
             <span class="lpCell lpNumber"></span>
@@ -61,7 +61,7 @@
         <li data-weight-type="worn" class="lpRow lpFooter lpBreakdown lpWornWeight">
             <span class="lpCell lpLegendCell"></span>
             <span class="lpCell lpCategoryCell">
-                Worn{{#tips.worn}}<span class="wgInfoTip"><button type="button" class="wgInfoTipBtn" aria-label="{{about}}" aria-describedby="{{id}}" aria-expanded="false" data-info-tip data-testid="info-tip-worn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.01"/></svg></button><span id="{{id}}" role="tooltip" class="wgInfoTipText">{{text}}</span></span>{{/tips.worn}}
+                <span class="wgTotalLabel">Worn</span>{{#tips.worn}}<span class="wgInfoTip"><button type="button" class="wgInfoTipBtn" aria-label="{{about}}" aria-describedby="{{id}}" aria-expanded="false" data-info-tip data-testid="info-tip-worn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.01"/></svg></button><span id="{{id}}" role="tooltip" class="wgInfoTipText">{{text}}</span></span>{{/tips.worn}}
             </span>
             {{#showPrices}}
             <span class="lpCell lpNumber"></span>
@@ -75,7 +75,7 @@
         <li data-weight-type="base" class="lpRow lpFooter lpBreakdown lpBaseWeight">
             <span class="lpCell lpLegendCell"></span>
             <span class="lpCell lpCategoryCell">
-                Base Weight{{#tips.base}}<span class="wgInfoTip"><button type="button" class="wgInfoTipBtn" aria-label="{{about}}" aria-describedby="{{id}}" aria-expanded="false" data-info-tip data-testid="info-tip-base"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.01"/></svg></button><span id="{{id}}" role="tooltip" class="wgInfoTipText">{{text}}</span></span>{{/tips.base}}
+                <span class="wgTotalLabel">Base Weight</span>{{#tips.base}}<span class="wgInfoTip"><button type="button" class="wgInfoTipBtn" aria-label="{{about}}" aria-describedby="{{id}}" aria-expanded="false" data-info-tip data-testid="info-tip-base"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.01"/></svg></button><span id="{{id}}" role="tooltip" class="wgInfoTipText">{{text}}</span></span>{{/tips.base}}
             </span>
             {{#showPrices}}
             <span class="lpCell lpNumber"></span>
@@ -89,7 +89,7 @@
         <li data-weight-type="pack" class="lpRow lpFooter lpBreakdown lpTotalPackWeight">
             <span class="lpCell lpLegendCell"></span>
             <span class="lpCell lpCategoryCell">
-                Total Pack Weight{{#tips.pack}}<span class="wgInfoTip"><button type="button" class="wgInfoTipBtn" aria-label="{{about}}" aria-describedby="{{id}}" aria-expanded="false" data-info-tip data-testid="info-tip-pack"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.01"/></svg></button><span id="{{id}}" role="tooltip" class="wgInfoTipText">{{text}}</span></span>{{/tips.pack}}
+                <span class="wgTotalLabel">Total Pack Weight</span>{{#tips.pack}}<span class="wgInfoTip"><button type="button" class="wgInfoTipBtn" aria-label="{{about}}" aria-describedby="{{id}}" aria-expanded="false" data-info-tip data-testid="info-tip-pack"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.01"/></svg></button><span id="{{id}}" role="tooltip" class="wgInfoTipText">{{text}}</span></span>{{/tips.pack}}
             </span>
             {{#showPrices}}
             <span class="lpCell lpNumber"></span>

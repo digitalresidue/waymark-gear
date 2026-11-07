@@ -52,7 +52,7 @@
                 <li class="lpRow lpFooter lpTotal">
                     <span class="lpCell lpLegendCell" />
                     <span class="lpCell lpCategoryCell lpSubtotal">
-                        Total<infoTip term="total" />
+                        <span class="wgTotalLabel">Total</span><infoTip term="total" />
                     </span>
                     <span v-if="list.optionalFields['price']" class="lpCell lpNumber lpSubtotal" :title="list.totalQty +' items'">
                         {{ displayPrice(list.totalPrice, library.currencySymbol) }}
@@ -67,7 +67,7 @@
                 <li v-if="list.totalConsumableWeight" data-weight-type="consumable" class="lpRow lpFooter lpBreakdown lpConsumableWeight">
                     <span class="lpCell lpLegendCell" />
                     <span class="lpCell lpCategoryCell">
-                        Consumable<infoTip term="consumable" />
+                        <span class="wgTotalLabel">Consumable</span><infoTip term="consumable" />
                     </span>
                     <span v-if="list.optionalFields['price']" class="lpCell lpNumber">
                         {{ displayPrice(list.totalConsumablePrice, library.currencySymbol) }}
@@ -80,7 +80,7 @@
                 <li v-if="list.totalWornWeight" data-weight-type="worn" class="lpRow lpFooter lpBreakdown lpWornWeight">
                     <span class="lpCell lpLegendCell" />
                     <span class="lpCell lpCategoryCell">
-                        Worn<infoTip term="worn" />
+                        <span class="wgTotalLabel">Worn</span><infoTip term="worn" />
                     </span>
                     <span v-if="list.optionalFields['price']" class="lpCell lpNumber" />
                     <span class="lpCell lpNumber lpWeightVal">
@@ -91,7 +91,7 @@
                 <li v-if="list.totalWornWeight || list.totalConsumableWeight" data-weight-type="base" class="lpRow lpFooter lpBreakdown lpBaseWeight">
                     <span class="lpCell lpLegendCell" />
                     <span class="lpCell lpCategoryCell">
-                        Base Weight<infoTip term="base" />
+                        <span class="wgTotalLabel">Base Weight</span><infoTip term="base" />
                     </span>
                     <span v-if="list.optionalFields['price']" class="lpCell lpNumber" />
                     <span class="lpCell lpNumber lpWeightVal">
@@ -104,7 +104,7 @@
                 <li v-if="list.optionalFields['packWeight']" data-weight-type="pack" class="lpRow lpFooter lpBreakdown lpTotalPackWeight">
                     <span class="lpCell lpLegendCell" />
                     <span class="lpCell lpCategoryCell">
-                        Total Pack Weight<infoTip term="pack" />
+                        <span class="wgTotalLabel">Total Pack Weight</span><infoTip term="pack" />
                     </span>
                     <span v-if="list.optionalFields['price']" class="lpCell lpNumber" />
                     <span class="lpCell lpNumber lpWeightVal">

@@ -79,7 +79,7 @@
 
                     <li class="lpSummaryLegendRow lpSummaryLegendTotal">
                         <span class="lpSummaryLegendSwatch" />
-                        <span class="lpSummaryLegendName">Total<infoTip term="total" /></span>
+                        <span class="lpSummaryLegendName"><span class="wgTotalLabel">Total</span><infoTip term="total" /></span>
                         <span v-if="list.optionalFields['price']" class="lpSummaryLegendPrice">{{ displayPrice(list.totalPrice, library.currencySymbol) }}</span>
                         <span class="lpSummaryLegendWeight">
                             <span data-testid="total-weight">{{ displayWeight(list.totalWeight, library.totalUnit) }}</span>
@@ -91,7 +91,7 @@
 
                     <li v-if="list.totalConsumableWeight" class="lpSummaryLegendRow lpSummaryLegendMuted">
                         <span class="lpSummaryLegendSwatch" />
-                        <span class="lpSummaryLegendName">Consumable<infoTip term="consumable" /></span>
+                        <span class="lpSummaryLegendName"><span class="wgTotalLabel">Consumable</span><infoTip term="consumable" /></span>
                         <span v-if="list.optionalFields['price']" class="lpSummaryLegendPrice" />
                         <span class="lpSummaryLegendWeight">
                             <span data-testid="consumable-weight">{{ displayWeight(list.totalConsumableWeight, library.totalUnit) }}</span>
@@ -100,7 +100,7 @@
                     </li>
                     <li v-if="list.totalWornWeight" class="lpSummaryLegendRow lpSummaryLegendMuted">
                         <span class="lpSummaryLegendSwatch" />
-                        <span class="lpSummaryLegendName">Worn<infoTip term="worn" /></span>
+                        <span class="lpSummaryLegendName"><span class="wgTotalLabel">Worn</span><infoTip term="worn" /></span>
                         <span v-if="list.optionalFields['price']" class="lpSummaryLegendPrice" />
                         <span class="lpSummaryLegendWeight">
                             <span data-testid="worn-weight">{{ displayWeight(list.totalWornWeight, library.totalUnit) }}</span>
@@ -109,7 +109,7 @@
                     </li>
                     <li v-if="hasBreakdown" class="lpSummaryLegendRow lpSummaryLegendMuted">
                         <span class="lpSummaryLegendSwatch" />
-                        <span class="lpSummaryLegendName">Base weight<infoTip term="base" /></span>
+                        <span class="lpSummaryLegendName"><span class="wgTotalLabel">Base weight</span><infoTip term="base" /></span>
                         <span v-if="list.optionalFields['price']" class="lpSummaryLegendPrice" />
                         <span class="lpSummaryLegendWeight">
                             <span data-testid="base-weight">{{ displayWeight(list.totalBaseWeight, library.totalUnit) }}</span>
@@ -118,7 +118,7 @@
                     </li>
                     <li v-if="list.optionalFields['packWeight']" class="lpSummaryLegendRow lpSummaryLegendMuted lpTotalPackWeight">
                         <span class="lpSummaryLegendSwatch" />
-                        <span class="lpSummaryLegendName">Total pack weight<infoTip term="pack" /></span>
+                        <span class="lpSummaryLegendName"><span class="wgTotalLabel">Total pack weight</span><infoTip term="pack" /></span>
                         <span v-if="list.optionalFields['price']" class="lpSummaryLegendPrice" />
                         <span class="lpSummaryLegendWeight">
                             <span data-testid="pack-weight">{{ displayWeight(list.totalPackWeight, library.totalUnit) }}</span>
