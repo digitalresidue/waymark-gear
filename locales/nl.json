@@ -236,5 +236,6 @@
   "units.metric": "Metrisch (g, kg, cm, °C)",
   "units.hint": "Gewichten, maten en temperaturen op de hele site, en de eenheden in je lijsten.",
   "editor.lists": "Lijsten",
-  "editor.listsAndGear": "Lijsten en uitrusting"
+  "editor.listsAndGear": "Lijsten en uitrusting",
+  "nav.follow": "Volgen"
 }

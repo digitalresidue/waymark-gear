@@ -100,14 +100,20 @@ export async function myTrips(user) {
     return rows.map((t) => tripApi(t, { entryCount: Number(t.entry_count) }));
 }
 
+// When a trip is first shown to anyone (public or followers): the Follow
+// timeline shows it then, not when it was started privately.
+const sharedAt = (trip) => (trip.visibility === 'private' ? {} : { shared_at: knex.raw('coalesce(shared_at, now())') });
+
 export async function createTrip(user, input) {
-    const [row] = await knex('trips').insert({ ...cleanTrip(input, user.user_id), user_id: user.user_id }).returning('*');
+    const trip = cleanTrip(input, user.user_id);
+    const [row] = await knex('trips').insert({ ...trip, user_id: user.user_id, ...(trip.visibility === 'private' ? {} : { shared_at: knex.fn.now() }) }).returning('*');
     return tripApi(row, { entries: [] });
 }
 
 export async function updateTrip(user, id, input) {
     await ownTrip(user, id);
-    const [row] = await knex('trips').where({ id: Number(id) }).update({ ...cleanTrip(input, user.user_id), updated_at: knex.fn.now() }).returning('*');
+    const trip = cleanTrip(input, user.user_id);
+    const [row] = await knex('trips').where({ id: Number(id) }).update({ ...trip, ...sharedAt(trip), updated_at: knex.fn.now() }).returning('*');
     return getOwnTrip(user, row.id);
 }
 

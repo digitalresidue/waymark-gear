@@ -236,5 +236,6 @@
   "units.metric": "Metriche (g, kg, cm, °C)",
   "units.hint": "Pesi, misure e temperature in tutto il sito e le unità delle tue liste.",
   "editor.lists": "Liste",
-  "editor.listsAndGear": "Liste e attrezzatura"
+  "editor.listsAndGear": "Liste e attrezzatura",
+  "nav.follow": "Segui"
 }

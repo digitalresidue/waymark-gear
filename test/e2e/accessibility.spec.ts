@@ -66,7 +66,7 @@ test('signed-in pages pass axe in both themes', async ({ browser }, testInfo) =>
     const found: string[] = [];
     for (const colorScheme of ['light', 'dark'] as const) {
         const page = await (await browser.newContext({ colorScheme, storageState })).newPage();
-        for (const p of ['/', '/gear', '/pack', '/profile', '/trips', '/owner/catalog']) {
+        for (const p of ['/', '/gear', '/pack', '/profile', '/trips', '/follow', '/owner/catalog']) {
             await page.goto(url(p));
             await page.waitForLoadState('networkidle').catch(() => {});
             await page.waitForTimeout(300);
