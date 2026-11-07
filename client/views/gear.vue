@@ -11,8 +11,14 @@
                 Closet
             </h1>
             <span class="lpGearCount">{{ activeCount }}</span>
-            <button v-if="activeCount || retiredCount" type="button" class="lpGearEmptyCloset" data-testid="closet-empty" @click="emptyCloset">
+            <button v-if="(activeCount || retiredCount) && !selecting" type="button" class="lpGearEmptyCloset" data-testid="closet-select" @click="startSelecting">
+                Select
+            </button>
+            <button v-if="(activeCount || retiredCount) && !selecting" type="button" class="lpGearEmptyCloset lpGearEmptyNext" data-testid="closet-empty" @click="emptyCloset">
                 Empty
+            </button>
+            <button v-if="selecting" type="button" class="lpGearEmptyCloset" data-testid="closet-select-done" @click="stopSelecting">
+                Done
             </button>
         </div>
 
@@ -35,8 +41,9 @@
         </scrollRow>
 
         <ul class="lpGearList">
-            <li v-for="entry in filteredItems" :key="entry.item.id" class="lpGearRow" data-testid="gear-row">
-                <div class="lpGearRowMain">
+            <li v-for="entry in filteredItems" :key="entry.item.id" class="lpGearRow" :class="{ lpGearRowSelected: selecting && isSelected(entry.item) }" data-testid="gear-row">
+                <div class="lpGearRowMain" @click="selecting && toggleSelected(entry.item, $event)">
+                    <input v-if="selecting" type="checkbox" class="lpGearCheck" :checked="isSelected(entry.item)" :aria-label="`Select ${entry.item.name || 'unnamed gear'}`" data-testid="closet-check" @click.stop @change="toggleSelected(entry.item)">
                     <div class="lpGearRowBody">
                         <div class="lpGearName">
                             {{ entry.item.name || 'Unnamed gear' }}
@@ -52,7 +59,8 @@
                         </button>
                     </div>
 
-                    <button v-if="entry.item.retired" type="button" class="lpGearRestore" data-testid="closet-restore" @click="restore(entry.item)">
+                    <template v-if="selecting" />
+                    <button v-else-if="entry.item.retired" type="button" class="lpGearRestore" data-testid="closet-restore" @click="restore(entry.item)">
                         Restore
                     </button>
                     <button v-else-if="entry.item.wishlist" type="button" class="lpGearRestore" data-testid="closet-got-it" title="Bought it: move it into your closet" @click="gotIt(entry.item)">
@@ -68,7 +76,7 @@
                         @click="togglePicker(entry.item.id)"
                     >+</a>
 
-                    <a v-if="!entry.item.retired" class="lpGearRemove" data-testid="gear-remove" title="Remove from your closet" @click="removeItem(entry.item)">
+                    <a v-if="!entry.item.retired && !selecting" class="lpGearRemove" data-testid="gear-remove" title="Remove from your closet" @click="removeItem(entry.item)">
                         <i class="lpSprite lpSpriteRemove" />
                     </a>
                 </div>
@@ -100,6 +108,17 @@
             </li>
         </ul>
 
+        <!-- Select: pinned to the bottom of the screen, in thumb reach. -->
+        <div v-if="selecting" class="lpGearSelectBar" role="region" aria-label="Selected gear" data-testid="closet-select-bar">
+            <span class="lpGearSelectCount" role="status" aria-live="polite" data-testid="closet-selected-count">{{ selectedIds.length }} selected</span>
+            <button type="button" class="lpGearSelectAll" data-testid="closet-select-all" @click="selectAllShown">
+                {{ filteredItems.length && filteredItems.every((e) => isSelected(e.item)) ? 'Clear' : 'Select all' }}
+            </button>
+            <button type="button" class="lpGearDeleteSelected" :disabled="!selectedIds.length" data-testid="closet-delete-selected" @click="deleteSelected">
+                Delete{{ selectedIds.length ? ` ${selectedIds.length}` : '' }}
+            </button>
+        </div>
+
         <speedbump
             :shown="showSpeedbump"
             :speedbump-callback="speedbumpCallback"
@@ -120,7 +139,7 @@ import { replaceSoon } from '../utils/gear-meta.js';
 import { api } from '../utils/format.js';
 
 import utilsMixin from '../mixins/utils-mixin.js';
-import { confirmClosetRemoval, confirmEmptyCloset, isPlaceholder, restoreClosetItem } from '../utils/closet.js';
+import { confirmBulkRemoval, confirmClosetRemoval, confirmEmptyCloset, isPlaceholder, restoreClosetItem } from '../utils/closet.js';
 
 export default {
     name: 'Gear',
@@ -133,6 +152,8 @@ export default {
     mixins: [utilsMixin],
     data() {
         return {
+            selecting: false,
+            selectedIds: [],
             isLoaded: false,
             searchText: '',
             filter: 'all',
@@ -286,6 +307,38 @@ export default {
             });
             this.pickerItemId = null;
         },
+        startSelecting() {
+            this.selecting = true;
+            this.selectedIds = [];
+            this.pickerItemId = null;
+        },
+        stopSelecting() {
+            this.selecting = false;
+            this.selectedIds = [];
+        },
+        isSelected(item) {
+            return this.selectedIds.includes(item.id);
+        },
+        toggleSelected(item, evt) {
+            if (evt && evt.target.closest('input, button, a')) return;
+            this.selectedIds = this.isSelected(item) ? this.selectedIds.filter((id) => id !== item.id) : [...this.selectedIds, item.id];
+        },
+        selectAllShown() {
+            const shown = this.filteredItems.map((e) => e.item.id);
+            const all = shown.length && shown.every((id) => this.selectedIds.includes(id));
+            this.selectedIds = all ? this.selectedIds.filter((id) => !shown.includes(id)) : [...new Set([...this.selectedIds, ...shown])];
+        },
+        deleteSelected() {
+            const items = this.selectedIds.map((id) => this.$store.state.library.getItemById(id)).filter(Boolean);
+            confirmBulkRemoval({
+                store: this.$store,
+                initSpeedbump: (callback, options) => {
+                    this.speedbumpCallback = callback;
+                    this.speedbumpOptions = options;
+                    this.showSpeedbump = true;
+                },
+            }, items, () => this.stopSelecting());
+        },
         removeItem(item) {
             confirmClosetRemoval({
                 store: this.$store,
@@ -392,6 +445,75 @@ export default {
     font-weight: 600;
     margin-left: auto;
     padding: 8px 4px;
+}
+
+.lpGearEmptyNext {
+    margin-left: 4px;
+}
+
+.lpGearCheck {
+    accent-color: var(--lp-danger);
+    flex: none;
+    height: 22px;
+    width: 22px;
+}
+
+.lpGearRowSelected {
+    background: var(--lp-active-bg);
+}
+
+.lpGearSelectBar {
+    align-items: center;
+    background: var(--lp-surface);
+    border-top: 1px solid var(--lp-border);
+    bottom: 0;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+    display: flex;
+    gap: 8px;
+    left: 0;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    position: fixed;
+    right: 0;
+    z-index: 5;
+}
+
+// Room under the last row, so the bar never covers it.
+#lpGear:has(.lpGearSelectBar) .lpGearList {
+    padding-bottom: 80px;
+}
+
+.lpGearSelectCount {
+    font-size: 14px;
+    font-weight: 700;
+    margin-right: auto;
+}
+
+.lpGearSelectAll,
+.lpGearDeleteSelected {
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: $font-body;
+    font-size: 14px;
+    font-weight: 700;
+    min-height: 44px;
+    padding: 0 14px;
+}
+
+.lpGearSelectAll {
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border-strong);
+    color: var(--lp-text);
+}
+
+.lpGearDeleteSelected {
+    background: var(--lp-danger);
+    border: 0;
+    color: #fff;
+
+    &:disabled {
+        cursor: default;
+        opacity: 0.45;
+    }
 }
 
 .lpGearSearchRow {

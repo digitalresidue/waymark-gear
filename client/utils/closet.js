@@ -40,6 +40,39 @@ export function confirmClosetRemoval({ store, initSpeedbump }, item) {
     }
 }
 
+// Selected gear, several pieces at once (the closet's Select): one "are you
+// sure" for all of it. As with one piece, retiring is offered first when
+// any of it is in a list.
+export function confirmBulkRemoval({ store, initSpeedbump }, items, done = () => {}) {
+    const library = store.state.library;
+    const ids = items.map((i) => i.id);
+    if (!ids.length) return;
+    const n = ids.length;
+    const what = `${n} ${n === 1 ? 'piece' : 'pieces'} of gear`;
+    const inLists = items.filter((i) => library.getListsContainingItem(i.id).length).length;
+    const del = () => {
+        store.commit('removeItems', ids);
+        done();
+    };
+    const retire = {
+        label: `Retire ${n === 1 ? 'it' : `all ${n}`}`,
+        callback: () => {
+            store.commit('setItemsRetired', { ids, retired: true });
+            done();
+        },
+    };
+    const names = items.slice(0, 5).map((i) => i.name || 'Unnamed gear').join(', ') + (n > 5 ? ` and ${n - 5} more` : '');
+    initSpeedbump(del, {
+        title: `Delete ${what}?`,
+        body: inLists
+            ? `${names}. ${inLists === n ? (n === 1 ? 'It is' : 'All of it is') : `${inLists} of them are`} in your lists, and deleting takes ${inLists === 1 ? 'it' : 'them'} out of those lists too. Retire instead to hide ${n === 1 ? 'it' : 'them'} from your closet and keep your lists as they are. Deleting can't be undone.`
+            : `${names}. None of it is in a list. Retire instead to hide ${n === 1 ? 'it' : 'them'} from your closet but keep ${n === 1 ? 'it' : 'them'}. Deleting can't be undone.`,
+        alternate: retire,
+        confirm: `Delete ${n}`,
+        cancel: 'Cancel',
+    });
+}
+
 export function restoreClosetItem(store, item) {
     store.commit('setItemRetired', { item, retired: false });
 }

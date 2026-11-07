@@ -5,8 +5,25 @@
             <button v-if="retiredCount" type="button" class="wgClosetToggle" :aria-pressed="String(showRetired)" data-testid="closet-show-retired" @click="showRetired = !showRetired">
                 {{ showRetired ? 'Hide retired' : `Retired (${retiredCount})` }}
             </button>
-            <button v-if="hasGear" type="button" class="wgClosetToggle wgClosetEmpty" title="Delete all the gear in your closet" data-testid="closet-empty" @click="emptyCloset">
+            <button v-if="hasGear && !selecting" type="button" class="wgClosetToggle" title="Pick gear to delete or retire" data-testid="closet-select" @click="startSelecting">
+                Select
+            </button>
+            <button v-if="hasGear && !selecting" type="button" class="wgClosetToggle wgClosetEmpty" title="Delete all the gear in your closet" data-testid="closet-empty" @click="emptyCloset">
                 Empty
+            </button>
+            <button v-if="selecting" type="button" class="wgClosetToggle" data-testid="closet-select-done" @click="stopSelecting">
+                Done
+            </button>
+        </div>
+        <!-- Select: tick gear, then delete or retire it all with one "are
+             you sure" (utils/closet.js, confirmBulkRemoval). -->
+        <div v-if="selecting" class="wgClosetSelectBar" role="region" aria-label="Selected gear" data-testid="closet-select-bar">
+            <span class="wgClosetSelectCount" role="status" aria-live="polite" data-testid="closet-selected-count">{{ selectedIds.length }} selected</span>
+            <button type="button" class="wgClosetToggle" data-testid="closet-select-all" @click="selectAllShown">
+                {{ filteredItems.length && filteredItems.every((i) => isSelected(i)) ? 'Clear' : 'Select all' }}
+            </button>
+            <button type="button" class="wgClosetDelete" :disabled="!selectedIds.length" data-testid="closet-delete-selected" @click="deleteSelected">
+                Delete{{ selectedIds.length ? ` ${selectedIds.length}` : '' }}
             </button>
         </div>
         <div class="lpSidebarSearch">
@@ -25,8 +42,9 @@
             </button>
         </div>
         <ul id="library" class="lpSidebarScroll">
-            <li v-for="item in filteredItems" :key="item.id" class="lpLibraryItem" :class="{ wgRetired: item.retired }" :data-item-id="item.id" data-testid="closet-item">
-                <div v-if="!item.inCurrentList && !item.retired" class="lpHandle lpLibraryItemHandle" title="Drag this item into your list" />
+            <li v-for="item in filteredItems" :key="item.id" class="lpLibraryItem" :class="{ wgRetired: item.retired, wgSelecting: selecting, wgSelected: selecting && isSelected(item) }" :data-item-id="item.id" data-testid="closet-item" @click="selecting && toggleSelected(item, $event)">
+                <input v-if="selecting" type="checkbox" class="wgClosetCheck" :checked="isSelected(item)" :aria-label="`Select ${item.name || 'unnamed gear'}`" data-testid="closet-check" @click.stop @change="toggleSelected(item)">
+                <div v-else-if="!item.inCurrentList && !item.retired" class="lpHandle lpLibraryItemHandle" title="Drag this item into your list" />
                 <span class="lpLibraryItemBody">
                     <span class="lpLibraryItemTopline">
                         <span class="lpName">{{ item.name }}<span v-if="item.closetCategory && closetFilter === null" class="wgClosetTag">{{ item.closetCategory }}</span><span v-if="needsReplacing(item)" class="wgReplaceTag" data-testid="replace-soon">Replace soon</span></span>
@@ -37,9 +55,11 @@
                     </span>
                     <span class="lpLibraryItemBottomline">
                         <span class="lpDescription"><span v-if="item.retired" class="wgRetiredTag">Retired</span><span v-else-if="item.wishlist" class="wgRetiredTag wgWishTag" data-testid="closet-wishlist-tag">Wishlist</span>{{ item.description }}</span>
-                        <button type="button" class="wgClosetDetails" :aria-label="`Details for ${item.name}`" data-testid="closet-details" @click="openGearDetails(library.getItemById(item.id))">Details</button>
-                        <button v-if="item.retired" type="button" class="wgClosetRestore" data-testid="closet-restore" @click="restore(item)">Restore</button>
-                        <a v-else class="lpRemove lpRemoveLibraryItem speedbump" title="Remove from your closet" @click="removeItem(item)"><i class="lpSprite lpSpriteRemove" /></a>
+                        <template v-if="!selecting">
+                            <button type="button" class="wgClosetDetails" :aria-label="`Details for ${item.name}`" data-testid="closet-details" @click="openGearDetails(library.getItemById(item.id))">Details</button>
+                            <button v-if="item.retired" type="button" class="wgClosetRestore" data-testid="closet-restore" @click="restore(item)">Restore</button>
+                            <a v-else class="lpRemove lpRemoveLibraryItem speedbump" title="Remove from your closet" @click="removeItem(item)"><i class="lpSprite lpSpriteRemove" /></a>
+                        </template>
                     </span>
                 </span>
             </li>
@@ -51,7 +71,7 @@
 import utilsMixin from '../mixins/utils-mixin.js';
 import dragula from 'dragula';
 import { getElementIndex } from '../utils/utils.js';
-import { confirmClosetRemoval, confirmEmptyCloset, isPlaceholder, restoreClosetItem } from '../utils/closet.js';
+import { confirmBulkRemoval, confirmClosetRemoval, confirmEmptyCloset, isPlaceholder, restoreClosetItem } from '../utils/closet.js';
 import { replaceSoon } from '../utils/gear-meta.js';
 
 export default {
@@ -67,6 +87,8 @@ export default {
             closetFilter: null,
             itemDragId: false,
             drake: null,
+            selecting: false,
+            selectedIds: [],
         };
     },
     computed: {
@@ -180,6 +202,32 @@ export default {
             });
             this.drake = drake;
         },
+        startSelecting() {
+            this.selecting = true;
+            this.selectedIds = [];
+        },
+        stopSelecting() {
+            this.selecting = false;
+            this.selectedIds = [];
+        },
+        isSelected(item) {
+            return this.selectedIds.includes(item.id);
+        },
+        toggleSelected(item, evt) {
+            // A click on the row (not its checkbox) toggles it too.
+            if (evt && evt.target.closest('input, button, a')) return;
+            this.selectedIds = this.isSelected(item) ? this.selectedIds.filter((id) => id !== item.id) : [...this.selectedIds, item.id];
+        },
+        // Everything shown (after search and filter), or clear if it's all ticked.
+        selectAllShown() {
+            const shown = this.filteredItems.map((i) => i.id);
+            const all = shown.length && shown.every((id) => this.selectedIds.includes(id));
+            this.selectedIds = all ? this.selectedIds.filter((id) => !shown.includes(id)) : [...new Set([...this.selectedIds, ...shown])];
+        },
+        deleteSelected() {
+            const items = this.selectedIds.map((id) => this.library.getItemById(id)).filter(Boolean);
+            confirmBulkRemoval({ store: this.$store, initSpeedbump: this.initSpeedbump }, items, () => this.stopSelecting());
+        },
         removeItem(item) {
             confirmClosetRemoval({ store: this.$store, initSpeedbump: this.initSpeedbump }, this.library.getItemById(item.id));
         },
@@ -244,6 +292,56 @@ export default {
     font-weight: 700;
     margin-right: 6px;
     padding: 1px 5px;
+}
+
+.wgClosetSelectBar {
+    align-items: center;
+    background: var(--lp-sidebar-inset);
+    border-radius: 8px;
+    display: flex;
+    gap: 6px;
+    margin: 0 12px 8px;
+    padding: 6px 8px;
+}
+
+.wgClosetSelectCount {
+    color: var(--lp-sidebar-text);
+    font-size: 13px;
+    font-weight: 700;
+    margin-right: auto;
+}
+
+.wgClosetDelete {
+    background: var(--lp-danger);
+    border: 0;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    font-family: $font-body;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 10px;
+
+    &:disabled {
+        cursor: default;
+        opacity: 0.45;
+    }
+}
+
+.lpLibraryItem.wgSelecting {
+    cursor: pointer;
+}
+
+.lpLibraryItem.wgSelected {
+    background: var(--lp-active-bg);
+}
+
+.wgClosetCheck {
+    accent-color: var(--lp-danger);
+    flex: none;
+    height: 18px;
+    margin: 2px 8px 0 4px;
+    width: 18px;
 }
 
 .wgClosetRestore {
