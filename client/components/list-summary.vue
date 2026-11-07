@@ -51,8 +51,8 @@
                 </template>
                 <li class="lpRow lpFooter lpTotal">
                     <span class="lpCell lpLegendCell" />
-                    <span class="lpCell lpCategoryCell lpSubtotal" :title="list.totalQty +' items'">
-                        Total
+                    <span class="lpCell lpCategoryCell lpSubtotal">
+                        <span class="wgTotalLabel">Total</span><infoTip term="total" />
                     </span>
                     <span v-if="list.optionalFields['price']" class="lpCell lpNumber lpSubtotal" :title="list.totalQty +' items'">
                         {{ displayPrice(list.totalPrice, library.currencySymbol) }}
@@ -67,7 +67,7 @@
                 <li v-if="list.totalConsumableWeight" data-weight-type="consumable" class="lpRow lpFooter lpBreakdown lpConsumableWeight">
                     <span class="lpCell lpLegendCell" />
                     <span class="lpCell lpCategoryCell">
-                        Consumable
+                        <span class="wgTotalLabel">Consumable</span><infoTip term="consumable" />
                     </span>
                     <span v-if="list.optionalFields['price']" class="lpCell lpNumber">
                         {{ displayPrice(list.totalConsumablePrice, library.currencySymbol) }}
@@ -80,7 +80,7 @@
                 <li v-if="list.totalWornWeight" data-weight-type="worn" class="lpRow lpFooter lpBreakdown lpWornWeight">
                     <span class="lpCell lpLegendCell" />
                     <span class="lpCell lpCategoryCell">
-                        Worn
+                        <span class="wgTotalLabel">Worn</span><infoTip term="worn" />
                     </span>
                     <span v-if="list.optionalFields['price']" class="lpCell lpNumber" />
                     <span class="lpCell lpNumber lpWeightVal">
@@ -90,8 +90,8 @@
                 </li>
                 <li v-if="list.totalWornWeight || list.totalConsumableWeight" data-weight-type="base" class="lpRow lpFooter lpBreakdown lpBaseWeight">
                     <span class="lpCell lpLegendCell" />
-                    <span class="lpCell lpCategoryCell" :title="displayWeight(list.totalPackWeight, library.totalUnit) + ' ' + library.totalUnit + ' pack weight (consumable + base weight)'">
-                        Base Weight
+                    <span class="lpCell lpCategoryCell">
+                        <span class="wgTotalLabel">Base Weight</span><infoTip term="base" />
                     </span>
                     <span v-if="list.optionalFields['price']" class="lpCell lpNumber" />
                     <span class="lpCell lpNumber lpWeightVal">
@@ -103,8 +103,8 @@
                 </li>
                 <li v-if="list.optionalFields['packWeight']" data-weight-type="pack" class="lpRow lpFooter lpBreakdown lpTotalPackWeight">
                     <span class="lpCell lpLegendCell" />
-                    <span class="lpCell lpCategoryCell" title="Total weight minus worn items">
-                        Total Pack Weight
+                    <span class="lpCell lpCategoryCell">
+                        <span class="wgTotalLabel">Total Pack Weight</span><infoTip term="pack" />
                     </span>
                     <span v-if="list.optionalFields['price']" class="lpCell lpNumber" />
                     <span class="lpCell lpNumber lpWeightVal">
@@ -123,6 +123,7 @@
 import { totalRowsFor } from '../utils/category-groups.js';
 import colorPicker from './colorpicker.vue';
 import unitSelect from './unit-select.vue';
+import infoTip from './info-tip.vue';
 
 import { makeChart, CHART_STYLES, chartStyle, rememberStyle } from '../charts.js';
 import { chartLineColor, chartHoverColor, onThemeChange } from '../utils/theme.js';
@@ -132,6 +133,7 @@ import colorUtils from '../utils/color.js';
 export default {
     name: 'ListSummary',
     components: {
+        infoTip,
         colorPicker,
         unitSelect,
     },
@@ -339,6 +341,12 @@ export default {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+    }
+
+    // Total, Consumable, Worn, Base weight: short labels with an ⓘ tip that
+    // has to show past the cell (client/utils/weight-terms.js).
+    .lpFooter .lpCategoryCell {
+        overflow: visible;
     }
 
     // Right-aligned like the item table's, so the price track growing for a

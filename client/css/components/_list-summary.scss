@@ -112,6 +112,12 @@
         white-space: nowrap;
     }
 
+    // Total, Consumable, Worn, Base weight: short labels with an ⓘ tip that
+    // has to show past the cell (client/utils/weight-terms.js).
+    .lpFooter .lpCategoryCell {
+        overflow: visible;
+    }
+
     // Right-aligned like the item table's, so the price track growing for a
     // four-figure subtotal doesn't shift the column.
     .lpNumber {
