@@ -34,9 +34,18 @@ export async function followState(viewer, username) {
     return { ...counts, following, self: Boolean(viewer && viewer.user_id === target.user_id) };
 }
 
+// Plenty for anyone following people (not a firehose), and it keeps the
+// Follow timeline's queries bounded (server/activity.js).
+export const MAX_FOLLOWING = 1000;
+
 export async function follow(user, username) {
     const target = await userByName(username);
     if (target.user_id === user.user_id) throw new FollowError("You can't follow yourself.");
+    const [{ c }] = await knex('follows').where({ follower_id: user.user_id }).count({ c: '*' });
+    if (Number(c) >= MAX_FOLLOWING) {
+        const already = await knex('follows').where({ follower_id: user.user_id, followee_id: target.user_id }).first();
+        if (!already) throw new FollowError(`You can follow up to ${MAX_FOLLOWING.toLocaleString('en-US')} backpackers. Unfollow someone to make room.`);
+    }
     const emails = await knex.transaction(async (trx) => {
         const inserted = await trx('follows').insert({ follower_id: user.user_id, followee_id: target.user_id })
             .onConflict(['follower_id', 'followee_id']).ignore().returning('follower_id');
@@ -57,7 +66,7 @@ export async function followingList(user) {
     return knex('follows').join('users', 'users.user_id', 'follows.followee_id')
         .where({ follower_id: user.user_id })
         .select('users.username', 'users.display_name', 'users.avatar_url')
-        .orderBy('follows.created_at', 'desc').limit(500)
+        .orderBy('follows.created_at', 'desc').limit(MAX_FOLLOWING)
         .then((rows) => rows.map((r) => ({ username: r.username, displayName: r.display_name || '', avatarUrl: r.avatar_url || '' })));
 }
 

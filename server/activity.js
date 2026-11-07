@@ -18,6 +18,16 @@
 //
 // While it's being tried out, only the site owner sees Follow; the owner
 // opens it to everyone from the page itself (site_settings.follow_feed).
+//
+// Limits, so it stays quick as the site grows:
+//   - The timeline goes back 12 months (HISTORY_DAYS). Older updates are
+//     still on each backpacker's profile, lists and trips; the timeline is
+//     for what's new. It also keeps every page of it cheap: each source is
+//     read newest-first through an index on (who, when), never scanned.
+//   - pack_updates, the one thing kept only for the timeline, is trimmed to
+//     the same 12 months once a day (schedulePackUpdatePrune).
+//   - A member follows at most MAX_FOLLOWING backpackers (server/follows.js).
+//   - A page is 30 updates (60 at most).
 
 import knex from './db.js';
 import { isOwner } from './auth.js';
@@ -134,6 +144,8 @@ export async function recordPackUpdate(trx, { userId, externalId, beforeItems, a
 // ---- the timeline ---------------------------------------------------------------------
 
 const PAGE = 30;
+export const HISTORY_DAYS = 365;
+const DAY_MS = 24 * 60 * 60 * 1000;
 const excerpt = (s, n) => {
     const t = String(s || '').replace(/[#*_>`[\]]/g, '').replace(/\s+/g, ' ').trim();
     return t.length > n ? `${t.slice(0, n - 1).trimEnd()}…` : t;
@@ -158,31 +170,33 @@ export async function timeline(user, { before, limit = PAGE } = {}) {
     requireAccess(user);
     const n = Math.min(Math.max(Number(limit) || PAGE, 1), 60);
     const until = before && !Number.isNaN(Date.parse(before)) ? new Date(before) : new Date(Date.now() + 60_000);
+    const since = new Date(Date.now() - HISTORY_DAYS * DAY_MS);
     const who = followees(user);
 
     const [published, shakedowns, packs, trips, entries, reviews] = await Promise.all([
-        knex('public_kits as k').whereIn('k.user_id', who).where('k.published_at', '<', until)
+        knex('public_kits as k').whereIn('k.user_id', who).where('k.published_at', '<', until).where('k.published_at', '>', since)
             .leftJoin('trails as t', 't.id', 'k.trail_id')
             .select('k.*', 't.name as trail_name', 't.slug as trail_slug', 'k.published_at as at')
             .orderBy('k.published_at', 'desc').limit(n),
-        knex('public_kits as k').whereIn('k.user_id', who).whereNotNull('k.shakedown_at').where('k.shakedown_at', '<', until)
+        knex('public_kits as k').whereIn('k.user_id', who).whereNotNull('k.shakedown_at').where('k.shakedown_at', '<', until).where('k.shakedown_at', '>', since)
             .select('k.external_id', 'k.user_id', 'k.name', 'k.base_weight_mg', 'k.item_count', 'k.shakedown_at as at')
             .orderBy('k.shakedown_at', 'desc').limit(n),
         knex('pack_updates as u').join('public_kits as k', 'k.external_id', 'u.external_id')
-            .whereIn('u.user_id', who).where('u.updated_at', '<', until)
+            .whereIn('u.user_id', who).where('u.updated_at', '<', until).where('u.updated_at', '>', since)
             .select('u.*', 'k.name', 'k.item_count', 'k.weight_class', 'u.updated_at as at')
             .orderBy('u.updated_at', 'desc').limit(n),
         knex('trips as t').whereIn('t.user_id', who).whereIn('t.visibility', ['public', 'followers'])
             .whereRaw('coalesce(t.shared_at, t.created_at) < ?', [until])
+            .whereRaw('coalesce(t.shared_at, t.created_at) > ?', [since])
             .select('t.*', knex.raw('coalesce(t.shared_at, t.created_at) as at'),
                 knex.raw('(select count(*) from trip_entries e where e.trip_id = t.id) as entry_count'))
             .orderByRaw('coalesce(t.shared_at, t.created_at) desc').limit(n),
         knex('trip_entries as e').join('trips as t', 't.id', 'e.trip_id')
-            .whereIn('t.user_id', who).whereIn('t.visibility', ['public', 'followers']).where('e.created_at', '<', until)
+            .whereIn('t.user_id', who).whereIn('t.visibility', ['public', 'followers']).where('e.created_at', '<', until).where('e.created_at', '>', since)
             .select('e.*', 't.user_id', 't.title as trip_title', 't.start_date', 'e.created_at as at')
             .orderBy('e.created_at', 'desc').limit(n),
         knex('gear_reviews as r').join('catalog_items as c', 'c.id', 'r.catalog_id')
-            .whereIn('r.author_id', who).whereNull('r.hidden_at').where('r.created_at', '<', until)
+            .whereIn('r.author_id', who).whereNull('r.hidden_at').where('r.created_at', '<', until).where('r.created_at', '>', since)
             .select('r.*', 'r.author_id as user_id', 'c.name as gear_name', 'c.brand', 'c.image_url', 'r.created_at as at')
             .orderBy('r.created_at', 'desc').limit(n),
     ]);
@@ -280,43 +294,87 @@ export async function timeline(user, { before, limit = PAGE } = {}) {
         // Another page if this one was full.
         next: items.length === n ? new Date(items[items.length - 1].at).toISOString() : null,
         following,
+        historyDays: HISTORY_DAYS,
     };
+}
+
+// ---- keeping it trim -------------------------------------------------------------------
+
+/** Pack updates older than the timeline's window: nothing shows them. */
+export async function prunePackUpdates(db = knex) {
+    return db('pack_updates').where('updated_at', '<', new Date(Date.now() - HISTORY_DAYS * DAY_MS)).del();
+}
+
+/** Once a day (and ten minutes after start), on each instance; deletes are idempotent. */
+export function schedulePackUpdatePrune(logger) {
+    const run = async () => {
+        try {
+            const removed = await prunePackUpdates();
+            if (removed) logger.info({ message: 'pack updates pruned', removed });
+        } catch (err) {
+            logger.error({ message: 'pack update prune failed', err });
+        }
+    };
+    setTimeout(run, 10 * 60 * 1000).unref();
+    setInterval(run, DAY_MS).unref();
 }
 
 // ---- finding people to follow ---------------------------------------------------------
 
 /**
  * Hikers with something public to follow (a published list or a public
- * trip), most recently active first; or the ones whose name matches `q`.
- * Leaves out the viewer and the people they already follow.
+ * trip), most recently active first; or, with `q`, those whose username or
+ * name starts with it. Leaves out the viewer and the people they already
+ * follow.
+ *
+ * Built to stay quick with a big membership: candidates come from walking
+ * the newest lists and trips (or the name indexes), and only the 24 shown
+ * get their counts.
  */
 export async function discover(user, { q = '' } = {}) {
     requireAccess(user);
-    const query = String(q || '').trim().slice(0, 60);
+    const query = String(q || '').trim().toLowerCase().slice(0, 60);
+    const SHOW = 24;
+    const skip = new Set([user.user_id, ...await knex('follows').where({ follower_id: user.user_id }).pluck('followee_id')]);
+
+    let ids;
+    if (query) {
+        const prefix = `${query.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
+        const rows = await knex('users')
+            .where('profile_hidden', false)
+            .where((w) => w.whereRaw('lower(username) like ?', [prefix]).orWhereRaw("lower(display_name) like ?", [prefix]))
+            .orderByRaw('lower(username)')
+            .limit(400)
+            .pluck('user_id');
+        ids = rows.filter((id) => !skip.has(id));
+    } else {
+        // Whoever published or updated a list, or shared a trip, most recently.
+        const [kits, trips] = await Promise.all([
+            knex('public_kits').orderBy('updated_at', 'desc').limit(600).select('user_id', 'updated_at as at'),
+            knex('trips').where('visibility', 'public').orderBy('updated_at', 'desc').limit(600).select('user_id', 'updated_at as at'),
+        ]);
+        const seen = new Set();
+        ids = [...kits, ...trips].sort((x, y) => new Date(y.at) - new Date(x.at))
+            .map((r) => r.user_id)
+            .filter((id) => !skip.has(id) && !seen.has(id) && seen.add(id));
+    }
+    if (!ids.length) return { people: [] };
+
     const rows = await knex('users as u')
+        .whereIn('u.user_id', ids.slice(0, SHOW * 3))
         .where('u.profile_hidden', false)
-        .whereNot('u.user_id', user.user_id)
-        .whereNotIn('u.user_id', knex('follows').where({ follower_id: user.user_id }).select('followee_id'))
-        .modify((b) => {
-            if (query) {
-                const like = `%${query.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
-                b.where((w) => w.whereILike('u.username', like).orWhereILike('u.display_name', like));
-            }
-        })
-        .select('u.username', 'u.display_name', 'u.avatar_url', 'u.trail_name',
+        .select('u.user_id', 'u.username', 'u.display_name', 'u.avatar_url', 'u.trail_name',
             knex.raw('(select count(*) from public_kits k where k.user_id = u.user_id) as packs'),
             knex.raw("(select count(*) from trips t where t.user_id = u.user_id and t.visibility = 'public') as trips"),
-            knex.raw('(select count(*) from follows f where f.followee_id = u.user_id) as followers'),
-            knex.raw(`greatest(
-                (select max(k.updated_at) from public_kits k where k.user_id = u.user_id),
-                (select max(t.updated_at) from trips t where t.user_id = u.user_id and t.visibility = 'public')
-            ) as active_at`))
-        .whereRaw(`(exists (select 1 from public_kits k where k.user_id = u.user_id)
-            or exists (select 1 from trips t where t.user_id = u.user_id and t.visibility = 'public'))`)
-        .orderByRaw('active_at desc nulls last')
-        .limit(24);
+            knex.raw('(select count(*) from follows f where f.followee_id = u.user_id) as followers'));
+    const order = new Map(ids.map((id, i) => [id, i]));
+    const people = rows
+        // Something public to follow, searched for or not.
+        .filter((r) => Number(r.packs) || Number(r.trips))
+        .sort((x, y) => order.get(x.user_id) - order.get(y.user_id))
+        .slice(0, SHOW);
     return {
-        people: rows.map((r) => ({
+        people: people.map((r) => ({
             username: r.username,
             displayName: r.display_name || '',
             avatarUrl: r.avatar_url || '',
@@ -324,7 +382,6 @@ export async function discover(user, { q = '' } = {}) {
             packs: Number(r.packs),
             trips: Number(r.trips),
             followers: Number(r.followers),
-            activeAt: r.active_at,
         })),
     };
 }

@@ -39,13 +39,32 @@ export async function up(knex) {
 
         alter table users add column if not exists share_activity boolean not null default true;
 
-        create index if not exists trip_entries_recent_idx on trip_entries (created_at desc);
+        -- The timeline reads each source newest-first for the people someone
+        -- follows: an index on (who, when) for each, so a page is an index
+        -- walk, however many years of lists and trips the site has.
+        create index if not exists trip_entries_trip_recent_idx on trip_entries (trip_id, created_at desc);
+        create index if not exists public_kits_user_published_idx on public_kits (user_id, published_at desc);
+        create index if not exists public_kits_user_shakedown_idx on public_kits (user_id, shakedown_at desc) where shakedown_at is not null;
+        create index if not exists gear_reviews_author_idx on gear_reviews (author_id, created_at desc) where hidden_at is null;
+        create index if not exists trips_user_shared_idx on trips (user_id, (coalesce(shared_at, created_at)) desc) where visibility <> 'private';
+
+        -- Discover: the most recently updated lists, and names by prefix.
+        create index if not exists public_kits_updated_idx on public_kits (updated_at desc);
+        create index if not exists users_username_prefix_idx on users (lower(username) text_pattern_ops);
+        create index if not exists users_display_name_prefix_idx on users (lower(display_name) text_pattern_ops);
     `);
 }
 
 export async function down(knex) {
     await knex.raw(`
-        drop index if exists trip_entries_recent_idx;
+        drop index if exists users_display_name_prefix_idx;
+        drop index if exists users_username_prefix_idx;
+        drop index if exists public_kits_updated_idx;
+        drop index if exists trips_user_shared_idx;
+        drop index if exists gear_reviews_author_idx;
+        drop index if exists public_kits_user_shakedown_idx;
+        drop index if exists public_kits_user_published_idx;
+        drop index if exists trip_entries_trip_recent_idx;
         alter table users drop column if exists share_activity;
         alter table trips drop column if exists shared_at;
         alter table kit_clock drop column if exists items;

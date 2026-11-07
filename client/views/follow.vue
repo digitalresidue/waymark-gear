@@ -177,6 +177,9 @@
                     <button v-if="next" type="button" class="wgBtn wgBtnGhost wgFollowMore" :disabled="loading" data-testid="timeline-more" @click="loadMore">
                         {{ loading ? 'Loading…' : 'Show older' }}
                     </button>
+                    <p v-else-if="items.length" class="wgMuted wgFollowEnd" data-testid="timeline-end">
+                        That's everything from the last 12 months. Older trips and packs are on each backpacker's profile.
+                    </p>
                 </section>
 
                 <!-- Following: who you follow, and unfollow. -->
@@ -747,6 +750,12 @@ export default {
 
     .wgFollowMore {
         align-self: center;
+    }
+
+    .wgFollowEnd {
+        font-size: 14px;
+        margin: 0;
+        text-align: center;
     }
 
     // ---- people ----
