@@ -40,14 +40,24 @@ const BY_CATEGORY = new Map([
     ['pack', 'pack'], ['backpack', 'pack'], ['rucksack', 'pack'], ['fastpack', 'pack'], ['hydrationvest', 'pack'], ['runningvest', 'pack'],
 ]);
 
-// Not big-three gear, though the words overlap: accessories and other kinds.
-const NOT = ['suspension', 'tree strap', 'whoopie', 'ridgeline', 'stake', 'bug net', 'footprint', 'groundsheet', 'ground sheet',
-    'pack liner', 'pack cover', 'packing cube', 'pack towel', 'stuff sack', 'fanny pack', 'hip pack', 'waist pack', 'battery pack',
-    'power pack', 'packraft', 'ice pack', 'pack rain', 'sit pad', 'seat pad', 'pad repair', 'pillow', 'liner', 'quilt strap',
-    'pad strap', 'tent pole', 'repair'];
+// Not big-three gear, though the words overlap: accessories that go with a
+// hammock, tarp, quilt or pack, and other kinds. Checked on the item's own
+// name (brand removed, and only the part before "with": a "hammock with bug
+// net" is a hammock), so they win even in a Hammock or Underquilt category.
+const NOT = ['suspension', 'tree strap', 'strap', 'whoopie', 'ridgeline', 'stake', 'bug net', 'bugnet', 'bug-net', 'net',
+    'footprint', 'groundsheet', 'ground sheet', 'ground cloth', 'groundcloth', 'protector', 'sleeve', 'snakeskin', 'snake skin',
+    'sock', 'door', 'cover', 'organizer', 'shelf', 'guyline', 'guy line', 'line', 'cord', 'tensioner', 'hardware', 'buckle',
+    'pack liner', 'packing cube', 'pack towel', 'stuff sack', 'fanny pack', 'hip pack', 'waist pack', 'battery pack',
+    'power pack', 'packraft', 'ice pack', 'sit pad', 'seat pad', 'pad repair', 'pillow', 'liner', 'tent pole',
+    'repair', 'patch', 'spreader bar', 'pad extender', 'pad sleeve', 'hip belt', 'hipbelt', 'pocket', 'shoulder strap'];
+
+// Brands whose names sound like a kind of gear: never read as one.
+const BRAND_WORDS = ['hammock gear', 'hammock bliss', 'tarptent', 'quilt works', 'underground quilts', 'sea to summit', 'big agnes', 'six moon designs', 'gossamer gear', 'hyperlite mountain gear', 'enlightened equipment'];
 
 // Words, most specific first: "hammock tarp" is a tarp, "hammock underquilt"
-// an underquilt.
+// an underquilt. Only for gear typed into a list without a catalog link, and
+// only words for kinds of gear: no model names ("Mariposa" is a Gossamer
+// Gear pack and a Town Shirt hoodie).
 const WORDS = [
     ['underquilt', ['underquilt', 'under quilt']],
     ['tarp', ['tarp']],
@@ -55,35 +65,64 @@ const WORDS = [
     ['hammock', ['hammock']],
     ['sleeping-bag', ['sleeping bag', 'mummy bag']],
     ['top-quilt', ['top quilt', 'quilt']],
-    ['foam-pad', ['foam pad', 'z lite', 'zlite', 'z-lite', 'thinlight', 'ccf', 'closed cell', 'closed-cell', 'switchback']],
-    ['air-pad', ['sleeping pad', 'sleep pad', 'neoair', 'xlite', 'xtherm', 'tensor', 'air pad', 'airpad', 'mattress', 'uberlite', 'etherlight', 'pad']],
-    ['tent', ['tent', 'x-mid', 'xmid', 'duplex', 'lunar solo', 'copper spur', 'notch', 'the one', 'pyramid', 'trekker', 'shelter', 'dipole']],
-    ['pack', ['backpack', 'daypack', 'pack', 'mariposa', 'circuit', 'kakwa', 'exos', 'southwest', 'arc haul']],
+    ['foam-pad', ['foam pad', 'closed cell pad', 'closed-cell pad', 'ccf pad']],
+    ['air-pad', ['sleeping pad', 'sleep pad', 'air pad', 'airpad', 'air mattress']],
+    ['tent', ['tent']],
+    ['pack', ['backpack', 'daypack', 'pack']],
 ];
 
 const text = (...parts) => ` ${parts.filter(Boolean).join(' ').toLowerCase().replace(/[^a-z0-9+-]+/g, ' ')} `;
 const has = (t, w) => t.includes(` ${w} `) || t.includes(` ${w}s `);
 
+// The item's own words: the brand taken out ("Hammock Gear Underquilt
+// Protector" is an underquilt protector, not a hammock), and what's in
+// brackets too, a variant ("Nero Classic 50L (Vest Straps)" is a pack).
+function ownName(name, brand) {
+    let t = text(String(name || '').replace(/\([^)]*\)|\[[^\]]*\]/g, ' '));
+    for (const b of [brand, ...BRAND_WORDS].filter(Boolean)) {
+        const w = text(b).trim();
+        if (w) t = t.split(` ${w} `).join(' ');
+    }
+    return t;
+}
+
 function padKind(name, specs) {
     if (specs && specs.pad_type) return specs.pad_type === 'closed_cell' ? 'foam-pad' : 'air-pad';
     const t = text(name);
-    return WORDS.find(([k]) => k === 'foam-pad')[1].some((w) => has(t, w)) ? 'foam-pad' : 'air-pad';
+    return ['foam', 'closed cell', 'closed-cell', 'ccf', 'z lite', 'zlite', 'z-lite', 'thinlight'].some((w) => has(t, w)) ? 'foam-pad' : 'air-pad';
+}
+
+/** An accessory or another kind of gear, by its own name? */
+export function isAccessory(name, brand = '') {
+    const own = ownName(name, brand).split(' with ')[0];
+    return NOT.some((w) => has(` ${own.trim()} `, w));
 }
 
 /**
- * Which big-three kind a piece of gear is, or null. `catalogCategory` (from
- * the catalog item it's linked to, or a catalog item itself) is trusted
- * first; then its name and description; then the list's category name.
+ * Which big-three kind a piece of gear is, or null.
+ *
+ * `catalogCategory` (the catalog item's own, or the one a list item is
+ * linked to) decides when there is one. With `strict` (catalog gear offered
+ * as a swap) it's the only thing that does: a catalog item whose category
+ * isn't a big-three kind is never one, whatever its name or brand says.
+ * Otherwise (gear typed into a list) the name decides, brand removed, then
+ * the list's category name. Accessories are never big-three gear.
  */
-export function bigThreeKind({ name = '', description = '', category = '', catalogCategory = '', specs = null } = {}) {
-    const t = text(name, description);
-    if (NOT.some((w) => has(t, w))) return null;
+export function bigThreeKind({ name = '', description = '', category = '', catalogCategory = '', specs = null, brand = '', strict = false } = {}) {
+    if (isAccessory(name, brand)) return null;
     const fromCatalog = BY_CATEGORY.get(categoryKey(catalogCategory));
     if (fromCatalog) return fromCatalog === 'pad' ? padKind(`${name} ${description}`, specs) : fromCatalog;
-    for (const [kind, words] of WORDS) if (words.some((w) => has(t, w))) return kind;
+    if (strict || catalogCategory) return null;
+    const own = ownName(name, brand);
+    for (const [kind, words] of WORDS) if (words.some((w) => has(own, w))) return kind;
     const fromList = BY_CATEGORY.get(categoryKey(category));
     if (fromList) return fromList === 'pad' ? padKind(name, specs) : fromList;
     return null;
+}
+
+/** The same catalog category ("Tents" and "Tent" are one)? */
+export function sameCategory(a, b) {
+    return Boolean(a) && Boolean(b) && categoryKey(a) === categoryKey(b);
 }
 
 const CAPACITY = { '1p': 1, '1p_plus': 1.5, '2p': 2, '2p_plus': 2.5, '3p': 3 };

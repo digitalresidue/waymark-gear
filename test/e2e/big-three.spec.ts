@@ -39,13 +39,28 @@ test('a hammock and top quilt get hammocks and quilts: 20% lighter, as warm, nev
         [`${t}-9`, `Light bag ${t}`, 'Trailco', 'Sleeping Bag', 1, '20F', ''],
         [`${t}-10`, `Summer quilt ${t}`, 'Trailco', 'Top Quilt', 1, '50F', ''],
         [`${t}-11`, `Thin pad ${t}`, 'Trailco', 'Sleeping Pad', 1, '', '1.5'],
+        // Reported: a brand isn't a kind of gear, and accessories aren't swaps,
+        // even filed under Hammock, Tarp or Underquilt.
+        [`${t}-12`, `Old tarp ${t}`, 'Heavyco', 'Tarp', 40, '', ''],
+        [`${t}-13`, `Old underquilt ${t}`, 'Heavyco', 'Underquilt', 40, '', ''],
+        [`${t}-14`, `Bottom Entry Bugnet ${t}`, 'Heavyco', 'Hammock', 40, '', ''],
+        [`${t}-15`, `Hammock Gear Dyneema Hammock Ground Cloth ${t}`, 'Hammock Gear', 'Hammock', 1, '', ''],
+        [`${t}-16`, `Hammock Gear Mesh Tarp Sleeve ${t}`, 'Hammock Gear', 'Tarp', 1, '', ''],
+        [`${t}-17`, `Hammock Gear Underquilt Protector ${t}`, 'Hammock Gear', 'Underquilt', 1, '', ''],
+        [`${t}-18`, `Hammock Gear Dyneema Hammock Tarp ${t}`, 'Hammock Gear', 'Accessories', 1, '', ''],
+        [`${t}-19`, `Light tarp ${t}`, 'Trailco', 'Tarp', 2, '', ''],
+        [`${t}-20`, `Light underquilt ${t}`, 'Trailco', 'Underquilt', 2, '', ''],
+        // Reported: a hoodie named like a pack is never a pack swap.
+        [`${t}-21`, `Nero Classic 50L (Vest Straps) ${t}`, 'Heavyco', 'Pack', 40, '', ''],
+        [`${t}-22`, `Town Shirt Desert Mariposa Sun Hoodie ${t}`, 'Town Shirt', 'Sun Hoodie', 1, '', ''],
+        [`${t}-23`, `Murmur 36 ${t}`, 'Gossamer Gear', 'Pack', 2, '', ''],
     ].map(([sku, name, brand, cat, oz, temp, r]) => `${sku},${name},${brand},${cat},${oz},oz,published,${temp},${r},${r ? 'inflatable' : ''}`);
     expect((await owner.request.post(url('/api/admin/catalog/import/apply'), { data: { csv: [head, ...rows].join('\n') } })).ok()).toBe(true);
     const find = async (name: string) => {
         const res = await (await owner.request.get(url(`/api/catalog?q=${encodeURIComponent(name)}`))).json();
         return res.items.find((i: { name: string }) => i.name === name);
     };
-    const mine = await Promise.all([`Old hammock ${t}`, `Old quilt ${t}`, `Old pad ${t}`].map(find));
+    const mine = await Promise.all([`Old hammock ${t}`, `Old quilt ${t}`, `Old pad ${t}`, `Old tarp ${t}`, `Old underquilt ${t}`, `Bottom Entry Bugnet ${t}`, `Nero Classic 50L (Vest Straps) ${t}`].map(find));
 
     // A hiker with the hammock, quilt and pad on their list (from the catalog).
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -80,6 +95,18 @@ test('a hammock and top quilt get hammocks and quilts: 20% lighter, as warm, nev
     await expect(pad).toContainText(`Good pad ${t}`);
     for (const never of [`Light tent ${t}`, `Light bag ${t}`, `Summer quilt ${t}`, `Thin pad ${t}`]) {
         await expect(panel, never).not.toContainText(never);
+    }
+
+    // Reported: a tarp gets a lighter tarp, an underquilt a lighter
+    // underquilt; never Hammock Gear's ground cloth, tarp sleeve or
+    // underquilt protector, and a bug net isn't a hammock to swap.
+    await expect(shelter.getByTestId('big-three-item').filter({ hasText: `Old tarp ${t}` })).toContainText(`Light tarp ${t}`);
+    await expect(sleep.getByTestId('big-three-item').filter({ hasText: `Old underquilt ${t}` })).toContainText(`Light underquilt ${t}`);
+    await expect(panel.getByTestId('big-three-item').filter({ hasText: `Bottom Entry Bugnet ${t}` })).toHaveCount(0);
+    const pack = panel.getByTestId('big-three-pack').getByTestId('big-three-item').filter({ hasText: `Nero Classic 50L` });
+    await expect(pack).toContainText(`Murmur 36 ${t}`);
+    for (const never of ['Ground Cloth', 'Tarp Sleeve', 'Underquilt Protector', `Dyneema Hammock Tarp ${t}`, 'Sun Hoodie']) {
+        await expect(panel.locator('[data-testid="big-three-option"]').filter({ hasText: never }), never).toHaveCount(0);
     }
     // The summary adds it up.
     await expect(panel.getByTestId('big-three-summary')).toContainText('could save up to');
