@@ -272,6 +272,19 @@ const store = createStore({
         setItemRetired(state, { item, retired }) {
             state.library.getItemById(item.id).retired = retired;
         },
+        // Several at once (the closet's Select): one change, one save.
+        setItemsRetired(state, { ids, retired }) {
+            for (const id of ids) {
+                const item = state.library.getItemById(id);
+                if (item) item.retired = retired;
+            }
+        },
+        removeItems(state, ids) {
+            for (const id of ids) {
+                if (state.library.getItemById(id)) state.library.removeItem(id);
+            }
+            state.library.lists.forEach((list) => list.calculateTotals());
+        },
         // Put existing closet gear into a category (linked, not copied).
         addClosetItems(state, { categoryId, itemIds }) {
             const category = state.library.getCategoryById(categoryId);
