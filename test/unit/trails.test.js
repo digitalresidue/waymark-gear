@@ -10,6 +10,9 @@ describe('trail tags', () => {
         assert.deepEqual(normalizeTrailTag({ name: ' Pacific  Crest Trail ', year: '2026', direction: 'nobo', junk: 1 }), { name: 'Pacific Crest Trail', year: 2026, direction: 'nobo' });
         assert.deepEqual(normalizeTrailTag({ name: 'AT', year: 3000, direction: 'sideways' }), { name: 'AT' });
         assert.equal(trailLabel({ name: 'Pacific Crest Trail', short: 'PCT', year: 2025, direction: 'sobo' }), 'PCT · 2025 · SOBO');
+        // Loop trails start and end at the same place.
+        assert.deepEqual(normalizeTrailTag({ name: 'Wonderland Trail', direction: 'loop' }), { name: 'Wonderland Trail', direction: 'loop' });
+        assert.equal(trailLabel({ name: 'Tahoe Rim Trail', year: 2026, direction: 'loop' }), 'Tahoe Rim Trail · 2026 · Loop');
     });
 
     test('names match however they are written', () => {

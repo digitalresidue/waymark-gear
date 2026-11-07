@@ -60,6 +60,8 @@ test.describe('Phase 8: trails', () => {
         await done;
         await expect(page.getByTestId('trail-tag-name').or(page.getByTestId('trail-tag-link'))).toHaveText('Pacific Crest Trail');
         await expect(page.getByTestId('trail-tag-year')).toHaveValue('2026');
+        // Loop is offered too, for trails that end where they start.
+        await expect(page.getByTestId('trail-tag-direction').locator('option[value="loop"]')).toHaveText('Loop');
         done = saved(page);
         await page.getByTestId('trail-tag-direction').selectOption('nobo');
         await done;
