@@ -6,7 +6,9 @@
 // name, short name or alias (server/trails.js), and keeps it as typed when
 // there's no match yet, so new trails can be suggested to the site owner.
 
-export const DIRECTIONS = { nobo: 'NOBO', sobo: 'SOBO', flip: 'Flip-flop', section: 'Section' };
+// Loop: trails that start and end at the same place (Wonderland Trail, Tahoe
+// Rim Trail), where north- or southbound doesn't apply.
+export const DIRECTIONS = { nobo: 'NOBO', sobo: 'SOBO', flip: 'Flip-flop', section: 'Section', loop: 'Loop' };
 
 export function normalizeTrailTag(input) {
     if (!input || typeof input !== 'object') return null;
