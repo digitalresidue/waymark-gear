@@ -57,8 +57,8 @@ test.describe('Phase 7: gear check, wishlist, compare, prices', () => {
         const t = tag();
         const owner = await signInOwner(browser, testInfo.workerIndex);
         await importCsv(owner.page.request, [
-            `${t}-h,Heavy tent ${t},Bigco,Cat${t},,60,oz,200,https://shop.example.com/heavy,false,false,,published,`,
-            `${t}-l,Light tent ${t},Trailco,Cat${t},,14,oz,450,https://shop.example.com/light,false,false,,published,`,
+            `${t}-h,Heavy tent ${t},Bigco,Tent,,60,oz,200,https://shop.example.com/heavy,false,false,,published,`,
+            `${t}-l,Light tent ${t},Trailco,Tent,,14,oz,450,https://shop.example.com/light,false,false,,published,`,
         ]);
         const heavy = await (await owner.page.request.get(url(`/api/catalog?q=Heavy tent ${t}`))).json();
 

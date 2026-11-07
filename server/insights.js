@@ -7,11 +7,9 @@
 import knex from './db.js';
 import { isUuid } from './catalog.js';
 import { gearKind } from '../client/utils/insights.js';
-import { bigThreeKind, likeForLike, worthSwapping, KINDS, SLOTS } from '../client/utils/big-three.js';
+import { bigThreeKind, likeForLike, worthSwapping, sameCategory, KINDS, SLOTS } from '../client/utils/big-three.js';
 
 const MAX_ROWS = 200;
-// Kinds the big three cover; the general "smaller swaps" leave them alone.
-const BIG_THREE_GEAR_KINDS = new Set(['hammock', 'shelter', 'foam-pad', 'sleep-pad', 'quilt-bag', 'pack']);
 
 function cleanRows(rows) {
     return (Array.isArray(rows) ? rows : []).slice(0, MAX_ROWS).map((r) => ({
@@ -37,11 +35,12 @@ export async function listInsights(input) {
     // Which catalog category each row belongs to: the linked item's, or a
     // catalog category with the same name as the row's list category.
     const linked = ownedIds.size
-        ? await knex('catalog_items').whereIn('id', [...ownedIds]).select('id', 'category', 'specs')
+        ? await knex('catalog_items').whereIn('id', [...ownedIds]).select('id', 'category', 'specs', 'brand')
         : [];
     const linkedCategory = new Map(linked.map((r) => [r.id, r.category]));
     const linkedSpecs = new Map(linked.map((r) => [r.id, r.specs || {}]));
-    const bigThree = await bigThreeSwaps(rows.filter((r) => !r.worn && !r.consumable), { linkedCategory, linkedSpecs, ownedIds });
+    const linkedBrand = new Map(linked.map((r) => [r.id, r.brand || '']));
+    const bigThree = await bigThreeSwaps(rows.filter((r) => !r.worn && !r.consumable), { linkedCategory, linkedSpecs, linkedBrand, ownedIds });
     const catalogCategories = await knex('catalog_items').where({ status: 'published' }).distinct('category').pluck('category');
     const byLower = new Map(catalogCategories.filter(Boolean).map((c) => [c.toLowerCase(), c]));
     const categoryOf = (r) => (r.catalogId && linkedCategory.get(r.catalogId)) || byLower.get(r.category.toLowerCase()) || null;
@@ -81,8 +80,9 @@ export async function listInsights(input) {
         if (r.worn || r.consumable) continue;
         const cat = categoryOf(r);
         const kind = gearKind(r.name, r.description);
-        if (!cat || !kind || !r.weightMg || BIG_THREE_GEAR_KINDS.has(kind)) continue;
-        if (bigThreeKind({ ...r, catalogCategory: r.catalogId ? linkedCategory.get(r.catalogId) : '' })) continue;
+        if (!cat || !kind || !r.weightMg) continue;
+        // Big-three gear is above; everything else, same catalog category.
+        if (bigThreeKind({ ...r, catalogCategory: r.catalogId ? linkedCategory.get(r.catalogId) || '' : '', brand: r.catalogId ? linkedBrand.get(r.catalogId) : '' })) continue;
         const lighter = (byCategory.get(cat) || [])
             .filter((p) => kindOf.get(p.id) === kind)
             .filter((p) => p.id !== r.catalogId && !ownedIds.has(p.id) && worthSwapping(r.weightMg, p.weight_mg))
@@ -107,7 +107,7 @@ export async function listInsights(input) {
         const top = (byCategory.get(cat) || [])
             .filter((p) => p.uses > 0 && !ownedIds.has(p.id))
             .filter((p) => {
-                const k = bigThreeKind({ name: p.name, description: p.description, catalogCategory: p.category });
+                const k = bigThreeKind({ name: p.name, description: p.description, brand: p.brand, catalogCategory: p.category, strict: true });
                 return !k || ownKinds.has(k);
             })
             .sort((a, b) => b.uses - a.uses)[0];
@@ -127,13 +127,14 @@ const PER_ITEM = 3;
  * least 20% lighter and like for like. Pieces with nothing lighter are kept,
  * so the panel can say they're already light.
  */
-async function bigThreeSwaps(rows, { linkedCategory, linkedSpecs, ownedIds }) {
+async function bigThreeSwaps(rows, { linkedCategory, linkedSpecs, linkedBrand, ownedIds }) {
     const mine = rows
         .filter((r) => r.weightMg > 0)
         .map((r) => {
-            const catalogCategory = r.catalogId ? linkedCategory.get(r.catalogId) : '';
+            const catalogCategory = r.catalogId ? linkedCategory.get(r.catalogId) || '' : '';
             const specs = r.catalogId ? linkedSpecs.get(r.catalogId) : null;
-            return { ...r, specs, kind: bigThreeKind({ ...r, catalogCategory, specs }) };
+            const brand = r.catalogId ? linkedBrand.get(r.catalogId) : '';
+            return { ...r, specs, catalogCategory, kind: bigThreeKind({ ...r, catalogCategory, specs, brand }) };
         })
         .filter((r) => r.kind);
     if (!mine.length) return { slots: [], totalMg: 0, bestSavingsMg: 0 };
@@ -148,7 +149,9 @@ async function bigThreeSwaps(rows, { linkedCategory, linkedSpecs, ownedIds }) {
         .where('catalog_items.weight_mg', '<', heaviest)
         .select('catalog_items.id', 'catalog_items.name', 'catalog_items.brand', 'catalog_items.category', 'catalog_items.description',
             'catalog_items.weight_mg', 'catalog_items.price', 'catalog_items.specs', knex.raw('coalesce(c.uses, 0)::int as uses')))
-        .map((p) => ({ ...p, kind: bigThreeKind({ name: p.name, description: p.description, catalogCategory: p.category, specs: p.specs }) }))
+        // Strict: the catalog category says what it is, never its name or
+        // brand ("Hammock Gear Ground Cloth" isn't a hammock).
+        .map((p) => ({ ...p, kind: bigThreeKind({ name: p.name, description: p.description, brand: p.brand, catalogCategory: p.category, specs: p.specs, strict: true }) }))
         .filter((p) => p.kind);
 
     const slots = SLOTS.map((s) => ({ ...s, items: [] }));
@@ -157,6 +160,8 @@ async function bigThreeSwaps(rows, { linkedCategory, linkedSpecs, ownedIds }) {
     for (const r of mine) {
         const options = candidates
             .filter((p) => p.kind === r.kind && p.id !== r.catalogId && !ownedIds.has(p.id))
+            // Gear from the catalog: the very same catalog category, too.
+            .filter((p) => !r.catalogCategory || sameCategory(p.category, r.catalogCategory))
             .filter((p) => worthSwapping(r.weightMg, p.weight_mg))
             .filter((p) => likeForLike(r.kind, r.specs, p.specs || {}))
             // Proven picks first (used in public lists), then the lightest.
