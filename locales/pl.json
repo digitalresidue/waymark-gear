@@ -244,5 +244,6 @@
   "units.metric": "Metryczne (g, kg, cm, °C)",
   "units.hint": "Wagi, wymiary i temperatury w całym serwisie oraz jednostki na Twoich listach.",
   "editor.lists": "Listy",
-  "editor.listsAndGear": "Listy i sprzęt"
+  "editor.listsAndGear": "Listy i sprzęt",
+  "nav.follow": "Obserwuj"
 }

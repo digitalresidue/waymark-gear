@@ -8,6 +8,7 @@
 // `show` says who sees an entry:
 //   all (default) · library (has lists, signed in or not) · signedIn · guest
 //   owner (site owner) · admin (owner or admin) · staff (anyone on the team)
+//   follow (members who can use Follow: canFollowFeed)
 // `id` doubles as the test id: data-testid="nav-<id>".
 
 export const MENU = [
@@ -26,6 +27,9 @@ export const MENU = [
         ],
     },
     { id: 'trips', label: 'Trips', href: '/trips', show: 'signedIn' },
+    // The timeline of hikers you follow: the owner only while it's tried
+    // out, then every member (server/activity.js).
+    { id: 'follow', label: 'Follow', href: '/follow', show: 'follow' },
     {
         id: 'owner',
         label: 'Site',
@@ -54,13 +58,14 @@ export const PHONE_EXTRAS = [
     { id: 'signin', label: 'Sign in', href: '/signin', show: 'guest', testid: 'menu-signin' },
 ];
 
-// viewer: { signedIn, hasLibrary, isOwner, isAdmin, isModerator }
+// viewer: { signedIn, hasLibrary, isOwner, isAdmin, isModerator, canFollowFeed }
 export function canSee(entry, viewer) {
     switch (entry.show || 'all') {
     case 'library': return Boolean(viewer.hasLibrary || viewer.signedIn);
     case 'signedIn': return Boolean(viewer.signedIn);
     case 'guest': return !viewer.signedIn;
     case 'owner': return Boolean(viewer.isOwner);
+    case 'follow': return Boolean(viewer.signedIn && viewer.canFollowFeed);
     case 'admin': return Boolean(viewer.isAdmin);
     case 'staff': return Boolean(viewer.isAdmin || viewer.isModerator);
     default: return true;

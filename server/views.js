@@ -62,6 +62,7 @@ const vueRoutes = [ /* TODO - get this from same data source as Vue */
     { path: '/plan/:owner/:listId' },
     { path: '/profile' },
     { path: '/notifications' },
+    { path: '/follow' },
     { path: '/leaderboard' },
     { path: '/print' },
     { path: '/report' },

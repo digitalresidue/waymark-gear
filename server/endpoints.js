@@ -11,6 +11,7 @@ import { applyCatalog } from './catalog.js';
 import { syncPublishedKits } from './kits.js';
 import { applyChanges, LibraryError, loadLibrary, normalizeLibrary, replaceLibrary } from './library-store.js';
 import { authenticateUser, isAdmin, isModerator, isOwner, roleOf, verifyPassword, generateSession, startSession, hashSessionToken, sessionCookieOptions, issueResetToken, hashResetToken, resetPasswordUrl, RESET_TOKEN_TTL_MS } from './auth.js';
+import { canFollowFeed } from './activity.js';
 import { sniffImage, storeImage, storeProfileImage, storeGearPhoto } from './images.js';
 import { deleteUserAccount } from './accounts.js';
 import { Library } from '../client/dataTypes.js';
@@ -173,6 +174,8 @@ function accountInfo(user) {
         isModerator: isModerator(user.username),
         isOwner: isOwner(user.username),
         role: roleOf(user.username),
+        // Follow (server/activity.js): the owner while it's tried out, then everyone.
+        canFollowFeed: canFollowFeed(user),
         language: user.language || '',
         units: user.units || '',
         supporter: isSupporter(user),

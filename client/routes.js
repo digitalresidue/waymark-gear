@@ -2,6 +2,7 @@ import dashboard from './views/dashboard.vue';
 import gear from './views/gear.vue';
 import pack from './views/pack.vue';
 import profileEdit from './views/profile-edit.vue';
+import follow from './views/follow.vue';
 import notifications from './views/notifications.vue';
 import leaderboard from './views/leaderboard.vue';
 import printList from './views/print.vue';
@@ -34,6 +35,7 @@ export default [
     { path: '/plan/:owner/:listId', component: dashboard },
     { path: '/profile', component: profileEdit },
     { path: '/notifications', component: notifications },
+    { path: '/follow', component: follow },
     { path: '/leaderboard', component: leaderboard },
     { path: '/print', component: printList },
     { path: '/report', component: report },

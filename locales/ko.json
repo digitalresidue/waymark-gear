@@ -232,5 +232,6 @@
   "units.metric": "미터법 (g, kg, cm, °C)",
   "units.hint": "사이트 전체의 무게, 크기, 온도와 내 목록의 단위에 적용됩니다.",
   "editor.lists": "목록",
-  "editor.listsAndGear": "목록과 장비"
+  "editor.listsAndGear": "목록과 장비",
+  "nav.follow": "팔로우"
 }

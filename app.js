@@ -20,6 +20,7 @@ import { languageMiddleware, languageRouter } from './server/i18n.js';
 import headTags, { injectHeadTags, loadHeadTags } from './server/head-tags.js';
 import { scheduleImageCleanup } from './server/image-gc.js';
 import { scheduleSitemap } from './server/sitemap.js';
+import { schedulePackUpdatePrune } from './server/activity.js';
 import { backfillBoardChecks } from './server/kits.js';
 import { loadLibrary } from './server/library-store.js';
 import googleAuth from './server/google.js';
@@ -184,6 +185,9 @@ server.listen(config.get('port'), () => {
 
 // Once a day: delete stored images nothing refers to any more.
 scheduleImageCleanup(knex, logger);
+
+// Once a day: the Follow timeline's pack-update history, kept 12 months.
+schedulePackUpdatePrune(logger);
 
 // Lists published before the Lightest board's Gear check: check them once.
 backfillBoardChecks(loadLibrary, logger)

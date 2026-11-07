@@ -18,6 +18,7 @@ import {
 } from './auth.js';
 import * as comments from './comments.js';
 import * as follows from './follows.js';
+import * as activity from './activity.js';
 import * as tickets from './tickets.js';
 import * as plans from './shared-lists.js';
 import * as trips from './trips.js';
@@ -81,7 +82,7 @@ const signedIn = (handler) => (req, res) => authenticateUser(req, res, async (re
     } catch (err) {
         if (err instanceof ProfileError) return res.status(400).json({ message: err.message, field: err.field });
         if (err instanceof LibraryError) return res.status(400).json({ message: err.message });
-        if (err instanceof comments.CommentError || err instanceof follows.FollowError || err instanceof tickets.TicketError || err instanceof plans.PlanError
+        if (err instanceof comments.CommentError || err instanceof follows.FollowError || err instanceof activity.ActivityError || err instanceof tickets.TicketError || err instanceof plans.PlanError
             || err instanceof trips.TripError || err instanceof reviews.ReviewError || err instanceof tokens.TokenError || err instanceof trails.TrailError) {
             return res.status(err.status).json({ message: err.message });
         }
@@ -185,7 +186,7 @@ router.get('/api/viewer', publicJson(async (req, res) => {
     // Their chart style, so shared lists draw the way they chose in the app.
     const settings = await knex('library_settings').where({ user_id: user.user_id }).first('preferences').catch(() => null);
     const prefs = settings && settings.preferences ? (typeof settings.preferences === 'string' ? JSON.parse(settings.preferences) : settings.preferences) : {};
-    res.json({ username: user.username, avatarUrl: user.avatar_url || '', isAdmin: isAdmin(user.username), isModerator: isModerator(user.username), isOwner: isOwner(user.username), canReview: reviews.canReview(user), chartStyle: prefs.chartStyle || null });
+    res.json({ username: user.username, avatarUrl: user.avatar_url || '', isAdmin: isAdmin(user.username), isModerator: isModerator(user.username), isOwner: isOwner(user.username), canFollowFeed: activity.canFollowFeed(user), canReview: reviews.canReview(user), chartStyle: prefs.chartStyle || null });
 }));
 
 router.get('/api/users/:username/follow', publicJson(async (req, res) => {
@@ -204,6 +205,34 @@ router.delete('/api/users/:username/follow', signedIn(async (req, res, user) => 
 router.get('/api/following', signedIn(async (req, res, user) => {
     res.set('Cache-Control', 'no-store');
     res.json({ following: await follows.followingList(user) });
+}));
+
+// ---- Follow: the activity timeline (server/activity.js) ------------------
+
+router.get('/api/activity', signedIn(async (req, res, user) => {
+    res.set('Cache-Control', 'no-store');
+    res.json(await activity.timeline(user, { before: req.query.before, limit: req.query.limit }));
+}));
+
+router.get('/api/activity/discover', signedIn(async (req, res, user) => {
+    res.set('Cache-Control', 'no-store');
+    res.json(await activity.discover(user, { q: req.query.q }));
+}));
+
+router.get('/api/activity/settings', signedIn(async (req, res, user) => {
+    res.set('Cache-Control', 'no-store');
+    const own = await activity.settings(user);
+    res.json({ ...own, ...(isOwner(user.username) ? { feed: await activity.followFeedState() } : {}) });
+}));
+
+router.put('/api/activity/settings', requireJson, signedIn(async (req, res, user) => {
+    res.json(await activity.saveSettings(user, req.body || {}));
+}));
+
+// Owner only: open Follow to every member, or keep it to the owner.
+router.put('/api/owner/follow-feed', requireJson, signedIn(async (req, res, user) => {
+    if (!isOwner(user.username)) return res.status(403).json({ message: 'Owner access only.' });
+    res.json(await activity.setFollowFeedOpen(Boolean(req.body && req.body.open)));
 }));
 
 router.get('/api/kits/:id/votes', pub(async (req, res) => {

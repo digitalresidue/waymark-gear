@@ -12,6 +12,7 @@ import { ensureTrails, resolveTrail } from './trails-index.js';
 import { createHash } from 'crypto';
 import { listRows } from '../client/utils/insights.js';
 import { boardGearCheck, boardStanding, BOARD_RULES } from '../client/utils/board-rules.js';
+import { recordPackUpdate } from './activity.js';
 
 const LB = 453592; // mg
 
@@ -90,6 +91,8 @@ function boardFields(library, list) {
     const check = boardGearCheck(rows, list);
     return {
         gearHash: createHash('sha256').update(gear.join('|')).digest('hex').slice(0, 32),
+        // What's in it, by name, for the Follow timeline's "added / took out".
+        gearItems: rows.map((r) => [String(r.itemId), String(r.name || '').slice(0, 120)]),
         boardOk: check.ok,
         readiness: check.score,
     };
@@ -107,7 +110,9 @@ export async function syncPublishedKits(user, serializedLibrary, db = knex) {
     // A list can only be published under a share id this user owns.
     const valid = kits.filter((k) => owned.has(k.externalId));
 
-    const before = new Set(await db('public_kits').where({ user_id: user.user_id }).pluck('external_id'));
+    const beforeRows = await db('public_kits').where({ user_id: user.user_id }).select('external_id', 'base_weight_mg');
+    const before = new Set(beforeRows.map((r) => r.external_id));
+    const baseBefore = new Map(beforeRows.map((r) => [r.external_id, Number(r.base_weight_mg)]));
     await db.transaction(async (trx) => {
         const keep = valid.map((k) => k.externalId);
         const stale = trx('public_kits').where({ user_id: user.user_id });
@@ -149,12 +154,26 @@ export async function syncPublishedKits(user, serializedLibrary, db = knex) {
             );
             // The gear clock restarts only when the gear itself changed. A
             // clock from before fingerprints existed adopts this one as is.
+            const clock = await trx('kit_clock').where({ external_id: k.externalId }).first('gear_hash', 'items');
             await trx.raw(`
-                insert into kit_clock (external_id, gear_hash) values (?, ?)
+                insert into kit_clock (external_id, gear_hash, items) values (?, ?, ?::jsonb)
                 on conflict (external_id) do update set
                     gear_changed_at = case when kit_clock.gear_hash is not null and kit_clock.gear_hash <> excluded.gear_hash
                         then now() else kit_clock.gear_changed_at end,
-                    gear_hash = excluded.gear_hash`, [k.externalId, k.gearHash]);
+                    gear_hash = excluded.gear_hash,
+                    items = excluded.items`, [k.externalId, k.gearHash, JSON.stringify(k.gearItems)]);
+            // The gear of a list that was already public changed: a pack
+            // update on the Follow timeline (server/activity.js).
+            if (before.has(k.externalId) && clock && clock.gear_hash && clock.gear_hash !== k.gearHash) {
+                await recordPackUpdate(trx, {
+                    userId: user.user_id,
+                    externalId: k.externalId,
+                    beforeItems: Array.isArray(clock.items) ? clock.items : null,
+                    afterItems: k.gearItems,
+                    baseBeforeMg: baseBefore.get(k.externalId),
+                    baseAfterMg: k.baseWeightMg,
+                });
+            }
             await trx('public_kits').insert({ ...row, shakedown_at: k.shakedown ? trx.fn.now() : null })
                 .onConflict('external_id').merge(merge);
         }
