@@ -236,10 +236,47 @@ function initEventHandlers() {
     });
 }
 
+// The ⓘ tips beside the totals: the same behaviour as the app's info-tip.vue.
+// Hover and focus show them with CSS alone; here a tap toggles one, a tap
+// elsewhere closes it, and Escape hides it until the pointer or focus moves on.
+function initInfoTips() {
+    const tips = [...document.querySelectorAll('.wgInfoTip')];
+    const close = (tip) => {
+        tip.classList.remove('wgInfoTipOpen');
+        tip.querySelector('[data-info-tip]').setAttribute('aria-expanded', 'false');
+    };
+    for (const tip of tips) {
+        const btn = tip.querySelector('[data-info-tip]');
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const open = !tip.classList.contains('wgInfoTipOpen');
+            tips.forEach(close);
+            tip.classList.remove('wgInfoTipDismissed');
+            tip.classList.toggle('wgInfoTipOpen', open);
+            btn.setAttribute('aria-expanded', String(open));
+        });
+        btn.addEventListener('blur', () => tip.classList.remove('wgInfoTipDismissed'));
+        tip.addEventListener('mouseleave', () => tip.classList.remove('wgInfoTipDismissed'));
+    }
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        for (const tip of tips) {
+            if (tip.classList.contains('wgInfoTipOpen') || tip.matches(':hover') || tip.contains(document.activeElement)) {
+                close(tip);
+                tip.classList.add('wgInfoTipDismissed');
+            }
+        }
+    });
+    document.addEventListener('pointerdown', (e) => {
+        tips.filter((t) => !t.contains(e.target)).forEach(close);
+    });
+}
+
 function init() {
     initEventHandlers();
     initShareMenu();
     initThemeToggle();
+    initInfoTips();
 
     initChart();
 }

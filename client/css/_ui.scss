@@ -354,3 +354,77 @@ $wg-data-colors: #1D3B30, #4F7A5A, #9DB8A0, #B04E1B, #D9C7A7, #6B756F;
         background: $c;
     }
 }
+
+// ============================================================
+// ⓘ tips: a term's explanation (components/info-tip.vue; shared lists use
+// the same markup, client/share-entry.js). Shown on hover, focus or tap;
+// .wgInfoTipDismissed (Escape) hides it until the pointer or focus moves on.
+// ============================================================
+.wgInfoTip {
+    display: inline-flex;
+    margin-left: 4px;
+    position: relative;
+    vertical-align: middle;
+}
+
+.wgInfoTipBtn {
+    align-items: center;
+    background: none;
+    border: 0;
+    border-radius: 50%;
+    color: inherit;
+    cursor: help;
+    display: inline-flex;
+    justify-content: center;
+    // A 24px target around a 13px icon.
+    margin: -6px;
+    opacity: 0.6;
+    padding: 5px;
+
+    &:hover,
+    &:focus-visible,
+    .wgInfoTipOpen & {
+        opacity: 1;
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--lp-focus-ring);
+        outline-offset: 1px;
+    }
+}
+
+.wgInfoTipText {
+    background: var(--lp-surface-invert);
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    color: var(--lp-text-invert);
+    font-family: $font-body;
+    font-size: 13px;
+    font-weight: 500;
+    left: -8px;
+    letter-spacing: normal;
+    line-height: 1.45;
+    max-width: calc(100vw - 32px);
+    padding: 8px 10px;
+    pointer-events: auto;
+    position: absolute;
+    text-align: left;
+    text-transform: none;
+    // Directly under the ⓘ, touching it, so the pointer can move onto it.
+    top: 100%;
+    visibility: hidden;
+    white-space: normal;
+    width: 260px;
+    z-index: 40;
+}
+
+.wgInfoTip:hover .wgInfoTipText,
+.wgInfoTipBtn:focus-visible + .wgInfoTipText,
+.wgInfoTipOpen .wgInfoTipText {
+    visibility: visible;
+}
+
+.wgInfoTip.wgInfoTipDismissed .wgInfoTipText,
+.wgInfoTip.wgInfoTipDismissed:hover .wgInfoTipText {
+    visibility: hidden;
+}

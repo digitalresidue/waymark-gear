@@ -36,6 +36,7 @@ import { badgesFor, buyOptions } from './shops.js';
 import { publishedBrands, matchesBrand } from './brands.js';
 import { ensureSitemap, sitemapFile } from './sitemap.js';
 import { GEAR_TYPES, GEAR_TYPE_IDS, gearTypeLabel } from '../client/brand-types.js';
+import { WEIGHT_TERMS } from '../client/utils/weight-terms.js';
 import { PACK_FEATURES, DIRECTIONS } from '../client/utils/trails.js';
 import { ratingsFor } from './reviews.js';
 import { ratingFor } from './ratings.js';
@@ -1531,6 +1532,8 @@ const renderListTotals = function (list, totalsTemplate, unitSelectTemplate, uni
     out.totalConsumablePriceDisplay = totalConsumablePrice ? totalConsumablePrice.toFixed(2) : '';
     out.showPrices = list.optionalFields.price;
     out.currencySymbol = list.library.currencySymbol;
+    // The ⓘ tips beside each total (client/utils/weight-terms.js).
+    out.tips = Object.fromEntries(Object.entries(WEIGHT_TERMS).map(([key, t]) => [key, { ...t, about: `About ${t.label.toLowerCase()}`, id: `wgTip-${key}` }]));
 
     return Mustache.render(totalsTemplate, out);
 };
