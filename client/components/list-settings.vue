@@ -20,6 +20,16 @@
                         <input id="currencySymbol" type="text" maxlength="4" :value="library.currencySymbol" @input="updateCurrencySymbol($event)">
                     </label>
                 </div>
+                <!-- A template: start new lists (and trips' lists) from it in one click. -->
+                <div class="wgTemplateSetting">
+                    <hr>
+                    <toggle :model-value="Boolean(list && list.template)" data-testid="list-template-toggle" @update:model-value="setTemplate">
+                        Use as a template
+                    </toggle>
+                    <p class="wgTemplateSettingHint">
+                        Start new lists from this one under New list → From a template, or from a trip. Copies use the same closet gear.
+                    </p>
+                </div>
                 <div id="lpDensitySettings">
                     <hr>
                     <span class="lpDensityLabel">Density</span>
@@ -89,6 +99,9 @@ export default {
         library() {
             return this.$store.state.library;
         },
+        list() {
+            return this.library.getListById(this.library.defaultListId);
+        },
         optionalFields() {
             return this.$store.getters.optionalFields;
         },
@@ -118,6 +131,9 @@ export default {
         this.updateOptionalFieldValues();
     },
     methods: {
+        setTemplate(value) {
+            this.$store.commit('setListTemplate', { list: this.list, template: value });
+        },
         toggleOptionalField(optionalField) {
             this.$store.commit('toggleOptionalField', optionalField);
         },
@@ -190,5 +206,15 @@ export default {
 
 #settings .lpContent {
     width: 200px;
+}
+</style>
+
+<style lang="scss">
+.wgTemplateSettingHint {
+    color: var(--lp-text-secondary);
+    font-size: 12px;
+    line-height: 1.4;
+    margin: 4px 0 0;
+    max-width: 240px;
 }
 </style>

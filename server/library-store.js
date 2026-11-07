@@ -171,6 +171,7 @@ function listRow(userId, list, position) {
         external_id: str(list.externalId, 40) || null,
         optional_fields: JSON.stringify(plainObject(list.optionalFields)),
         pinned: bool(list.pinned),
+        template: bool(list.template),
         published: bool(list.published),
         shakedown: bool(list.shakedown),
         trip_type: TRIP_TYPES.includes(list.tripType) ? list.tripType : '',
@@ -281,6 +282,7 @@ export async function loadLibrary(userId, db = knex) {
             optionalFields: l.optional_fields || {},
         };
         if (l.pinned) out.pinned = true;
+        if (l.template) out.template = true;
         if (l.published) out.published = true;
         if (l.shakedown) out.shakedown = true;
         if (l.trip_type) out.tripType = l.trip_type;
