@@ -49,9 +49,51 @@
                 Found by the names of your gear and categories. Hover a ✓ to see what counted.
             </p>
 
+            <!-- The big three first: where swaps change a pack the most. Same
+                 kind only (no tents for a hammock), at least 20% lighter, like
+                 for like (utils/big-three.js, server/insights.js). -->
+            <template v-if="bigThree.slots.length">
+                <h3 class="wgInsightH">
+                    Your big three
+                </h3>
+                <p class="wgMuted wgTripFine wgInsightNote" data-testid="big-three-summary">
+                    {{ fmt(bigThree.totalMg) }} in shelter, sleep system and pack
+                    <template v-if="bigThree.bestSavingsMg">
+                        · the best swaps below could save up to <strong>{{ fmt(bigThree.bestSavingsMg) }}</strong>
+                    </template>.
+                    Only swaps at least 20% lighter, in the same system you use.
+                </p>
+                <div v-for="slot in bigThree.slots" :key="slot.id" class="wgBigThreeSlot" :data-testid="`big-three-${slot.id}`">
+                    <h4 class="wgBigThreeSlotH">
+                        {{ slot.label }}
+                    </h4>
+                    <ul class="wgInsightRows">
+                        <li v-for="a in slot.items" :key="a.item.itemId || a.item.name" data-testid="big-three-item" :data-kind="a.item.kind">
+                            <span class="wgInsightFrom">
+                                {{ a.item.name }} <span class="wgMono wgMuted">{{ fmt(a.item.weightMg) }}</span>
+                                <span class="wgBigThreeKind">{{ a.item.kindLabel }}</span>
+                            </span>
+                            <span v-if="!a.options.length" class="wgMuted wgTripFine" data-testid="big-three-none">
+                                Nothing in the catalog at least 20% lighter. Already a light pick.
+                            </span>
+                            <span v-for="o in a.options" :key="o.id" class="wgInsightOption" data-testid="big-three-option">
+                                <a :href="`/g/${o.id}`" target="_blank" rel="noopener">{{ o.brand }} {{ o.name }}</a>
+                                <span class="wgMono">{{ fmt(o.weightMg) }}</span>
+                                <span class="wgInsightSave">saves {{ fmt(o.savesMg) }} ({{ o.savesPct }}%)</span>
+                                <span v-if="o.share" class="wgMuted">in {{ o.share }}% of public lists</span>
+                                <a :href="compareUrl(a, o)" class="wgLinkBtn" data-testid="alternative-compare">Compare</a>
+                                <button type="button" class="wgLinkBtn" :disabled="wished(o.id)" data-testid="alternative-wish" @click="wish(o)">
+                                    {{ wished(o.id) ? 'On wishlist' : 'Add to wishlist' }}
+                                </button>
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+            </template>
+
             <template v-if="alternatives.length">
                 <h3 class="wgInsightH">
-                    Lighter options
+                    Smaller swaps
                 </h3>
                 <ul class="wgInsightRows" data-testid="insights-alternatives">
                     <li v-for="a in alternatives" :key="a.item.itemId || a.item.name" data-testid="alternative">
@@ -88,7 +130,7 @@
                     </li>
                 </ul>
             </template>
-            <p v-if="loaded && !alternatives.length && !favorites.length" class="wgMuted wgTripFine">
+            <p v-if="loaded && !bigThree.slots.length && !alternatives.length && !favorites.length" class="wgMuted wgTripFine">
                 No lighter options in the catalog for this list yet. Gear picked from the catalog gets the best matches.
             </p>
         </div>
@@ -106,7 +148,7 @@ export default {
         list: { type: Object, required: true },
     },
     data() {
-        return { open: false, loaded: false, alternatives: [], favorites: [], timer: null };
+        return { open: false, loaded: false, bigThree: { slots: [], totalMg: 0, bestSavingsMg: 0 }, alternatives: [], favorites: [], timer: null };
     },
     computed: {
         library() {
@@ -162,8 +204,9 @@ export default {
         },
         async fetch() {
             try {
-                const body = { items: this.rows.map(({ itemId, name, description, category, weightMg, catalogId }) => ({ itemId, name, description, category, weightMg, catalogId })) };
+                const body = { items: this.rows.map(({ itemId, name, description, category, weightMg, catalogId, worn, consumable }) => ({ itemId, name, description, category, weightMg, catalogId, worn, consumable })) };
                 const res = await api('/api/insights', { method: 'POST', body: JSON.stringify(body) });
+                this.bigThree = res.bigThree || { slots: [], totalMg: 0, bestSavingsMg: 0 };
                 this.alternatives = res.alternatives;
                 this.favorites = res.favorites;
             } catch {
@@ -195,6 +238,32 @@ export default {
 </script>
 
 <style lang="scss">
+@import "../css/_globals";
+
+.wgBigThreeSlot {
+    margin-bottom: 10px;
+}
+
+.wgBigThreeSlotH {
+    color: var(--lp-text-secondary);
+    font-family: $font-mono;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    margin: 10px 0 4px;
+    text-transform: uppercase;
+}
+
+.wgBigThreeKind {
+    background: var(--lp-active-bg);
+    border-radius: 4px;
+    color: var(--lp-accent-green-deep);
+    font-size: 11px;
+    font-weight: 700;
+    margin-left: 6px;
+    padding: 1px 6px;
+}
+
 .wgInsightBadge {
     border-radius: 999px;
     color: #fff;

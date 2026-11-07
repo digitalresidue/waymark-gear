@@ -146,7 +146,7 @@ export async function checkList(user, listId) {
     const rows = listRows(library, list);
     const trip = list.trip || {};
     const essentials = checkEssentials(rows, { tripType: list.tripType, tempLowC: trip.tempLowC, tempHighC: trip.tempHighC, dismissed: list.notNeeded });
-    const { alternatives, favorites } = await listInsights(rows);
+    const { bigThree, alternatives, favorites } = await listInsights(rows);
     const unit = library.totalUnit;
     const estimate = list.trip ? tripEstimates(list.trip, (list.totalBaseWeight || 0) + (list.totalConsumableWeight || 0)) : null;
     return {
@@ -156,6 +156,21 @@ export async function checkList(user, listId) {
         covered: essentials.covered,
         notNeeded: essentials.dismissed,
         notes: essentials.notes,
+        // Shelter, sleep system and pack first: same kind only (a hammock gets
+        // hammocks, never tents), at least 20% lighter, like for like.
+        bigThree: {
+            total: weight(bigThree.totalMg, unit),
+            bestSavings: weight(bigThree.bestSavingsMg, unit),
+            slots: bigThree.slots.map((s) => ({
+                slot: s.label,
+                items: s.items.map((i) => ({
+                    item: i.item.name,
+                    kind: i.item.kindLabel,
+                    weight: weight(i.item.weightMg, unit),
+                    options: i.options.map((o) => ({ catalogId: o.id, name: `${o.brand} ${o.name}`.trim(), weight: weight(o.weightMg, unit), saves: weight(o.savesMg, unit), savesPercent: o.savesPct, usedInPublicLists: `${o.share}%` })),
+                })),
+            })),
+        },
         lighterOptions: alternatives.map((a) => ({
             item: a.item.name,
             weight: weight(a.item.weightMg, unit),
