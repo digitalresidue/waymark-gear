@@ -391,17 +391,25 @@ $panelWidth: 380px;
     }
 }
 
-// Collapsed: the rail stays, the panel is clipped away with the column.
+// Collapsed: the rail stays and the panel fades out and is hidden. The
+// column isn't clipped to the rail (as the phone and plan sidebars are when
+// put away): Share, Settings and the rest open from the rail and hang past
+// its edge, and clipping cut them off under the list.
 #main:not(.lpHasSidebar) #sidebar.wgSidebarDesk {
     background: var(--lp-sidebar-bg);
+    clip-path: none;
     flex-basis: $railWidth;
 
     .lpSidebarSticky {
         opacity: 1;
+        width: $railWidth;
     }
 
     .wgSidebarPanel {
         opacity: 0;
+        pointer-events: none;
+        transition: opacity $transitionDurationSlow, visibility 0s $transitionDurationSlow;
+        visibility: hidden;
     }
 }
 
