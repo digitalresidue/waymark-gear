@@ -14,6 +14,13 @@
                 <template #content="{ hide }">
                     <div>
                         <a class="lpAdd" data-testid="new-list-blank" @click="hide(); newList()"><i class="lpSprite lpSpriteAdd" />Add new list</a>
+                        <!-- Your templates (Settings → Use as a template): one
+                             click makes a copy to tweak, using the same gear. -->
+                        <div class="wgTemplateMenu" role="group" aria-labelledby="wgTemplateMenuLabel" data-testid="new-list-templates">
+                            <span id="wgTemplateMenuLabel" class="wgTemplateMenuLabel">From a template</span>
+                            <a v-for="t in templates" :key="t.id" class="lpAdd wgTemplateItem" role="button" tabindex="0" :data-testid="`new-from-template-${t.id}`" @click="hide(); fromTemplate(t)"><i class="lpSprite lpSpriteCopy" />{{ listName(t) }}</a>
+                            <span v-if="!templates.length" class="wgTemplateHint">Make any list a template in its Settings (Use as a template), then start new lists from it here.</span>
+                        </div>
                         <a class="lpCopy" @click="hide(); copyList()"><i class="lpSprite lpSpriteCopy" />Copy a list</a>
                         <a class="lpAdd" data-testid="new-list-import" @click="hide(); openImportLighterPack()"><i class="lpSprite lpSpriteUpload" />Import a list</a>
                         <a class="lpAdd" @click="hide(); importCSV()"><i class="lpSprite lpSpriteUpload" />Import CSV</a>
@@ -42,7 +49,7 @@
                         @click="setDefaultList(list)"
                     >
                         <div v-if="!filtering" class="lpHandle" title="Reorder this list" />
-                        <span class="lpLibraryListSwitch lpListName" role="button" tabindex="0" :aria-current="library.defaultListId == list.id ? 'true' : null">{{ listName(list) }}</span>
+                        <span class="lpLibraryListSwitch lpListName" role="button" tabindex="0" :aria-current="library.defaultListId == list.id ? 'true' : null">{{ listName(list) }}<span v-if="list.template" class="wgTemplateTag" data-testid="list-template-tag">Template</span></span>
                         <span class="wgListWeight wgMono">{{ baseWeight(list) }}</span>
                         <button type="button" class="wgListPin wgPinned" :aria-label="`Unpin ${listName(list)}`" title="Unpin" @click.stop="togglePin(list)">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 3l5 5-3 1-4 4 1 5-2 2-4-4-5 5-1-1 5-5-4-4 2-2 5 1 4-4z" /></svg>
@@ -64,7 +71,7 @@
                     @click="setDefaultList(list)"
                 >
                     <div v-if="!filtering" class="lpHandle" title="Reorder this list" />
-                    <span class="lpLibraryListSwitch lpListName" role="button" tabindex="0" :aria-current="library.defaultListId == list.id ? 'true' : null">{{ listName(list) }}</span>
+                    <span class="lpLibraryListSwitch lpListName" role="button" tabindex="0" :aria-current="library.defaultListId == list.id ? 'true' : null">{{ listName(list) }}<span v-if="list.template" class="wgTemplateTag" data-testid="list-template-tag">Template</span></span>
                     <span class="wgListWeight wgMono">{{ baseWeight(list) }}</span>
                     <button type="button" class="wgListPin" :aria-label="`Pin ${listName(list)}`" title="Pin to top" @click.stop="togglePin(list)">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 3l5 5-3 1-4 4 1 5-2 2-4-4-5 5-1-1 5-5-4-4 2-2 5 1 4-4z" /></svg>
@@ -111,6 +118,9 @@ export default {
     computed: {
         library() {
             return this.$store.state.library;
+        },
+        templates() {
+            return this.library.lists.filter((l) => l.template);
         },
         // Search earns its space once there are enough lists to hunt through.
         showSearch() {
@@ -200,6 +210,18 @@ export default {
         },
         copyList() {
             this.openCopyList();
+        },
+        fromTemplate(template) {
+            this.query = '';
+            this.$store.commit('newListFromTemplate', { listId: template.id });
+            this.$emit('chosen', this.library.getListById(this.library.defaultListId));
+            this.$nextTick(() => {
+                const title = document.getElementById('lpListName');
+                if (title) {
+                    title.focus();
+                    title.select();
+                }
+            });
         },
         importCSV() {
             this.openImportCSV();
@@ -342,6 +364,19 @@ export default {
         visibility: visible;
     }
 
+    .wgTemplateTag {
+        background: var(--lp-active-bg);
+        border-radius: 4px;
+        color: var(--lp-accent-green-deep);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        margin-left: 6px;
+        padding: 1px 5px;
+        text-transform: uppercase;
+        vertical-align: 1px;
+    }
+
     .lpListName {
         flex: 1 1 auto;
         min-width: 0;
@@ -410,6 +445,31 @@ export default {
                 margin-bottom: 0;
             }
         }
+    }
+
+    .wgTemplateMenu {
+        border-bottom: 1px solid var(--lp-border);
+        border-top: 1px solid var(--lp-border);
+        margin: 6px 0;
+        padding: 6px 0;
+    }
+
+    .wgTemplateMenuLabel {
+        color: var(--lp-text-secondary);
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+    }
+
+    .wgTemplateHint {
+        color: var(--lp-text-secondary);
+        display: block;
+        font-size: 12px;
+        line-height: 1.4;
+        max-width: 240px;
     }
 }
 

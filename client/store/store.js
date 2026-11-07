@@ -582,6 +582,23 @@ const store = createStore({
             const copiedList = state.library.copyList(listId);
             state.library.defaultListId = copiedList.id;
         },
+        // Templates (Day hike, Overnighter...): mark or unmark a list.
+        setListTemplate(state, { list, template }) {
+            const l = state.library.getListById(list.id);
+            if (l) l.template = Boolean(template);
+        },
+        // A new list from a template: its categories and the same closet gear,
+        // named after the template (or `name`, e.g. a trip's), and opened.
+        newListFromTemplate(state, { listId, name }) {
+            const template = state.library.getListById(listId);
+            if (!template) return;
+            const copy = state.library.copyList(listId);
+            copy.name = name || template.name;
+            if (template.tripType) copy.tripType = template.tripType;
+            if (template.trip) copy.trip = { ...template.trip };
+            copy.calculateTotals();
+            state.library.defaultListId = copy.id;
+        },
         importGearList(state, parsed) {
             const library = state.library;
             const previous = library.getListById(library.defaultListId);

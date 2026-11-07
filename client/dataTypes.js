@@ -507,6 +507,8 @@ List.prototype.save = function () {
     // Only written when set, so libraries that never use them keep the shape
     // older clients wrote.
     if (this.pinned) out.pinned = true;
+    // A template: offered under New list → From a template, and on trips.
+    if (this.template) out.template = true;
     // Trip planner settings (client/utils/trip.js), when the user has set them.
     if (this.trip) out.trip = { ...this.trip };
     // Published lists appear on the public Explore page and homepage; the
@@ -771,6 +773,8 @@ Library.prototype.copyList = function (id) {
     const copiedList = this.newList();
 
     copiedList.name = `Copy of ${oldList.name}`;
+    // A copy is a list of its own, never a template or published (until its
+    // owner says so).
     copiedList.optionalFields = assignIn({}, oldList.optionalFields);
     // Its groups too, with new ids.
     const groupIds = new Map();

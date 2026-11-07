@@ -40,6 +40,27 @@
                             <option v-for="l in lists" :key="l.id" :value="l.id">{{ l.name || 'New list' }}</option>
                         </select>
                     </label>
+                    <!-- No list yet: one from a template, named after the trip,
+                         with the same closet gear, ready to tweak. -->
+                    <div v-if="!form.listId && templates.length" class="wgField wgTripWide wgTripTemplate" data-testid="trip-template">
+                        <span>Or start a pack list from a template</span>
+                        <div class="wgTripTemplateRow">
+                            <select v-model="templateId" class="wgSelect" aria-label="Template" data-testid="trip-template-pick">
+                                <option v-for="t in templates" :key="t.id" :value="t.id">
+                                    {{ t.name || 'Untitled template' }}
+                                </option>
+                            </select>
+                            <button type="button" class="wgBtn wgBtnGhost" data-testid="trip-template-use" @click="listFromTemplate">
+                                Make the list
+                            </button>
+                        </div>
+                    </div>
+                    <p v-if="madeList" class="wgField wgTripWide wgMuted" role="status" data-testid="trip-template-made">
+                        Made “{{ madeList }}” from your template and linked it to this trip.
+                        <router-link to="/">
+                            Open it to tweak
+                        </router-link>
+                    </p>
                     <label class="wgField wgTripWide">Summary <span class="wgMuted">(markdown)</span>
                         <textarea v-model="form.summary" class="wgInput" rows="4" maxlength="4000" data-testid="trip-summary" />
                     </label>
@@ -128,7 +149,7 @@ export default {
     name: 'TripEdit',
     components: { siteHeader },
     data() {
-        return { trip: null, form: {}, drafts: [], missing: false, error: '', saved: false, uploading: null };
+        return { trip: null, form: {}, drafts: [], missing: false, error: '', saved: false, uploading: null, templateId: null, madeList: '' };
     },
     computed: {
         signedIn() {
@@ -137,6 +158,9 @@ export default {
         lists() {
             const lib = this.$store.state.library;
             return lib && this.$store.state.saveType !== 'shared' ? lib.lists : [];
+        },
+        templates() {
+            return this.lists.filter((l) => l.template);
         },
         imperial() {
             const lib = this.$store.state.library;
@@ -183,6 +207,17 @@ export default {
         entryBody(e) {
             const d = e.distance === '' || e.distance === null ? null : Number(e.distance) * (this.imperial ? KM_PER_MI : 1);
             return JSON.stringify({ date: e.date, title: e.title, body: e.body, photos: e.photos, distanceKm: d });
+        },
+        // A copy of the template, named after the trip, linked and saved.
+        async listFromTemplate() {
+            const id = this.templateId || (this.templates[0] && this.templates[0].id);
+            if (!id) return;
+            const name = this.form.title || (this.trip && this.trip.title) || '';
+            this.$store.commit('newListFromTemplate', { listId: id, name });
+            const lib = this.$store.state.library;
+            this.form.listId = lib.defaultListId;
+            this.madeList = name || 'New list';
+            await this.saveTrip();
         },
         async saveTrip() {
             this.error = '';
@@ -251,6 +286,21 @@ export default {
 </script>
 
 <style lang="scss">
+.wgTripTemplate {
+    gap: 6px;
+}
+
+.wgTripTemplateRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    .wgSelect {
+        flex: 1 1 200px;
+        min-width: 0;
+    }
+}
+
 .wgTripEdit {
     max-width: 860px;
 }
