@@ -140,6 +140,8 @@
   "explore.parent.cook-kit.note": "Kuchenki, paliwo, garnki i sztućce",
   "explore.parent.water": "Woda",
   "explore.parent.water.note": "Butelki, bukłaki i filtry",
+  "explore.parent.lights-electronics": "Oświetlenie i elektronika",
+  "explore.parent.lights-electronics.note": "Czołówki, zegarki, ładowarki i kable",
   "gear.noRatings": "Jeszcze bez ocen.",
   "gear.ratingFrom": {
     "one": "/ 5 z {count} oceny",

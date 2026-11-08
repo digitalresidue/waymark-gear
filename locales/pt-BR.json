@@ -138,6 +138,8 @@
   "explore.parent.cook-kit.note": "Fogareiros, combustível, panelas e talheres",
   "explore.parent.water": "Água",
   "explore.parent.water.note": "Garrafas, bolsas de hidratação e filtros",
+  "explore.parent.lights-electronics": "Iluminação e eletrônicos",
+  "explore.parent.lights-electronics.note": "Lanternas de cabeça, relógios, carregadores e cabos",
   "gear.noRatings": "Ainda sem avaliações.",
   "gear.ratingFrom": {
     "one": "/ 5 de {count} avaliação",

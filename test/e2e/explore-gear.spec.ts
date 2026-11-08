@@ -39,7 +39,7 @@ test('the index: Pack, Shelter, Sleep System, Clothing, Cook Kit and Water first
     await seed(browser, testInfo.workerIndex, `Ex${Date.now().toString(36)}`);
     await page.goto(url('/explore'));
     const sections = page.getByTestId('explore-section');
-    expect((await sections.evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.slug))).slice(0, 6)).toEqual(['pack', 'shelter', 'sleep-system', 'clothing', 'cook-kit', 'water']);
+    expect((await sections.evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.slug))).slice(0, 7)).toEqual(['pack', 'shelter', 'sleep-system', 'clothing', 'cook-kit', 'water', 'lights-electronics']);
     const others = await page.getByTestId('explore-others').locator('a > span:first-child').allTextContents();
     expect(others).toEqual([...others].sort((a, b) => a.localeCompare(b)));
     // A child category opens its parent with that category ticked.

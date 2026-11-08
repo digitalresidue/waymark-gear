@@ -115,6 +115,12 @@ export const DEFAULT_GROUPS = [
         name: 'Water',
         types: ['Bottle', 'Water Bottle', 'Bladder', 'Hydration Bladder', 'Reservoir', 'Filter', 'Water Filter'],
     },
+    {
+        name: 'Lights & Electronics',
+        types: ['Lights and Electronics', 'Lights & Electronics', 'Electronics', 'Lights', 'Light', 'Headlamp', 'Head Lamp',
+            'Flashlight', 'Lantern', 'Watch', 'Watches', 'GPS Watch', 'Cable', 'Cables', 'Charging Cable', 'Charger', 'Chargers',
+            'Battery', 'Batteries', 'Power Bank', 'Battery Pack', 'Phone', 'GPS', 'Satellite Messenger', 'Satellite Communicator'],
+    },
 ];
 const GROUP_BY_TYPE = new Map(DEFAULT_GROUPS.flatMap((g) => g.types.map((t) => [categoryKey(t), g.name])));
 export const CLOTHING_GROUP = 'Clothing';
@@ -122,8 +128,9 @@ export const SLEEP_GROUP = 'Sleep System';
 export const SHELTER_GROUP = 'Shelter';
 export const COOK_GROUP = 'Cook Kit';
 export const WATER_GROUP = 'Water';
+export const ELECTRONICS_GROUP = 'Lights & Electronics';
 
-/** The group a catalog type goes in by default ('Clothing', 'Sleep System', 'Shelter', 'Cook Kit', 'Water'), or ''. */
+/** The group a catalog type goes in by default ('Clothing', 'Sleep System', 'Shelter', 'Cook Kit', 'Water', 'Lights & Electronics'), or ''. */
 export function defaultGroupFor(type) {
     const k = categoryKey(type);
     if (!k) return '';

@@ -138,6 +138,8 @@
   "explore.parent.cook-kit.note": "Hornillos, combustible, ollas y cubiertos",
   "explore.parent.water": "Agua",
   "explore.parent.water.note": "Botellas, depósitos y filtros",
+  "explore.parent.lights-electronics": "Luces y electrónica",
+  "explore.parent.lights-electronics.note": "Frontales, relojes, cargadores y cables",
   "gear.noRatings": "Aún sin valoraciones.",
   "gear.ratingFrom": {
     "one": "/ 5 de {count} valoración",

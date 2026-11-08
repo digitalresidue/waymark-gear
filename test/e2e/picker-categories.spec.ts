@@ -5,7 +5,7 @@ import { registerUser, generateTestUser } from './auth-utils';
 
 // Add from catalog: every category is reachable. The panel used to show the
 // first 14 categories A–Z, so Quilt, Sleeping Bag, Tent, Top Quilt and
-// Underquilt (all after "P") never appeared. Now the six parent groups come
+// Underquilt (all after "P") never appeared. Now the parent groups come
 // first, each opening a row of its categories, then everything else.
 
 const url = (p: string) => new URL(p, testRoot).toString();
@@ -43,6 +43,8 @@ test('every catalog category can be picked, grouped like Explore', async ({ page
     await expect(sections.getByTestId('picker-section-sleep-system')).toBeVisible();
     await expect(sections.getByTestId('picker-section-shelter')).toBeAttached();
     await expect(sections.getByTestId('picker-section-trekking-poles')).toBeAttached();
+    // Lights & Electronics is a group of its own now.
+    await expect(sections.getByTestId('picker-section-lights-electronics')).toBeAttached();
 
     // Sleep System opens its categories; each narrows the results.
     await sections.getByTestId('picker-section-sleep-system').click();

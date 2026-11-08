@@ -13,7 +13,9 @@ const CATS = [
 describe('the category index', () => {
     test('parents, in order, then everything else A–Z', () => {
         const index = exploreIndex(CATS);
-        assert.deepEqual(index.map((s) => s.name), ['Pack', 'Shelter', 'Sleep System', 'Clothing', 'Cook Kit', 'Water', 'Accessories', 'Lights and Electronics']);
+        assert.deepEqual(index.map((s) => s.name), ['Pack', 'Shelter', 'Sleep System', 'Clothing', 'Cook Kit', 'Water', 'Lights & Electronics', 'Accessories']);
+        // The catalog's own "Lights and Electronics" category sits under the group.
+        assert.deepEqual(index[6].children.map((c) => c.name), ['Lights and Electronics']);
         const shelter = index[1];
         assert.equal(shelter.count, 10);
         // "Tent" and "Tents" are one.
@@ -23,7 +25,7 @@ describe('the category index', () => {
         assert.deepEqual(index[2].children.map((c) => c.name), ['Top Quilt', 'Sleeping Pad', 'Sleep']);
         assert.equal(index[0].children[0].name, 'Backpack');
         // The parents stay even while empty.
-        assert.equal(exploreIndex([]).length, 6);
+        assert.equal(exploreIndex([]).length, 7);
     });
 
     test('parents and categories resolve from a slug', () => {
@@ -37,6 +39,10 @@ describe('the category index', () => {
         for (const c of ['Pants', 'Shorts', 'Gloves', 'Fanny']) assert.equal(parentOf(c), 'clothing', c);
         assert.equal(parentOf('Bug Net'), 'shelter');
         assert.equal(parentOf('Bugnet'), 'shelter');
+        // Lights & Electronics: headlamps, watches, cables, chargers and kin.
+        for (const c of ['Lights and Electronics', 'Lights & Electronics', 'Headlamp', 'Headlamps', 'Watch', 'Cables', 'Cable', 'Charger', 'Power Bank', 'Batteries']) {
+            assert.equal(parentOf(c), 'lights-electronics', c);
+        }
         const shelter = resolveSection('shelter', CATS);
         assert.deepEqual(shelter.categories.sort(), ['Shelter', 'Tarps', 'Tent', 'Tents']);
         assert.deepEqual(resolveSection('cooking', CATS).categories.sort(), ['Cooking', 'cooking']);

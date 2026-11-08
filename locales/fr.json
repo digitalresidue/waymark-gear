@@ -138,6 +138,8 @@
   "explore.parent.cook-kit.note": "Réchauds, combustible, popotes et couverts",
   "explore.parent.water": "Eau",
   "explore.parent.water.note": "Gourdes, poches à eau et filtres",
+  "explore.parent.lights-electronics": "Éclairage et électronique",
+  "explore.parent.lights-electronics.note": "Frontales, montres, chargeurs et câbles",
   "gear.noRatings": "Pas encore de notes.",
   "gear.ratingFrom": {
     "one": "/ 5 sur {count} note",

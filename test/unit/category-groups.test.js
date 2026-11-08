@@ -2,7 +2,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { Library } from '../../client/dataTypes.js';
-import { defaultGroupFor, CLOTHING_GROUP, SLEEP_GROUP, SHELTER_GROUP, COOK_GROUP, WATER_GROUP } from '../../client/utils/gear-meta.js';
+import { defaultGroupFor, CLOTHING_GROUP, SLEEP_GROUP, SHELTER_GROUP, COOK_GROUP, WATER_GROUP, ELECTRONICS_GROUP } from '../../client/utils/gear-meta.js';
 
 // A list: Shelter, Base Layer, Sleep, Mid Layer, Shells.
 function setup() {
@@ -96,6 +96,12 @@ describe('defaultGroupFor', () => {
         }
         for (const t of ['Bug Net', 'Bug Nets', 'Bugnet', 'Bug Netting', 'Mosquito Net']) {
             assert.equal(defaultGroupFor(t), SHELTER_GROUP, t);
+        }
+    });
+    test('headlamps, watches, cables and chargers go under Lights & Electronics', () => {
+        for (const t of ['Headlamp', 'Headlamps', 'Head Lamp', 'Watch', 'Watches', 'Cable', 'Cables', 'Charger', 'Chargers',
+            'Battery', 'Batteries', 'Power Bank', 'Phone', 'Lights and Electronics', 'Lights & Electronics', 'Electronics']) {
+            assert.equal(defaultGroupFor(t), ELECTRONICS_GROUP, t);
         }
     });
     test('pads, quilts, underquilts and bags go under Sleep System', () => {

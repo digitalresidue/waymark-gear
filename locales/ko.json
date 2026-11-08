@@ -137,6 +137,8 @@
   "explore.parent.cook-kit.note": "스토브, 연료, 코펠, 수저",
   "explore.parent.water": "물",
   "explore.parent.water.note": "물병, 수낭, 정수기",
+  "explore.parent.lights-electronics": "조명 및 전자기기",
+  "explore.parent.lights-electronics.note": "헤드램프, 시계, 충전기, 케이블",
   "gear.noRatings": "아직 평점이 없어요.",
   "gear.ratingFrom": {
     "other": "/ 5 (평점 {count}개)"

@@ -18,8 +18,9 @@ export const PARENTS = [
     { slug: 'clothing', name: 'Clothing', note: 'Layers, shells, pants, gloves, socks and shoes' },
     { slug: 'cook-kit', name: 'Cook Kit', note: 'Stoves, fuel, pots and utensils' },
     { slug: 'water', name: 'Water', note: 'Bottles, bladders and filters' },
+    { slug: 'lights-electronics', name: 'Lights & Electronics', note: 'Headlamps, watches, chargers and cables' },
 ];
-const PARENT_BY_GROUP = { Shelter: 'shelter', 'Sleep System': 'sleep-system', Clothing: 'clothing', 'Cook Kit': 'cook-kit', Water: 'water' };
+const PARENT_BY_GROUP = { Shelter: 'shelter', 'Sleep System': 'sleep-system', Clothing: 'clothing', 'Cook Kit': 'cook-kit', Water: 'water', 'Lights & Electronics': 'lights-electronics' };
 
 export const slugify = (name) => String(name || '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
