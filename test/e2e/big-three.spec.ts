@@ -91,6 +91,8 @@ test('a hammock and top quilt get hammocks and quilts: 20% lighter, as warm, nev
     const quilt = sleep.getByTestId('big-three-item').filter({ hasText: `Old quilt ${t}` });
     await expect(quilt).toContainText(`Warm quilt ${t}`);
     await expect(quilt).toContainText('saves');
+    // Gear is compared in ounces (or grams), not pounds: 40 oz → 2 oz saves 38 oz.
+    await expect(quilt.getByTestId('big-three-option').filter({ hasText: `Warm quilt ${t}` })).toContainText(/2 oz.*saves 38 oz \(95%\)/);
     const pad = sleep.getByTestId('big-three-item').filter({ hasText: `Old pad ${t}` });
     await expect(pad).toContainText(`Good pad ${t}`);
     for (const never of [`Light tent ${t}`, `Light bag ${t}`, `Summer quilt ${t}`, `Thin pad ${t}`]) {
@@ -110,4 +112,11 @@ test('a hammock and top quilt get hammocks and quilts: 20% lighter, as warm, nev
     }
     // The summary adds it up.
     await expect(panel.getByTestId('big-three-summary')).toContainText('could save up to');
+    await expect(panel.getByTestId('big-three-summary')).toContainText(/ oz/);
+
+    // Metric readers get grams.
+    await page.request.post(url('/api/units'), { data: { system: 'metric' } });
+    await page.reload();
+    await page.getByTestId('gear-insights').getByTestId('insights-toggle').click();
+    await expect(page.getByTestId('big-three-sleep').getByTestId('big-three-option').filter({ hasText: `Warm quilt ${t}` })).toContainText(/57 g.*saves 1077 g/);
 });
