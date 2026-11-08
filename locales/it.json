@@ -138,6 +138,8 @@
   "explore.parent.cook-kit.note": "Fornelli, combustibile, pentole e posate",
   "explore.parent.water": "Acqua",
   "explore.parent.water.note": "Borracce, sacche idriche e filtri",
+  "explore.parent.lights-electronics": "Luci ed elettronica",
+  "explore.parent.lights-electronics.note": "Frontali, orologi, caricatori e cavi",
   "gear.noRatings": "Ancora nessuna valutazione.",
   "gear.ratingFrom": {
     "one": "/ 5 da {count} valutazione",

@@ -137,6 +137,8 @@
   "explore.parent.cook-kit.note": "ストーブ、燃料、クッカー、カトラリー",
   "explore.parent.water": "水",
   "explore.parent.water.note": "ボトル、ハイドレーション、浄水器",
+  "explore.parent.lights-electronics": "ライトと電子機器",
+  "explore.parent.lights-electronics.note": "ヘッドランプ、腕時計、充電器、ケーブル",
   "gear.noRatings": "まだ評価はありません。",
   "gear.ratingFrom": {
     "other": "/ 5（{count}件の評価）"

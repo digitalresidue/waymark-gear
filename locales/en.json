@@ -138,6 +138,8 @@
   "explore.parent.cook-kit.note": "Stoves, fuel, pots and utensils",
   "explore.parent.water": "Water",
   "explore.parent.water.note": "Bottles, bladders and filters",
+  "explore.parent.lights-electronics": "Lights & Electronics",
+  "explore.parent.lights-electronics.note": "Headlamps, watches, chargers and cables",
   "gear.noRatings": "No ratings yet.",
   "gear.ratingFrom": {
     "one": "/ 5 from {count} rating",

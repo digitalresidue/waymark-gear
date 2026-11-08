@@ -137,6 +137,8 @@
   "explore.parent.cook-kit.note": "炉头、燃料、锅具和餐具",
   "explore.parent.water": "饮水",
   "explore.parent.water.note": "水瓶、水袋和滤水器",
+  "explore.parent.lights-electronics": "照明与电子设备",
+  "explore.parent.lights-electronics.note": "头灯、手表、充电器和数据线",
   "gear.noRatings": "还没有评分。",
   "gear.ratingFrom": {
     "other": "/ 5，来自 {count} 个评分"
