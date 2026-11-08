@@ -6,7 +6,7 @@ import { registerUser, generateTestUser } from './auth-utils';
 // The gear check's big three (client/utils/big-three.js, server/insights.js):
 // shelter, sleep system and pack first; swaps only of the same kind (a
 // hammock sleeper never gets tents or sleeping bags), at least 20% lighter,
-// and like for like (as warm, as well insulated).
+// and like for like (as warm, as well insulated, the same volume and size).
 
 const url = (p: string) => new URL(p, testRoot).toString();
 const saved = (page: Page) => page.waitForResponse((r) => r.url().includes('saveLibrary') && r.status() === 200, { timeout: 20000 });
@@ -53,14 +53,24 @@ test('a hammock and top quilt get hammocks and quilts: 20% lighter, as warm, nev
         // Reported: a hoodie named like a pack is never a pack swap.
         [`${t}-21`, `Nero Classic 50L (Vest Straps) ${t}`, 'Heavyco', 'Pack', 40, '', ''],
         [`${t}-22`, `Town Shirt Desert Mariposa Sun Hoodie ${t}`, 'Town Shirt', 'Sun Hoodie', 1, '', ''],
+        // Packs stay about the same volume: a 50 L pack gets a 46 L one,
+        // never a 36 L or a 60 L.
         [`${t}-23`, `Murmur 36 ${t}`, 'Gossamer Gear', 'Pack', 2, '', ''],
+        [`${t}-24`, `Kumo 46L ${t}`, 'Gossamer Gear', 'Pack', 3, '', ''],
+        [`${t}-25`, `Mariposa 60 ${t}`, 'Gossamer Gear', 'Pack', 3, '', ''],
+        // Clothing stays the same size: an XL rain jacket never gets a Small
+        // or a Medium.
+        [`${t}-26`, `Old rain jacket ${t} (XL)`, 'Heavyco', 'Rain Gear', 20, '', ''],
+        [`${t}-27`, `Light rain jacket ${t} (X-Large)`, 'Trailco', 'Rain Gear', 5, '', ''],
+        [`${t}-28`, `Tiny rain jacket ${t} (Small)`, 'Trailco', 'Rain Gear', 4, '', ''],
+        [`${t}-29`, `Mid rain jacket ${t} (M)`, 'Trailco', 'Rain Gear', 4, '', ''],
     ].map(([sku, name, brand, cat, oz, temp, r]) => `${sku},${name},${brand},${cat},${oz},oz,published,${temp},${r},${r ? 'inflatable' : ''}`);
     expect((await owner.request.post(url('/api/admin/catalog/import/apply'), { data: { csv: [head, ...rows].join('\n') } })).ok()).toBe(true);
     const find = async (name: string) => {
         const res = await (await owner.request.get(url(`/api/catalog?q=${encodeURIComponent(name)}`))).json();
         return res.items.find((i: { name: string }) => i.name === name);
     };
-    const mine = await Promise.all([`Old hammock ${t}`, `Old quilt ${t}`, `Old pad ${t}`, `Old tarp ${t}`, `Old underquilt ${t}`, `Bottom Entry Bugnet ${t}`, `Nero Classic 50L (Vest Straps) ${t}`].map(find));
+    const mine = await Promise.all([`Old hammock ${t}`, `Old quilt ${t}`, `Old pad ${t}`, `Old tarp ${t}`, `Old underquilt ${t}`, `Bottom Entry Bugnet ${t}`, `Nero Classic 50L (Vest Straps) ${t}`, `Old rain jacket ${t} (XL)`].map(find));
 
     // A hiker with the hammock, quilt and pad on their list (from the catalog).
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -106,7 +116,14 @@ test('a hammock and top quilt get hammocks and quilts: 20% lighter, as warm, nev
     await expect(sleep.getByTestId('big-three-item').filter({ hasText: `Old underquilt ${t}` })).toContainText(`Light underquilt ${t}`);
     await expect(panel.getByTestId('big-three-item').filter({ hasText: `Bottom Entry Bugnet ${t}` })).toHaveCount(0);
     const pack = panel.getByTestId('big-three-pack').getByTestId('big-three-item').filter({ hasText: `Nero Classic 50L` });
-    await expect(pack).toContainText(`Murmur 36 ${t}`);
+    await expect(pack).toContainText(`Kumo 46L ${t}`);
+    await expect(pack).not.toContainText(`Murmur 36 ${t}`);
+    await expect(pack).not.toContainText(`Mariposa 60 ${t}`);
+    // An XL rain jacket: the X-Large, never the Small or the Medium.
+    const jacket = panel.getByTestId('alternative').filter({ hasText: `Old rain jacket ${t}` });
+    await expect(jacket).toContainText(`Light rain jacket ${t}`);
+    await expect(jacket).not.toContainText(`Tiny rain jacket ${t}`);
+    await expect(jacket).not.toContainText(`Mid rain jacket ${t}`);
     for (const never of ['Ground Cloth', 'Tarp Sleeve', 'Underquilt Protector', `Dyneema Hammock Tarp ${t}`, 'Sun Hoodie']) {
         await expect(panel.locator('[data-testid="big-three-option"]').filter({ hasText: never }), never).toHaveCount(0);
     }

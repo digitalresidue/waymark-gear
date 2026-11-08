@@ -91,9 +91,9 @@ describe('the big three', () => {
         // Pads: as well insulated.
         assert.equal(likeForLike('air-pad', { r_value: 4 }, { r_value: 2 }), false);
         assert.equal(likeForLike('air-pad', { r_value: 4 }, { r_value: 3.9 }), true);
-        // Packs: not much smaller.
-        assert.equal(likeForLike('pack', { volume: 60 }, { volume: 30 }), false);
-        assert.equal(likeForLike('pack', { volume: 60 }, { volume: 50 }), true);
+        // Packs: carrying about as much (volume is fit.js's).
+        assert.equal(likeForLike('pack', { max_carry: 16 }, { max_carry: 9 }), false);
+        assert.equal(likeForLike('pack', { max_carry: 16 }, { max_carry: 14 }), true);
         // Without specs on both, any of the same kind.
         assert.equal(likeForLike('tent', { capacity: '2p' }, {}), true);
     });

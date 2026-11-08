@@ -7,7 +7,9 @@
 // underquilt, a sleeping bag, an inflatable pad or a foam pad), and only the
 // same kind is suggested. Someone with a hammock and a top quilt never gets
 // a tent or a sleeping bag. A swap has to be at least 20% lighter, and, where
-// both have the specs, as roomy, as warm, as well insulated or as big.
+// both have the specs, as roomy, as warm or as well insulated, and the same
+// volume and size (fit.js): a 40 L pack gets 34-46 L packs, a Regular pad
+// Regular pads.
 
 import { categoryKey } from './gear-meta.js';
 
@@ -132,7 +134,8 @@ const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
  * Is `option` a like-for-like swap for `mine` (same kind)? Only judged on
  * specs both have: as many people for a tent, as warm for a quilt or bag
  * (within 1°C), as well insulated for a pad, and at least three quarters
- * the volume and carrying weight for a pack.
+ * the carrying weight for a pack. Volume and size (a 40 L pack, an XL
+ * jacket) are fit.js's, from the specs or the name.
  */
 export function likeForLike(kind, mine = {}, option = {}) {
     const a = mine || {};
@@ -146,7 +149,6 @@ export function likeForLike(kind, mine = {}, option = {}) {
     }
     if (['air-pad', 'foam-pad'].includes(kind) && num(a.r_value) !== null && num(b.r_value) !== null) return b.r_value >= a.r_value - 0.2;
     if (kind === 'pack') {
-        if (num(a.volume) !== null && num(b.volume) !== null && b.volume < a.volume * 0.75) return false;
         if (num(a.max_carry) !== null && num(b.max_carry) !== null && b.max_carry < a.max_carry * 0.75) return false;
     }
     return true;
