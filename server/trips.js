@@ -3,6 +3,7 @@
 // or private.
 
 import knex from './db.js';
+import { TERRAINS, parseStretches } from '../client/utils/energy.js';
 import { loadLibrary } from './library-store.js';
 import { Library } from '../client/dataTypes.js';
 import { userImageLocation } from './images.js';
@@ -32,6 +33,7 @@ function tripApi(t, extra = {}) {
         listId: t.list_id === null ? null : Number(t.list_id),
         visibility: t.visibility,
         coverUrl: t.cover_url,
+        plan: t.plan && typeof t.plan === 'object' ? t.plan : {},
         updatedAt: t.updated_at,
         ...extra,
     };
@@ -66,7 +68,34 @@ function cleanTrip(input = {}, userId) {
         list_id: Number.isSafeInteger(input.listId) && input.listId > 0 ? input.listId : null,
         visibility: VISIBILITY.includes(input.visibility) ? input.visibility : 'private',
         cover_url: ownPhoto(userId)(input.coverUrl) ? input.coverUrl : '',
+        // Only when given: saving a trip without its plan keeps the plan.
+        ...(input.plan !== undefined ? { plan: JSON.stringify(cleanPlan(input.plan)) } : {}),
     };
+}
+
+// The trip's plan for the calorie, food and water estimates (utils/energy.js),
+// stored metric: km per day, m of climbing per day, km/h, °C, days per
+// stretch between town stops, km between water sources.
+function cleanPlan(input) {
+    const p = input && typeof input === 'object' ? input : {};
+    const within = (v, min, max) => {
+        if (v === null || v === undefined || v === '') return null;
+        const n = Number(v);
+        return Number.isFinite(n) && n >= min && n <= max ? Math.round(n * 10) / 10 : null;
+    };
+    const out = {
+        kmPerDay: within(p.kmPerDay, 0, 120),
+        gainPerDayM: within(p.gainPerDayM, 0, 6000),
+        terrain: Object.prototype.hasOwnProperty.call(TERRAINS, p.terrain) ? p.terrain : null,
+        paceKmh: within(p.paceKmh, 1, 8),
+        lowC: within(p.lowC, -50, 50),
+        highC: within(p.highC, -50, 55),
+        kcalPerOz: within(p.kcalPerOz, 60, 200),
+        waterEveryKm: within(p.waterEveryKm, 0.5, 200),
+        stretches: parseStretches(p.stretches),
+    };
+    if (!out.stretches.length) out.stretches = null;
+    return Object.fromEntries(Object.entries(out).filter(([, v]) => v !== null));
 }
 
 function cleanEntry(input = {}, userId) {

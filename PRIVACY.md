@@ -47,6 +47,15 @@ Everything you enter into Waymark Gear, including list names, item names, descri
 weights, prices, quantities, links, and the images you upload, is stored in our
 database and associated with your account. We attempt to strip all EXIF metadata from uploaded images.
 
+### Body stats (optional)
+
+If you add body stats in **Your profile** (weight, height, year born, sex and
+build), we use them only to estimate calories, food and water for your trips.
+They are private: only you can see them, and they never appear on your
+profile, your shared lists, other people's timelines or the API for anyone
+else. Leave any of them blank, or clear them at any time with **Clear**;
+deleting your account deletes them.
+
 ### Your public profile (optional)
 
 Your profile at `/@username` shows only what you choose to add: a name, trail

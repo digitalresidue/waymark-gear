@@ -91,11 +91,11 @@
                         Use this for food per day
                     </button>
                     <p class="wgMuted wgTripFine">
-                        A planning estimate with a 10% margin: resting burn, walking with your pack, climbing and cold. Bodies differ; adjust from experience.
+                        A planning estimate with a 10% margin: resting burn ({{ estimate.restingMethod }}), hiking with your pack, climbing and cold. Your height, age, sex and build come from your body stats in Your profile. Bodies differ; adjust from experience.
                     </p>
                 </div>
                 <p v-else class="wgMuted wgTripFine">
-                    Add your weight (and the distance and climbing, if you know them) for a calorie and water estimate.
+                    Add your weight here or in your body stats (Your profile), and the distance and climbing if you know them, for a calorie and water estimate.
                 </p>
             </details>
 
@@ -162,7 +162,7 @@
 
 <script>
 import { tripDays, normalizeTrip, tripEstimates, TERRAINS } from '../utils/trip.js';
-import { formatWeightMg } from '../utils/format.js';
+import { formatWeightMg, api } from '../utils/format.js';
 import weightUtils from '../utils/weight.js';
 
 const MAX_ROWS = 14;
@@ -173,7 +173,7 @@ export default {
         list: { type: Object, required: true },
     },
     data() {
-        return { open: false, terrains: TERRAINS };
+        return { open: false, terrains: TERRAINS, body: {} };
     },
     computed: {
         library() {
@@ -196,7 +196,7 @@ export default {
             return ['distanceKm', 'elevationM', 'bodyKg', 'tempLowC', 'tempHighC'].some((k) => this.trip[k] !== undefined);
         },
         estimate() {
-            return tripEstimates(this.trip, (this.list.totalBaseWeight || 0) + (this.list.totalConsumableWeight || 0));
+            return tripEstimates(this.trip, (this.list.totalBaseWeight || 0) + (this.list.totalConsumableWeight || 0), this.body);
         },
         foodPerDayDisplay() {
             return Math.round(weightUtils.MgToWeight(this.trip.foodPerDayMg, this.unit) * 100) / 100;
@@ -217,6 +217,18 @@ export default {
         },
         scale() {
             return this.days.length ? this.days[0].packMg || 1 : 1;
+        },
+    },
+    watch: {
+        // Your body stats (Your profile), once the planner is opened.
+        async open(isOpen) {
+            if (!isOpen || this.bodyLoaded || !this.$store.state.loggedIn) return;
+            this.bodyLoaded = true;
+            try {
+                this.body = await api('/api/body-stats');
+            } catch {
+                this.body = {};
+            }
         },
     },
     methods: {
