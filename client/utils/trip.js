@@ -8,6 +8,8 @@
 //   - water: liters carried, at 1 kg per liter.
 // Worn gear is on your body, not in the pack, so it's reported separately.
 
+import { dayOnTrail } from './energy.js';
+
 export const MG_PER_LITER = 1_000_000;
 export const DEFAULT_TRIP = { days: 3, foodPerDayMg: 680389, waterLiters: 2 }; // 1.5 lb of food a day
 
@@ -42,36 +44,23 @@ export function normalizeTrip(trip) {
     return out;
 }
 
-const KCAL_PER_KG_FAT_FREE_DAY = 24; // resting burn, about 1 kcal/kg/hour
-const TERRAIN_FACTOR = { trail: 1, offtrail: 1.25, snow: 1.5, desert: 1.1 };
-
-// Rough daily calories and water for a trip, from its details and the pack.
-// Estimates to plan with, not prescriptions: people differ a lot.
-//   resting: ~24 kcal per kg of body weight a day
-//   walking: ~0.5 kcal per kg (body + pack) per km, more off trail or on snow
-//   climbing: lifting (body + pack) up the day's gain at ~25% efficiency
-//   cold: +5% for every 10 °C the low drops below 10 °C
-//   margin: +10%
-export function tripEstimates(trip, packMg) {
+// Rough daily calories and water for a trip, from its details and the pack:
+// the same model as trip pages (utils/energy.js: Mifflin–St Jeor or
+// Katch–McArdle resting burn, Pandolf for hiking with the pack, cold, a 10%
+// margin). `body` is the member's body stats (Your profile); the list's own
+// "Your weight" wins over its weight when set.
+export function tripEstimates(trip, packMg, body = {}) {
     const t = normalizeTrip(trip);
-    if (!t.bodyKg) return null;
+    const who = { ...(body || {}), ...(t.bodyKg ? { kg: t.bodyKg } : {}) };
+    if (!who.kg) return null;
     const days = t.days;
     const kmPerDay = (t.distanceKm || 0) / days;
     const gainPerDay = (t.elevationM || 0) / days;
-    const mass = t.bodyKg + (packMg || 0) / 1e6;
-    const terrain = TERRAIN_FACTOR[t.terrain] || 1;
-    const resting = KCAL_PER_KG_FAT_FREE_DAY * t.bodyKg;
-    const walking = 0.5 * mass * kmPerDay * terrain;
-    const climbing = (mass * 9.81 * gainPerDay) / 4184 / 0.25;
-    const coldBoost = t.tempLowC !== undefined && t.tempLowC < 10 ? 1 + 0.05 * ((10 - t.tempLowC) / 10) : 1;
-    const kcal = Math.round(((resting + walking + climbing) * coldBoost * 1.1) / 50) * 50;
+    const day = dayOnTrail(who, { km: kmPerDay, gainM: gainPerDay, terrain: t.terrain || 'trail', lowC: t.tempLowC, highC: t.tempHighC }, (packMg || 0) / 1e6);
+    const kcal = day.kcal;
     const kcalPerOz = t.kcalPerOz || 125;
     const foodPerDayMg = Math.round((kcal / kcalPerOz) * 28349.5);
-    // Water to drink a day: a base, plus distance, climbing and heat.
-    let water = 2 + 0.05 * kmPerDay + 0.5 * (gainPerDay / 500);
-    if (t.tempHighC !== undefined && t.tempHighC > 27) water += 0.1 * (t.tempHighC - 27);
-    if (t.terrain === 'desert') water += 1;
-    const waterLitersPerDay = Math.round(water * 10) / 10;
+    const waterLitersPerDay = day.waterLiters;
     return {
         kcalPerDay: kcal,
         foodPerDayMg,
@@ -79,6 +68,7 @@ export function tripEstimates(trip, packMg) {
         waterLitersPerDay,
         kmPerDay,
         gainPerDay,
+        restingMethod: day.restingMethod,
         macros: macrosFor(kcal),
         totals: { kcal: kcal * days, foodMg: foodPerDayMg * days, waterLiters: Math.round(waterLitersPerDay * days * 10) / 10 },
     };

@@ -18,6 +18,7 @@ import {
 } from './auth.js';
 import * as comments from './comments.js';
 import * as follows from './follows.js';
+import { bodyStats, saveBodyStats } from './body-stats.js';
 import * as activity from './activity.js';
 import * as tickets from './tickets.js';
 import * as plans from './shared-lists.js';
@@ -98,6 +99,18 @@ router.get('/api/profile', signedIn(async (req, res, user) => {
 
 router.put('/api/profile', requireJson, signedIn(async (req, res, user) => {
     res.json(await updateProfile(user, req.body || {}));
+}));
+
+// Body stats for the calorie estimates: the owner's only, never shown to
+// anyone else (server/body-stats.js).
+router.get('/api/body-stats', signedIn(async (req, res, user) => {
+    res.set('Cache-Control', 'no-store, private');
+    res.json(await bodyStats(user));
+}));
+
+router.put('/api/body-stats', requireJson, signedIn(async (req, res, user) => {
+    res.set('Cache-Control', 'no-store, private');
+    res.json(await saveBodyStats(user, req.body || {}));
 }));
 
 // ---- comments, shakedowns, notifications ----------------------------------

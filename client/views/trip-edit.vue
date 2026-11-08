@@ -61,6 +61,7 @@
                             Open it to tweak
                         </router-link>
                     </p>
+                    <tripPlan v-model="form.plan" class="wgTripWide" :list="linkedList" />
                     <label class="wgField wgTripWide">Summary <span class="wgMuted">(markdown)</span>
                         <textarea v-model="form.summary" class="wgInput" rows="4" maxlength="4000" data-testid="trip-summary" />
                     </label>
@@ -140,6 +141,7 @@
 </template>
 
 <script>
+import tripPlan from '../components/trip-plan.vue';
 import siteHeader from '../components/site-header.vue';
 import { api } from '../utils/format.js';
 
@@ -147,7 +149,7 @@ const KM_PER_MI = 1.609344;
 
 export default {
     name: 'TripEdit',
-    components: { siteHeader },
+    components: { siteHeader, tripPlan },
     data() {
         return { trip: null, form: {}, drafts: [], missing: false, error: '', saved: false, uploading: null, templateId: null, madeList: '' };
     },
@@ -161,6 +163,13 @@ export default {
         },
         templates() {
             return this.lists.filter((l) => l.template);
+        },
+        // The linked pack list, with its totals, for the food and water plan.
+        linkedList() {
+            const l = this.form.listId && this.lists.find((x) => x.id === this.form.listId);
+            if (!l) return null;
+            l.calculateTotals();
+            return l;
         },
         imperial() {
             const lib = this.$store.state.library;
@@ -196,6 +205,7 @@ export default {
                 listId: trip.listId,
                 summary: trip.summary,
                 coverUrl: trip.coverUrl,
+                plan: { ...(trip.plan || {}) },
             };
             this.drafts = trip.entries.map((e) => ({
                 ...e,

@@ -178,6 +178,8 @@
                     </p>
                 </section>
 
+                <bodyStats />
+
                 <section class="wgCard wgProfileFields">
                     <label class="wgProfileCheck">
                         <input v-model="form.hidden" type="checkbox" data-testid="profile-hidden">
@@ -206,6 +208,7 @@
 </template>
 
 <script>
+import bodyStats from '../components/body-stats.vue';
 import siteHeader from '../components/site-header.vue';
 import globalAlerts from '../components/global-alerts.vue';
 import { api, formatWeightMg } from '../utils/format.js';
@@ -223,7 +226,7 @@ const NETWORKS = [
 
 export default {
     name: 'ProfileEdit',
-    components: { siteHeader, globalAlerts },
+    components: { bodyStats, siteHeader, globalAlerts },
     data() {
         return {
             languages: LANGUAGES,
