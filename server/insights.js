@@ -8,6 +8,7 @@ import knex from './db.js';
 import { isUuid } from './catalog.js';
 import { gearKind } from '../client/utils/insights.js';
 import { bigThreeKind, likeForLike, worthSwapping, sameCategory, KINDS, SLOTS } from '../client/utils/big-three.js';
+import { fitsLike } from '../client/utils/fit.js';
 
 const MAX_ROWS = 200;
 
@@ -54,7 +55,7 @@ export async function listInsights(input) {
         .whereIn('catalog_items.category', categories)
         .where('catalog_items.weight_mg', '>', 0)
         .select('catalog_items.id', 'catalog_items.name', 'catalog_items.brand', 'catalog_items.category', 'catalog_items.description',
-            'catalog_items.weight_mg', 'catalog_items.price', 'catalog_items.url', knex.raw('coalesce(c.uses, 0)::int as uses'));
+            'catalog_items.weight_mg', 'catalog_items.price', 'catalog_items.url', 'catalog_items.specs', knex.raw('coalesce(c.uses, 0)::int as uses'));
     const byCategory = new Map();
     for (const p of pool) {
         if (!byCategory.has(p.category)) byCategory.set(p.category, []);
@@ -86,6 +87,8 @@ export async function listInsights(input) {
         const lighter = (byCategory.get(cat) || [])
             .filter((p) => kindOf.get(p.id) === kind)
             .filter((p) => p.id !== r.catalogId && !ownedIds.has(p.id) && worthSwapping(r.weightMg, p.weight_mg))
+            // The same size and volume: an XL jacket never gets a Small.
+            .filter((p) => fitsLike({ name: r.name, specs: r.catalogId ? linkedSpecs.get(r.catalogId) : null }, p, kind))
             .sort((a, b) => b.uses - a.uses || a.weight_mg - b.weight_mg)
             .slice(0, 2);
         if (lighter.length) {
@@ -164,6 +167,8 @@ async function bigThreeSwaps(rows, { linkedCategory, linkedSpecs, linkedBrand, o
             .filter((p) => !r.catalogCategory || sameCategory(p.category, r.catalogCategory))
             .filter((p) => worthSwapping(r.weightMg, p.weight_mg))
             .filter((p) => likeForLike(r.kind, r.specs, p.specs || {}))
+            // The same volume and size, from specs or names (fit.js).
+            .filter((p) => fitsLike(r, p, r.kind))
             // Proven picks first (used in public lists), then the lightest.
             .sort((a, b) => (b.uses > 0) - (a.uses > 0) || a.weight_mg - b.weight_mg)
             .slice(0, PER_ITEM)
