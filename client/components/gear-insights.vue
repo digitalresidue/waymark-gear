@@ -141,6 +141,8 @@
 import { checkEssentials, listRows, readinessLabel } from '../utils/insights.js';
 import { TRIP_TYPE_LABELS } from '../utils/gear-meta.js';
 import { formatWeightMg, api } from '../utils/format.js';
+import { currentUnits } from '../utils/i18n-app.js';
+import { unitFor } from '../utils/units.js';
 
 export default {
     name: 'GearInsights',
@@ -154,8 +156,10 @@ export default {
         library() {
             return this.$store.state.library;
         },
+        // Gear is compared in ounces or grams, the reader's units
+        // (Your profile → Units): a swap that saves 3.2 oz says more than 0.2 lb.
         unit() {
-            return ['g', 'kg'].includes(this.library.totalUnit) ? 'kg' : 'lb';
+            return unitFor('weight', currentUnits());
         },
         rows() {
             return listRows(this.library, this.list);
