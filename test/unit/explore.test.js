@@ -32,6 +32,11 @@ describe('the category index', () => {
         assert.equal(parentOf('Packs'), 'pack');
         assert.equal(parentOf('Cooking'), 'cook-kit');
         assert.equal(parentOf('Accessories'), null);
+        // On Explore: pants, shorts, gloves and fanny packs under Clothing;
+        // bug nets under Shelter.
+        for (const c of ['Pants', 'Shorts', 'Gloves', 'Fanny']) assert.equal(parentOf(c), 'clothing', c);
+        assert.equal(parentOf('Bug Net'), 'shelter');
+        assert.equal(parentOf('Bugnet'), 'shelter');
         const shelter = resolveSection('shelter', CATS);
         assert.deepEqual(shelter.categories.sort(), ['Shelter', 'Tarps', 'Tent', 'Tents']);
         assert.deepEqual(resolveSection('cooking', CATS).categories.sort(), ['Cooking', 'cooking']);

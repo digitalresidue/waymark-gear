@@ -90,6 +90,14 @@ describe('defaultGroupFor', () => {
             assert.equal(defaultGroupFor(t), CLOTHING_GROUP, t);
         }
     });
+    test('pants, shorts, gloves and fanny packs are Clothing; bug nets are Shelter', () => {
+        for (const t of ['Pants', 'Pant', 'Trousers', 'Shorts', 'Gloves', 'Glove', 'Mittens', 'Fanny', 'Fanny Pack', 'Fanny Packs']) {
+            assert.equal(defaultGroupFor(t), CLOTHING_GROUP, t);
+        }
+        for (const t of ['Bug Net', 'Bug Nets', 'Bugnet', 'Bug Netting', 'Mosquito Net']) {
+            assert.equal(defaultGroupFor(t), SHELTER_GROUP, t);
+        }
+    });
     test('pads, quilts, underquilts and bags go under Sleep System', () => {
         for (const t of ['Sleeping Pad', 'Sleeping Pads', 'sleep pad', 'Top Quilt', 'Top Quilts', 'Backpacking Quilt',
             'Backpacking Quilts', 'Underquilt', 'Under Quilt', 'Under-quilts', 'Sleeping Bag', 'Sleeping Bags', 'Quilt', 'Pillow', 'Pillows']) {

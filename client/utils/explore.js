@@ -13,9 +13,9 @@ import { specTypeFor, SPEC_FIELDS, SPEC_TYPES, filterKind, formatSpec, matchKey 
 
 export const PARENTS = [
     { slug: 'pack', name: 'Pack', note: 'Backpacks, frameless to framed' },
-    { slug: 'shelter', name: 'Shelter', note: 'Tents, tarps, bivies and hammocks' },
+    { slug: 'shelter', name: 'Shelter', note: 'Tents, tarps, bivies, hammocks and bug nets' },
     { slug: 'sleep-system', name: 'Sleep System', note: 'Quilts, bags, pads and pillows' },
-    { slug: 'clothing', name: 'Clothing', note: 'Layers, shells, socks and shoes' },
+    { slug: 'clothing', name: 'Clothing', note: 'Layers, shells, pants, gloves, socks and shoes' },
     { slug: 'cook-kit', name: 'Cook Kit', note: 'Stoves, fuel, pots and utensils' },
     { slug: 'water', name: 'Water', note: 'Bottles, bladders and filters' },
 ];

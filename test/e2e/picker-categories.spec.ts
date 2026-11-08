@@ -53,9 +53,9 @@ test('every catalog category can be picked, grouped like Explore', async ({ page
     await children.getByTestId('picker-child-underquilt').click();
     await expect.poll(names).toEqual([`Underquilt ${b}`]);
 
-    // Shelter: tents and hammocks.
+    // Shelter: tents, hammocks and bug nets.
     await sections.getByTestId('picker-section-shelter').click();
-    await expect.poll(async () => (await names()).sort()).toEqual([`Hammock ${b}`, `Tent ${b}`]);
+    await expect.poll(async () => (await names()).sort()).toEqual([`Bug Net ${b}`, `Hammock ${b}`, `Tent ${b}`]);
     // All: everything again.
     await sections.getByRole('button', { name: 'All', exact: true }).click();
     await expect.poll(async () => (await names()).length).toBe(cats.length);
@@ -82,5 +82,5 @@ test('the editor\'s Catalog panel reaches every category too', async ({ page, br
     await panel.getByTestId('catalog-panel-children').getByTestId('catalog-panel-child-topquilt').click();
     await expect.poll(names).toEqual([`Top Quilt ${b}`]);
     await chips.getByTestId('catalog-panel-section-shelter').click();
-    await expect.poll(async () => (await names()).sort()).toEqual([`Hammock ${b}`, `Tent ${b}`]);
+    await expect.poll(async () => (await names()).sort()).toEqual([`Bug Net ${b}`, `Hammock ${b}`, `Tent ${b}`]);
 });
