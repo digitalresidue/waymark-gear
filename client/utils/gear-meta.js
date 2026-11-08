@@ -92,7 +92,8 @@ export const DEFAULT_GROUPS = [
         name: 'Clothing',
         types: ['Base Layer', 'Mid Layer', 'Outer Layer', 'Insulation', 'Insulating Layer', 'Shell',
             'Rain Gear', 'Rainwear', 'Rain Jacket', 'Rain Shell', 'Wind Shell', 'Wind Layer', 'Outerwear',
-            'Socks', 'Shoes', 'Footwear', 'Hat', 'Underwear'],
+            'Socks', 'Shoes', 'Footwear', 'Hat', 'Underwear',
+            'Pants', 'Trousers', 'Shorts', 'Gloves', 'Mittens', 'Fanny', 'Fanny Pack'],
         // Any "... Layer" too.
         also: (k) => /layer$/.test(k),
     },
@@ -103,7 +104,8 @@ export const DEFAULT_GROUPS = [
     {
         name: 'Shelter',
         types: ['Tent', 'Bivy', 'Bivvy', 'Bivy Sack', 'Hammock', 'Tarp',
-            'Suspension', 'Hammock Suspension', 'Ridgeline', 'Stakes', 'Tent Stakes'],
+            'Suspension', 'Hammock Suspension', 'Ridgeline', 'Stakes', 'Tent Stakes',
+            'Bug Net', 'Bugnet', 'Bug Netting', 'Mosquito Net'],
     },
     {
         name: 'Cook Kit',
