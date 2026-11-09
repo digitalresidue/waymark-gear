@@ -346,11 +346,13 @@ sheet without spec columns leaves specs as they are.
 
 | Column | Field | Value |
 |---|---|---|
-| `max_carry` | Max carry weight | `14 oz` or `397 g` (bare number: lb) |
 | `volume` | Volume | `40 L` or `2440 cu in` (bare number: L) |
+| `max_carry` | Max carry weight | `14 oz` or `397 g` (bare number: lb) |
+| `gender` | Fit for | Men's / Women's / Unisex |
 | `pack_type` | Pack type | Fastpack / Pack / Hydration vest |
-| `strap_type` | Shoulder straps | J-curve / S-curve / Vest / Other |
 | `frame` | Frame | Framed / Frameless |
+| `strap_type` | Shoulder straps | J-curve / S-curve / Vest / Other |
+| `hip_belt` | Hip belt | Fixed / Removable / None |
 | `roll_top` | Roll top | yes / no |
 | `adjustable_torso` | Adjustable torso | yes / no |
 | `fabric` | Fabric | free text, up to 60 characters (filters ignore capitals) |
@@ -364,7 +366,7 @@ sheet without spec columns leaves specs as they are.
 | `trail_weight` | Trail weight | `14 oz` or `397 g` (bare number: oz) |
 | `min_weight` | Minimum weight | `14 oz` or `397 g` (bare number: oz) |
 | `double_wall` | Double walled | yes / no |
-| `vestibules` | Vestibules | number (whole) |
+| `vestibules` | Vestibules | whole number |
 | `floor_width` | Floor width | `72 in` or `183 cm` (bare number: in) |
 | `floor_length` | Floor length | `72 in` or `183 cm` (bare number: in) |
 | `peak_height` | Peak height | `72 in` or `183 cm` (bare number: in) |
@@ -376,7 +378,7 @@ sheet without spec columns leaves specs as they are.
 |---|---|---|
 | `temp_comfort` | Comfort rating | `20F` or `-7C` (bare number: °F) |
 | `temp_limit` | Limit rating | `20F` or `-7C` (bare number: °F) |
-| `insulation` | Insulation | Down / Synthetic |
+| `insulation` | Insulation | Down / Synthetic / Fleece |
 | `fill_power` | Fill power | 450 fill / 550 fill / 650 fill / 750 fill / 800 fill / 850 fill / 900 fill / 950 fill / 1000 fill |
 | `rds` | RDS certified | Yes / No / Unknown |
 | `footbox` | Footbox | Sewn / Zippered / Drawcord |
@@ -400,25 +402,119 @@ sheet without spec columns leaves specs as they are.
 |---|---|---|
 | `temp_comfort` | Comfort rating | `20F` or `-7C` (bare number: °F) |
 | `temp_limit` | Limit rating | `20F` or `-7C` (bare number: °F) |
-| `insulation` | Insulation | Down / Synthetic |
+| `insulation` | Insulation | Down / Synthetic / Fleece |
 | `fill_power` | Fill power | 450 fill / 550 fill / 650 fill / 750 fill / 800 fill / 850 fill / 900 fill / 950 fill / 1000 fill |
 | `rds` | RDS certified | Yes / No / Unknown |
 | `gender` | Fit for | Men's / Women's / Unisex |
 | `bag_width` | Width | Slim / Regular / Wide |
 | `bag_shape` | Shape | Mummy / Tapered / Rectangular / Other |
 
-**Outer layer** (category "Outer Layer", "Insulation", "Insulated Jacket", "Puffy", any spelling or plural)
+**Outer layer** (category "Outer Layer", "Insulation", "Insulated Jacket", "Puffy", "Puffy Jacket", "Puffer", "Down Jacket", "Down Hoody", "Synthetic Jacket", "Insulated Hoody", "Insulating Layer", "Insulated Layer", "Mid Layer", "Fleece", "Vest", "Down Vest", "Insulated Pants", "Down Pants", any spelling or plural)
 
 | Column | Field | Value |
 |---|---|---|
-| `insulation` | Insulation | Down / Synthetic |
+| `insulation` | Insulation | Down / Synthetic / Fleece |
 | `fill_power` | Fill power | 450 fill / 550 fill / 650 fill / 750 fill / 800 fill / 850 fill / 900 fill / 950 fill / 1000 fill |
 | `fill_weight` | Fill weight | `14 oz` or `397 g` (bare number: oz) |
-| `rds` | RDS certified | Yes / No / Unknown |
 | `gender` | Fit for | Men's / Women's / Unisex |
 | `hooded` | Hooded | yes / no |
 | `zipper` | Zipper | Full / Quarter / None |
 | `baffles` | Baffles | Sewn-through / Box / Other |
+| `rds` | RDS certified | Yes / No / Unknown |
+| `fabric` | Fabric | free text, up to 60 characters (filters ignore capitals) |
+
+**Rain or wind shell** (category "Shell", "Rain Gear", "Rainwear", "Rain Jacket", "Rain Shell", "Rain Pants", "Hardshell", "Softshell", "Wind Shell", "Wind Layer", "Wind Jacket", "Wind Shirt", "Windbreaker", "Poncho", any spelling or plural)
+
+| Column | Field | Value |
+|---|---|---|
+| `waterproof_mm` | Waterproof rating | whole number in mm, e.g. `30,000 mm` |
+| `breathability` | Breathability | whole number in g/m²/24h, e.g. `40,000 g/m²/24h` |
+| `membrane` | Membrane | free text, up to 40 characters (filters ignore capitals) |
+| `gender` | Fit for | Men's / Women's / Unisex |
+| `hooded` | Hooded | yes / no |
+| `pit_zips` | Pit zips | yes / no |
+| `fabric` | Fabric | free text, up to 60 characters (filters ignore capitals) |
+
+**Headlamp or light** (category "Headlamp", "Head Lamp", "Flashlight", "Torch", "Lantern", "Light", "Lights", any spelling or plural)
+
+| Column | Field | Value |
+|---|---|---|
+| `lumens` | Brightness | whole number in lm, e.g. `1,500 lm` |
+| `runtime` | Runtime (longest mode) | number in h, e.g. `300 h` |
+| `beam_distance` | Beam distance | whole number in m, e.g. `200 m` |
+| `battery` | Battery | Built-in rechargeable / Rechargeable or AAA / AAA / AA / 18650 / 21700 / CR123A / Other |
+| `charge_port` | Charging | USB-C / Micro-USB / Magnetic / None |
+| `red_light` | Red light | yes / no |
+| `ip_rating` | Water resistance | IPX4 / IPX5 / IPX6 / IPX7 / IPX8 / IP54 / IP65 / IP66 / IP67 / IP68 |
+
+**Power bank** (category "Power Bank", "Battery Bank", "Battery Pack", "Portable Charger", any spelling or plural)
+
+| Column | Field | Value |
+|---|---|---|
+| `capacity_mah` | Capacity | whole number in mAh, e.g. `27,000 mAh` |
+| `output_w` | Max output | number in W, e.g. `100 W` |
+| `usb_c_ports` | USB-C ports | whole number |
+| `usb_a_ports` | USB-A ports | whole number |
+| `passthrough` | Pass-through charging | yes / no |
+| `ip_rating` | Water resistance | IPX4 / IPX5 / IPX6 / IPX7 / IPX8 / IP54 / IP65 / IP66 / IP67 / IP68 |
+
+**Stove** (category "Stove", "Cook System", "Cooking System", "Stove System", "Canister Stove", "Alcohol Stove", any spelling or plural)
+
+| Column | Field | Value |
+|---|---|---|
+| `fuel` | Fuel | Canister / Alcohol / Solid fuel / Wood / Liquid fuel / Multi-fuel |
+| `boil_time` | Boil time (1 L) | number in min, e.g. `10 min` |
+| `piezo` | Push-button igniter | yes / no |
+| `integrated_pot` | Pot included | yes / no |
+
+**Pot** (category "Pot", "Cook Pot", "Cookware", "Cookset", "Cook Set", "Mug", "Cup", "Kettle", "Pan", any spelling or plural)
+
+| Column | Field | Value |
+|---|---|---|
+| `pot_volume` | Capacity | `0.75 L` or `750 ml` (bare number: L) |
+| `material` | Material | Titanium / Aluminum / Stainless steel / Silicone / Other |
+| `lid` | Lid | yes / no |
+| `measuring_marks` | Measuring marks | yes / no |
+
+**Water filter** (category "Water Filter", "Filter", "Water Treatment", "Water Purifier", "Purifier", any spelling or plural)
+
+| Column | Field | Value |
+|---|---|---|
+| `filter_type` | Type | Squeeze / Gravity / Pump / Straw / Filter bottle / Inline / Tablets or drops / UV |
+| `flow_rate` | Flow rate | number in L/min, e.g. `3 L/min` |
+| `pore_size` | Pore size | number in µm, e.g. `0.5 µm` |
+| `removes_viruses` | Removes viruses | yes / no |
+| `lifespan_l` | Lifespan | whole number in L, e.g. `400,000 L` |
+
+**Shoe** (category "Shoes", "Shoe", "Footwear", "Trail Runners", "Trail Runner", "Trail Shoes", "Hiking Shoes", "Boots", "Hiking Boots", "Sandals", "Camp Shoes", any spelling or plural)
+
+| Column | Field | Value |
+|---|---|---|
+| `shoe_type` | Type | Trail runner / Hiking shoe / Boot / Sandal / Camp shoe |
+| `gender` | Fit for | Men's / Women's / Unisex |
+| `drop` | Drop | number in mm, e.g. `12 mm` |
+| `stack_height` | Stack height | number in mm, e.g. `45 mm` |
+| `waterproof` | Waterproof | yes / no |
+| `shoe_width` | Width | Narrow / Regular / Wide |
+
+**Trekking poles** (category "Trekking Poles", "Trekking Pole", "Poles", "Hiking Poles", any spelling or plural)
+
+| Column | Field | Value |
+|---|---|---|
+| `pole_material` | Material | Carbon / Aluminum / Carbon and aluminum |
+| `pole_adjust` | Length | Fixed / Adjustable / Folding / Folding, adjustable |
+| `pole_lock` | Lock | Lever / Twist / Push-button / None |
+| `collapsed_length` | Collapsed length | `72 in` or `183 cm` (bare number: in) |
+| `max_length` | Longest length | `72 in` or `183 cm` (bare number: in) |
+
+**Tarp** (category "Tarp", "Hammock Tarp", any spelling or plural)
+
+| Column | Field | Value |
+|---|---|---|
+| `tarp_size` | Size | sizes, e.g. `8.5 x 10 ft` (bare: ft) |
+| `tarp_shape` | Shape | Rectangular / Square / Catenary cut / Hex / Diamond / Other |
+| `tie_outs` | Tie-outs | whole number |
+| `fabric` | Fabric | free text, up to 60 characters (filters ignore capitals) |
 
 ## Trails
 

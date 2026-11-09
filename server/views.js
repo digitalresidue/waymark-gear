@@ -8,7 +8,7 @@ import { thumbnailUrl } from './images.js';
 import config from 'config';
 import { logWithRequest, logger } from './log.js';
 import weightUtils from '../client/utils/weight.js';
-import { specRows, specTypeFor } from '../client/utils/gear-specs.js';
+import { specRows, specTypeFor, compareSpecRows } from '../client/utils/gear-specs.js';
 import { unitFor } from '../client/utils/units.js';
 import { marked, isSafeHref } from '../client/utils/markdown.js';
 import { Library } from '../client/dataTypes.js';
@@ -677,6 +677,13 @@ router.get('/compare', async (req, res) => {
             metaDescription: names.length ? `${names.join(', ')}: weight, price, ratings side by side.` : 'Compare backpacking gear side by side.',
             idsCsv: items.map((i) => i.id).join(','),
             hasItems: items.length > 0,
+            // Specs side by side: every spec any of them has, the best marked
+            // (brightest, warmest, most capacity...) where two or more say.
+            specRows: compareSpecRows(items, currentUnits()).map((r) => ({
+                ...r,
+                label: currentT()(`spec.${r.key}`, {}, r.label),
+                cells: r.cells.map((c) => ({ ...c, text: c.text || '—', tag: c.best ? 'best' : '' })),
+            })),
             items: items.map((i) => {
                 const r = ratings[i.id];
                 const buy = buyModel(i, compareBadges, { from: 'compare', testid: 'compare-buy', btnClass: 'wgBtnPrimary' });

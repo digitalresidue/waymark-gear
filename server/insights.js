@@ -9,6 +9,7 @@ import { isUuid } from './catalog.js';
 import { gearKind } from '../client/utils/insights.js';
 import { bigThreeKind, likeForLike, worthSwapping, sameCategory, KINDS, SLOTS } from '../client/utils/big-three.js';
 import { fitsLike } from '../client/utils/fit.js';
+import { likeForLikeSpecs } from '../client/utils/gear-specs.js';
 
 const MAX_ROWS = 200;
 
@@ -89,6 +90,9 @@ export async function listInsights(input) {
             .filter((p) => p.id !== r.catalogId && !ownedIds.has(p.id) && worthSwapping(r.weightMg, p.weight_mg))
             // The same size and volume: an XL jacket never gets a Small.
             .filter((p) => fitsLike({ name: r.name, specs: r.catalogId ? linkedSpecs.get(r.catalogId) : null }, p, kind))
+            // What the specs say must stay: a power bank's capacity, a
+            // headlamp's brightness, a filter's type (gear-specs.js).
+            .filter((p) => !r.catalogId || likeForLikeSpecs(linkedSpecs.get(r.catalogId), p.specs || {}))
             .sort((a, b) => b.uses - a.uses || a.weight_mg - b.weight_mg)
             .slice(0, 2);
         if (lighter.length) {

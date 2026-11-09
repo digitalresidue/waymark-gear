@@ -57,6 +57,9 @@
                         <tr><th scope="row">Rating</th>{{#items}}<td>{{#average}}<span class="wgStars" aria-hidden="true">{{stars}}</span> {{average}} ({{reviewCount}}){{/average}}{{^average}}—{{/average}}</td>{{/items}}</tr>
                         <tr><th scope="row">In public lists</th>{{#items}}<td>{{uses}}</td>{{/items}}</tr>
                         <tr><th scope="row">Category</th>{{#items}}<td>{{category}}</td>{{/items}}</tr>
+                        {{#specRows}}
+                        <tr data-testid="compare-spec" data-key="{{key}}"><th scope="row">{{label}}</th>{{#cells}}<td class="{{#best}}wgCompareBest{{/best}}">{{text}}{{#best}} <span class="wgCompareTag">{{tag}}</span>{{/best}}</td>{{/cells}}</tr>
+                        {{/specRows}}
                         <tr><th scope="row">About</th>{{#items}}<td class="wgCompareAbout">{{description}}</td>{{/items}}</tr>
                         <tr><th scope="row"><span class="wgVisuallyHidden">Buy</span></th>{{#items}}<td>{{> buy}} <a href="/gear?wish={{id}}" class="wgBtn wgBtnGhost wgBtnSmall" data-testid="compare-wish">Add to wishlist</a></td>{{/items}}</tr>
                     </tbody>

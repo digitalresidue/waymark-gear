@@ -7,6 +7,8 @@
 //   - Size (clothing, pack torsos, shoes): XS to 3XL, Small/Medium/Large;
 //     "S/M" covers both. An XL jacket never gets a Small or a Medium.
 //   - Length (sleeping bags, quilts, pads): Short, Regular, Long; Wide too.
+//   - Fit: men's for men's and women's for women's (the specs' "Fit for",
+//     or the name); unisex goes with either.
 //
 // Only judged when both say: gear without a size in its name (most catalog
 // entries name a model, not a size) is still offered.
@@ -108,10 +110,29 @@ export function sameSize(a, b) {
 }
 
 /**
+ * Men's, women's or unisex: the specs' "Fit for" (gender), else the name
+ * ("Women's Kumo 36"). Null when neither says.
+ */
+export function fitFor({ name = '', specs = null } = {}) {
+    if (specs && ['mens', 'womens', 'unisex'].includes(specs.gender)) return specs.gender;
+    const t = ` ${String(name || '').toLowerCase().replace(/['’]/g, '')} `;
+    if (/[^a-z](womens|women|ladies|wmns)[^a-z]/.test(t)) return 'womens';
+    if (/[^a-z](mens|men)[^a-z]/.test(t)) return 'mens';
+    if (/[^a-z]unisex[^a-z]/.test(t)) return 'unisex';
+    return null;
+}
+
+/** The same fit: men's for men's, women's for women's; unisex goes with either. */
+export function sameFitFor(a, b) {
+    return !a || !b || a === 'unisex' || b === 'unisex' || a === b;
+}
+
+/**
  * Would `option` fit like `mine`? Each is { name, description, specs };
  * kind is the big-three kind or gear kind, when known.
  */
 export function fitsLike(mine = {}, option = {}, kind = '') {
     if (!sameVolume(volumeLiters({ ...mine, kind }), volumeLiters({ ...option, kind }))) return false;
+    if (!sameFitFor(fitFor(mine), fitFor(option))) return false;
     return sameSize(sizeOf(mine.name, kind), sizeOf(option.name, kind));
 }

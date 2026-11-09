@@ -119,7 +119,7 @@ test('packs offer pack weight, max carry, volume, straps, frame, roll top and ad
     await page.goto(url(`/explore/pack?brand=${brand.toLowerCase()}`));
     // In this order: category, brand, then weight, price and the specs.
     const labels = await page.locator('#wgGearFilters .wgFilter').evaluateAll((els) => els.map((e) => (e.querySelector('legend, .wgFilterLabel') || {}).textContent?.trim()));
-    expect(labels.slice(0, 12)).toEqual(['Category', 'Brand', 'Pack weight', 'Price', 'Max carry weight', 'Volume', 'Pack type', 'Shoulder straps', 'Frame', 'Roll top', 'Adjustable torso', 'Fabric']);
+    expect(labels.slice(0, 15)).toEqual(['Category', 'Brand', 'Pack weight', 'Price', 'Volume', 'Max carry weight', 'Fit for', 'Pack type', 'Frame', 'Shoulder straps', 'Hip belt', 'Roll top', 'Adjustable torso', 'Fabric']);
     // Every strap style is listed; ones nothing has yet can't be picked.
     const straps = page.getByTestId('filter-strap_type');
     await expect(straps.locator('input')).toHaveCount(4);
