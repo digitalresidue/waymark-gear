@@ -49,8 +49,8 @@ export function unitFor(kind, system = DEFAULT_UNITS, big = false) {
 
 /** Does a unit belong to a system? 'oz' → imperial, 'kg' → metric, 'L' → both. */
 export function unitSystemOf(unit) {
-    if (['oz', 'lb', 'in', 'F'].includes(unit)) return 'imperial';
-    if (['g', 'kg', 'cm', 'C'].includes(unit)) return 'metric';
+    if (['oz', 'lb', 'in', 'ft', 'F'].includes(unit)) return 'imperial';
+    if (['g', 'kg', 'cm', 'm', 'C'].includes(unit)) return 'metric';
     return null;
 }
 

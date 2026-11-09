@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { readSpec, readSpecs, formatSpec, specInput, specRows, specTypeFor, SPEC_TYPES, SPEC_FIELDS, filterKind } from '../../client/utils/gear-specs.js';
+import { readSpec, readSpecs, formatSpec, specInput, specRows, specTypeFor, SPEC_TYPES, SPEC_FIELDS, filterKind, likeForLikeSpecs, compareSpecRows } from '../../client/utils/gear-specs.js';
 
 describe('gear spec types', () => {
     test('categories map to types, however they are spelled', () => {
@@ -110,5 +110,75 @@ describe('showing values', () => {
         assert.equal(filterKind('trail_weight'), 'range');
         assert.equal(filterKind('pitch'), 'match');
         assert.equal(filterKind('packed_size'), null);
+    });
+});
+
+describe('more gear types: lights, power banks, shells, stoves, pots, filters, shoes, poles, tarps', () => {
+    test('categories find their types; packs have a fit', () => {
+        for (const [category, id] of [['Headlamp', 'light'], ['Power Banks', 'power'], ['Rain Jacket', 'shell'], ['Wind Shirt', 'shell'],
+            ['Stove', 'stove'], ['Cook Pot', 'cookware'], ['Water Filter', 'filter'], ['Trail Runners', 'shoe'], ['Trekking Poles', 'poles'],
+            ['Tarp', 'tarp'], ['Down Jacket', 'outer'], ['Mid Layer', 'outer']]) {
+            assert.equal((specTypeFor(category) || {}).id, id, category);
+        }
+        assert.ok(specTypeFor('Backpack').fields.includes('gender'));
+        assert.deepEqual(readSpecs('Pack', { gender: 'Female', hip_belt: 'detachable' }).specs, { gender: 'womens', hip_belt: 'removable' });
+    });
+
+    test('numbers with their unit, grouped thousands, decimals', () => {
+        assert.deepEqual(readSpec('lumens', '400 lumens'), { value: 400 });
+        assert.deepEqual(readSpec('lumens', '400lm'), { value: 400 });
+        assert.deepEqual(readSpec('capacity_mah', '10,000 mAh'), { value: 10000 });
+        assert.deepEqual(readSpec('capacity_mah', '20000'), { value: 20000 });
+        assert.deepEqual(readSpec('waterproof_mm', '20,000mm'), { value: 20000 });
+        assert.deepEqual(readSpec('pore_size', '0.1 microns'), { value: 0.1 });
+        assert.deepEqual(readSpec('pore_size', '0,02'), { value: 0.02 });
+        assert.deepEqual(readSpec('boil_time', '3.5 min'), { value: 3.5 });
+        assert.deepEqual(readSpec('lifespan_l', '100000 gal'), { value: 378541 });
+        assert.ok(readSpec('lumens', '400 watts').error, 'another unit');
+        assert.ok(readSpec('capacity_mah', '1.5').error, 'whole numbers');
+        assert.equal(formatSpec('capacity_mah', 10000), '10,000 mAh');
+        assert.equal(formatSpec('lumens', 400), '400 lm');
+        assert.equal(specInput('capacity_mah', 10000), '10000 mAh');
+    });
+
+    test('choices, pot sizes in L or ml, tarp sizes in feet', () => {
+        assert.deepEqual(readSpecs('Headlamp', { battery: 'Rechargeable', charge_port: 'Type-C', ip_rating: 'ipx4', red_light: 'yes' }).specs,
+            { battery: 'built_in', charge_port: 'usb_c', red_light: true, ip_rating: 'ipx4' });
+        assert.deepEqual(readSpecs('Stove', { fuel: 'Isobutane', piezo: 'no' }).specs, { fuel: 'canister', piezo: false });
+        assert.deepEqual(readSpec('pot_volume', '750 ml'), { value: 0.75 });
+        assert.deepEqual(readSpec('pot_volume', '0.9'), { value: 0.9 });
+        assert.equal(formatSpec('pot_volume', 0.75), '0.8 L');
+        assert.deepEqual(readSpec('tarp_size', '8.5 x 10 ft'), { value: [259.1, 304.8] });
+        assert.equal(formatSpec('tarp_size', [259.1, 304.8], 'imperial'), '8.5 × 10 ft');
+        assert.equal(formatSpec('tarp_size', [259.1, 304.8], 'metric'), '2.6 × 3 m');
+        assert.deepEqual(readSpecs('Water Filter', { filter_type: 'Squeeze', flow_rate: '1.7 L/min', removes_viruses: 'no' }).specs,
+            { filter_type: 'squeeze', flow_rate: 1.7, removes_viruses: false });
+    });
+
+    test('a lighter swap keeps what matters', () => {
+        assert.equal(likeForLikeSpecs({ capacity_mah: 10000 }, { capacity_mah: 5000 }), false);
+        assert.equal(likeForLikeSpecs({ capacity_mah: 10000 }, { capacity_mah: 9000 }), true);
+        assert.equal(likeForLikeSpecs({ lumens: 400 }, { lumens: 100 }), false);
+        assert.equal(likeForLikeSpecs({ filter_type: 'squeeze' }, { filter_type: 'gravity' }), false);
+        assert.equal(likeForLikeSpecs({ fuel: 'canister' }, { fuel: 'alcohol' }), false);
+        assert.equal(likeForLikeSpecs({ pot_volume: 0.75 }, { pot_volume: 0.45 }), false);
+        assert.equal(likeForLikeSpecs({ pot_volume: 0.75 }, { pot_volume: 0.9 }), true);
+        assert.equal(likeForLikeSpecs({ capacity_mah: 10000 }, {}), true, 'not judged without both');
+    });
+
+    test('side by side: every spec either has, the best marked', () => {
+        const rows = compareSpecRows([
+            { category: 'Headlamp', specs: { lumens: 400, battery: 'built_in' } },
+            { category: 'Headlamp', specs: { lumens: 250, battery: 'aaa', runtime: 120 } },
+            { category: 'Spork', specs: {} },
+        ], 'imperial');
+        assert.deepEqual(rows.map((r) => r.key), ['lumens', 'runtime', 'battery']);
+        assert.deepEqual(rows[0].cells.map((c) => [c.text, c.best]), [['400 lm', true], ['250 lm', false], ['', false]]);
+        // One value isn't a contest; choices have no best.
+        assert.deepEqual(rows[1].cells.map((c) => c.best), [false, false, false]);
+        assert.deepEqual(rows[2].cells.map((c) => c.text), ['Built-in rechargeable', 'AAA', '']);
+        // Lower is better for a rating.
+        const quilts = compareSpecRows([{ category: 'Quilt', specs: { temp_comfort: -6.7 } }, { category: 'Quilt', specs: { temp_comfort: 1.7 } }]);
+        assert.deepEqual(quilts[0].cells.map((c) => c.best), [true, false]);
     });
 });

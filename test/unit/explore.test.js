@@ -83,7 +83,7 @@ describe('filters', () => {
         assert.deepEqual(facetsFor(packs).specs, [], 'without the section, nothing to offer');
         const f = facetsFor(packs, { categories: ['Packs'] });
         // Fabric is free words: offered once some pack says one.
-        assert.deepEqual(f.specs.map((x) => x.key), ['max_carry', 'volume', 'pack_type', 'strap_type', 'frame', 'roll_top', 'adjustable_torso']);
+        assert.deepEqual(f.specs.map((x) => x.key), ['volume', 'max_carry', 'gender', 'pack_type', 'frame', 'strap_type', 'hip_belt', 'roll_top', 'adjustable_torso']);
         assert.deepEqual(f.specs.find((x) => x.key === 'pack_type').options.map((o) => o.label), ['Fastpack', 'Pack', 'Hydration vest']);
         const volume = f.specs.find((x) => x.key === 'volume');
         assert.equal(volume.kind, 'range');

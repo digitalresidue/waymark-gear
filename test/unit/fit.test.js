@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { volumeLiters, sameVolume, sizeOf, sameSize, fitsLike } from '../../client/utils/fit.js';
+import { volumeLiters, sameVolume, sizeOf, sameSize, fitsLike, fitFor } from '../../client/utils/fit.js';
 
 describe('fit: volume', () => {
     it('reads liters from specs, then the name', () => {
@@ -68,5 +68,17 @@ describe('fit: fitsLike', () => {
         assert.equal(fitsLike({ name: 'Old pack 40L' }, { name: 'Mariposa 60', specs: {} }, 'pack'), false);
         assert.equal(fitsLike({ name: 'Old pack 40L' }, { name: 'Pack', specs: { volume: 30 } }, 'pack'), false);
         assert.equal(fitsLike({ name: 'Puffy XL' }, { name: 'Puffy Small' }, 'insulation'), false);
+    });
+});
+
+describe('fit: men\'s and women\'s', () => {
+    it('from specs or the name; unisex goes with either', () => {
+        assert.equal(fitFor({ name: 'Anything', specs: { gender: 'womens' } }), 'womens');
+        assert.equal(fitFor({ name: "Women's Kumo 36" }), 'womens');
+        assert.equal(fitFor({ name: "Men's Ghost Whisperer" }), 'mens');
+        assert.equal(fitFor({ name: 'Ghost Whisperer' }), null);
+        assert.equal(fitsLike({ name: "Women's Puffy" }, { name: "Men's Puffy" }, 'insulation'), false);
+        assert.equal(fitsLike({ name: 'Pack', specs: { gender: 'womens' } }, { name: 'Pack', specs: { gender: 'unisex' } }, 'pack'), true);
+        assert.equal(fitsLike({ name: "Women's Puffy" }, { name: 'Puffy' }, 'insulation'), true);
     });
 });

@@ -87,3 +87,51 @@ test('specs from the import sheet: stored, filterable, on the gear page, editabl
     await expect(page.getByTestId('catalog-specs-none')).toContainText('Specs come with these categories');
     await visitor.context().close();
 });
+
+test('lights, power banks and pack fit: from the sheet, side by side on /compare, kept by swaps', async ({ browser }, testInfo) => {
+    test.setTimeout(90000);
+    const page = await owner(browser, testInfo.workerIndex);
+    const tag = `sq${Date.now().toString(36)}`;
+    const head = 'sku,name,brand,category,weight,unit,status,lumens,runtime,battery,charge_port,capacity_mah,output_w,gender,hip_belt';
+    const csv = [
+        head,
+        `${tag}-h1,Bright lamp ${tag},Trailco,Headlamp,3,oz,published,400 lumens,40 h,Rechargeable,USB-C,,,,`,
+        `${tag}-h2,Dim lamp ${tag},Trailco,Headlamp,2,oz,published,250,120 hours,AAA,none,,,,`,
+        `${tag}-p1,Old power bank ${tag},Heavyco,Power Bank,10,oz,published,,,,,"10,000 mAh",18 W,,`,
+        `${tag}-p2,Light power bank ${tag},Trailco,Power Bank,6,oz,published,,,,,10000,20,,`,
+        `${tag}-p3,Small power bank ${tag},Trailco,Power Bank,4,oz,published,,,,,5000 mAh,10,,`,
+        `${tag}-k,Fit pack ${tag},Trailco,Backpack,20,oz,published,,,,,,,Women's,Removable`,
+    ].join('\n');
+    const plan = await (await page.request.post(url('/api/admin/catalog/import/preview'), { data: { csv } })).json();
+    expect(plan.summary).toMatchObject({ new: 6, error: 0 });
+    expect((await page.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } })).ok()).toBe(true);
+    const find = async (name: string) => (await (await page.request.get(url(`/api/admin/catalog?q=${encodeURIComponent(name)}`))).json()).items[0];
+    const bright = await find(`Bright lamp ${tag}`);
+    const dim = await find(`Dim lamp ${tag}`);
+    expect(bright.specs).toMatchObject({ lumens: 400, runtime: 40, battery: 'built_in', charge_port: 'usb_c' });
+    expect((await find(`Old power bank ${tag}`)).specs).toMatchObject({ capacity_mah: 10000, output_w: 18 });
+    expect((await find(`Fit pack ${tag}`)).specs).toMatchObject({ gender: 'womens', hip_belt: 'removable' });
+
+    // The gear page.
+    await page.goto(url(`/g/${bright.id}`));
+    await expect(page.getByTestId('gear-specs').locator('[data-spec="lumens"] dd')).toHaveText('400 lm');
+    await expect(page.getByTestId('gear-specs').locator('[data-spec="battery"] dd')).toHaveText('Built-in rechargeable');
+
+    // Side by side: the brighter lamp and the longer runtime marked best.
+    await page.goto(url(`/compare?ids=${bright.id},${dim.id}`));
+    const row = (key: string) => page.locator(`[data-testid="compare-spec"][data-key="${key}"] td`);
+    await expect(row('lumens')).toHaveText(['400 lm best', '250 lm']);
+    await expect(row('runtime')).toHaveText(['40 h', '120 h best']);
+    await expect(row('battery')).toHaveText(['Built-in rechargeable', 'AAA']);
+    await expect(row('charge_port')).toHaveText(['USB-C', 'None']);
+
+    // The gear check: a lighter power bank with the same capacity, never one
+    // with half of it.
+    const list = (await page.request.post(url('/api/insights'), { data: { items: [
+        { name: `Old power bank ${tag}`, category: 'Power Bank', weightMg: 283495, catalogId: (await find(`Old power bank ${tag}`)).id },
+    ] } }));
+    expect(list.ok()).toBe(true);
+    const alts = (await list.json()).alternatives.flatMap((a: { options: { name: string }[] }) => a.options.map((o) => o.name));
+    expect(alts).toContain(`Light power bank ${tag}`);
+    expect(alts).not.toContain(`Small power bank ${tag}`);
+});

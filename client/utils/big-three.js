@@ -12,6 +12,7 @@
 // Regular pads.
 
 import { categoryKey } from './gear-meta.js';
+import { likeForLikeSpecs } from './gear-specs.js';
 
 export const MIN_SAVING = 0.2; // a swap must be at least 20% lighter
 
@@ -151,7 +152,7 @@ export function likeForLike(kind, mine = {}, option = {}) {
     if (kind === 'pack') {
         if (num(a.max_carry) !== null && num(b.max_carry) !== null && b.max_carry < a.max_carry * 0.75) return false;
     }
-    return true;
+    return likeForLikeSpecs(a, b);
 }
 
 /** Light enough to be worth a swap: at least 20% lighter. */

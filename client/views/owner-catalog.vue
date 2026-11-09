@@ -341,6 +341,13 @@ import { specTypeFor, specInput, SPEC_FIELDS, SPEC_TYPES } from '../utils/gear-s
 
 // What a measurement box suggests, by kind.
 const SPEC_PLACEHOLDERS = { temp: '20F or -7C', weight: '14 oz or 397 g', length: '72 in or 183 cm', volume: '40 L', dims: '18 x 5 x 5 in', number: '', text: 'e.g. Ultra 200, Robic 210D' };
+// A number's unit ("in lm"), sizes in a field's own unit ("8.5 x 10 ft").
+const specPlaceholder = (field) => {
+    if (field.kind === 'number') return field.suffix ? `in ${field.suffix}` : '';
+    if (field.kind === 'dims' && field.unit !== 'in') return `8.5 x 10 ${field.unit}`;
+    if (field.kind === 'text' && field.max <= 40) return 'e.g. Gore-Tex, eVent, Pertex Shield';
+    return SPEC_PLACEHOLDERS[field.kind] || '';
+};
 
 const PAGE = 100;
 const emptyForm = () => ({
@@ -403,7 +410,7 @@ export default {
             const insulation = String(this.form.specs.insulation || '').toLowerCase();
             return this.specType.fields
                 .filter((key) => !SPEC_FIELDS[key].onlyWhen || !insulation || insulation === 'down')
-                .map((key) => ({ key, ...SPEC_FIELDS[key], placeholder: SPEC_PLACEHOLDERS[SPEC_FIELDS[key].kind] || '' }));
+                .map((key) => ({ key, ...SPEC_FIELDS[key], placeholder: specPlaceholder(SPEC_FIELDS[key]) }));
         },
         specCategories() {
             return SPEC_TYPES.map((t) => t.categories[0]).join(', ');
