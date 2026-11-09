@@ -6,6 +6,7 @@ import { makeChart, chartStyle, rememberStyle, rememberedStyle } from './charts.
 import { initSocial } from './social.js';
 import { initAnalytics } from './utils/analytics.js';
 import weightUtils from './utils/weight.js';
+import { openTotalGroups, toggleTotalGroup } from './utils/total-drawers.js';
 import {
     initTheme, toggleTheme, chartLineColor, chartHoverColor, onThemeChange,
 } from './utils/theme.js';
@@ -51,9 +52,30 @@ function addParents(chartData, parent) {
 function chartHover(chartItem) {
     document.querySelectorAll('.hover').forEach(el => el.classList.remove('hover'));
     if (chartItem && chartItem.id) {
-        const el = document.getElementById(`total_${chartItem.id}`);
+        let el = document.getElementById(`total_${chartItem.id}`);
+        // In a closed group's drawer: light up the group instead.
+        if (el && el.hidden && el.dataset.totalGroup) el = document.getElementById(`total_group-${el.dataset.totalGroup}`);
         if (el) el.classList.add('hover');
     }
+}
+
+// The totals' groups as drawers (utils/total-drawers.js): closed, unless
+// this browser opened them before.
+function initTotalDrawers() {
+    let open = openTotalGroups();
+    const show = (btn) => {
+        const id = btn.dataset.totalToggle;
+        const isOpen = open.has(String(id));
+        btn.setAttribute('aria-expanded', String(isOpen));
+        document.querySelectorAll(`[data-total-group="${CSS.escape(id)}"]`).forEach((row) => { row.hidden = !isOpen; });
+    };
+    document.querySelectorAll('[data-total-toggle]').forEach((btn) => {
+        show(btn);
+        btn.addEventListener('click', () => {
+            open = toggleTotalGroup(open, btn.dataset.totalToggle);
+            show(btn);
+        });
+    });
 }
 
 function updateSubtotalsUnit(unit) {
@@ -277,6 +299,7 @@ function init() {
     initShareMenu();
     initThemeToggle();
     initInfoTips();
+    initTotalDrawers();
 
     initChart();
 }

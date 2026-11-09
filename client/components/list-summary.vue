@@ -19,12 +19,26 @@
         <div class="lpTotalsContainer">
             <ul class="lpTotals lpTable lpDataTable" :class="{ lpHasPrice: list.optionalFields['price'] }">
                 <template v-for="row in totalRows" :key="row.key">
-                    <!-- A group (Clothing): its weight together, its categories under it. -->
-                    <li v-if="row.group" class="lpTotalCategory lpRow wgTotalGroup" :class="{ hover: row.chartId === hoveredCategoryId }" data-testid="total-group">
+                    <!-- A group (Clothing): its weight together, a drawer of its
+                         categories under it (utils/total-drawers.js). -->
+                    <li v-if="row.group" class="lpTotalCategory lpRow wgTotalGroup" :class="{ hover: groupHovered(row) }" data-testid="total-group">
                         <span class="lpCell lpLegendCell">
                             <span class="wgTotalGroupSwatch" :style="{ background: row.color }" />
                         </span>
-                        <span class="lpCell lpCategoryCell">{{ row.group.name || 'Group' }}</span>
+                        <span class="lpCell lpCategoryCell">
+                            <button
+                                type="button"
+                                class="wgTotalToggle"
+                                :aria-expanded="String(isOpen(row))"
+                                :aria-controls="row.categoryIds.map((id) => `wgTotalCat${id}`).join(' ')"
+                                data-testid="total-group-toggle"
+                                @click="toggleGroup(row)"
+                            >
+                                <span class="wgTotalChevron" aria-hidden="true" />
+                                <span class="wgTotalGroupName">{{ row.group.name || 'Group' }}</span>
+                                <span class="wgTotalCount">{{ row.count }}</span>
+                            </button>
+                        </span>
                         <span v-if="list.optionalFields['price']" class="lpCell lpNumber">
                             {{ displayPrice(row.price, library.currencySymbol) }}
                         </span>
@@ -33,7 +47,12 @@
                         </span>
                         <span class="lpCell lpUnitCell lpSubtotalUnit">{{ library.totalUnit }}</span>
                     </li>
-                    <li v-else :class="{'hover': row.category.id === hoveredCategoryId || (row.chartId && row.chartId === hoveredCategoryId), 'lpTotalCategory lpRow': true, wgTotalInGroup: row.inGroup}">
+                    <li
+                        v-else-if="!row.inGroup || openGroups.has(String(row.groupId))"
+                        :id="row.inGroup ? `wgTotalCat${row.category.id}` : null"
+                        :class="{'hover': row.category.id === hoveredCategoryId || (row.chartId && row.chartId === hoveredCategoryId), 'lpTotalCategory lpRow': true, wgTotalInGroup: row.inGroup}"
+                        data-testid="total-category"
+                    >
                         <span class="lpCell lpLegendCell">
                             <colorPicker v-if="row.category.displayColor" :color="colorToHex(row.category.displayColor)" @color-change="updateColor(row.category, $event)" />
                         </span>
@@ -121,6 +140,7 @@
 
 <script>
 import { totalRowsFor } from '../utils/category-groups.js';
+import { openTotalGroups, toggleTotalGroup } from '../utils/total-drawers.js';
 import colorPicker from './colorpicker.vue';
 import unitSelect from './unit-select.vue';
 import infoTip from './info-tip.vue';
@@ -143,6 +163,7 @@ export default {
         return {
             chart: null,
             hoveredCategoryId: null,
+            openGroups: openTotalGroups(),
         };
     },
     computed: {
@@ -185,6 +206,17 @@ export default {
         if (this.stopThemeWatch) this.stopThemeWatch();
     },
     methods: {
+        isOpen(row) {
+            return this.openGroups.has(String(row.group.id));
+        },
+        toggleGroup(row) {
+            this.openGroups = toggleTotalGroup(this.openGroups, row.group.id);
+        },
+        // A closed group lights up for any of its categories on the chart.
+        groupHovered(row) {
+            const id = this.hoveredCategoryId;
+            return Boolean(id) && (row.chartId === id || (!this.isOpen(row) && row.categoryIds.includes(id)));
+        },
         recolorChart() {
             if (!this.chart) return;
             this.chart.update({ lineColor: chartLineColor(), hoverColor: chartHoverColor() });

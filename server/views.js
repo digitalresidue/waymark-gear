@@ -1505,6 +1505,8 @@ const renderListTotals = function (list, totalsTemplate, unitSelectTemplate, uni
                 isGroup: true,
                 id: block.group.id,
                 name: block.group.name || 'Group',
+                count: block.categories.length,
+                controls: block.categories.map((c) => `total_${c.id}`).join(' '),
                 displayColor: block.categories[0].displayColor,
                 subtotalWeight: weight,
                 subtotalWeightDisplay: weightUtils.MgToDisplayWeight(weight, unit),
@@ -1514,7 +1516,7 @@ const renderListTotals = function (list, totalsTemplate, unitSelectTemplate, uni
         }
         for (const category of block.categories) {
             out.rows.push(Object.assign(Object.create(category), {
-                isGroup: false, inGroup: Boolean(block.group), subtotalPriceDisplay: priceText(category.subtotalPrice),
+                isGroup: false, inGroup: Boolean(block.group), groupId: block.group ? block.group.id : null, subtotalPriceDisplay: priceText(category.subtotalPrice),
             }));
         }
     }

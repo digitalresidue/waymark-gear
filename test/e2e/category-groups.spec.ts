@@ -150,6 +150,33 @@ test('a shared list shows the group: its heading, its categories indented, one r
     await expect(visitor.locator('.lpCategory.wgInGroup')).toHaveCount(2);
     await expect(visitor.locator('.lpTotals .wgTotalGroup')).toContainText('Clothing');
     await expect(visitor.locator('.lpTotals .wgTotalInGroup')).toHaveCount(2);
+    // A drawer: closed at first, the group's total on its row; opened, its
+    // categories under it; remembered on the next visit.
+    const toggle = visitor.locator('.lpTotals').getByTestId('total-group-toggle');
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(toggle).toContainText('2');
+    await expect(visitor.locator('.lpTotals .wgTotalInGroup:visible')).toHaveCount(0);
+    // Categories outside a group stay as they were.
+    await expect(visitor.locator('.lpTotals .lpTotalCategory:visible').filter({ hasText: 'Sleep' })).toHaveCount(1);
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(visitor.locator('.lpTotals .wgTotalInGroup:visible')).toHaveText([/Base Layer/, /Mid Layer/]);
+    await visitor.reload();
+    await expect(visitor.locator('.lpTotals .wgTotalInGroup:visible')).toHaveCount(2);
+    await visitor.locator('.lpTotals').getByTestId('total-group-toggle').press('Enter');
+    await expect(visitor.locator('.lpTotals .wgTotalInGroup:visible')).toHaveCount(0);
     await visitor.context().close();
+
+    // The editor's totals: the same drawer.
+    await page.mouse.move(5, 5);
+    const summary = page.locator('.lpListSummary');
+    const editorToggle = summary.getByTestId('total-group-toggle');
+    await expect(editorToggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(summary.getByTestId('total-group')).toContainText('16');
+    await expect(summary.locator('.wgTotalInGroup')).toHaveCount(0);
+    await editorToggle.click();
+    await expect(summary.locator('.wgTotalInGroup')).toHaveText([/Base Layer/, /Mid Layer/]);
+    await page.reload();
+    await expect(page.locator('.lpListSummary .wgTotalInGroup')).toHaveCount(2);
 });
 

@@ -12,6 +12,8 @@ export function totalRowsFor(list) {
                 group: block.group,
                 chartId: `group-${block.group.id}`,
                 color: block.categories[0].displayColor || '',
+                count: block.categories.length,
+                categoryIds: block.categories.map((c) => c.id),
                 weight: block.categories.reduce((sum, c) => sum + (c.subtotalWeight || 0), 0),
                 price: block.categories.reduce((sum, c) => sum + (c.subtotalPrice || 0), 0),
             });
@@ -21,6 +23,7 @@ export function totalRowsFor(list) {
                 key: `c${category.id}`,
                 category,
                 inGroup: Boolean(block.group),
+                groupId: block.group ? block.group.id : null,
                 chartId: block.group ? `group-${block.group.id}` : null,
             });
         }
