@@ -6,7 +6,11 @@
                 <span class="lpLegend" style="background-color: {{displayColor}}"></span>
             </span>
             <span class="lpCell lpCategoryCell">
-                {{name}}
+                <button type="button" class="wgTotalToggle" aria-expanded="false" aria-controls="{{controls}}" data-total-toggle="{{id}}" data-testid="total-group-toggle">
+                    <span class="wgTotalChevron" aria-hidden="true"></span>
+                    <span class="wgTotalGroupName">{{name}}</span>
+                    <span class="wgTotalCount">{{count}}</span>
+                </button>
             </span>
             {{#showPrices}}<span class="lpCell lpNumber">
                 {{currencySymbol}}{{subtotalPriceDisplay}}
@@ -17,7 +21,7 @@
         </li>
         {{/isGroup}}
         {{^isGroup}}
-        <li class="lpTotalCategory lpRow{{#inGroup}} wgTotalInGroup{{/inGroup}}" id="total_{{id}}" category="{{id}}">
+        <li class="lpTotalCategory lpRow{{#inGroup}} wgTotalInGroup{{/inGroup}}" id="total_{{id}}" category="{{id}}"{{#inGroup}} data-total-group="{{groupId}}" hidden{{/inGroup}}>
             <span class="lpCell lpLegendCell">
                 <span class="lpLegend" style="background-color: {{displayColor}}"></span>
             </span>

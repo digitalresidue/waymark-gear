@@ -57,14 +57,33 @@
                     <template v-for="row in totalRows" :key="row.key">
                         <li v-if="row.group" class="lpSummaryLegendRow wgTotalGroup" data-testid="total-group">
                             <span class="lpSummaryLegendSwatch"><span class="wgTotalGroupSwatch" :style="{ background: row.color }" /></span>
-                            <span class="lpSummaryLegendName">{{ row.group.name || 'Group' }}</span>
+                            <span class="lpSummaryLegendName">
+                                <button
+                                    type="button"
+                                    class="wgTotalToggle"
+                                    :aria-expanded="String(openGroups.has(String(row.group.id)))"
+                                    :aria-controls="row.categoryIds.map((id) => `wgTotalCatM${id}`).join(' ')"
+                                    data-testid="total-group-toggle"
+                                    @click="openGroups = toggleTotalGroup(openGroups, row.group.id)"
+                                >
+                                    <span class="wgTotalChevron" aria-hidden="true" />
+                                    <span class="wgTotalGroupName">{{ row.group.name || 'Group' }}</span>
+                                    <span class="wgTotalCount">{{ row.count }}</span>
+                                </button>
+                            </span>
                             <span v-if="list.optionalFields['price']" class="lpSummaryLegendPrice">{{ displayPrice(row.price, library.currencySymbol) }}</span>
                             <span class="lpSummaryLegendWeight">
                                 {{ displayWeight(row.weight, library.totalUnit) }}
                                 <span class="lpSummaryLegendUnit">{{ library.totalUnit }}</span>
                             </span>
                         </li>
-                        <li v-else class="lpSummaryLegendRow" :class="{ wgTotalInGroup: row.inGroup }">
+                        <li
+                            v-else-if="!row.inGroup || openGroups.has(String(row.groupId))"
+                            :id="row.inGroup ? `wgTotalCatM${row.category.id}` : null"
+                            class="lpSummaryLegendRow"
+                            :class="{ wgTotalInGroup: row.inGroup }"
+                            data-testid="total-category"
+                        >
                             <span class="lpSummaryLegendSwatch">
                                 <colorPicker v-if="row.category.displayColor" :color="colorToHex(row.category.displayColor)" @color-change="updateColor(row.category, $event)" />
                             </span>
@@ -133,6 +152,7 @@
 
 <script>
 import { totalRowsFor } from '../utils/category-groups.js';
+import { openTotalGroups, toggleTotalGroup } from '../utils/total-drawers.js';
 import colorPicker from './colorpicker.vue';
 import unitSelect from './unit-select.vue';
 import infoTip from './info-tip.vue';
@@ -155,6 +175,7 @@ export default {
         return {
             chart: null,
             expanded: false,
+            openGroups: openTotalGroups(),
         };
     },
     computed: {
@@ -224,6 +245,7 @@ export default {
         if (this.stopThemeWatch) this.stopThemeWatch();
     },
     methods: {
+        toggleTotalGroup,
         recolorChart() {
             if (!this.chart) return;
             this.chart.update({ lineColor: chartLineColor(), hoverColor: chartHoverColor() });
