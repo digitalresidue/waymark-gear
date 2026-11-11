@@ -39,7 +39,7 @@ const KINDS = {
     },
     length: {
         stored: 'cm',
-        units: { cm: 'cm', mm: 'mm', m: 'm', in: 'in', inch: 'in', inches: 'in', '"': 'in', ft: 'ft' },
+        units: { cm: 'cm', mm: 'mm', m: 'm', in: 'in', inch: 'in', inches: 'in', '"': 'in', ft: 'ft', feet: 'ft', foot: 'ft', "'": 'ft' },
         factor: { cm: 1, mm: 0.1, m: 100, in: 2.54, ft: 30.48 },
         min: 0,
         max: 1000,
@@ -56,8 +56,14 @@ const KINDS = {
 /** A field kind's value in stored units, from "20F", "14 oz", "72 in"... */
 function measure(kindName, raw, defaultUnit) {
     const kind = KINDS[kindName];
-    const text = String(raw).trim().toLowerCase().replace(/°/g, '').replace(/,/g, '.');
-    const m = text.match(/^(-?\d+(?:\.\d+)?)\s*([a-z" ]*)$/);
+    const text = String(raw).trim().toLowerCase().replace(/°/g, '').replace(/,/g, '.').replace(/[’′]/g, "'").replace(/[”″]/g, '"');
+    // Feet and inches: "11 ft 6 in", "11' 6\"", "11ft6".
+    const ftIn = kindName === 'length' && text.match(/^(\d+(?:\.\d+)?)\s*(?:ft|feet|foot|')\s*(\d+(?:\.\d+)?)\s*(?:in|inch|inches|"|'')?$/);
+    if (ftIn) {
+        const stored = Number(ftIn[1]) * 30.48 + Number(ftIn[2]) * 2.54;
+        return stored > kind.max ? null : round(stored);
+    }
+    const m = text.match(/^(-?\d+(?:\.\d+)?)\s*([a-z"' ]*)$/);
     if (!m) return null;
     const n = Number(m[1]);
     const unitText = m[2].trim();
@@ -196,11 +202,25 @@ export const SPEC_FIELDS = {
 
     // Tarps
     tarp_size: { label: 'Size', kind: 'dims', unit: 'ft', display: ['ft', 'm'] },
-    tarp_shape: { label: 'Shape', ...choice([['rectangular', 'Rectangular'], ['square', 'Square'], ['cat_cut', 'Catenary cut'], ['hex', 'Hex'], ['diamond', 'Diamond'], ['other', 'Other']]), aliases: { rectangle: 'rectangular', catenary: 'cat_cut', catcut: 'cat_cut', hexagonal: 'hex' } },
+    tarp_length: { label: 'Length', kind: 'length', unit: 'ft', display: ['ftin', 'cm'], range: [240, 400] },
+    tarp_shape: {
+        label: 'Shape',
+        ...choice([['rectangular', 'Flat (rectangular)'], ['hex', 'Hex'], ['asym', 'Asymmetrical'], ['winter', 'Winter'], ['square', 'Square'], ['cat_cut', 'Catenary cut'], ['diamond', 'Diamond'], ['other', 'Other']]),
+        aliases: { flat: 'rectangular', rectangle: 'rectangular', catenary: 'cat_cut', catcut: 'cat_cut', hexagonal: 'hex', asymmetrical: 'asym', asymmetric: 'asym', wintertarp: 'winter' },
+    },
+    tarp_material: {
+        label: 'Material',
+        ...choice([['dcf', 'Dyneema (DCF)'], ['silnylon', 'Silnylon'], ['silpoly', 'Silpoly'], ['nylon', 'Nylon (PU)'], ['polyester', 'Polyester'], ['other', 'Other']]),
+        aliases: { dyneema: 'dcf', cuben: 'dcf', ctf: 'dcf', dyneemacompositefabric: 'dcf', dcfdyneema: 'dcf', silnylon: 'silnylon', silpoly: 'silpoly', silpolyester: 'silpoly', punylon: 'nylon', nylonpu: 'nylon', poly: 'polyester' },
+    },
+    side_pullouts: { label: 'Side panel pullouts', ...yesNo },
+    bonded: { label: 'Bonded seams', ...yesNo },
+    seam_sealed: { label: 'Seam sealed', ...yesNo },
+    doors: { label: 'Doors', ...yesNo },
     tie_outs: { label: 'Tie-outs', ...num(0, 40, { integer: true, range: [4, 20] }) },
 
     // Hammocks
-    hammock_length: { label: 'Length', kind: 'length', unit: 'ft', display: ['ft', 'm'], range: [270, 370] },
+    hammock_length: { label: 'Length', kind: 'length', unit: 'ft', display: ['ftin', 'cm'], range: [270, 370] },
     hammock_width: { label: 'Width', kind: 'length', unit: 'in', display: ['in', 'cm'], range: [140, 185] },
     hammock_shape: { label: 'Lay', ...choice([['symmetrical', 'Symmetrical'], ['asymmetrical', 'Asymmetrical']]), aliases: { sym: 'symmetrical', gathered: 'symmetrical', gatheredend: 'symmetrical', asym: 'asymmetrical', asymmetric: 'asymmetrical', symmetric: 'symmetrical' } },
     lay_direction: { label: 'Lay direction', ...choice([['head_left', 'Head left, foot right'], ['head_right', 'Head right, foot left']]), aliases: { left: 'head_left', headleft: 'head_left', headleftfootright: 'head_left', lh: 'head_left', right: 'head_right', headright: 'head_right', headrightfootleft: 'head_right', rh: 'head_right' }, onlyWhen: { hammock_shape: 'asymmetrical' } },
@@ -276,7 +296,7 @@ export const SPEC_TYPES = [
     },
     {
         id: 'tarp', label: 'Tarp', categories: ['Tarp', 'Hammock Tarp'],
-        fields: ['tarp_size', 'tarp_shape', 'tie_outs', 'fabric'],
+        fields: ['tarp_length', 'tarp_shape', 'wide', 'tarp_material', 'side_pullouts', 'bonded', 'seam_sealed', 'doors', 'tie_outs', 'tarp_size', 'fabric'],
     },
     {
         id: 'hammock', label: 'Hammock', categories: ['Hammock', 'Camping Hammock', 'Backpacking Hammock', 'Bridge Hammock', 'Gathered End Hammock'],
@@ -406,6 +426,14 @@ const withSuffix = (field, value) => {
 };
 const minus = (s) => s.replace(/^-/, '−');
 
+// A length in feet and whole inches: "11 ft 6 in", "10 ft" (display 'ftin').
+const feetAndInches = (cm) => {
+    const inches = Math.round(cm / 2.54);
+    const ft = Math.floor(inches / 12);
+    const rest = inches % 12;
+    return rest ? `${ft} ft ${rest} in` : `${ft} ft`;
+};
+
 const optionLabel = (field, value) => {
     const hit = field.options.find(([v]) => String(v) === String(value));
     return hit ? hit[1] : String(value);
@@ -442,7 +470,7 @@ export function formatSpec(key, value, system = null) {
     }
     default: {
         const units = pick(field.display);
-        const shown = units.map((u) => `${trim1(inUnit(field.kind, value, u))} ${UNIT_LABEL[u]}`);
+        const shown = units.map((u) => (u === 'ftin' ? feetAndInches(value) : `${trim1(inUnit(field.kind, value, u))} ${UNIT_LABEL[u]}`));
         return shown.length > 1 ? `${shown[0]} (${shown.slice(1).join(', ')})` : shown[0];
     }
     }
