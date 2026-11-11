@@ -511,16 +511,23 @@ sheet without spec columns leaves specs as they are.
 
 | Column | Field | Value |
 |---|---|---|
-| `tarp_size` | Size | sizes, e.g. `8.5 x 10 ft` (bare: ft) |
-| `tarp_shape` | Shape | Rectangular / Square / Catenary cut / Hex / Diamond / Other |
+| `tarp_length` | Length | `11 ft 6 in`, `11' 6"`, `11.5 ft` or `350 cm` (bare number: ft) |
+| `tarp_shape` | Shape | Flat (rectangular) / Hex / Asymmetrical / Winter / Square / Catenary cut / Diamond / Other |
+| `wide` | Wide | yes / no |
+| `tarp_material` | Material | Dyneema (DCF) / Silnylon / Silpoly / Nylon (PU) / Polyester / Other |
+| `side_pullouts` | Side panel pullouts | yes / no |
+| `bonded` | Bonded seams | yes / no |
+| `seam_sealed` | Seam sealed | yes / no |
+| `doors` | Doors | yes / no |
 | `tie_outs` | Tie-outs | whole number |
+| `tarp_size` | Size | sizes, e.g. `8.5 x 10 ft` (bare: ft) |
 | `fabric` | Fabric | free text, up to 60 characters (filters ignore capitals) |
 
 **Hammock** (category "Hammock", "Camping Hammock", "Backpacking Hammock", "Bridge Hammock", "Gathered End Hammock", any spelling or plural)
 
 | Column | Field | Value |
 |---|---|---|
-| `hammock_length` | Length | `72 in` or `183 cm` (bare number: ft) |
+| `hammock_length` | Length | `11 ft 6 in`, `11' 6"`, `11.5 ft` or `350 cm` (bare number: ft) |
 | `hammock_width` | Width | `72 in` or `183 cm` (bare number: in) |
 | `hammock_shape` | Lay | Symmetrical / Asymmetrical |
 | `lay_direction` | Lay direction | Head left, foot right / Head right, foot left |

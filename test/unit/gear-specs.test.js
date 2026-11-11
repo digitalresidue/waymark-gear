@@ -204,3 +204,23 @@ describe('hammocks', () => {
         assert.deepEqual(readSpecs('Hammock', { hammock_shape: 'symmetrical', lay_direction: 'left' }).specs, { hammock_shape: 'symmetrical' });
     });
 });
+
+describe('tarps', () => {
+    test('length in feet and inches or cm; shape, wide, material, pullouts, bonded, seam sealed, doors', () => {
+        for (const v of ['11 ft 6 in', "11' 6\"", '11ft6', '11.5 ft', '11.5']) assert.deepEqual(readSpec('tarp_length', v), { value: 350.5 }, v);
+        assert.deepEqual(readSpec('tarp_length', '350 cm'), { value: 350 });
+        assert.equal(formatSpec('tarp_length', 350.5, 'imperial'), '11 ft 6 in');
+        assert.equal(formatSpec('tarp_length', 335.3, 'imperial'), '11 ft');
+        assert.equal(formatSpec('tarp_length', 350.5, 'metric'), '350.5 cm');
+        assert.equal(formatSpec('tarp_length', 350.5), '11 ft 6 in (350.5 cm)');
+        const { specs, errors } = readSpecs('Tarp', {
+            tarp_shape: 'Winter', wide: 'yes', tarp_material: 'Dyneema', side_pullouts: 'yes', bonded: 'no', seam_sealed: 'yes', doors: 'yes',
+        });
+        assert.deepEqual(errors, []);
+        assert.deepEqual(specs, { tarp_shape: 'winter', wide: true, tarp_material: 'dcf', side_pullouts: true, bonded: false, seam_sealed: true, doors: true });
+        assert.equal(readSpecs('Tarp', { tarp_shape: 'Flat' }).specs.tarp_shape, 'rectangular');
+        assert.equal(readSpecs('Tarp', { tarp_shape: 'asym' }).specs.tarp_shape, 'asym');
+        assert.equal(readSpecs('Tarp', { tarp_material: 'Silpoly' }).specs.tarp_material, 'silpoly');
+        assert.equal(formatSpec('tarp_shape', 'rectangular'), 'Flat (rectangular)');
+    });
+});

@@ -166,3 +166,31 @@ test('hammocks: from the sheet, on the gear page, and their own filters in Shelt
     await expect(page.getByTestId('explore-item').filter({ visible: true }).filter({ hasText: tag })).toHaveText([new RegExp(`Asym hammock ${tag}`)]);
     await ownerPage.context().close();
 });
+
+test('tarps: length in feet and inches, shape, material and the yes/no features', async ({ browser, page }, testInfo) => {
+    const ownerPage = await owner(browser, testInfo.workerIndex);
+    const tag = `tp${Date.now().toString(36)}`;
+    const csv = [
+        'sku,name,brand,category,weight,unit,status,tarp_length,tarp_shape,wide,tarp_material,side_pullouts,bonded,seam_sealed,doors',
+        `${tag}-1,Winter tarp ${tag},Trailco,Tarp,19,oz,published,"11' 6""",Winter,yes,DCF,yes,yes,yes,yes`,
+        `${tag}-2,Hex tarp ${tag},Trailco,Hammock Tarp,12,oz,published,11 ft,Hex,no,Silpoly,yes,no,yes,no`,
+    ].join('\n');
+    const plan = await (await ownerPage.request.post(url('/api/admin/catalog/import/preview'), { data: { csv } })).json();
+    expect(plan.summary).toMatchObject({ new: 2, error: 0 });
+    expect((await ownerPage.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } })).ok()).toBe(true);
+    const winter = (await (await ownerPage.request.get(url(`/api/admin/catalog?q=${encodeURIComponent(`Winter tarp ${tag}`)}`))).json()).items[0];
+    expect(winter.specs).toMatchObject({ tarp_length: 350.5, tarp_shape: 'winter', wide: true, tarp_material: 'dcf', side_pullouts: true, bonded: true, seam_sealed: true, doors: true });
+
+    await page.goto(url(`/g/${winter.id}`));
+    const specs = page.getByTestId('gear-specs');
+    await expect(specs.locator('[data-spec="tarp_length"] dd')).toContainText('11 ft 6 in');
+    await expect(specs.locator('[data-spec="tarp_material"] dd')).toHaveText('Dyneema (DCF)');
+    await expect(specs.locator('[data-spec="doors"] dd')).toHaveText('Yes');
+
+    // Explore → Shelter: tarps with doors.
+    await page.goto(url('/explore/shelter'));
+    await page.locator('input[name="cat"][value="tarp"]').check();
+    await page.getByTestId('filter-doors').locator('input[value="true"]').check();
+    await expect(page.getByTestId('explore-item').filter({ visible: true }).filter({ hasText: tag })).toHaveText([new RegExp(`Winter tarp ${tag}`)]);
+    await ownerPage.context().close();
+});
