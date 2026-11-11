@@ -86,7 +86,7 @@
 
                         {{#blocks}}
                         {{#range}}
-                        <div class="wgFilter wgRange" data-range="{{key}}" data-min="{{min}}" data-max="{{max}}" data-step="{{step}}" {{#stops}}data-stops="{{stops}}"{{/stops}} data-testid="range-{{key}}">
+                        <div class="wgFilter wgRange" data-range="{{key}}" data-spec-types="{{types}}" {{#hidden}}hidden{{/hidden}} data-min="{{min}}" data-max="{{max}}" data-step="{{step}}" {{#stops}}data-stops="{{stops}}"{{/stops}} data-testid="range-{{key}}">
                             <div class="wgRangeHead"><span class="wgFilterLabel">{{label}}{{#appliesTo}}<span class="wgFilterFor"> · {{appliesTo}}</span>{{/appliesTo}}</span><output data-out>{{text}}</output></div>
                             <div class="wgRangeTrack">
                                 <input type="range" class="wgRangeLo" name="{{key}}_min" min="{{min}}" max="{{max}}" step="{{step}}" value="{{lo}}" aria-label="{{ariaMin}}" data-testid="range-{{key}}-min">
@@ -95,7 +95,7 @@
                         </div>
                         {{/range}}
                         {{#match}}
-                        <fieldset class="wgFilter" data-testid="filter-{{key}}">
+                        <fieldset class="wgFilter" data-testid="filter-{{key}}" data-spec-types="{{types}}" {{#hidden}}hidden{{/hidden}}>
                             <legend>{{label}}{{#appliesTo}}<span class="wgFilterFor"> · {{appliesTo}}</span>{{/appliesTo}}</legend>
                             {{#options}}<label class="wgFilterCheck{{#off}} wgFilterOff{{/off}}"><input type="checkbox" name="{{key}}" value="{{value}}" {{#on}}checked{{/on}} {{#off}}disabled{{/off}}> {{label}} <span class="wgMuted">{{count}}</span></label>{{/options}}
                         </fieldset>

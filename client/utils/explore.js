@@ -292,6 +292,35 @@ export function specAppliesLabel(key, categories, t = null) {
     return new Intl.ListFormat(locale, { type: 'conjunction' }).format(names);
 }
 
+/** The gear types that have a spec ('r_value' → ['pad']). */
+export function specTypes(key) {
+    return TYPES_BY_FIELD.get(key) || [];
+}
+
+/**
+ * The gear types the ticked categories are (Tent → tent), or null when none
+ * are ticked and the whole section's filters stand. items: filterItem()s.
+ */
+export function chosenTypes(f, items) {
+    if (!f.cats.length) return null;
+    return new Set(items.filter((i) => f.cats.includes(i.cat)).map((i) => i.type).filter(Boolean));
+}
+
+/**
+ * Is a spec filter offered for the ticked categories? With Shell ticked in
+ * Clothing, only a shell's specs; with Tent ticked in Shelter, none of a
+ * tarp's. Nothing ticked: every filter the section has.
+ */
+export function specShown(key, types) {
+    return types === null || specTypes(key).some((t) => types.has(t));
+}
+
+/** The filters without spec filters the ticked categories don't offer. */
+export function withoutHiddenSpecs(f, types) {
+    if (types === null) return f;
+    return { ...f, specs: Object.fromEntries(Object.entries(f.specs).filter(([key]) => specShown(key, types))) };
+}
+
 /** Does a spec filter apply to this item? Only to gear of a type that has the spec. */
 export function specApplies(item, key) {
     const types = TYPES_BY_FIELD.get(key);

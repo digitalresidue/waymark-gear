@@ -215,3 +215,40 @@ test('Sleep System: filters keep every kind of gear they should; spec filters on
     await page.locator('input[name="cat"][value="sleepingpad"]').check();
     expect(await names(page)).toEqual(['Pad B']);
 });
+
+test('spec filters follow the ticked categories: Tent in Shelter drops the tarp filters; none ticked, all are back', async ({ page, browser }, testInfo) => {
+    const b = `Sf${Date.now().toString(36)}`;
+    await seed(browser, testInfo.workerIndex, b);
+    await page.goto(url('/explore/shelter'));
+    const tent = page.getByTestId('filter-capacity');
+    const tarp = page.getByTestId('filter-tarp_shape');
+    // Shelter as a whole: a tent's and a tarp's filters.
+    await expect(tent).toBeVisible();
+    await expect(tarp).toBeVisible();
+    await expect(page.getByTestId('range-tie_outs')).toBeVisible();
+
+    // A tarp filter set, then Tent ticked: only a tent's filters, and the
+    // tarp one is gone from the link.
+    await slide(page, 'range-tie_outs-min', 8);
+    expect(page.url()).toContain('tie_outs_min=8');
+    await page.locator('input[name="cat"][value="tent"]').check();
+    await expect(tarp).toBeHidden();
+    await expect(page.getByTestId('range-tie_outs')).toBeHidden();
+    await expect(tent).toBeVisible();
+    await expect(page.getByTestId('filter-pitch')).toBeVisible();
+    expect(page.url()).not.toContain('tie_outs');
+    expect(page.url()).toContain('cat=tent');
+    expect(await names(page)).toEqual(expect.arrayContaining(['Pole tent', 'Free tent']));
+    // Both ticked: both kinds' filters; none ticked: all of Shelter's.
+    await page.locator('input[name="cat"][value="tarp"]').check();
+    await expect(tarp).toBeVisible();
+    await page.locator('input[name="cat"]:checked').evaluateAll((els) => els.forEach((e) => (e as HTMLInputElement).click()));
+    await expect(tarp).toBeVisible();
+    await expect(tent).toBeVisible();
+
+    // A link with Tent ticked opens that way, and drops a tarp spec it carries.
+    await page.goto(url('/explore/shelter?cat=tent&tie_outs_min=8'));
+    await expect(tarp).toBeHidden();
+    await expect(tent).toBeVisible();
+    await expect(page.locator('[data-filter-count]')).toHaveText('(1)');
+});

@@ -3,7 +3,9 @@
 // in step so the view can be shared. The server applies the same rules
 // (client/utils/explore.js) for the first load and for links.
 
-import { readFilters, filtersToQuery, matchesFilters, sortItems, rangeLabel, activeFilterCount, movedFrom, RANGE_WORDS } from './utils/explore.js';
+import {
+    readFilters, filtersToQuery, matchesFilters, sortItems, rangeLabel, activeFilterCount, movedFrom, RANGE_WORDS, chosenTypes, withoutHiddenSpecs,
+} from './utils/explore.js';
 import { translator } from './utils/i18n.js';
 
 export function initExploreGear() {
@@ -80,10 +82,25 @@ export function initExploreGear() {
             if (hi < r.facet.max && movedFrom(hi, r.facet.max, r.step)) params.set(`${r.key}_max`, String(hi));
         }
         if (sortSelect) params.set('sort', sortSelect.value);
-        return readFilters(params);
+        const f = readFilters(params);
+        return withoutHiddenSpecs(f, chosenTypes(f, items));
+    }
+
+    // Spec filters follow the ticked categories: tick Shell in Clothing and
+    // only a shell's are left; untick them all and every one is back.
+    const specBlocks = [...form.querySelectorAll('[data-spec-types]')];
+    function showSpecFilters() {
+        const params = new URLSearchParams();
+        const cats = [...form.querySelectorAll('input[name="cat"]:checked')].map((c) => c.value);
+        if (cats.length) params.set('cat', cats.join(','));
+        const types = chosenTypes(readFilters(params), items);
+        for (const el of specBlocks) {
+            el.hidden = types !== null && !el.dataset.specTypes.split(' ').some((t) => types.has(t));
+        }
     }
 
     function apply() {
+        showSpecFilters();
         const f = current();
         let shown = 0;
         for (const item of items) {
