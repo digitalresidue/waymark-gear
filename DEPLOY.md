@@ -389,9 +389,9 @@ sheet without spec columns leaves specs as they are.
 
 | Column | Field | Value |
 |---|---|---|
-| `r_value` | R-value | number |
+| `r_value` | R-value | number, e.g. 4.5 or 0.5 |
 | `pad_type` | Type | Closed-cell foam / Inflatable / Self-inflating |
-| `thickness` | Thickness | `72 in` or `183 cm` (bare number: in) |
+| `thickness` | Thickness | `2.5 in`, `1/8"` or `6 cm` (bare number: in; fractions like 3/8 work) |
 | `pad_width` | Width | `72 in` or `183 cm` (bare number: in) |
 | `pad_length` | Length | `72 in` or `183 cm` (bare number: in) |
 | `packed_size` | Packed size | sizes, e.g. `18 x 5 x 5 in` (bare: in) |
