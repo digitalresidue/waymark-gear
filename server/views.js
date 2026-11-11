@@ -28,6 +28,7 @@ import { reviewsFor, latestReviews } from './reviews.js';
 import { getById as catalogItem, isUuid, search as catalogSearch, categories as catalogCategories, toApi as catalogToApi } from './catalog.js';
 import {
     exploreIndex, resolveSection, filterItem, facetsFor, readFilters, matchesFilters, sortItems, rangeLabel, formatWeightG, activeFilterCount, PARENTS, specAppliesLabel,
+    chosenTypes, specShown, specTypes, withoutHiddenSpecs,
 } from '../client/utils/explore.js';
 const PARENT_SLUGS = new Set(PARENTS.map((p) => p.slug));
 import { priceHistory } from './prices.js';
@@ -841,7 +842,11 @@ router.get('/explore/:slug', async (req, res) => {
         // The section's own gear types offer their filters even before
         // the catalog has those specs filled in.
         const facets = facetsFor(items, { categories: section.categories });
-        const filters = readFilters(req.query);
+        // Spec filters follow the ticked categories: Shell in Clothing
+        // offers a shell's, Tent in Shelter a tent's (chosenTypes).
+        const parsed = readFilters(req.query);
+        const types = chosenTypes(parsed, items);
+        const filters = withoutHiddenSpecs(parsed, types);
         const shown = items.filter((i) => matchesFilters(i, filters));
         const byId = new Map(entries.map((e) => [e.id, e]));
 
@@ -870,13 +875,15 @@ router.get('/explore/:slug', async (req, res) => {
             // In a mixed section (Sleep System), say which gear a spec is about.
             const appliesTo = specAppliesLabel(f.key, section.categories, t);
             const label = t(`spec.${f.key}`, {}, f.label);
-            if (f.kind === 'range') blocks.push({ range: { ...rangeOf(f.key, label, f, filters.specs[f.key] || {}, f.stops), appliesTo } });
+            const forTypes = { types: specTypes(f.key).join(' '), hidden: !specShown(f.key, types) };
+            if (f.kind === 'range') blocks.push({ range: { ...rangeOf(f.key, label, f, filters.specs[f.key] || {}, f.stops), appliesTo, ...forTypes } });
             else {
                 blocks.push({
                     match: {
                         ...f,
                         label,
                         appliesTo,
+                        ...forTypes,
                         options: f.options.map((o) => {
                             const checked = Boolean(filters.specs[f.key] && filters.specs[f.key].any.includes(o.value));
                             // Nothing in the catalog has it yet: shown, not pickable.
