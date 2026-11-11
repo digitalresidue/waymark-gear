@@ -224,3 +224,30 @@ describe('tarps', () => {
         assert.equal(formatSpec('tarp_shape', 'rectangular'), 'Flat (rectangular)');
     });
 });
+
+describe('sleeping pads: small R-values and thin pads', () => {
+    test('an R-value under one, with or without the 0', () => {
+        assert.deepEqual(readSpec('r_value', '0.5'), { value: 0.5 });
+        assert.deepEqual(readSpec('r_value', '.5'), { value: 0.5 });
+        assert.deepEqual(readSpec('r_value', '0,5'), { value: 0.5 });
+        assert.equal(formatSpec('r_value', 0.5), '0.5');
+    });
+
+    test('thickness in fractions of an inch, down to 1/8"', () => {
+        for (const v of ['1/8 in', '1/8"', '⅛"', '0.125', '.125 in']) assert.deepEqual(readSpec('thickness', v), { value: 0.32 }, v);
+        assert.deepEqual(readSpec('thickness', '3/8'), { value: 0.95 });
+        assert.deepEqual(readSpec('thickness', '2-3/4"'), { value: 6.99 });
+        assert.deepEqual(readSpec('thickness', '1 1/2 in'), { value: 3.81 });
+        assert.equal(formatSpec('thickness', 0.32, 'imperial'), '1/8 in');
+        assert.equal(formatSpec('thickness', 0.95, 'imperial'), '3/8 in');
+        assert.equal(formatSpec('thickness', 6.99, 'imperial'), '2 3/4 in');
+        assert.equal(formatSpec('thickness', 6.35, 'imperial'), '2.5 in');
+        assert.equal(formatSpec('thickness', 0.32, 'metric'), '3.2 mm');
+        assert.equal(formatSpec('thickness', 0.32), '1/8 in (3.2 mm)');
+        // The editor gets back what reads the same again.
+        assert.equal(specInput('thickness', 0.32), '1/8 in');
+        assert.deepEqual(readSpec('thickness', specInput('thickness', 0.95)), { value: 0.95 });
+        // Longer lengths as before.
+        assert.equal(formatSpec('pad_length', 182.9, 'imperial'), '72 in');
+    });
+});

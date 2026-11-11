@@ -18,6 +18,14 @@ import { unitSystemOf } from './units.js';
 // ---- kinds of value -----------------------------------------------------------
 
 const round = (n) => Math.round(n * 10) / 10;
+
+// "1/8", "1 1/2", "1-1/2", "⅛" → decimals, so a 1/8" pad reads as 0.125 in.
+const VULGAR = { '¼': '1/4', '½': '1/2', '¾': '3/4', '⅛': '1/8', '⅜': '3/8', '⅝': '5/8', '⅞': '7/8' };
+const fractions = (text) => text
+    .replace(/(\d)?\s*([¼½¾⅛⅜⅝⅞])/g, (_, whole, v) => `${whole ? `${whole} ` : ''}${VULGAR[v]}`)
+    .replace(/(?:(\d+)[\s-]+)?(\d+)\/(\d+)/g, (all, whole, num, den) => (
+        Number(den) ? String(Number(whole || 0) + Number(num) / Number(den)) : all
+    ));
 const trim1 = (n) => String(Math.round(n * 10) / 10);
 
 // Units each kind accepts, as factors (or functions) to its stored unit.
@@ -56,14 +64,14 @@ const KINDS = {
 /** A field kind's value in stored units, from "20F", "14 oz", "72 in"... */
 function measure(kindName, raw, defaultUnit) {
     const kind = KINDS[kindName];
-    const text = String(raw).trim().toLowerCase().replace(/°/g, '').replace(/,/g, '.').replace(/[’′]/g, "'").replace(/[”″]/g, '"');
+    const text = fractions(String(raw).trim().toLowerCase().replace(/°/g, '').replace(/,/g, '.').replace(/[’′]/g, "'").replace(/[”″]/g, '"'));
     // Feet and inches: "11 ft 6 in", "11' 6\"", "11ft6".
     const ftIn = kindName === 'length' && text.match(/^(\d+(?:\.\d+)?)\s*(?:ft|feet|foot|')\s*(\d+(?:\.\d+)?)\s*(?:in|inch|inches|"|'')?$/);
     if (ftIn) {
         const stored = Number(ftIn[1]) * 30.48 + Number(ftIn[2]) * 2.54;
         return stored > kind.max ? null : round(stored);
     }
-    const m = text.match(/^(-?\d+(?:\.\d+)?)\s*([a-z"' ]*)$/);
+    const m = text.match(/^(-?(?:\d+(?:\.\d+)?|\.\d+))\s*([a-z"' ]*)$/);
     if (!m) return null;
     const n = Number(m[1]);
     const unitText = m[2].trim();
@@ -71,8 +79,8 @@ function measure(kindName, raw, defaultUnit) {
     if (!unit || !Number.isFinite(n)) return null;
     const stored = kind.toStored ? kind.toStored(n, unit) : n * kind.factor[unit];
     if (stored < kind.min || stored > kind.max) return null;
-    // A 0.75 L pot keeps its hundredths.
-    return kindName === 'volume' && stored < 10 ? Math.round(stored * 100) / 100 : round(stored);
+    // A 0.75 L pot and a 1/8" pad (0.32 cm) keep their hundredths.
+    return (kindName === 'volume' || kindName === 'length') && Math.abs(stored) < 10 ? Math.round(stored * 100) / 100 : round(stored);
 }
 
 // ---- fields --------------------------------------------------------------------
@@ -86,6 +94,7 @@ const FILL_POWERS = [450, 550, 650, 750, 800, 850, 900, 950, 1000];
 /**
  * Every spec field. kind: temp | weight | length | volume | dims | number |
  * choice | yesno | text (free words, up to `max` characters). unit: what a bare number means when typed or imported.
+ * placeholder: the editor's hint, when the kind's usual one doesn't fit.
  * A number's `suffix` is its unit, shown after it ("400 lm") and accepted
  * when typed ("400 lumens", "10,000 mAh"); `decimals` how many it keeps (1).
  * better: 'high' or 'low', which way is better, for "best" on /compare.
@@ -139,8 +148,8 @@ export const SPEC_FIELDS = {
     baffles: { label: 'Baffles', ...choice([['sewn_through', 'Sewn-through'], ['box', 'Box'], ['other', 'Other']]), aliases: { sewn: 'sewn_through', boxbaffle: 'box' } },
 
     // Sleeping pads
-    r_value: { label: 'R-value', kind: 'number', min: 0, max: 15, range: [0, 8], better: 'high' },
-    thickness: { label: 'Thickness', kind: 'length', unit: 'in', display: ['in', 'cm'], range: [0, 12] },
+    r_value: { label: 'R-value', kind: 'number', min: 0, max: 15, range: [0, 8], better: 'high', placeholder: 'e.g. 4.5 or 0.5' },
+    thickness: { label: 'Thickness', kind: 'length', unit: 'in', display: ['in', 'cm'], range: [0, 12], placeholder: '2.5 in, 1/8" or 6 cm' },
     pad_width: { label: 'Width', kind: 'length', unit: 'in', display: ['in', 'cm'], range: [40, 80] },
     pad_length: { label: 'Length', kind: 'length', unit: 'in', display: ['in', 'cm'], range: [100, 220] },
     pad_type: { label: 'Type', ...choice([['closed_cell', 'Closed-cell foam'], ['inflatable', 'Inflatable'], ['self_inflating', 'Self-inflating']]), aliases: { ccf: 'closed_cell', foam: 'closed_cell', closedcellfoam: 'closed_cell', air: 'inflatable' } },
@@ -352,7 +361,8 @@ export function readSpec(key, raw) {
         // comma, and the field's own unit after the number.
         const grouped = /^\d{1,3}([,\s]\d{3})+(?!\d)/.test(text);
         const plain = grouped ? text.replace(/(\d)[,\s](?=\d{3}(?!\d))/g, '$1') : text.replace(',', '.');
-        const m = plain.match(/^(-?\d+(?:\.\d+)?)\s*(.*)$/);
+        // ".5" is 0.5 (an R-value under one).
+        const m = plain.match(/^(-?(?:\d+(?:\.\d+)?|\.\d+))\s*(.*)$/);
         const unit = m ? m[2].trim().toLowerCase() : '';
         const units = [field.suffix, ...(field.units || [])].filter(Boolean).map((u) => u.toLowerCase());
         const n = m ? Number(m[1]) : NaN;
@@ -426,6 +436,21 @@ const withSuffix = (field, value) => {
 };
 const minus = (s) => s.replace(/^-/, '−');
 
+// Inches in eighths, as pads and gear are sold: "1/8", "3/8", "2 3/4";
+// halves and wholes as decimals ("2.5", "72"); anything else to a tenth.
+const inchText = (n) => {
+    const eighths = Math.round(n * 8);
+    if (Math.abs(n * 8 - eighths) > 0.1 || eighths % 4 === 0 || eighths <= 0) return trim1(n);
+    const whole = Math.floor(eighths / 8);
+    let num = eighths % 8;
+    let den = 8;
+    while (num % 2 === 0) {
+        num /= 2;
+        den /= 2;
+    }
+    return whole ? `${whole} ${num}/${den}` : `${num}/${den}`;
+};
+
 // A length in feet and whole inches: "11 ft 6 in", "10 ft" (display 'ftin').
 const feetAndInches = (cm) => {
     const inches = Math.round(cm / 2.54);
@@ -470,7 +495,13 @@ export function formatSpec(key, value, system = null) {
     }
     default: {
         const units = pick(field.display);
-        const shown = units.map((u) => (u === 'ftin' ? feetAndInches(value) : `${trim1(inUnit(field.kind, value, u))} ${UNIT_LABEL[u]}`));
+        const shown = units.map((u) => {
+            if (u === 'ftin') return feetAndInches(value);
+            if (u === 'in' && field.kind === 'length') return `${inchText(inUnit('length', value, 'in'))} in`;
+            // A thin pad in millimeters: "3.2 mm", not "0.3 cm".
+            if (u === 'cm' && field.kind === 'length' && value < 1) return `${trim1(value * 10)} mm`;
+            return `${trim1(inUnit(field.kind, value, u))} ${UNIT_LABEL[u]}`;
+        });
         return shown.length > 1 ? `${shown[0]} (${shown.slice(1).join(', ')})` : shown[0];
     }
     }
@@ -487,7 +518,9 @@ export function specInput(key, value) {
     case 'number': return field.suffix ? `${value} ${field.suffix}` : String(value);
     case 'dims': return `${value.map((n) => trim1(n / KINDS.length.factor[field.unit])).join(' x ')} ${field.unit}`;
     case 'temp': return `${Math.round(inUnit('temp', value, field.unit))}${field.unit}`;
-    default: return `${trim1(inUnit(field.kind, value, field.unit))} ${field.unit}`;
+    default: return field.kind === 'length' && field.unit === 'in'
+        ? `${inchText(inUnit('length', value, 'in'))} in`
+        : `${trim1(inUnit(field.kind, value, field.unit))} ${field.unit}`;
     }
 }
 
