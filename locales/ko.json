@@ -263,6 +263,14 @@
   "spec.tarp_size": "크기",
   "spec.tarp_shape": "형태",
   "spec.tie_outs": "스트링 고정점",
+  "spec.hammock_length": "길이",
+  "spec.hammock_width": "너비",
+  "spec.hammock_shape": "누움 방식",
+  "spec.lay_direction": "누움 방향",
+  "spec.bug_net": "일체형 모기장",
+  "spec.ridgeline": "구조용 릿지라인",
+  "spec.hammock_layers": "겹",
+  "spec.wide": "와이드",
   "spec.types.pack": "배낭",
   "spec.types.tent": "텐트",
   "spec.types.quilt": "퀼트",
@@ -278,6 +286,7 @@
   "spec.types.shoe": "신발",
   "spec.types.poles": "트레킹 폴",
   "spec.types.tarp": "타프",
+  "spec.types.hammock": "해먹",
   "gear.shops": {
     "other": "판매처 {count}곳"
   },

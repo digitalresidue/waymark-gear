@@ -266,6 +266,14 @@
   "spec.tarp_size": "Afmetingen",
   "spec.tarp_shape": "Vorm",
   "spec.tie_outs": "Scheerlijnpunten",
+  "spec.hammock_length": "Lengte",
+  "spec.hammock_width": "Breedte",
+  "spec.hammock_shape": "Ligging",
+  "spec.lay_direction": "Ligrichting",
+  "spec.bug_net": "Ingebouwd muggennet",
+  "spec.ridgeline": "Structurele nokkoord",
+  "spec.hammock_layers": "Lagen",
+  "spec.wide": "Breed",
   "spec.types.pack": "rugzakken",
   "spec.types.tent": "tenten",
   "spec.types.quilt": "quilts",
@@ -281,6 +289,7 @@
   "spec.types.shoe": "schoenen",
   "spec.types.poles": "wandelstokken",
   "spec.types.tarp": "tarps",
+  "spec.types.hammock": "hangmatten",
   "gear.shops": {
     "one": "{count} winkel",
     "other": "{count} winkels"

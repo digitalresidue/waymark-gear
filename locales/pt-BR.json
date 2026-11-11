@@ -266,6 +266,14 @@
   "spec.tarp_size": "Tamanho",
   "spec.tarp_shape": "Formato",
   "spec.tie_outs": "Pontos de ancoragem",
+  "spec.hammock_length": "Comprimento",
+  "spec.hammock_width": "Largura",
+  "spec.hammock_shape": "Posição",
+  "spec.lay_direction": "Direção de deitar",
+  "spec.bug_net": "Mosquiteiro integrado",
+  "spec.ridgeline": "Cumeeira estrutural",
+  "spec.hammock_layers": "Camadas",
+  "spec.wide": "Larga",
   "spec.types.pack": "mochilas",
   "spec.types.tent": "barracas",
   "spec.types.quilt": "quilts",
@@ -281,6 +289,7 @@
   "spec.types.shoe": "calçados",
   "spec.types.poles": "bastões de trekking",
   "spec.types.tarp": "tarps",
+  "spec.types.hammock": "redes de dormir",
   "gear.shops": {
     "one": "{count} loja",
     "other": "{count} lojas"

@@ -263,6 +263,14 @@
   "spec.tarp_size": "尺寸",
   "spec.tarp_shape": "形状",
   "spec.tie_outs": "拉绳点",
+  "spec.hammock_length": "长度",
+  "spec.hammock_width": "宽度",
+  "spec.hammock_shape": "睡姿",
+  "spec.lay_direction": "躺向",
+  "spec.bug_net": "一体式防蚊网",
+  "spec.ridgeline": "结构脊绳",
+  "spec.hammock_layers": "层数",
+  "spec.wide": "加宽",
   "spec.types.pack": "背包",
   "spec.types.tent": "帐篷",
   "spec.types.quilt": "被子",
@@ -278,6 +286,7 @@
   "spec.types.shoe": "鞋",
   "spec.types.poles": "登山杖",
   "spec.types.tarp": "天幕",
+  "spec.types.hammock": "吊床",
   "gear.shops": {
     "other": "{count} 家店"
   },

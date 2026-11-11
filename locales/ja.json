@@ -263,6 +263,14 @@
   "spec.tarp_size": "サイズ",
   "spec.tarp_shape": "形状",
   "spec.tie_outs": "ガイポイント",
+  "spec.hammock_length": "長さ",
+  "spec.hammock_width": "幅",
+  "spec.hammock_shape": "寝方",
+  "spec.lay_direction": "寝る向き",
+  "spec.bug_net": "蚊帳一体型",
+  "spec.ridgeline": "ストラクチュラルリッジライン",
+  "spec.hammock_layers": "層",
+  "spec.wide": "ワイド",
   "spec.types.pack": "ザック",
   "spec.types.tent": "テント",
   "spec.types.quilt": "キルト",
@@ -278,6 +286,7 @@
   "spec.types.shoe": "シューズ",
   "spec.types.poles": "トレッキングポール",
   "spec.types.tarp": "タープ",
+  "spec.types.hammock": "ハンモック",
   "gear.shops": {
     "other": "{count}店舗"
   },
