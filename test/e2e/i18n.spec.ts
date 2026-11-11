@@ -75,10 +75,15 @@ test('a member\'s language follows them to another device, and cached pages keep
     const visitorEs = await (await browser.newContext({ locale: 'es' })).newPage();
     const visitorEn = await (await browser.newContext({ locale: 'en' })).newPage();
     await visitorEs.goto(url(`/@${u.username}`));
-    await visitorEn.goto(url(`/@${u.username}`));
-    await visitorEs.goto(url(`/@${u.username}`));
     await expect(visitorEs.getByTestId('header-signin')).toHaveText('Iniciar sesión');
+    await visitorEn.goto(url(`/@${u.username}`));
     await expect(visitorEn.getByTestId('header-signin')).toHaveText('Sign in');
+    // A second Spanish visitor after the English render still gets Spanish. A fresh
+    // context rather than re-opening the same URL in one tab, which Firefox can leave
+    // stuck waiting on the navigation.
+    const visitorEs2 = await (await browser.newContext({ locale: 'es' })).newPage();
+    await visitorEs2.goto(url(`/@${u.username}`));
+    await expect(visitorEs2.getByTestId('header-signin')).toHaveText('Iniciar sesión');
 
-    for (const p of [page, other, visitorEs, visitorEn]) await p.context().close();
+    for (const p of [page, other, visitorEs, visitorEn, visitorEs2]) await p.context().close();
 });
