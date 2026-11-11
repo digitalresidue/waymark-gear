@@ -266,6 +266,14 @@
   "spec.tarp_size": "Dimensioni",
   "spec.tarp_shape": "Forma",
   "spec.tie_outs": "Punti di ancoraggio",
+  "spec.hammock_length": "Lunghezza",
+  "spec.hammock_width": "Larghezza",
+  "spec.hammock_shape": "Posizione",
+  "spec.lay_direction": "Direzione",
+  "spec.bug_net": "Zanzariera integrata",
+  "spec.ridgeline": "Ridgeline strutturale",
+  "spec.hammock_layers": "Strati",
+  "spec.wide": "Larga",
   "spec.types.pack": "zaini",
   "spec.types.tent": "tende",
   "spec.types.quilt": "quilt",
@@ -281,6 +289,7 @@
   "spec.types.shoe": "scarpe",
   "spec.types.poles": "bastoncini da trekking",
   "spec.types.tarp": "tarp",
+  "spec.types.hammock": "amache",
   "gear.shops": {
     "one": "{count} negozio",
     "other": "{count} negozi"

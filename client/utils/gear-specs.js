@@ -198,6 +198,16 @@ export const SPEC_FIELDS = {
     tarp_size: { label: 'Size', kind: 'dims', unit: 'ft', display: ['ft', 'm'] },
     tarp_shape: { label: 'Shape', ...choice([['rectangular', 'Rectangular'], ['square', 'Square'], ['cat_cut', 'Catenary cut'], ['hex', 'Hex'], ['diamond', 'Diamond'], ['other', 'Other']]), aliases: { rectangle: 'rectangular', catenary: 'cat_cut', catcut: 'cat_cut', hexagonal: 'hex' } },
     tie_outs: { label: 'Tie-outs', ...num(0, 40, { integer: true, range: [4, 20] }) },
+
+    // Hammocks
+    hammock_length: { label: 'Length', kind: 'length', unit: 'ft', display: ['ft', 'm'], range: [270, 370] },
+    hammock_width: { label: 'Width', kind: 'length', unit: 'in', display: ['in', 'cm'], range: [140, 185] },
+    hammock_shape: { label: 'Lay', ...choice([['symmetrical', 'Symmetrical'], ['asymmetrical', 'Asymmetrical']]), aliases: { sym: 'symmetrical', gathered: 'symmetrical', gatheredend: 'symmetrical', asym: 'asymmetrical', asymmetric: 'asymmetrical', symmetric: 'symmetrical' } },
+    lay_direction: { label: 'Lay direction', ...choice([['head_left', 'Head left, foot right'], ['head_right', 'Head right, foot left']]), aliases: { left: 'head_left', headleft: 'head_left', headleftfootright: 'head_left', lh: 'head_left', right: 'head_right', headright: 'head_right', headrightfootleft: 'head_right', rh: 'head_right' }, onlyWhen: { hammock_shape: 'asymmetrical' } },
+    bug_net: { label: 'Integrated bug net', ...yesNo },
+    ridgeline: { label: 'Structural ridgeline', ...yesNo },
+    hammock_layers: { label: 'Layers', ...choice([['single', 'Single layer'], ['double', 'Double layer']]), aliases: { '1': 'single', '2': 'double', singlelayer: 'single', doublelayer: 'double' } },
+    wide: { label: 'Wide', ...yesNo },
 };
 
 /** Gear types with specs: which categories they cover and their fields, in order. */
@@ -267,6 +277,10 @@ export const SPEC_TYPES = [
     {
         id: 'tarp', label: 'Tarp', categories: ['Tarp', 'Hammock Tarp'],
         fields: ['tarp_size', 'tarp_shape', 'tie_outs', 'fabric'],
+    },
+    {
+        id: 'hammock', label: 'Hammock', categories: ['Hammock', 'Camping Hammock', 'Backpacking Hammock', 'Bridge Hammock', 'Gathered End Hammock'],
+        fields: ['hammock_length', 'hammock_width', 'hammock_shape', 'lay_direction', 'bug_net', 'ridgeline', 'hammock_layers', 'wide', 'fabric'],
     },
 ];
 

@@ -266,6 +266,14 @@
   "spec.tarp_size": "Größe",
   "spec.tarp_shape": "Form",
   "spec.tie_outs": "Abspannpunkte",
+  "spec.hammock_length": "Länge",
+  "spec.hammock_width": "Breite",
+  "spec.hammock_shape": "Liegeart",
+  "spec.lay_direction": "Liegerichtung",
+  "spec.bug_net": "Integriertes Moskitonetz",
+  "spec.ridgeline": "Feste Firstleine",
+  "spec.hammock_layers": "Lagen",
+  "spec.wide": "Breit",
   "spec.types.pack": "Rucksäcke",
   "spec.types.tent": "Zelte",
   "spec.types.quilt": "Quilts",
@@ -281,6 +289,7 @@
   "spec.types.shoe": "Schuhe",
   "spec.types.poles": "Trekkingstöcke",
   "spec.types.tarp": "Tarps",
+  "spec.types.hammock": "Hängematten",
   "gear.shops": {
     "one": "{count} Shop",
     "other": "{count} Shops"

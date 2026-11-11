@@ -135,3 +135,34 @@ test('lights, power banks and pack fit: from the sheet, side by side on /compare
     expect(alts).toContain(`Light power bank ${tag}`);
     expect(alts).not.toContain(`Small power bank ${tag}`);
 });
+
+test('hammocks: from the sheet, on the gear page, and their own filters in Shelter', async ({ browser, page }, testInfo) => {
+    const ownerPage = await owner(browser, testInfo.workerIndex);
+    const tag = `hm${Date.now().toString(36)}`;
+    const csv = [
+        'sku,name,brand,category,weight,unit,status,hammock_length,hammock_width,hammock_shape,lay_direction,bug_net,ridgeline,hammock_layers,wide,fabric',
+        `${tag}-1,Asym hammock ${tag},Trailco,Hammock,20,oz,published,11 ft,60 in,Asymmetrical,Head left,yes,yes,Double,no,1.0 Hexon`,
+        `${tag}-2,Gathered hammock ${tag},Trailco,Hammock,14,oz,published,10 ft,58,Symmetrical,,no,yes,single,no,1.0 Hexon`,
+        `${tag}-3,Pole tent ${tag},Trailco,Tent,28,oz,published,,,,,,,,,`,
+    ].join('\n');
+    const plan = await (await ownerPage.request.post(url('/api/admin/catalog/import/preview'), { data: { csv } })).json();
+    expect(plan.summary).toMatchObject({ new: 3, error: 0 });
+    expect((await ownerPage.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } })).ok()).toBe(true);
+    const asym = (await (await ownerPage.request.get(url(`/api/admin/catalog?q=${encodeURIComponent(`Asym hammock ${tag}`)}`))).json()).items[0];
+    expect(asym.specs).toMatchObject({ hammock_shape: 'asymmetrical', lay_direction: 'head_left', bug_net: true, ridgeline: true, hammock_layers: 'double', wide: false });
+
+    await page.goto(url(`/g/${asym.id}`));
+    const specs = page.getByTestId('gear-specs');
+    await expect(specs.locator('[data-spec="hammock_length"] dd')).toContainText('11 ft');
+    await expect(specs.locator('[data-spec="lay_direction"] dd')).toHaveText('Head left, foot right');
+    await expect(specs.locator('[data-spec="bug_net"] dd')).toHaveText('Yes');
+
+    // Explore → Shelter: hammock filters.
+    await page.goto(url('/explore/shelter'));
+    await expect(page.getByTestId('filter-hammock_shape')).toBeVisible();
+    await expect(page.getByTestId('filter-bug_net')).toBeVisible();
+    await page.locator('input[name="cat"][value="hammock"]').check();
+    await page.getByTestId('filter-hammock_shape').locator('input[value="asymmetrical"]').check();
+    await expect(page.getByTestId('explore-item').filter({ visible: true }).filter({ hasText: tag })).toHaveText([new RegExp(`Asym hammock ${tag}`)]);
+    await ownerPage.context().close();
+});

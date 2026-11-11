@@ -266,6 +266,14 @@
   "spec.tarp_size": "Size",
   "spec.tarp_shape": "Shape",
   "spec.tie_outs": "Tie-outs",
+  "spec.hammock_length": "Length",
+  "spec.hammock_width": "Width",
+  "spec.hammock_shape": "Lay",
+  "spec.lay_direction": "Lay direction",
+  "spec.bug_net": "Integrated bug net",
+  "spec.ridgeline": "Structural ridgeline",
+  "spec.hammock_layers": "Layers",
+  "spec.wide": "Wide",
   "spec.types.pack": "packs",
   "spec.types.tent": "tents",
   "spec.types.quilt": "quilts",
@@ -281,6 +289,7 @@
   "spec.types.shoe": "shoes",
   "spec.types.poles": "trekking poles",
   "spec.types.tarp": "tarps",
+  "spec.types.hammock": "hammocks",
   "gear.shops": {
     "one": "{count} shop",
     "other": "{count} shops"

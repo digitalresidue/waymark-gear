@@ -182,3 +182,25 @@ describe('more gear types: lights, power banks, shells, stoves, pots, filters, s
         assert.deepEqual(quilts[0].cells.map((c) => c.best), [true, false]);
     });
 });
+
+describe('hammocks', () => {
+    test('length, width, lay, direction, bug net, ridgeline, layers, wide, fabric', () => {
+        assert.equal(specTypeFor('Hammocks').id, 'hammock');
+        assert.equal(specTypeFor('Bridge Hammock').id, 'hammock');
+        assert.equal(specTypeFor('Hammock Tarp').id, 'tarp');
+        const { specs, errors } = readSpecs('Hammock', {
+            hammock_length: '11 ft', hammock_width: '60', hammock_shape: 'Asym', lay_direction: 'Head left / foot right',
+            bug_net: 'yes', ridgeline: 'yes', hammock_layers: '2', wide: 'no', fabric: '1.0 Hexon',
+        });
+        assert.deepEqual(errors, []);
+        assert.deepEqual(specs, {
+            hammock_length: 335.3, hammock_width: 152.4, hammock_shape: 'asymmetrical', lay_direction: 'head_left',
+            bug_net: true, ridgeline: true, hammock_layers: 'double', wide: false, fabric: '1.0 Hexon',
+        });
+        assert.equal(formatSpec('hammock_length', 335.3, 'imperial'), '11 ft');
+        assert.equal(formatSpec('hammock_width', 152.4, 'imperial'), '60 in');
+        assert.equal(formatSpec('lay_direction', 'head_right'), 'Head right, foot left');
+        // A lay direction only for an asymmetrical hammock.
+        assert.deepEqual(readSpecs('Hammock', { hammock_shape: 'symmetrical', lay_direction: 'left' }).specs, { hammock_shape: 'symmetrical' });
+    });
+});

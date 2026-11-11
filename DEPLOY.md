@@ -516,6 +516,20 @@ sheet without spec columns leaves specs as they are.
 | `tie_outs` | Tie-outs | whole number |
 | `fabric` | Fabric | free text, up to 60 characters (filters ignore capitals) |
 
+**Hammock** (category "Hammock", "Camping Hammock", "Backpacking Hammock", "Bridge Hammock", "Gathered End Hammock", any spelling or plural)
+
+| Column | Field | Value |
+|---|---|---|
+| `hammock_length` | Length | `72 in` or `183 cm` (bare number: ft) |
+| `hammock_width` | Width | `72 in` or `183 cm` (bare number: in) |
+| `hammock_shape` | Lay | Symmetrical / Asymmetrical |
+| `lay_direction` | Lay direction | Head left, foot right / Head right, foot left |
+| `bug_net` | Integrated bug net | yes / no |
+| `ridgeline` | Structural ridgeline | yes / no |
+| `hammock_layers` | Layers | Single layer / Double layer |
+| `wide` | Wide | yes / no |
+| `fabric` | Fabric | free text, up to 60 characters (filters ignore capitals) |
+
 ## Trails
 
 The trail list starts with about 40 well-known long trails. **Owner → Trails**
