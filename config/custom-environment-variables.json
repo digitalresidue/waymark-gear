@@ -58,6 +58,16 @@
         "__format": "boolean"
     },
     "googleAnalyticsId": "GA_MEASUREMENT_ID",
+    "uploads": {
+        "maxFileMb": "UPLOAD_MAX_FILE_MB",
+        "maxPhotos": "UPLOAD_MAX_PHOTOS",
+        "maxStorageMb": "UPLOAD_MAX_STORAGE_MB",
+        "supporter": {
+            "maxFileMb": "SUPPORTER_UPLOAD_MAX_FILE_MB",
+            "maxPhotos": "SUPPORTER_UPLOAD_MAX_PHOTOS",
+            "maxStorageMb": "SUPPORTER_UPLOAD_MAX_STORAGE_MB"
+        }
+    },
     "supporter": {
         "givesBack": "SUPPORTER_GIVES_BACK"
     },
