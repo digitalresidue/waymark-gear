@@ -30,7 +30,7 @@
 //   - A page is 30 updates (60 at most).
 
 import knex from './db.js';
-import { isOwner } from './auth.js';
+import { canUseStage, isStage, seesEarly } from './early-access.js';
 
 export class ActivityError extends Error {
     constructor(message, status = 400) {
@@ -41,44 +41,62 @@ export class ActivityError extends Error {
 
 // ---- who can use it -------------------------------------------------------------------
 
+// Follow's stage (server/early-access.js): the owner only, Supporters
+// first (early access), or every member. Saved before stages as
+// { open: true|false }, which reads as everyone|owner.
 const SETTING = 'follow_feed';
-let open = false;
+let stage = 'owner';
 let loadedAt = 0;
 
 async function refreshOpen() {
     try {
         const row = await knex('site_settings').where({ key: SETTING }).first('value');
-        open = Boolean(row && row.value && row.value.open);
+        const v = (row && row.value) || {};
+        stage = isStage(v.stage) ? v.stage : (v.open ? 'everyone' : 'owner');
     } catch {
-        // No table yet (first start): stays closed.
+        // No table yet (first start): stays with the owner.
     }
     loadedAt = Date.now();
 }
 
-/** Is Follow open to every member? Cached for a minute (several instances). */
-export function followFeedOpen() {
+/** Follow's stage. Cached for a minute (several instances). */
+export function followFeedStage() {
     if (Date.now() - loadedAt > 60_000) {
         loadedAt = Date.now();
         refreshOpen();
     }
-    return open;
+    return stage;
+}
+
+/** Is Follow open to every member? */
+export function followFeedOpen() {
+    return followFeedStage() === 'everyone';
 }
 
 export async function followFeedState() {
     await refreshOpen();
-    return { open };
+    return { open: stage === 'everyone', stage };
 }
 
-export async function setFollowFeedOpen(value) {
-    await knex('site_settings').insert({ key: SETTING, value: JSON.stringify({ open: Boolean(value) }), updated_at: knex.fn.now() })
+export async function setFollowFeedStage(value) {
+    const next = isStage(value) ? value : 'owner';
+    await knex('site_settings').insert({ key: SETTING, value: JSON.stringify({ stage: next, open: next === 'everyone' }), updated_at: knex.fn.now() })
         .onConflict('key').merge();
-    await refreshOpen();
-    return { open };
+    return followFeedState();
 }
 
-/** Can this member use Follow? The owner always; everyone once it's open. */
+export function setFollowFeedOpen(value) {
+    return setFollowFeedStage(value ? 'everyone' : 'owner');
+}
+
+/** Can this member use Follow? The owner always; Supporters from early access; everyone once it's open. */
 export function canFollowFeed(user) {
-    return Boolean(user && (isOwner(user.username) || followFeedOpen()));
+    return canUseStage(followFeedStage(), user);
+}
+
+/** Is this member seeing Follow early, as a Supporter? */
+export function followFeedEarly(user) {
+    return seesEarly(followFeedStage(), user);
 }
 
 function requireAccess(user) {

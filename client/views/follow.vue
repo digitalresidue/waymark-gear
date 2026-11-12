@@ -22,20 +22,25 @@
             </p>
 
             <template v-else>
-                <!-- The owner tries it out first, then opens it to everyone. -->
+                <!-- The owner tries it out first, then Supporters get it early,
+                     then every member (server/early-access.js). -->
                 <section v-if="feed" class="wgCard wgFollowOwner" data-testid="follow-owner">
                     <div>
-                        <strong>{{ feed.open ? 'Open to every member' : 'Owner only while you test it' }}</strong>
+                        <strong>{{ STAGE_TITLES[feed.stage || 'owner'] }}</strong>
                         <p class="wgMuted">
-                            {{ feed.open
-                                ? 'Follow is in every member\'s menu.'
-                                : 'Only you see Follow in the menu. Open it when it\'s ready, and every member gets it.' }}
+                            {{ STAGE_NOTES[feed.stage || 'owner'] }}
                         </p>
                     </div>
-                    <toggle :model-value="feed.open" data-testid="follow-open" @update:model-value="setOpen">
-                        Open to everyone
-                    </toggle>
+                    <div class="wgFollowStages" role="radiogroup" aria-label="Who gets Follow">
+                        <label v-for="s in STAGES" :key="s.id" class="wgFollowStage">
+                            <input type="radio" name="followStage" :value="s.id" :checked="(feed.stage || 'owner') === s.id" :data-testid="`follow-stage-${s.id}`" @change="setStage(s.id)">
+                            {{ s.label }}
+                        </label>
+                    </div>
                 </section>
+                <p v-else-if="earlyAccess" class="wgCard wgFollowEarly" data-testid="follow-early">
+                    <span class="wgSupporterBadge">Early access</span> You're trying Follow before everyone else, as a Supporter. Thank you.
+                </p>
 
                 <div class="wgFollowIntro">
                     <button type="button" class="wgCard wgFollowTile" :aria-pressed="String(tab === 'discover')" data-testid="tile-discover" @click="show('discover')">
@@ -264,6 +269,19 @@ import { api, formatWeightMg } from '../utils/format.js';
 import { bigWeightUnit, currentUnits, currentLanguage } from '../utils/i18n-app.js';
 import { TRIP_TYPE_LABELS } from '../utils/gear-meta.js';
 
+// Who gets Follow, step by step (server/early-access.js).
+const STAGES = [
+    { id: 'owner', label: 'Only me' },
+    { id: 'supporters', label: 'Supporters first' },
+    { id: 'everyone', label: 'Every member' },
+];
+const STAGE_TITLES = { owner: 'Owner only while you test it', supporters: 'Early access for Supporters', everyone: 'Open to every member' };
+const STAGE_NOTES = {
+    owner: 'Only you see Follow in the menu. Give Supporters early access when it\'s ready, then open it to everyone.',
+    supporters: 'You and Supporters see Follow in the menu, marked Early access. Open it to everyone when you\'re happy.',
+    everyone: 'Follow is in every member\'s menu.',
+};
+
 const VERBS = {
     published: 'published a pack',
     pack: 'updated a pack',
@@ -291,6 +309,10 @@ export default {
             discoverLoaded: false,
             mine: null,
             feed: null,
+            earlyAccess: false,
+            STAGES,
+            STAGE_TITLES,
+            STAGE_NOTES,
         };
     },
     computed: {
@@ -335,6 +357,7 @@ export default {
             this.following = t.following;
             this.mine = { shareActivity: s.shareActivity };
             this.feed = s.feed || null;
+            this.earlyAccess = Boolean(s.earlyAccess);
             this.followingList = f.following;
             this.loaded = true;
             // Following nobody: start where they can find someone.
@@ -393,8 +416,8 @@ export default {
         async setShare(value) {
             this.mine = await api('/api/activity/settings', { method: 'PUT', body: JSON.stringify({ shareActivity: value }) });
         },
-        async setOpen(value) {
-            this.feed = await api('/api/owner/follow-feed', { method: 'PUT', body: JSON.stringify({ open: value }) });
+        async setStage(stage) {
+            this.feed = await api('/api/owner/follow-feed', { method: 'PUT', body: JSON.stringify({ stage }) });
         },
         verb(i) {
             return VERBS[i.kind] || '';
@@ -476,6 +499,24 @@ export default {
     .wgFollowEmpty {
         margin: 0;
         padding: 18px 20px;
+    }
+
+    .wgFollowStages {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 16px;
+    }
+
+    .wgFollowStage {
+        align-items: center;
+        display: inline-flex;
+        gap: 6px;
+        min-height: 44px;
+    }
+
+    .wgFollowEarly {
+        margin: 0 0 16px;
+        padding: 12px 16px;
     }
 
     .wgFollowOwner {

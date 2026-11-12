@@ -46,3 +46,23 @@ describe('the one-time Supporter offer', () => {
         assert.equal(offerOpen({ signup_offer_until: null }), false);
     });
 });
+
+describe('early access stages', async () => {
+    const { canUseStage, seesEarly } = await import('../../server/early-access.js');
+    const member = { username: 'someone', plan: 'free' };
+    const fan = { username: 'fan', plan: 'supporter', plan_until: null };
+    test('the owner stage keeps members and Supporters out', () => {
+        assert.equal(canUseStage('owner', member), false);
+        assert.equal(canUseStage('owner', fan), false);
+    });
+    test('Supporters first: Supporters in, early; members not yet', () => {
+        assert.equal(canUseStage('supporters', fan), true);
+        assert.equal(seesEarly('supporters', fan), true);
+        assert.equal(canUseStage('supporters', member), false);
+    });
+    test('everyone: every member, and nobody signed out', () => {
+        assert.equal(canUseStage('everyone', member), true);
+        assert.equal(seesEarly('everyone', fan), false);
+        assert.equal(canUseStage('everyone', null), false);
+    });
+});
