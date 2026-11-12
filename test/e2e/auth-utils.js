@@ -43,15 +43,28 @@ export async function openPage(page, path) {
     }
 }
 
-export async function registerUser(page, username, password, email) {
-    await openPage(page, 'register');
-
+/**
+ * Fill in the sign-up form: email and password, and the username, which is
+ * optional there (behind "Choose your username"). Leaves the page on the
+ * form's result; see registerUser for the whole way to the lists.
+ */
+export async function fillRegisterForm(page, { username, password, email }) {
     const registerForm = page.getByTestId('register-form');
-    await registerForm.getByPlaceholder('Username', { exact: true }).fill(username);
     await registerForm.getByPlaceholder('Email', { exact: true }).fill(email);
     await registerForm.getByPlaceholder('Password', { exact: true }).fill(password);
-    await registerForm.getByPlaceholder('Confirm password', { exact: true }).fill(password);
-    await registerForm.getByRole('button', { name: 'Register' }).click();
+    if (username) {
+        const name = registerForm.getByPlaceholder('Username', { exact: true });
+        if (!(await name.isVisible())) await registerForm.getByTestId('register-pick-username').click();
+        await name.fill(username);
+    }
+    await registerForm.getByTestId('register-submit').click();
+}
+
+/** Sign up and go to the new account's lists (past the welcome steps). */
+export async function registerUser(page, username, password, email) {
+    await openPage(page, 'register');
+    await fillRegisterForm(page, { username, password, email });
+    await page.getByTestId('start-blank').click();
 }
 
 export async function loginUser(page, username, password) {

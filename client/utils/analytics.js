@@ -194,3 +194,15 @@ export function initAnalytics() {
         // Analytics must never break the page.
     }
 }
+
+// A named event for the sign-up funnel (sign_up, the welcome offer, the
+// first-pack choice). Only when Analytics is set up and allowed; queued like
+// the page view until then, and gone if the visitor said no.
+export function trackEvent(name, params = {}) {
+    try {
+        if (!measurementId) return;
+        gtag('event', name, params);
+    } catch {
+        // Analytics must never break the page.
+    }
+}

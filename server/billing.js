@@ -20,7 +20,7 @@ const router = express.Router();
 const GRACE_MS = 3 * 86400000; // a late renewal doesn't drop the badge at once
 const ACTIVE = ['active', 'trialing', 'past_due'];
 
-const stripe = () => (config.has('stripe') ? config.get('stripe') : {});
+export const stripe = () => (config.has('stripe') ? config.get('stripe') : {});
 export const billingEnabled = () => Boolean(stripe().secretKey && stripe().priceMonthly);
 
 export function isSupporter(user, now = Date.now()) {
@@ -39,7 +39,7 @@ function form(obj, prefix = '', out = new URLSearchParams()) {
     return out;
 }
 
-async function stripeCall(method, path, body) {
+export async function stripeCall(method, path, body) {
     const s = stripe();
     const res = await fetch(`${s.apiBase || 'https://api.stripe.com'}${path}`, {
         method,

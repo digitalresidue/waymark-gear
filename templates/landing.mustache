@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html class="lp" lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>{{landingTitle}}</title>
+        <meta name="description" content="{{metaDescription}}">
+        <link rel="canonical" href="{{deployUrl}}/">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="Waymark Gear">
+        <meta property="og:title" content="{{landingTitle}}">
+        <meta property="og:description" content="{{metaDescription}}">
+        <meta property="og:url" content="{{deployUrl}}/">
+        <meta property="og:image" content="{{deployUrl}}/images/og-image.png">
+        <meta name="twitter:card" content="summary_large_image">
+        {{{styles}}}
+        <link rel="icon" href="/favicon.png" />
+        <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script nonce="{{{cspNonce}}}">
+            (function () {
+                try {
+                    // Lists kept in this browser without an account: their place is
+                    // the app. The cookie tells the server next time.
+                    if (localStorage.getItem('library')) {
+                        document.cookie = 'wg_local=1; path=/; max-age=31536000; samesite=lax';
+                        location.replace('/');
+                        return;
+                    }
+                    var t = localStorage.getItem('lpTheme');
+                    if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+                } catch (e) { /* storage blocked; the media query decides */ }
+            }());
+        </script>
+        <script type="application/ld+json" nonce="{{{cspNonce}}}">{{{structuredData}}}</script>
+    </head>
+    <body class="wgLandingPage">
+        {{> siteHeader}}
+
+        <main id="wgMain" tabindex="-1" class="wgLanding">
+            <!-- Hero -->
+            <section class="wgLandHero">
+                <div class="wgLandWrap wgLandHeroInner">
+                    <div class="wgLandHeroCopy">
+                        <p class="wgLandKicker wgLandKickerLight">Free backpacking gear lists · Trail packs · Shakedowns</p>
+                        <h1 class="wgLandH1" data-testid="landing-h1">Plan your backpacking gear, from traditional to super ultralight.</h1>
+                        <p class="wgLandLede">Build your gear list from real weights. See what hikers carry on {{trailCount}} trails, from the PCT to the AT. Get a free shakedown from people who've hiked them.</p>
+
+                        <div class="wgLandSignup" data-testid="landing-signup">
+                            {{#googleOn}}<a href="/auth/google" class="wgLandGoogle" data-testid="landing-google">
+                                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z" /><path fill="#34A853" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z" /><path fill="#FBBC05" d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1A10 10 0 0 0 2 12c0 1.6.4 3.1 1.1 4.6L6.4 14z" /><path fill="#EA4335" d="M12 5.9c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 3.1 7.4L6.4 10C7.2 7.7 9.4 5.9 12 5.9z" /></svg>
+                                Continue with Google
+                            </a>{{/googleOn}}
+                            <form class="wgLandEmail" action="/register" method="get" data-testid="landing-email-form">
+                                <label for="wgLandEmail" class="wgVisuallyHidden">Email</label>
+                                <input id="wgLandEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" data-testid="landing-email">
+                                <button type="submit" class="wgLandBtn wgLandBtnEmber" data-testid="landing-email-submit">Create free account</button>
+                            </form>
+                            <p class="wgLandFine">Free forever. No paywalls. Open source. Already on LighterPack or PackWizard? Bring your lists over right after you sign up.</p>
+                        </div>
+
+                        <div class="wgLandOfferNote">
+                            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12v8H4v-8M2 7h20v5H2zM12 22V7M12 7H8a2.5 2.5 0 1 1 0-5c3 0 4 5 4 5zM12 7h4a2.5 2.5 0 1 0 0-5c-3 0-4 5-4 5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" /></svg>
+                            <p><strong>New accounts only:</strong> Supporter at 50% off, for as long as you stay subscribed. It's offered once, right after you sign up.</p>
+                        </div>
+                    </div>
+
+                    <div class="wgLandHeroCardWrap">
+                        <figure class="wgLandHeroCard" aria-label="An example shakedown">
+                            <div class="wgLandHeroCardHead">
+                                <div>
+                                    <p class="wgLandMuted">Example shakedown · Colorado Trail, 3 nights</p>
+                                    <p class="wgLandHeroCardTitle">Before and after 4 swaps</p>
+                                </div>
+                                <span class="wgLandPill">Now Ultralight</span>
+                            </div>
+                            <div class="wgLandBeforeAfter">
+                                <div><p class="wgLandStatLabel">Base weight before</p><p class="wgLandStatBig">14.2 lb</p><p class="wgLandMuted">Lightweight</p></div>
+                                <div class="wgLandAfter"><p class="wgLandStatLabel">After</p><p class="wgLandStatBig">9.6 lb</p><p>Ultralight · −4.6 lb</p></div>
+                            </div>
+                            <ul class="wgLandSwaps">
+                                <li><span>Freestanding 2P tent → trekking pole 1P</span><b>−1.9 lb</b></li>
+                                <li><span>Synthetic bag → 20°F down quilt</span><b>−1.4 lb</b></li>
+                                <li><span>65 L framed pack → 45 L frameless</span><b>−0.9 lb</b></li>
+                                <li><span>Stove kit → shared with partner</span><b>−0.4 lb</b></li>
+                            </ul>
+                            <div class="wgLandHeroCardFoot">
+                                <p class="wgLandMuted">An example of what a shakedown finds</p>
+                                <a href="/register">Get yours shaken down →</a>
+                            </div>
+                        </figure>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Numbers -->
+            <section class="wgLandProof" aria-label="Waymark Gear in numbers">
+                <div class="wgLandWrap wgLandProofGrid">
+                    <div><p class="wgLandProofNum">{{trailCount}}</p><p>trails with pack stats</p></div>
+                    {{#hasKits}}<div><p class="wgLandProofNum">{{kitCount}}</p><p>public gear lists</p></div>{{/hasKits}}
+                    {{#hasCatalog}}<div><p class="wgLandProofNum">{{catalogCount}}</p><p>catalog items with real weights</p></div>{{/hasCatalog}}
+                    <div><p class="wgLandProofNum">$0</p><p>for every feature, forever</p></div>
+                </div>
+            </section>
+
+            <!-- Weight classes -->
+            <section id="classes" class="wgLandWrap wgLandSection">
+                <div class="wgLandIntro">
+                    <p class="wgLandKicker">Every pack weight</p>
+                    <h2 class="wgLandH2">Ultralight, super ultralight and traditional backpacking gear lists</h2>
+                    <p>Your base weight is everything you carry except food, water, fuel and what you wear. Waymark Gear works it out as you build your list and shows your class. Every pack weight is welcome here. The bear canister counts.</p>
+                </div>
+                <div class="wgLandGrid4">
+                    {{#classes}}
+                    <article class="wgLandCard" data-testid="landing-class">
+                        <p class="wgLandCardRange">{{range}}</p>
+                        <h3 class="wgLandH3">{{name}}</h3>
+                        <p class="wgLandCardBody">{{blurb}}</p>
+                        <a href="/kits?class={{id}}">See {{#hasCount}}{{count}} {{/hasCount}}{{short}} gear lists →</a>
+                    </article>
+                    {{/classes}}
+                </div>
+                <div class="wgLandInlineCta">
+                    <a href="/register" class="wgLandBtn wgLandBtnEmber">Find my weight class, free</a>
+                    <span class="wgLandMuted">Import your list or start one. Your base weight shows up as you add gear.</span>
+                </div>
+            </section>
+
+            <!-- Checklist -->
+            <section id="checklist" class="wgLandBand">
+                <div class="wgLandWrap wgLandSection">
+                    <div class="wgLandSplitHead">
+                        <div class="wgLandIntro">
+                            <p class="wgLandKicker">Start here</p>
+                            <h2 class="wgLandH2">Backpacking gear checklist: what goes in your pack</h2>
+                            <p>The gear most backpackers carry on a multi-day trip, from ultralight to traditional. Sign up and build it into your first list, with real weights from the catalog for every item.</p>
+                        </div>
+                        <a href="/register" class="wgLandBtn wgLandBtnForest">Build this list</a>
+                    </div>
+                    <div class="wgLandGrid4">
+                        <div class="wgLandCheck"><h3 class="wgLandH3s">The big three</h3><ul><li>Backpack</li><li>Tent, tarp or hammock</li><li>Quilt or sleeping bag</li><li>Sleeping pad</li></ul></div>
+                        <div class="wgLandCheck"><h3 class="wgLandH3s">Clothing</h3><ul><li>Rain jacket</li><li>Insulated jacket</li><li>Base layers and sleep clothes</li><li>Extra socks, hat, gloves</li></ul></div>
+                        <div class="wgLandCheck"><h3 class="wgLandH3s">Kitchen and water</h3><ul><li>Stove, pot and fuel</li><li>Spoon and lighter</li><li>Water filter</li><li>Bottles or bladder</li></ul></div>
+                        <div class="wgLandCheck"><h3 class="wgLandH3s">The essentials</h3><ul><li>Navigation and headlamp</li><li>First aid and repair kit</li><li>Sun protection and knife</li><li>Trowel and toilet kit</li></ul></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Trails -->
+            <section id="trails" class="wgLandWrap wgLandSection">
+                <div class="wgLandSplitHead">
+                    <div class="wgLandIntro">
+                        <p class="wgLandKicker">Backpacking gear by trail</p>
+                        <h2 class="wgLandH2">Backpacking gear lists by trail: PCT, AT, CDT and more</h2>
+                        <p>What do hikers actually carry on the PCT? Real gear lists, grouped by trail: average base weight, the shelters and quilts people choose, and how many go ultralight.</p>
+                    </div>
+                    <a href="/trails/all" class="wgLandLinkStrong">All {{trailCount}} trails →</a>
+                </div>
+                <div class="wgLandGrid3">
+                    {{#trails}}
+                    <a href="/trails/{{slug}}" class="wgLandCard wgLandTrail" data-testid="landing-trail">
+                        <span class="wgLandMuted">{{name}}{{#lengthMi}} · {{lengthMi}} mi{{/lengthMi}}</span>
+                        <span class="wgLandH3">{{label}} gear lists</span>
+                        <span class="wgLandTrailStats">
+                            {{#avgBase}}<span><b>{{avgBase}}</b> average base</span>{{/avgBase}}
+                            {{#hasPacks}}<span><b>{{count}}</b> {{listWord}}</span>{{/hasPacks}}
+                        </span>
+                    </a>
+                    {{/trails}}
+                </div>
+                <div class="wgLandStrip">
+                    <p><strong>Hiking one of these?</strong> Sign up, tag your list with the trail, and see how your pack compares to everyone else's.</p>
+                    <a href="/register" class="wgLandBtn wgLandBtnForest">Compare my pack</a>
+                </div>
+            </section>
+
+            <!-- Why switch -->
+            <section id="switch" class="wgLandBand">
+                <div class="wgLandWrap wgLandSection wgLandSwitch">
+                    <div class="wgLandSwitchCopy">
+                        <p class="wgLandKicker">Why hikers are switching</p>
+                        <h2 class="wgLandH2">A backpacking gear list app that doesn't stop at the total</h2>
+                        <p>Most gear lists stop at the total. Ours is where it starts. A spreadsheet or a basic gear list app adds up your grams. Waymark Gear tells you what to do next: what to swap, what people on your trail carry, how much food and water you need, and whether you've packed the essentials.</p>
+                        <div class="wgLandImport">
+                            <p><strong>Coming from LighterPack or PackWizard?</strong></p>
+                            <p>Paste your list link or upload the CSV right after you sign up. Your categories, weights, worn and consumable items come with it. It takes about a minute.</p>
+                            <a href="/register">Sign up and import →</a>
+                        </div>
+                    </div>
+                    <div class="wgLandTableBox">
+                        <table class="wgLandTable" data-testid="landing-compare">
+                            <caption class="wgVisuallyHidden">What you get with a basic gear list app compared with Waymark Gear</caption>
+                            <thead><tr><th scope="col"><span class="wgVisuallyHidden">Feature</span></th><th scope="col">A basic gear list app</th><th scope="col" class="wgLandUs">Waymark Gear</th></tr></thead>
+                            <tbody>
+                                <tr><th scope="row">Total and base weight</th><td>Yes</td><td class="wgLandUs">Yes</td></tr>
+                                <tr><th scope="row">Pick gear from a catalog with real weights</th><td>Type it in</td><td class="wgLandUs">Yes</td></tr>
+                                <tr><th scope="row">What hikers carry on your trail</th><td>No</td><td class="wgLandUs">{{trailCount}} trails</td></tr>
+                                <tr><th scope="row">Shakedowns from the community</th><td>No</td><td class="wgLandUs">Yes</td></tr>
+                                <tr><th scope="row">Lighter options, side-by-side compare</th><td>No</td><td class="wgLandUs">Yes</td></tr>
+                                <tr><th scope="row">Trip planner: food, water, calories by day</th><td>No</td><td class="wgLandUs">Yes</td></tr>
+                                <tr><th scope="row">Gear check for the essentials</th><td>No</td><td class="wgLandUs">Yes</td></tr>
+                                <tr><th scope="row">Plan one list together, live</th><td>Often paid</td><td class="wgLandUs">Free</td></tr>
+                                <tr><th scope="row">Pack mode on your phone, even offline</th><td>Rarely</td><td class="wgLandUs">Yes</td></tr>
+                                <tr><th scope="row">Trip journals tied to your gear</th><td>No</td><td class="wgLandUs">Yes</td></tr>
+                                <tr class="wgLandTablePrice"><th scope="row">Price</th><td>Free list, paid extras</td><td class="wgLandUs">$0, everything</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            {{#hasShakedowns}}
+            <!-- Shakedown requests, live -->
+            <section class="wgLandWrap wgLandSection" aria-labelledby="wgLandShakeTitle">
+                <h2 id="wgLandShakeTitle" class="wgLandH2">Real backpacking gear shakedowns, happening now</h2>
+                <p class="wgLandIntroText">Hikers post their gear list and ask what to cut, swap or rethink. The community answers. Anyone can help, and anyone can ask.</p>
+                <div class="wgLandGrid3">
+                    {{#shakedowns}}
+                    <a href="/r/{{externalId}}#wgComments" class="wgLandCard wgLandShake" data-testid="landing-shakedown">
+                        <span class="wgLandMuted">@{{username}}{{#trailName}} · {{trailName}}{{/trailName}} · {{replies}}</span>
+                        <span class="wgLandShakeName">{{name}}</span>
+                        {{#base}}<span class="wgLandMono"><b>{{base}}</b> base weight</span>{{/base}}
+                    </a>
+                    {{/shakedowns}}
+                </div>
+                <p><a href="/register" class="wgLandLinkEmber">Ask for your own shakedown, free →</a></p>
+            </section>
+            {{/hasShakedowns}}
+
+            <!-- How it works -->
+            <section class="wgLandWrap wgLandSection">
+                <p class="wgLandKicker">How it works</p>
+                <h2 class="wgLandH2">Build your ultralight backpacking gear list in five minutes</h2>
+                <ol class="wgLandSteps">
+                    <li><span class="wgLandStepNum">1</span><h3 class="wgLandH3s">Make a free account</h3><p>Google or email, ten seconds. No card, no trial, nothing to cancel.</p></li>
+                    <li><span class="wgLandStepNum">2</span><h3 class="wgLandH3s">Build or import your pack</h3><p>Copy a list from your trail, pick gear from the catalog, or bring your LighterPack or PackWizard list.</p></li>
+                    <li><span class="wgLandStepNum">3</span><h3 class="wgLandH3s">Get it shaken down</h3><p>Ask the community for a shakedown, see lighter options for each item, and run the gear check before you go.</p></li>
+                </ol>
+            </section>
+
+            <!-- Supporter offer -->
+            <section class="wgLandWrap wgLandSectionTight" aria-labelledby="wgLandOfferTitle">
+                <div class="wgLandOffer">
+                    <div class="wgLandOfferCopy">
+                        <p class="wgLandKicker">Only when you sign up</p>
+                        <h2 id="wgLandOfferTitle" class="wgLandH2 wgLandH2Small">Become a Supporter at half price, for life.</h2>
+                        <p>Everything on Waymark Gear is free, and it stays that way. Supporters keep it running: no affiliate links anywhere you look, a Supporter badge on your profile, and an open-source project that doesn't need ads. New accounts get one chance to lock in 50% off for as long as they stay subscribed.</p>
+                        <p class="wgLandMuted">You'll see the offer once, right after you make your account. Skip it and nothing changes: every feature is still yours.</p>
+                    </div>
+                    <div class="wgLandPrices">
+                        <div class="wgLandPrice"><p>Monthly</p><p class="wgLandMuted"><s>$5</s></p><p class="wgLandPriceNum">$2.50</p><p class="wgLandMuted">per month</p></div>
+                        <div class="wgLandPrice wgLandPriceDark"><p>Yearly</p><p><s>$48</s></p><p class="wgLandPriceNum">$24</p><p>per year</p></div>
+                        <a href="/register" class="wgLandBtn wgLandBtnEmber wgLandPricesCta">Sign up free to unlock it</a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FAQ -->
+            <section class="wgLandBand" aria-labelledby="wgLandFaqTitle">
+                <div class="wgLandWrapNarrow wgLandSection">
+                    <h2 id="wgLandFaqTitle" class="wgLandH2 wgLandH2Small">Ultralight backpacking gear list FAQ</h2>
+                    <div class="wgLandFaq">
+                        {{#faq}}
+                        <details>
+                            <summary>{{q}}<span class="wgLandPlus" aria-hidden="true">+</span></summary>
+                            <p>{{a}}</p>
+                        </details>
+                        {{/faq}}
+                    </div>
+                </div>
+            </section>
+
+            <!-- Last call -->
+            <section class="wgLandFinal">
+                <div class="wgLandWrapNarrow">
+                    <p class="wgLandKicker wgLandKickerLight">Build it. Share it. Go.</p>
+                    <h2 class="wgLandH2 wgLandH2Light">Start your backpacking gear list free</h2>
+                    <p>Free account, every feature, and a one-time Supporter offer when you join.</p>
+                    <div class="wgLandFinalActions">
+                        <a href="/register" class="wgLandBtn wgLandBtnEmber" data-testid="landing-final-signup">Create free account</a>
+                        {{#googleOn}}<a href="/auth/google" class="wgLandBtn wgLandBtnWhite">Continue with Google</a>{{/googleOn}}
+                    </div>
+                </div>
+            </section>
+
+            <!-- Links for readers and search engines -->
+            <nav class="wgLandWrap wgLandLinks" aria-label="Gear lists and gear">
+                <div>
+                    <p class="wgLandLinksHead">Gear lists by trail</p>
+                    {{#trails}}<a href="/trails/{{slug}}">{{label}} gear list</a>{{/trails}}
+                    <a href="/trails/all">All trails</a>
+                </div>
+                <div>
+                    <p class="wgLandLinksHead">Backpacking gear</p>
+                    <a href="/explore/pack">Ultralight backpacks</a>
+                    <a href="/explore/shelter">Tents, tarps and hammocks</a>
+                    <a href="/explore/sleep-system">Quilts, bags and sleeping pads</a>
+                    <a href="/explore/clothing">Backpacking clothing</a>
+                    <a href="/reviews">Gear reviews</a>
+                </div>
+                <div>
+                    <p class="wgLandLinksHead">Gear lists by weight</p>
+                    {{#classes}}<a href="/kits?class={{id}}">{{name}} gear lists</a>{{/classes}}
+                </div>
+                <div>
+                    <p class="wgLandLinksHead">Community</p>
+                    <a href="/welcome">Community home</a>
+                    <a href="/kits?shakedown=1">Shakedown requests</a>
+                    <a href="/leaderboard">Leaderboards</a>
+                    <a href="/brands">Gear brands</a>
+                </div>
+            </nav>
+        </main>
+        {{{scripts}}}
+        {{> siteFooter}}
+    </body>
+</html>

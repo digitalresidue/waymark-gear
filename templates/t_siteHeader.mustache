@@ -32,7 +32,7 @@
         </nav>
         <div class="wgSiteHeaderActions">
             <a href="/signin" class="wgBtn wgBtnGhost wgHideOnPhone" data-show="guest" data-testid="header-signin">{{#t}}header.signIn{{/t}}</a>
-            <a href="/?start=1" class="wgBtn wgBtnPrimary" data-show="guest" data-testid="header-lists" data-lists-button><span class="wgLong">{{chrome.cta}}</span><span class="wgShort">{{chrome.ctaShort}}</span></a>
+            {{#signupCta}}<a href="/register" class="wgBtn wgBtnPrimary wgBtnEmber" data-show="guest" data-testid="header-signup">{{signupCta}}</a>{{/signupCta}}{{^signupCta}}<a href="/?start=1" class="wgBtn wgBtnPrimary" data-show="guest" data-testid="header-lists" data-lists-button><span class="wgLong">{{chrome.cta}}</span><span class="wgShort">{{chrome.ctaShort}}</span></a>{{/signupCta}}
             <!-- Signed in: notifications and the account menu, as in the app. -->
             <a href="/notifications" class="wgHeaderBell" data-show="signedIn" hidden aria-label="{{#t}}header.notifications{{/t}}" data-testid="notification-bell">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0" /></svg>

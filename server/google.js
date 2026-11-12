@@ -21,6 +21,8 @@ import { replaceLibrary } from './library-store.js';
 import { logWithRequest } from './log.js';
 import { hashSessionToken, startSession } from './auth.js';
 import { Library } from '../client/dataTypes.js';
+import { pickUsername } from './usernames.js';
+import { SIGNUP_OFFER_MS } from './signup-offer.js';
 
 const router = express.Router();
 
@@ -142,19 +144,6 @@ async function verifyIdToken(idToken, nonce) {
     return payload;
 }
 
-// lowercase letters and digits, 3-32 chars, unique.
-async function pickUsername(email, name) {
-    const base = (String(email || '').split('@')[0] || String(name || '') || 'hiker')
-        .toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 24) || 'hiker';
-    const stem = base.length >= 3 ? base : `${base}hiker`.slice(0, 24);
-    for (let attempt = 0; attempt < 20; attempt++) {
-        const candidate = attempt === 0 ? stem : `${stem}${crypto.randomInt(10, 99999)}`;
-        const taken = await knex('users').where({ username: candidate }).first('user_id');
-        if (!taken) return candidate;
-    }
-    return `hiker${crypto.randomInt(100000, 999999999)}`;
-}
-
 router.get('/auth/google/callback', async (req, res) => {
     let saved;
     try {
@@ -219,6 +208,7 @@ router.get('/auth/google/callback', async (req, res) => {
                     sync_token: 0,
                     registered: new Date(),
                     last_seen: new Date(),
+                    signup_offer_until: new Date(Date.now() + SIGNUP_OFFER_MS),
                 }).returning('*');
                 await replaceLibrary(created[0].user_id, new Library().save(), trx);
                 return created;
@@ -232,7 +222,9 @@ router.get('/auth/google/callback', async (req, res) => {
         logWithRequest(req, { message: 'signed in via google', username: user.username });
         // A brand-new account picks up a library the visitor built before
         // signing up (the client sees ?welcome=google and moves it over).
-        return finish(res, isNew ? '/?welcome=google' : '/');
+        // New accounts go through the welcome steps (/start: the one-time
+        // Supporter offer, then their first pack).
+        return finish(res, isNew ? '/start?welcome=google' : '/');
     } catch (err) {
         if (err.code === '23505') return fail('unique violation race', '/signin?error=google-failed');
         return fail(`database error: ${err.message}`);

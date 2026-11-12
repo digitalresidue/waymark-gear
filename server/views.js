@@ -44,6 +44,8 @@ import { ratingFor } from './ratings.js';
 import { RATING_WORDS } from '../client/utils/ratings.js';
 import { renderPage } from './site-chrome.js';
 import { localizeHtml, currentT, currentUnits } from './i18n.js';
+import { landingData, wantsApp, LANDING_CLASSES, LANDING_FAQ } from './landing.js';
+import { googleEnabled } from './google.js';
 
 const router = express.Router();
 
@@ -75,6 +77,7 @@ const vueRoutes = [ /* TODO - get this from same data source as Vue */
     { path: '/owner/catalog' },
     { path: '/owner/kits' },
     { path: '/register' },
+    { path: '/start' },
     { path: '/forgot-password' },
     { path: '/reset-password/:token' },
     { path: '/moderation' },
@@ -241,6 +244,84 @@ docPages.forEach((doc, i) => {
     });
 });
 
+// ---- the homepage --------------------------------------------------------------
+
+// Signed out: the server-rendered homepage (server/landing.js). Signed in,
+// or a browser with an account-less library: the app, as before.
+const landingTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/landing.mustache'), 'utf8');
+const jsonLd = (data) => JSON.stringify(data).replace(/</g, '\\u003c');
+
+export function landingPageModel(data, deployUrl) {
+    const n = (v) => Number(v || 0).toLocaleString('en-US');
+    const title = 'Backpacking Gear Lists, Ultralight to Traditional | Waymark Gear';
+    const description = 'Build your backpacking gear list, see your base weight, and find out what hikers carry on the PCT, AT and 40+ trails. Super ultralight to traditional. Free.';
+    return {
+        deployUrl,
+        signupCta: 'Sign up free',
+        googleOn: googleEnabled(),
+        landingTitle: title,
+        metaDescription: description,
+        trailCount: data.trailCount ? `${Math.max(data.trailCount, 1)}` : '40+',
+        kitCount: n(data.kitCount),
+        hasKits: data.kitCount > 0,
+        catalogCount: n(data.catalogCount),
+        hasCatalog: data.catalogCount > 0,
+        classes: LANDING_CLASSES.map((c) => ({ ...c, count: n(data.byClass[c.id]), hasCount: Boolean(data.byClass[c.id]) })),
+        trails: data.trails.map((t) => ({
+            slug: t.slug,
+            name: t.name,
+            // "PCT gear lists"; a two-letter short name (CT) says too little.
+            label: t.short && t.short.length >= 3 ? t.short : t.name,
+            listWord: t.count === 1 ? 'list' : 'lists',
+            lengthMi: t.lengthMi ? n(t.lengthMi) : '',
+            count: n(t.count),
+            hasPacks: t.count > 0,
+            avgBase: t.avgBaseWeightMg ? lbLabel(t.avgBaseWeightMg) : '',
+        })),
+        shakedowns: data.shakedowns.map((k) => ({
+            externalId: k.externalId,
+            name: k.name,
+            username: k.username,
+            trailName: k.trailName,
+            base: k.baseWeightMg > 0 ? lbLabel(k.baseWeightMg) : '',
+            replies: k.commentCount ? `${k.commentCount} ${k.commentCount === 1 ? 'suggestion' : 'suggestions'}` : 'No suggestions yet',
+        })),
+        hasShakedowns: data.shakedowns.length > 0,
+        faq: LANDING_FAQ,
+        structuredData: jsonLd([
+            { '@context': 'https://schema.org', '@type': 'Organization', name: 'Waymark Gear', url: `${deployUrl}/`, logo: `${deployUrl}/images/icon-512.png` },
+            { '@context': 'https://schema.org', '@type': 'WebSite', name: 'Waymark Gear', url: `${deployUrl}/` },
+            {
+                '@context': 'https://schema.org',
+                '@type': 'WebApplication',
+                name: 'Waymark Gear',
+                url: `${deployUrl}/`,
+                applicationCategory: 'LifestyleApplication',
+                operatingSystem: 'Any (web browser)',
+                description,
+                offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+            },
+            {
+                '@context': 'https://schema.org',
+                '@type': 'FAQPage',
+                mainEntity: LANDING_FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+            },
+        ]),
+    };
+}
+
+router.get('/', async (req, res, next) => {
+    if (wantsApp(req)) return next();
+    try {
+        const model = { ...shareHead(), cspNonce: NONCE_PLACEHOLDER, path: '/', ...landingPageModel(await landingData(), config.get('deployUrl')) };
+        res.set('Vary', 'Cookie');
+        sendFresh(res, renderPage(landingTemplate, model, {}, '/'));
+    } catch (err) {
+        logWithRequest(req, { message: 'error rendering homepage', err });
+        next();
+    }
+});
+
 for (let i = 0; i < vueRoutes.length; i++) {
     router.get(vueRoutes[i].path, (req, res) => {
         // The app reads its language from <html lang> (server/i18n.js picked it).
@@ -260,6 +341,7 @@ router.get('/robots.txt', (req, res) => {
         'Disallow: /owner/',
         'Disallow: /profile',
         'Disallow: /pack',
+        'Disallow: /start',
         'Disallow: /gear',
         'Disallow: /csv/',
         `Sitemap: ${config.get('deployUrl')}/sitemap.xml`,

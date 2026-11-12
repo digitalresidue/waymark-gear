@@ -1,0 +1,897 @@
+// The homepage for visitors who aren't signed in (templates/landing.mustache).
+// The hero and the last call are Forest in both themes; everything else uses
+// the theme's tokens, so dark mode works as on the rest of the site.
+
+@import "../globals";
+
+$land-ember-light: #E8A57E; // Ember on Forest: 5.9:1
+
+.wgLandingPage {
+    background: var(--lp-bg);
+}
+
+.wgLanding {
+    font-size: 17px;
+    line-height: 1.55;
+
+    p {
+        margin: 0;
+    }
+
+    a {
+        color: var(--lp-link-blue);
+    }
+}
+
+.wgLandWrap {
+    box-sizing: border-box;
+    margin: 0 auto;
+    max-width: 1240px;
+    padding: 0 24px;
+}
+
+.wgLandWrapNarrow {
+    box-sizing: border-box;
+    margin: 0 auto;
+    max-width: 880px;
+    padding: 0 24px;
+}
+
+.wgLandSection {
+    padding-bottom: 72px;
+    padding-top: 80px;
+}
+
+.wgLandSectionTight {
+    padding-bottom: 80px;
+}
+
+.wgLandBand {
+    background: var(--lp-surface);
+    border-bottom: 1px solid var(--lp-border);
+    border-top: 1px solid var(--lp-border);
+}
+
+.wgLandKicker {
+    color: var(--lp-accent);
+    font-family: $font-mono;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px !important;
+    text-transform: uppercase;
+}
+
+.wgLandKickerLight {
+    color: $sage;
+}
+
+.wgLandH1 {
+    color: #fff;
+    font-family: $font-display;
+    font-size: clamp(36px, 5vw, 62px);
+    font-stretch: 125%;
+    font-weight: 850;
+    letter-spacing: -0.01em;
+    line-height: 1.03;
+    margin: 0;
+}
+
+.wgLandH2 {
+    font-family: $font-display;
+    font-size: clamp(28px, 3.4vw, 42px);
+    font-stretch: 115%;
+    font-weight: 800;
+    line-height: 1.1;
+    margin: 0;
+}
+
+.wgLandH2Small {
+    font-size: clamp(26px, 3vw, 36px);
+    margin-bottom: 24px;
+}
+
+.wgLandH2Light {
+    color: #fff;
+}
+
+.wgLandH3 {
+    display: block;
+    font-family: $font-display;
+    font-size: 21px;
+    font-stretch: 110%;
+    font-weight: 800;
+    line-height: 1.2;
+    margin: 0;
+}
+
+.wgLandH3s {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 8px;
+}
+
+.wgLandMuted {
+    color: var(--lp-text-secondary);
+    font-size: 14px;
+}
+
+.wgLandMono {
+    font-family: $font-mono;
+}
+
+.wgLandIntro {
+    max-width: 760px;
+
+    > p:last-child {
+        color: var(--lp-text-secondary);
+        margin-top: 14px;
+    }
+}
+
+.wgLandIntroText {
+    color: var(--lp-text-secondary);
+    margin: 14px 0 28px !important;
+    max-width: 720px;
+}
+
+// Buttons: 48px tall, so they're easy to hit on a phone.
+.wgLandBtn {
+    align-items: center;
+    border: 0;
+    border-radius: 10px;
+    box-sizing: border-box;
+    cursor: pointer;
+    display: inline-flex;
+    font-family: $font-body;
+    font-size: 16px;
+    font-weight: 700;
+    justify-content: center;
+    min-height: 50px;
+    padding: 0 22px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.wgLanding .wgLandBtnEmber,
+.wgLandBtnEmber {
+    background: $ember;
+    color: #fff;
+
+    &:hover,
+    &:focus-visible {
+        background: #963F14;
+        color: #fff;
+    }
+}
+
+.wgLanding .wgLandBtnForest,
+.wgLandBtnForest {
+    background: $forest;
+    color: #fff;
+
+    &:hover,
+    &:focus-visible {
+        background: #27503F;
+        color: #fff;
+    }
+}
+
+.wgLanding .wgLandBtnWhite {
+    background: #fff;
+    color: $forest;
+}
+
+// The header's sign-up button on this page.
+.wgBtnEmber {
+    background: $ember !important;
+    border-color: $ember !important;
+    color: #fff !important;
+}
+
+.wgLandLinkStrong {
+    font-weight: 600;
+}
+
+.wgLanding .wgLandLinkEmber {
+    color: var(--lp-accent);
+    font-weight: 700;
+}
+
+// ---- hero ---------------------------------------------------------------------
+
+.wgLandHero {
+    background: $forest;
+    color: #F1F3EF;
+}
+
+.wgLandHeroInner {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 56px;
+    padding-bottom: 80px;
+    padding-top: 64px;
+}
+
+.wgLandHeroCopy {
+    display: flex;
+    flex: 1 1 520px;
+    flex-direction: column;
+    gap: 22px;
+    min-width: 0;
+}
+
+.wgLandLede {
+    color: #D5DDD7;
+    font-size: 19px;
+    max-width: 560px;
+}
+
+.wgLandSignup {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 520px;
+}
+
+.wgLanding .wgLandGoogle {
+    align-items: center;
+    background: #fff;
+    border-radius: 10px;
+    color: $grey-900;
+    display: flex;
+    font-weight: 600;
+    gap: 10px;
+    justify-content: center;
+    min-height: 52px;
+    text-decoration: none;
+}
+
+.wgLandEmail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    input {
+        background: $grey-900;
+        border: 1px solid $moss;
+        border-radius: 10px;
+        box-sizing: border-box;
+        color: #fff;
+        flex: 1 1 240px;
+        font-size: 16px;
+        min-height: 52px;
+        min-width: 0;
+        padding: 0 16px;
+
+        &::placeholder {
+            color: #9FAFA5;
+        }
+
+        &:focus {
+            border-color: $land-ember-light;
+            outline: none;
+        }
+    }
+}
+
+.wgLandFine {
+    color: #B9C6BD;
+    font-size: 14px;
+}
+
+.wgLandOfferNote {
+    align-items: center;
+    border: 1px dashed $land-ember-light;
+    border-radius: 10px;
+    box-sizing: border-box;
+    color: $land-ember-light;
+    display: flex;
+    gap: 12px;
+    max-width: 520px;
+    padding: 12px 16px;
+
+    svg {
+        flex: none;
+    }
+
+    p {
+        color: #F1F3EF;
+        font-size: 15px;
+    }
+
+    strong {
+        color: $land-ember-light;
+    }
+}
+
+.wgLandHeroCardWrap {
+    display: flex;
+    flex: 1 1 420px;
+    justify-content: center;
+    min-width: 0;
+}
+
+.wgLandHeroCard {
+    background: var(--lp-surface);
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    color: var(--lp-text);
+    margin: 0;
+    max-width: 480px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.wgLandHeroCardHead {
+    align-items: flex-start;
+    border-bottom: 1px solid var(--lp-border);
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    padding: 20px 22px 16px;
+}
+
+.wgLandHeroCardTitle {
+    font-family: $font-display;
+    font-size: 20px;
+    font-stretch: 112%;
+    font-weight: 800;
+    margin-top: 4px !important;
+}
+
+.wgLandPill {
+    background: var(--lp-active-bg);
+    border-radius: 999px;
+    color: var(--lp-bubble-text);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 10px;
+    white-space: nowrap;
+}
+
+.wgLandBeforeAfter {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 18px 22px;
+
+    > div {
+        background: var(--lp-surface-sunken);
+        border-radius: 10px;
+        padding: 14px;
+    }
+
+    .wgLandAfter {
+        background: $forest;
+        color: $sage;
+
+        .wgLandStatLabel {
+            color: $sage;
+        }
+
+        .wgLandStatBig {
+            color: #fff;
+        }
+    }
+}
+
+.wgLandStatLabel {
+    color: var(--lp-text-secondary);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.wgLandStatBig {
+    font-family: $font-mono;
+    font-size: 26px;
+    font-weight: 600;
+    margin-top: 4px !important;
+}
+
+.wgLandSwaps {
+    font-size: 15px;
+    list-style: none;
+    margin: 0;
+    padding: 0 22px 8px;
+
+    li {
+        border-top: 1px solid var(--lp-border);
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+        padding: 10px 0;
+    }
+
+    b {
+        color: var(--lp-success);
+        font-family: $font-mono;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+}
+
+.wgLandHeroCardFoot {
+    align-items: center;
+    background: var(--lp-surface-sunken);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: space-between;
+    padding: 14px 22px 18px;
+
+    a {
+        color: var(--lp-accent) !important;
+        font-size: 14px;
+        font-weight: 700;
+    }
+}
+
+// ---- numbers --------------------------------------------------------------------
+
+.wgLandProof {
+    background: var(--lp-surface);
+    border-bottom: 1px solid var(--lp-border);
+}
+
+.wgLandProofGrid {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    padding-bottom: 28px;
+    padding-top: 28px;
+    text-align: center;
+
+    p {
+        color: var(--lp-text-secondary);
+        font-size: 14px;
+    }
+
+    .wgLandProofNum {
+        color: var(--lp-text);
+        font-family: $font-mono;
+        font-size: 30px;
+        font-weight: 600;
+    }
+}
+
+// ---- cards and grids ----------------------------------------------------------
+
+.wgLandGrid4,
+.wgLandGrid3 {
+    display: grid;
+    gap: 16px;
+    margin-top: 32px;
+}
+
+.wgLandGrid4 {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.wgLandGrid3 {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+}
+
+.wgLandCard {
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: 14px;
+    box-sizing: border-box;
+    color: var(--lp-text);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 22px;
+}
+
+a.wgLandCard {
+    color: var(--lp-text) !important;
+    text-decoration: none;
+
+    &:hover {
+        border-color: var(--lp-border-hover);
+        box-shadow: var(--lp-lift-shadow);
+    }
+}
+
+.wgLandCardRange {
+    color: var(--lp-accent);
+    font-family: $font-mono;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.wgLandCardBody {
+    color: var(--lp-text-secondary);
+    flex: 1;
+    font-size: 15px;
+}
+
+.wgLandCard > a {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.wgLandInlineCta {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 24px;
+}
+
+.wgLandSplitHead {
+    align-items: flex-end;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: space-between;
+}
+
+.wgLandCheck {
+    background: var(--lp-bg);
+    border-radius: 14px;
+    padding: 20px;
+
+    ul {
+        color: var(--lp-text-secondary);
+        font-size: 15px;
+        margin: 0;
+        padding-left: 18px;
+    }
+}
+
+.wgLandTrailStats {
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 14px;
+    gap: 6px 18px;
+    margin-top: 4px;
+
+    b {
+        font-family: $font-mono;
+        font-weight: 600;
+    }
+}
+
+.wgLandStrip {
+    align-items: center;
+    background: var(--lp-active-bg);
+    border-radius: 14px;
+    color: var(--lp-bubble-text);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    justify-content: space-between;
+    margin-top: 22px;
+    padding: 18px 24px;
+}
+
+.wgLandShakeName {
+    font-size: 17px;
+    font-weight: 700;
+}
+
+// ---- why switch ---------------------------------------------------------------
+
+.wgLandSwitch {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 48px;
+}
+
+.wgLandSwitchCopy {
+    display: flex;
+    flex: 1 1 360px;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+
+    > p {
+        color: var(--lp-text-secondary);
+    }
+}
+
+.wgLandImport {
+    background: var(--lp-bg);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 20px;
+
+    p:nth-child(2) {
+        color: var(--lp-text-secondary);
+        font-size: 15px;
+    }
+
+    a {
+        color: var(--lp-accent) !important;
+        font-weight: 600;
+    }
+}
+
+.wgLandTableBox {
+    flex: 1.4 1 520px;
+    min-width: 0;
+    overflow-x: auto;
+}
+
+.wgLandTable {
+    border-collapse: collapse;
+    font-size: 15px;
+    min-width: 480px;
+    width: 100%;
+
+    th,
+    td {
+        border-bottom: 1px solid var(--lp-border);
+        padding: 13px 14px;
+    }
+
+    thead th {
+        border-bottom: 2px solid var(--lp-text);
+        color: var(--lp-text-secondary);
+        font-weight: 600;
+        text-align: center;
+        width: 26%;
+
+        &:first-child {
+            width: auto;
+        }
+    }
+
+    tbody th {
+        font-weight: 500;
+        text-align: left;
+    }
+
+    td {
+        color: var(--lp-text-secondary);
+        text-align: center;
+    }
+
+    td.wgLandUs {
+        background: var(--lp-active-bg);
+        color: var(--lp-bubble-text);
+        font-weight: 700;
+    }
+
+    thead .wgLandUs {
+        background: $forest;
+        border-radius: 10px 10px 0 0;
+        color: #fff;
+        font-weight: 800;
+    }
+
+    .wgLandTablePrice {
+        th {
+            font-weight: 700;
+        }
+
+        th,
+        td {
+            border-bottom: 0;
+        }
+
+        td.wgLandUs {
+            background: $forest;
+            border-radius: 0 0 10px 10px;
+            color: #fff;
+            font-weight: 800;
+        }
+    }
+}
+
+// ---- how it works ---------------------------------------------------------------
+
+.wgLandSteps {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    list-style: none;
+    margin: 32px 0 0;
+    padding: 0;
+
+    li {
+        background: var(--lp-surface);
+        border: 1px solid var(--lp-border);
+        border-radius: 14px;
+        padding: 24px;
+    }
+
+    p {
+        color: var(--lp-text-secondary);
+        font-size: 15px;
+    }
+}
+
+.wgLandStepNum {
+    align-items: center;
+    background: $forest;
+    border-radius: 999px;
+    color: #fff;
+    display: inline-flex;
+    font-family: $font-mono;
+    font-weight: 600;
+    height: 34px;
+    justify-content: center;
+    margin-bottom: 12px;
+    width: 34px;
+}
+
+// ---- Supporter offer ------------------------------------------------------------
+
+.wgLandOffer {
+    align-items: center;
+    background: var(--lp-surface);
+    border: 2px solid $ember;
+    border-radius: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 40px;
+    padding: 36px;
+}
+
+.wgLandOfferCopy {
+    display: flex;
+    flex: 1 1 420px;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+
+    .wgLandH2Small {
+        margin-bottom: 0;
+    }
+
+    > p:nth-of-type(3) {
+        color: var(--lp-text-secondary);
+    }
+}
+
+.wgLandPrices {
+    display: grid;
+    flex: 0 1 380px;
+    gap: 14px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 0;
+}
+
+.wgLandPrice {
+    background: var(--lp-bg);
+    border-radius: 14px;
+    padding: 18px;
+    text-align: center;
+}
+
+.wgLandPriceDark {
+    background: $forest;
+    color: $sage;
+}
+
+.wgLandPriceNum {
+    color: var(--lp-text);
+    font-family: $font-mono;
+    font-size: 32px;
+    font-weight: 600;
+
+    .wgLandPriceDark & {
+        color: #fff;
+    }
+}
+
+.wgLandPricesCta {
+    grid-column: 1 / -1;
+}
+
+// ---- FAQ ----------------------------------------------------------------------------
+
+.wgLandFaq details {
+    border-top: 1px solid var(--lp-border);
+    padding: 18px 0;
+
+    &:last-child {
+        border-bottom: 1px solid var(--lp-border);
+    }
+
+    summary {
+        cursor: pointer;
+        display: flex;
+        font-size: 18px;
+        font-weight: 700;
+        gap: 16px;
+        justify-content: space-between;
+        list-style: none;
+
+        &::-webkit-details-marker {
+            display: none;
+        }
+    }
+
+    p {
+        color: var(--lp-text-secondary);
+        margin-top: 10px;
+    }
+
+    &[open] .wgLandPlus {
+        transform: rotate(45deg);
+    }
+}
+
+.wgLandPlus {
+    color: var(--lp-accent);
+    font-family: $font-mono;
+    transition: transform 0.2s;
+}
+
+// ---- last call and links ------------------------------------------------------------
+
+.wgLandFinal {
+    background: $forest;
+    color: #D5DDD7;
+    padding: 80px 0;
+    text-align: center;
+
+    .wgLandWrapNarrow {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+}
+
+.wgLandFinalActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+}
+
+.wgLandLinks {
+    display: grid;
+    gap: 28px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    padding-bottom: 48px;
+    padding-top: 48px;
+
+    div {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    a {
+        font-size: 15px;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
+
+.wgLandLinksHead {
+    font-weight: 700;
+    margin-bottom: 4px !important;
+}
+
+@media (max-width: 600px) {
+    .wgLandHeroInner {
+        gap: 40px;
+        padding-top: 40px;
+    }
+
+    .wgLandSection {
+        padding-bottom: 56px;
+        padding-top: 56px;
+    }
+
+    .wgLandOffer {
+        padding: 24px;
+    }
+
+    .wgLandEmail .wgLandBtn {
+        width: 100%;
+    }
+}

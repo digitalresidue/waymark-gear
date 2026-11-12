@@ -51,6 +51,9 @@
         "priceYearly": "",
         "monthlyLabel": "$5",
         "yearlyLabel": "$48",
+        "signupCoupon": "",
+        "signupMonthlyLabel": "$2.50",
+        "signupYearlyLabel": "$24",
         "apiBase": "https://api.stripe.com"
     },
     "google": {

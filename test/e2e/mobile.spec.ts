@@ -675,8 +675,8 @@ test.describe('Phone onboarding', () => {
     await page.goto(`${testRoot}register`);
     const form = page.getByTestId('register-form');
     await expect(form).toBeVisible();
-    await form.getByRole('button', { name: 'Register' }).tap();
-    await expect(page.getByText('Please enter a username.')).toBeVisible();
+    await form.getByTestId('register-submit').tap();
+    await expect(page.getByText('Please enter an email.')).toBeVisible();
   });
 
   test('sign in and register link to each other', async ({ page }) => {

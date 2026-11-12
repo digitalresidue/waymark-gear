@@ -2,23 +2,28 @@
     <div class="wgAuth">
         <siteHeader />
         <main id="wgMain" class="wgAuthMain" tabindex="-1">
-            <div :id="cardId" class="wgAuthCard wgCard" :class="{ wgAuthWide: wide }">
-                <h1 class="wgAuthTitle">
-                    {{ title }}
-                </h1>
-                <p v-if="subtitle" class="wgMuted wgAuthSubtitle">
-                    {{ subtitle }}
-                </p>
-                <p v-if="googleError" class="wgAuthError" role="alert" data-testid="google-error">
-                    {{ googleError }}
-                </p>
-                <template v-if="google">
-                    <googleButton class="wgAuthGoogle" @availability="googleOn = $event" />
-                    <div v-if="googleOn" class="wgAuthDivider">
-                        <span>{{ $t('auth.orEmail') }}</span>
-                    </div>
-                </template>
-                <slot />
+            <div class="wgAuthRow" :class="{ wgAuthRowAside: $slots.aside }">
+                <div :id="cardId" class="wgAuthCard wgCard" :class="{ wgAuthWide: wide }">
+                    <h1 class="wgAuthTitle">
+                        {{ title }}
+                    </h1>
+                    <p v-if="subtitle" class="wgMuted wgAuthSubtitle">
+                        {{ subtitle }}
+                    </p>
+                    <p v-if="googleError" class="wgAuthError" role="alert" data-testid="google-error">
+                        {{ googleError }}
+                    </p>
+                    <template v-if="google">
+                        <googleButton class="wgAuthGoogle" @availability="googleOn = $event" />
+                        <div v-if="googleOn" class="wgAuthDivider">
+                            <span>{{ $t('auth.orEmail') }}</span>
+                        </div>
+                    </template>
+                    <slot />
+                </div>
+                <aside v-if="$slots.aside" class="wgAuthAside">
+                    <slot name="aside" />
+                </aside>
             </div>
             <p v-if="$slots.after" class="wgAuthAfter">
                 <slot name="after" />
@@ -83,6 +88,30 @@ export default {
     flex: 1 1 auto;
     flex-direction: column;
     padding: 48px 16px 64px;
+}
+
+.wgAuthRow {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+// Register: the form beside what an account gets you.
+.wgAuthRowAside {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 40px 56px;
+    max-width: 1040px;
+
+    .wgAuthCard {
+        flex: 1 1 380px;
+    }
+}
+
+.wgAuthAside {
+    flex: 1 1 380px;
+    max-width: 520px;
+    min-width: 0;
 }
 
 .wgAuthCard {
