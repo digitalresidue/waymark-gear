@@ -52,11 +52,11 @@
                         <span class="wgMuted">{{ interval === 'year' ? 'per year' : 'per month' }}</span>
                         <s class="wgMuted">{{ interval === 'year' ? offer.yearlyFull : offer.monthlyFull }}</s>
                     </p>
-                    <ul class="wgStartPerks">
+                    <ul class="wgStartPerks" data-testid="offer-perks">
                         <li>Half price on every renewal, for as long as you stay subscribed</li>
-                        <li>No affiliate links anywhere on the site</li>
-                        <li>A Supporter badge on your profile</li>
-                        <li>Keeps a free, open-source hiking app free for everyone</li>
+                        <li v-for="p in offer.perks || []" :key="p.id">
+                            {{ p.text }}
+                        </li>
                     </ul>
                     <button type="button" class="wgStartClaim" :disabled="busy" data-testid="offer-claim" @click="claim">
                         Claim {{ interval === 'year' ? `${offer.yearly} a year` : `${offer.monthly} a month` }} for life

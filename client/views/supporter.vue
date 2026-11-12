@@ -17,10 +17,13 @@
                 <h2 class="wgProfileEditH">
                     Supporter
                 </h2>
-                <ul class="wgSupporterPerks">
-                    <li>Plain shop links everywhere: no affiliate tracking on anything you click.</li>
-                    <li>A Supporter badge on your profile.</li>
-                    <li>You keep the site running and pay for what's built next.</li>
+                <p class="wgMuted">
+                    Every feature for planning your hike is free, and stays free. Supporters get these extras:
+                </p>
+                <ul class="wgSupporterPerks" data-testid="supporter-perks">
+                    <li v-for="p in perks" :key="p.id">
+                        {{ p.text }}
+                    </li>
                 </ul>
 
                 <p v-if="!signedIn">
@@ -43,6 +46,10 @@
                             {{ plan.yearly }} a year
                         </button>
                     </div>
+                    <label v-if="plan.supporter" class="wgSupporterWall">
+                        <input type="checkbox" :checked="plan.onWall" :disabled="busy" data-testid="supporter-wall-toggle" @change="setWall($event.target.checked)">
+                        <span>Thank me by name on the <a href="/supporters">Supporters wall</a></span>
+                    </label>
                     <p v-if="plan.canManage">
                         <button type="button" class="wgBtn wgBtnGhost" :disabled="busy" data-testid="supporter-manage" @click="portal">
                             Manage or cancel
@@ -74,12 +81,13 @@
 <script>
 import siteHeader from '../components/site-header.vue';
 import { api } from '../utils/format.js';
+import { SUPPORTER_PERKS } from '../utils/supporter-perks.js';
 
 export default {
     name: 'Supporter',
     components: { siteHeader },
     data() {
-        return { plan: null, busy: false, error: '' };
+        return { plan: null, perks: SUPPORTER_PERKS, busy: false, error: '' };
     },
     computed: {
         signedIn() {
@@ -91,8 +99,13 @@ export default {
     },
     async mounted() {
         document.title = 'Support Waymark Gear';
-        if (!this.signedIn) return;
+        if (!this.signedIn) {
+            const res = await api('/api/supporter/perks').catch(() => null);
+            if (res && res.perks) this.perks = res.perks;
+            return;
+        }
         this.plan = await api('/api/plan').catch(() => null);
+        if (this.plan && this.plan.perks) this.perks = this.plan.perks;
         // Back from Stripe: its confirmation can land a moment after we do.
         for (let i = 0; this.welcome && this.plan && !this.plan.supporter && i < 10; i++) {
             await new Promise((r) => { setTimeout(r, 1500); });
@@ -120,6 +133,17 @@ export default {
         portal() {
             return this.go('/api/plan/portal');
         },
+        async setWall(listed) {
+            this.busy = true;
+            this.error = '';
+            try {
+                const res = await api('/api/plan/wall', { method: 'PUT', body: JSON.stringify({ listed }) });
+                this.plan = { ...this.plan, onWall: res.onWall };
+            } catch (err) {
+                this.error = err.message;
+            }
+            this.busy = false;
+        },
     },
 };
 </script>
@@ -134,6 +158,14 @@ export default {
 .wgSupporterCard {
     margin: 0 0 16px;
     padding: 16px 18px;
+}
+
+.wgSupporterWall {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    margin: 12px 0;
+    min-height: 44px;
 }
 
 .wgSupporterPerks {

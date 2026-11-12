@@ -68,6 +68,9 @@
             "maxStorageMb": "SUPPORTER_UPLOAD_MAX_STORAGE_MB"
         }
     },
+    "supporter": {
+        "givesBack": "SUPPORTER_GIVES_BACK"
+    },
     "stripe": {
         "secretKey": "STRIPE_SECRET_KEY",
         "webhookSecret": "STRIPE_WEBHOOK_SECRET",

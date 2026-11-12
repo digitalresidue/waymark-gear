@@ -750,6 +750,17 @@ a.wgLandCard {
     }
 }
 
+.wgLandPerks {
+    color: var(--lp-text-secondary);
+    font-size: 15px;
+    margin: 0;
+    padding-left: 20px;
+
+    li + li {
+        margin-top: 4px;
+    }
+}
+
 .wgLandPrices {
     display: grid;
     flex: 0 1 380px;

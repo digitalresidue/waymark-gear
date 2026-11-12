@@ -38,7 +38,7 @@ export const LANDING_FAQ = [
     },
     {
         q: 'Is Waymark Gear really free?',
-        a: "Yes. Every feature is free, with no paywalls and no trial. It's open source too. The optional Supporter plan removes affiliate links and adds a badge; it doesn't unlock anything.",
+        a: "Yes. Every feature is free, with no paywalls and no trial. It's open source too. The optional Supporter plan adds extras, like plain shop links and a Supporter badge, but never locks a feature away.",
     },
     {
         q: 'Can I import my LighterPack or PackWizard list?',

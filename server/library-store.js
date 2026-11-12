@@ -527,7 +527,7 @@ export async function libraryCounts(userId, db = knex) {
 // The owner of a share id, with their library, for share pages and embeds.
 export async function libraryForExternalId(externalId, db = knex) {
     const row = await db('users').join('list', 'users.user_id', 'list.user_id')
-        .select('users.user_id', 'users.username', 'users.avatar_url').where({ 'list.external_id': String(externalId) }).first();
+        .select('users.user_id', 'users.username', 'users.avatar_url', 'users.plan', 'users.plan_until').where({ 'list.external_id': String(externalId) }).first();
     if (!row) return null;
     const library = await loadLibrary(row.user_id, db);
     return library ? { ...row, library } : null;

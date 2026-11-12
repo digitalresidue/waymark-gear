@@ -54,6 +54,9 @@
             "maxStorageMb": 500
         }
     },
+    "supporter": {
+        "givesBack": ""
+    },
     "stripe": {
         "secretKey": "",
         "webhookSecret": "",

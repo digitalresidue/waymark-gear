@@ -11,6 +11,7 @@
 
 import knex from './db.js';
 import { isModerator } from './auth.js';
+import { isSupporter } from './billing.js';
 import { notify, sendNotificationEmails } from './notify.js';
 
 export const COMMENT_MAX = 2000;
@@ -57,6 +58,7 @@ function present(row, { viewer, ownerId }) {
             displayName: row.display_name || '',
             avatarUrl: row.avatar_url || '',
             isListOwner: row.author_id === ownerId,
+            supporter: isSupporter({ plan: row.plan, plan_until: row.plan_until }),
         },
         createdAt: row.created_at,
         editedAt: row.edited_at,
@@ -72,7 +74,7 @@ export async function listComments(externalId, viewer) {
     if (!kit) throw new CommentError('Comments are only open on published lists.', 404);
     const rows = await knex('comments')
         .leftJoin('users', 'users.user_id', 'comments.author_id')
-        .select('comments.*', 'users.username', 'users.display_name', 'users.avatar_url')
+        .select('comments.*', 'users.username', 'users.display_name', 'users.avatar_url', 'users.plan', 'users.plan_until')
         .where({ external_id: kit.external_id })
         .orderBy('comments.created_at', 'asc')
         .limit(1000);
@@ -142,7 +144,7 @@ export async function addComment(user, externalId, input = {}) {
 
     sendNotificationEmails(emails);
     const author = await knex('users').where({ user_id: user.user_id }).first();
-    return present({ ...result.row, username: author.username, display_name: author.display_name, avatar_url: author.avatar_url }, { viewer: user, ownerId: result.ownerId });
+    return present({ ...result.row, username: author.username, display_name: author.display_name, avatar_url: author.avatar_url, plan: author.plan, plan_until: author.plan_until }, { viewer: user, ownerId: result.ownerId });
 }
 
 async function commentFor(id) {

@@ -15,6 +15,7 @@ import knex from './db.js';
 import { authenticateUser, authenticateOwner } from './auth.js';
 import { logWithRequest, logger } from './log.js';
 import { forgetUserPages } from './page-cache.js';
+import { supporterPerks } from '../client/utils/supporter-perks.js';
 
 const router = express.Router();
 const GRACE_MS = 3 * 86400000; // a late renewal doesn't drop the badge at once
@@ -51,9 +52,18 @@ export async function stripeCall(method, path, body) {
     return json;
 }
 
+// The owner's own words for what Supporter money gives to trails, or ''.
+export const givesBack = () => (config.has('supporter.givesBack') ? String(config.get('supporter.givesBack') || '').trim() : '');
+
+/** What being a Supporter gets you, as the pages list it. */
+export const perks = () => supporterPerks({ givesBack: givesBack() });
+
 function planInfo(user) {
     const s = stripe();
     return {
+        perks: perks(),
+        // On the Supporters wall (/supporters), by their choice.
+        onWall: Boolean(user && user.supporter_public),
         available: billingEnabled(),
         monthly: s.monthlyLabel || '$5',
         yearly: s.priceYearly ? (s.yearlyLabel || '$48') : null,
@@ -78,6 +88,30 @@ const signedIn = (handler) => (req, res) => authenticateUser(req, res, async (re
         if (!res.headersSent) res.status(502).json({ message: "Payments aren't working right now. Try again in a few minutes." });
     }
 });
+
+// For pages anyone can see (the Supporter page signed out).
+router.get('/api/supporter/perks', (req, res) => {
+    res.set('Cache-Control', 'public, max-age=300');
+    res.json({ perks: perks() });
+});
+
+// Be thanked by name on /supporters, or not.
+router.put('/api/plan/wall', requireJson, signedIn(async (req, res, user) => {
+    const listed = Boolean(req.body && req.body.listed);
+    await knex('users').where({ user_id: user.user_id }).update({ supporter_public: listed });
+    res.json({ onWall: listed });
+}));
+
+/** The Supporters who asked to be on the wall, A to Z. */
+export async function supportersWall(db = knex) {
+    const rows = await db('users')
+        .where({ plan: 'supporter', supporter_public: true })
+        .where((w) => w.whereNull('plan_until').orWhere('plan_until', '>', db.fn.now()))
+        .select('username', 'display_name', 'avatar_url')
+        .orderByRaw('lower(username)')
+        .limit(2000);
+    return rows.map((r) => ({ username: r.username, name: r.display_name || '', avatarUrl: /^\/userimages\//.test(r.avatar_url || '') ? r.avatar_url : '' }));
+}
 
 router.get('/api/plan', signedIn(async (req, res, user) => {
     res.set('Cache-Control', 'no-store');
