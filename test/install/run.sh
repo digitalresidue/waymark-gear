@@ -60,7 +60,9 @@ grep -q "All done!" install.log || fail "install.sh didn't finish"
 
 step "The site answers over HTTPS"
 https localhost /healthz >/dev/null || fail "/healthz over https"
-https localhost / | grep -qi "waymark" || fail "homepage"
+# grep -q would stop reading at the first match and cut curl off mid-page
+# (a write error under pipefail); read it all.
+https localhost / | grep -i "waymark" >/dev/null || fail "homepage"
 code=$(curl -sk -m 20 -o /dev/null -w '%{http_code} %{redirect_url}' --resolve www.localhost:443:127.0.0.1 https://www.localhost/trails)
 [ "$code" = "301 https://localhost/trails" ] || fail "www redirect: $code"
 
@@ -74,7 +76,7 @@ step "The owner account works"
 signin trailboss first-password-1 || fail "owner sign-in"
 
 step "Running it again leaves the install alone"
-bash install.sh | grep -q "already installed" || fail "second run"
+bash install.sh | grep "already installed" >/dev/null || fail "second run"
 
 step "An interrupted install resumes, keeping the database password"
 before=$(grep '^POSTGRES_PASSWORD=' "$WAYMARK_DIR/.env")
