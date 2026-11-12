@@ -503,3 +503,39 @@
 .wgWallNote {
     font-size: 14px;
 }
+
+// A Supporter's accent colour (client/utils/profile-accents.js): the plain
+// banner, the ring round the picture and the tab underline.
+$profile-accents: (
+    forest: #1D3B30,
+    moss: #3F6B52,
+    ember: #B04E1B,
+    lake: #2F5D7C,
+    dusk: #5A4A7E,
+    granite: #3F4A52,
+    heather: #7A3E5E,
+);
+
+@each $id, $hex in $profile-accents {
+    .wgAccent-#{$id} {
+        --wg-accent: #{$hex};
+    }
+}
+
+.wgProfile[data-accent] {
+    .wgProfileBannerPlain {
+        background:
+            linear-gradient(170deg, transparent 58%, rgba(255, 255, 255, 0.06) 58.5%),
+            linear-gradient(195deg, transparent 64%, rgba(0, 0, 0, 0.14) 64.5%),
+            linear-gradient(135deg, var(--wg-accent), color-mix(in srgb, var(--wg-accent) 70%, #fff) 140%);
+    }
+
+    .wgProfileAvatar {
+        background: var(--wg-accent);
+        box-shadow: 0 0 0 3px var(--wg-accent);
+    }
+
+    .wgProfileTabs a[aria-current="page"] {
+        border-color: var(--wg-accent);
+    }
+}

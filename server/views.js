@@ -489,6 +489,7 @@ router.get('/@:username', async (req, res) => {
             supporter: found.supporter,
             avatarUrl: profile.avatarUrl,
             bannerUrl: profile.bannerUrl,
+            accent: profile.accent,
             ogImage: `${deployUrl}/og/@${profile.username}.png?v=${profileImageVersion({
                 name, trailName: profile.trailName, avatarUrl: profile.avatarUrl, kitCount: kits.length, lightest,
             })}`,
