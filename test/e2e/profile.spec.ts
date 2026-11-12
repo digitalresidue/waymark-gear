@@ -81,12 +81,13 @@ test.describe('Public profiles', () => {
         // Check the link, then follow it.
         const back = page.getByTestId('share-profile-link');
         await expect(back).toHaveAttribute('href', `/@${username}`);
-        // Open it in a fresh tab: leaving the shared list mid-load lost the
-        // navigation in Firefox's automation.
-        const profileTab = await page.context().newPage();
+        // Open it as a fresh visitor: a second visit to the same page in this
+        // browser profile could leave Firefox waiting on the navigation.
+        const fresh = await page.context().browser()!.newContext();
+        const profileTab = await fresh.newPage();
         await profileTab.goto(url((await back.getAttribute('href'))!), { waitUntil: 'domcontentloaded' });
         await expect(profileTab.getByTestId('profile-name')).toHaveText('Robin Ridge');
-        await profileTab.close();
+        await fresh.close();
     });
 
     test('bad links are refused, hidden profiles 404, unpublished lists never show', async ({ page }) => {
