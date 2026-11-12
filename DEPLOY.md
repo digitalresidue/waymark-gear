@@ -339,6 +339,15 @@ the gear page instead.
 To give someone Supporter for free (a contributor, a reviewer): Owner →
 Revenue → Supporters.
 
+## Photo uploads
+
+Each member can upload photos up to `UPLOAD_MAX_FILE_MB` (5) each, keep up to
+`UPLOAD_MAX_PHOTOS` (1,000) photos and `UPLOAD_MAX_STORAGE_MB` (500 MB) in
+all. Supporters have their own three settings (`SUPPORTER_UPLOAD_MAX_FILE_MB`,
+`SUPPORTER_UPLOAD_MAX_PHOTOS`, `SUPPORTER_UPLOAD_MAX_STORAGE_MB`), the same
+as everyone's for now: raise them to make more room a Supporter perk. A photo
+nothing uses any more is cleared out within a day, which frees its room.
+
 ## Gear specs
 
 Catalog gear of these types can carry specs: a pack's volume and frame, a

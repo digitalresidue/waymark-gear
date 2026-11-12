@@ -44,6 +44,16 @@
     "remoteImages": {
         "allowPrivate": false
     },
+    "uploads": {
+        "maxFileMb": 5,
+        "maxPhotos": 1000,
+        "maxStorageMb": 500,
+        "supporter": {
+            "maxFileMb": 5,
+            "maxPhotos": 1000,
+            "maxStorageMb": 500
+        }
+    },
     "stripe": {
         "secretKey": "",
         "webhookSecret": "",
