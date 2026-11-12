@@ -58,7 +58,9 @@ http.createServer(async (req, res) => {
             if (req.method === 'POST' && url.pathname === '/v1/checkout/sessions') {
                 const f = await readForm(req);
                 if (!f['line_items[0][price]']) return json(res, 400, { error: { message: 'Missing price' } });
-                const s = { id: id('cs'), customer: f.customer || id('cus'), client_reference_id: f.client_reference_id, price: f['line_items[0][price]'], success_url: f.success_url };
+                const s = { id: id('cs'), customer: f.customer || id('cus'), client_reference_id: f.client_reference_id, price: f['line_items[0][price]'], success_url: f.success_url, coupon: f['discounts[0][coupon]'] || null, allow_promotion_codes: f.allow_promotion_codes || null };
+                // Stripe refuses both at once.
+                if (s.coupon && s.allow_promotion_codes) return json(res, 400, { error: { message: 'You may only specify one of these parameters: allow_promotion_codes, discounts.' } });
                 sessions.set(s.id, s);
                 return json(res, 200, { id: s.id, url: `${base}/pay/${s.id}` });
             }
@@ -68,6 +70,9 @@ http.createServer(async (req, res) => {
                 portals.set(p, { customer: f.customer, return_url: f.return_url });
                 return json(res, 200, { id: p, url: `${base}/portal/${p}` });
             }
+            // For tests: what a checkout session was made with.
+            const cs = /^\/v1\/checkout\/sessions\/(.+)$/.exec(url.pathname);
+            if (req.method === 'GET' && cs && sessions.has(cs[1])) return json(res, 200, sessions.get(cs[1]));
             const m = /^\/v1\/subscriptions\/(.+)$/.exec(url.pathname);
             if (req.method === 'GET' && m && subscriptions.has(m[1])) return json(res, 200, subscriptions.get(m[1]));
             return json(res, 404, { error: { message: 'Not found' } });

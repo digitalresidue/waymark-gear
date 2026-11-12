@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 import { testRoot } from './utils';
 
-import { registerUser, loginUser, logoutUser, generateTestUser, openPage } from './auth-utils';
+import { registerUser, fillRegisterForm, skipWelcome, loginUser, logoutUser, generateTestUser, openPage } from './auth-utils';
 
 test.describe('Cookie security', () => {
   let username: string;
@@ -191,25 +191,20 @@ test.describe('User Authentication Tests', () => {
     await openPage(page, 'register');
 
     const registerForm = page.getByTestId('register-form');
-    await registerForm.getByRole('button', { name: 'Register' }).click();
+    await registerForm.getByTestId('register-submit').click();
 
-    await expect(registerForm.locator('.lpError')).toContainText('Please enter a username.');
     await expect(registerForm.locator('.lpError')).toContainText('Please enter an email.');
     await expect(registerForm.locator('.lpError')).toContainText('Please enter a password.');
-    await expect(registerForm.locator('.lpError')).toContainText('Please enter a password confirmation.');
+    await expect(registerForm.locator('.lpError')).not.toContainText('username');
   });
 
-  test('should show password mismatch error on registration', async ({ page }) => {
+  test('the username is optional: one is made from the email', async ({ page }) => {
     await openPage(page, 'register');
-
-    const registerForm = page.getByTestId('register-form');
-    await registerForm.getByPlaceholder('Username', { exact: true }).fill('mismatchUser');
-    await registerForm.getByPlaceholder('Email', { exact: true }).fill('mismatch@example.com');
-    await registerForm.getByPlaceholder('Password', { exact: true }).fill('testtest');
-    await registerForm.getByPlaceholder('Confirm password', { exact: true }).fill('testtest2');
-    await registerForm.getByRole('button', { name: 'Register' }).click();
-
-    await expect(registerForm.locator('.lpError')).toContainText("Your passwords don't match.");
+    const stamp = `${Date.now()}${Math.random().toString(36).slice(2, 6)}`;
+    await fillRegisterForm(page, { email: `trail.name${stamp}@example.com`, password: 'testtest' });
+    await skipWelcome(page);
+    await expect(page.getByTestId('item-row').first()).toBeVisible();
+    expect(await page.evaluate(() => window.LighterPack.$store.state.loggedIn)).toBe(`trailname${stamp}`.slice(0, 24));
   });
 
   test('should block duplicate usernames and emails during registration', async ({ page }) => {
@@ -221,17 +216,13 @@ test.describe('User Authentication Tests', () => {
 
     await openPage(page, 'register');
     const registerForm = page.getByTestId('register-form');
-    await registerForm.getByPlaceholder('Username', { exact: true }).fill(username);
-    await registerForm.getByPlaceholder('Email', { exact: true }).fill(`alt+${email}`);
-    await registerForm.getByPlaceholder('Password', { exact: true }).fill(password);
-    await registerForm.getByPlaceholder('Confirm password', { exact: true }).fill(password);
-    await registerForm.getByRole('button', { name: 'Register' }).click();
+    await fillRegisterForm(page, { username, password, email: `alt+${email}` });
 
     await expect(registerForm.locator('.lpError')).toContainText('That username already exists, please pick a different username.');
 
     await registerForm.getByPlaceholder('Username', { exact: true }).fill(`${username}2`);
     await registerForm.getByPlaceholder('Email', { exact: true }).fill(email);
-    await registerForm.getByRole('button', { name: 'Register' }).click();
+    await registerForm.getByTestId('register-submit').click();
 
     await expect(registerForm.locator('.lpError')).toContainText('A user with that email already exists.');
   });
@@ -279,12 +270,8 @@ test.describe('User Authentication Tests', () => {
     await openPage(page, 'register');
 
     const { username, password, email } = generateTestUser('local');
-    const registerForm = page.getByTestId('register-form');
-    await registerForm.getByPlaceholder('Username', { exact: true }).fill(username);
-    await registerForm.getByPlaceholder('Email', { exact: true }).fill(email);
-    await registerForm.getByPlaceholder('Password', { exact: true }).fill(password);
-    await registerForm.getByPlaceholder('Confirm password', { exact: true }).fill(password);
-    await registerForm.getByRole('button', { name: 'Register' }).click();
+    await fillRegisterForm(page, { username, password, email });
+    await skipWelcome(page);
 
     await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
     await expect(page.getByPlaceholder('Name your list', { exact: true })).toHaveValue('Local Data List');

@@ -1,6 +1,6 @@
 import { test, expect, Page, APIRequestContext } from '@playwright/test';
 
-import { registerUser, generateTestUser } from './auth-utils';
+import { registerUser, generateTestUser, skipWelcome } from './auth-utils';
 import { testRoot } from './utils';
 import { showLists } from './test-helpers';
 
@@ -43,9 +43,10 @@ async function importCatalog(request: APIRequestContext, tag: string) {
 }
 
 test.describe('Homepage and Explore', () => {
-    test('a visitor sees the homepage and can start a list without an account', async ({ page }) => {
-        await page.goto(url('/'));
-        await expect(page).toHaveURL(/\/welcome$/);
+    test('the community page still lets a visitor start a list without an account', async ({ page }) => {
+        // / is the server-rendered homepage now (landing.spec.ts); /welcome
+        // keeps the app's community page.
+        await page.goto(url('/welcome'));
         await expect(page.getByRole('heading', { name: 'Know every ounce before you go.' })).toBeVisible();
         await expect(page.getByRole('img', { name: /Waymark Gear/ }).first()).toBeVisible();
         await expect(page.getByTestId('google-signin').first()).toBeVisible();
@@ -313,6 +314,9 @@ test.describe('Google sign-in', () => {
         const stamp = `${Date.now()}${Math.random().toString(36).slice(2, 6)}`;
         await page.goto(url('/signin'));
         await googleSignIn(page, { sub: `g-${stamp}`, email: `g${stamp}@example.com` });
+        // New accounts go through the welcome steps first.
+        await expect(page).toHaveURL(/\/start\?welcome=google$/);
+        await skipWelcome(page);
         await expect(page.locator('#lpListName')).toBeVisible();
         await expect(page.getByTestId('account-menu')).toBeVisible();
 
@@ -349,6 +353,7 @@ test.describe('Google sign-in', () => {
         const stamp = `${Date.now()}${Math.random().toString(36).slice(2, 6)}`;
         await page.goto(url('/signin'));
         await googleSignIn(page, { sub: `g-local-${stamp}`, email: `local${stamp}@example.com` });
+        await skipWelcome(page);
         await expect(page.locator('#lpListName')).toHaveValue('Built before signing up');
         expect(await page.evaluate(() => localStorage.library)).toBeUndefined();
     });

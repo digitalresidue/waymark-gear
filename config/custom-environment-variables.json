@@ -64,7 +64,10 @@
         "priceMonthly": "STRIPE_PRICE_MONTHLY",
         "priceYearly": "STRIPE_PRICE_YEARLY",
         "monthlyLabel": "SUPPORTER_MONTHLY_LABEL",
-        "yearlyLabel": "SUPPORTER_YEARLY_LABEL"
+        "yearlyLabel": "SUPPORTER_YEARLY_LABEL",
+        "signupCoupon": "STRIPE_SIGNUP_COUPON",
+        "signupMonthlyLabel": "SUPPORTER_SIGNUP_MONTHLY_LABEL",
+        "signupYearlyLabel": "SUPPORTER_SIGNUP_YEARLY_LABEL"
     },
     "google": {
         "clientId": "GOOGLE_CLIENT_ID",

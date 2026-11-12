@@ -19,6 +19,8 @@ import { Library } from '../client/dataTypes.js';
 import { mailIdentity, sendMail } from './mail.js';
 import { forgetUserPages } from './page-cache.js';
 import { isSupporter } from './billing.js';
+import { pickUsername } from './usernames.js';
+import { SIGNUP_OFFER_MS } from './signup-offer.js';
 import { announceLibraryChange } from './shared-lists.js';
 
 const router = express.Router();
@@ -37,15 +39,13 @@ router.post('/register', (req, res) => {
 });
 
 async function register(req, res) {
-    const username = String(req.body.username).toLowerCase().trim();
-    const password = String(req.body.password);
-    let email = String(req.body.email).trim();
+    // The username is optional: left empty, one is made from the email
+    // (server/usernames.js) and can be changed later.
+    let username = String(req.body.username || '').toLowerCase().trim();
+    const password = String(req.body.password || '');
+    let email = String(req.body.email || '').trim();
 
     const errors = [];
-
-    if (!username) {
-        errors.push({ field: 'username', message: 'Please enter a username.' });
-    }
 
     if (username && (username.length < 3 || username.length > 32)) {
         errors.push({ field: 'username', message: 'Please enter a username between 3 and 32 characters.' });
@@ -72,6 +72,7 @@ async function register(req, res) {
     logWithRequest(req, { message: 'Attempting to register', username });
 
     try {
+        if (!username) username = await pickUsername(email);
         let conflictingUsers = await knex('users')
             .where({ username })
             .orWhere({ email })
@@ -113,7 +114,8 @@ async function register(req, res) {
             token: hashSessionToken(token),
             sync_token: newSyncToken,
             registered: new Date(),
-            last_seen: new Date()
+            last_seen: new Date(),
+            signup_offer_until: new Date(Date.now() + SIGNUP_OFFER_MS),
         };
 
         logWithRequest(req, { message: 'Saving new user', username });

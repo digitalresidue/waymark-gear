@@ -1,15 +1,22 @@
 <template>
     <form class="lpRegister lpFields" data-testid="register-form" @submit.prevent="submit">
         <div class="lpFields">
-            <input v-model="username" v-focus-on-create="autofocus" type="text" :placeholder="$t('auth.username')" :aria-label="$t('auth.username')" autocomplete="username" name="username">
-            <input v-model="email" type="email" :placeholder="$t('auth.email')" :aria-label="$t('auth.email')" autocomplete="email" name="email">
+            <input v-model="email" v-focus-on-create="autofocus" type="email" :placeholder="$t('auth.email')" :aria-label="$t('auth.email')" autocomplete="email" name="email">
             <input v-model="password" type="password" :placeholder="$t('auth.password')" :aria-label="$t('auth.password')" autocomplete="new-password" name="password">
-            <input v-model="passwordConfirm" type="password" :placeholder="$t('auth.confirmPassword')" :aria-label="$t('auth.confirmPassword')" autocomplete="new-password" name="passwordConfirm">
+            <template v-if="pickName">
+                <input v-model="username" type="text" :placeholder="$t('auth.username')" :aria-label="$t('auth.username')" autocomplete="username" name="username">
+                <p class="wgMuted wgRegisterHint">
+                    {{ $t('auth.usernameHint') }}
+                </p>
+            </template>
+            <button v-else type="button" class="lpHref wgRegisterPickName" data-testid="register-pick-username" @click="pickName = true">
+                {{ $t('auth.pickUsername') }}
+            </button>
         </div>
         <errors :errors="errors" />
         <div class="lpButtons">
-            <button class="lpButton">
-                {{ $t('auth.register') }}
+            <button class="lpButton" data-testid="register-submit">
+                {{ $t('auth.createFreeAccount') }}
                 <spinner v-if="saving" />
             </button>
             <a class="lpHref lpGetStarted" @click="loadLocal">{{ $t('auth.tryWithout') }}</a>
@@ -22,6 +29,7 @@ import errors from './errors.vue';
 import spinner from './spinner.vue';
 
 import { fetchJson } from '../utils/utils.js';
+import { trackEvent } from '../utils/analytics.js';
 
 export default {
     name: 'RegisterForm',
@@ -35,11 +43,14 @@ export default {
         autofocus: { type: Boolean, default: true },
     },
     data() {
+        // The homepage's email box sends it here as ?email=.
+        const fromLink = this.$route && typeof this.$route.query.email === 'string' ? this.$route.query.email.slice(0, 200) : '';
         return {
             username: '',
-            email: '',
+            email: fromLink,
             password: '',
-            passwordConfirm: '',
+            // The username is optional: left out, one is made from the email.
+            pickName: false,
             saving: false,
             errors: [],
         };
@@ -51,10 +62,6 @@ export default {
         },
         submit() {
             this.errors = [];
-
-            if (!this.username) {
-                this.errors.push({ field: 'username', message: 'Please enter a username.' });
-            }
 
             if (this.username && (this.username.length < 3 || this.username.length > 32)) {
                 this.errors.push({ field: 'username', message: 'Please enter a username between 3 and 32 characters.' });
@@ -68,14 +75,6 @@ export default {
                 this.errors.push({ field: 'password', message: 'Please enter a password.' });
             }
 
-            if (!this.passwordConfirm) {
-                this.errors.push({ field: 'passwordConfirm', message: 'Please enter a password confirmation.' });
-            }
-
-            if (this.password && this.passwordConfirm && this.password !== this.passwordConfirm) {
-                this.errors.push({ field: 'password', message: "Your passwords don't match." });
-            }
-
             if (this.password && (this.password.length < 5 || this.password.length > 60)) {
                 this.errors.push({ field: 'password', message: 'Please enter a password between 5 and 60 characters.' });
             }
@@ -84,7 +83,7 @@ export default {
                 return;
             }
 
-            const registerData = { username: this.username, email: this.email, password: this.password };
+            const registerData = { username: this.username.trim(), email: this.email, password: this.password };
 
             if (localStorage.library) {
                 registerData.library = localStorage.library;
@@ -111,7 +110,10 @@ export default {
                         delete localStorage.library;
                     }
                     this.saving = false;
-                    this.$router.push('/');
+                    trackEvent('sign_up', { method: 'email' });
+                    // The welcome steps: the one-time offer (if there is one),
+                    // then their first pack.
+                    this.$router.push('/start');
                 })
                 .catch((err) => {
                     this.saving = false;
@@ -123,5 +125,17 @@ export default {
 </script>
 
 <style lang="scss">
+.wgRegisterPickName {
+    align-self: flex-start;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 0;
+}
 
+.wgRegisterHint {
+    font-size: 13px;
+    margin: -4px 0 0;
+}
 </style>

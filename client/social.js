@@ -381,7 +381,7 @@ function initSiteHeader() {
             if (!g.hidden && !g.querySelector('.wgNavDropItem:not([hidden])')) g.hidden = true;
         });
         const cta = header.querySelector('[data-lists-button]');
-        if (!viewer.signedIn && viewer.hasLibrary) {
+        if (cta && !viewer.signedIn && viewer.hasLibrary) {
             cta.href = '/';
             cta.querySelector('.wgLong').textContent = 'My lists';
             cta.querySelector('.wgShort').textContent = 'My lists';

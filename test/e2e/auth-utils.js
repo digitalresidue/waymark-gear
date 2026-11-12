@@ -43,15 +43,40 @@ export async function openPage(page, path) {
     }
 }
 
-export async function registerUser(page, username, password, email) {
-    await openPage(page, 'register');
-
+/**
+ * Fill in the sign-up form: email and password, and the username, which is
+ * optional there (behind "Choose your username"). Leaves the page on the
+ * form's result; see registerUser for the whole way to the lists.
+ */
+export async function fillRegisterForm(page, { username, password, email }) {
     const registerForm = page.getByTestId('register-form');
-    await registerForm.getByPlaceholder('Username', { exact: true }).fill(username);
     await registerForm.getByPlaceholder('Email', { exact: true }).fill(email);
     await registerForm.getByPlaceholder('Password', { exact: true }).fill(password);
-    await registerForm.getByPlaceholder('Confirm password', { exact: true }).fill(password);
-    await registerForm.getByRole('button', { name: 'Register' }).click();
+    if (username) {
+        const name = registerForm.getByPlaceholder('Username', { exact: true });
+        if (!(await name.isVisible())) await registerForm.getByTestId('register-pick-username').click();
+        await name.fill(username);
+    }
+    await registerForm.getByTestId('register-submit').click();
+}
+
+/**
+ * Past the welcome steps a new account lands on (/start): "No thanks" to the
+ * one-time Supporter offer, then "Start blank", into their lists.
+ */
+export async function skipWelcome(page) {
+    const skip = page.getByTestId('offer-skip');
+    const blank = page.getByTestId('start-blank');
+    await skip.or(blank).first().waitFor();
+    if (await skip.isVisible()) await skip.click();
+    await blank.click();
+}
+
+/** Sign up and go to the new account's lists (past the welcome steps). */
+export async function registerUser(page, username, password, email) {
+    await openPage(page, 'register');
+    await fillRegisterForm(page, { username, password, email });
+    await skipWelcome(page);
 }
 
 export async function loginUser(page, username, password) {

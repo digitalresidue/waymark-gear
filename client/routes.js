@@ -27,6 +27,7 @@ import ownerBrands from './views/owner-brands.vue';
 import ownerTeam from './views/owner-team.vue';
 import ownerActivity from './views/owner-activity.vue';
 import ownerMembers from './views/owner-members.vue';
+import start from './views/start.vue';
 
 export default [
     { path: '/', component: dashboard },
@@ -48,6 +49,7 @@ export default [
     { path: '/signin/reset-password', component: signin },
     { path: '/signin/forgot-username', component: signin },
     { path: '/register', component: register },
+    { path: '/start', component: start },
     { path: '/forgot-password', component: forgotPassword },
     { path: '/reset-password/:token', component: resetPassword },
     { path: '/moderation', component: moderation },
