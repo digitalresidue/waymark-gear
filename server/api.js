@@ -42,6 +42,7 @@ import { importRateLimit, ImportError } from './lighterpack.js';
 import { importFromLink } from './import-links.js';
 import { absoluteImageUrl, copyRemoteImage, isLocalImage, localImagePath, localizeCatalogImages, remoteCatalogImageCount, RemoteImageError } from './remote-image.js';
 import { saveBadges, fetchMissingBadges, badgesFor, domainOf } from './shops.js';
+import { uploadRefusal } from './upload-limits.js';
 
 const router = express.Router();
 
@@ -780,6 +781,8 @@ router.post('/api/images/copy', requireJson, signedIn(async (req, res, user) => 
     const own = localImagePath(url);
     if (own) return res.json({ imageUrl: own });
     if (!copyAllowed(user.user_id)) return res.status(429).json({ message: 'That\'s a lot of images at once; try again in a minute.' });
+    const refused = uploadRefusal(user);
+    if (refused) return res.status(refused.status).json({ message: refused.message });
     try {
         res.json(await copyRemoteImage(url, user.user_id));
     } catch (err) {

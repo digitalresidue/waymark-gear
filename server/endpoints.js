@@ -20,6 +20,7 @@ import { mailIdentity, sendMail } from './mail.js';
 import { forgetUserPages } from './page-cache.js';
 import { isSupporter } from './billing.js';
 import { pickUsername } from './usernames.js';
+import { uploadRefusal, maxFileBytes, tooLargeMessage } from './upload-limits.js';
 import { SIGNUP_OFFER_MS } from './signup-offer.js';
 import { announceLibraryChange } from './shared-lists.js';
 
@@ -631,7 +632,7 @@ router.post('/imageUpload', (req, res) => {
     authenticateUser(req, res, imageUpload);
 });
 
-const maxImageUploadBytes = 5 * 1024 * 1024;
+// Size, count and storage limits per member: server/upload-limits.js.
 
 // Profile picture or banner: ?kind=avatar|banner. Returns the URL; the
 // profile form saves it with everything else.
@@ -639,11 +640,13 @@ router.post('/api/profile/image', (req, res) => {
     const kind = String(req.query.kind || '');
     if (!['avatar', 'banner', 'photo'].includes(kind)) return res.status(400).json({ message: 'Unknown image kind.' });
     authenticateUser(req, res, async (req, res, user) => {
+        const refused = uploadRefusal(user);
+        if (refused) return res.status(refused.status).json({ message: refused.message });
         let files;
         try {
-            [, files] = await formidable({ maxFileSize: maxImageUploadBytes }).parse(req);
+            [, files] = await formidable({ maxFileSize: maxFileBytes(user) }).parse(req);
         } catch (err) {
-            if (err.httpCode === 413) return res.status(413).json({ message: 'Image is too large (5MB max).' });
+            if (err.httpCode === 413) return res.status(413).json({ message: tooLargeMessage(user) });
             logWithRequest(req, { message: 'form parse error', err });
             return res.status(500).json({ message: 'An error occurred' });
         }
@@ -667,13 +670,15 @@ router.post('/api/profile/image', (req, res) => {
 });
 
 async function imageUpload(req, res, user) {
+    const refused = uploadRefusal(user);
+    if (refused) return res.status(refused.status).json({ message: refused.message });
     let files;
     try {
-        [, files] = await formidable({ maxFileSize: maxImageUploadBytes }).parse(req);
+        [, files] = await formidable({ maxFileSize: maxFileBytes(user) }).parse(req);
     } catch (err) {
         logWithRequest(req, { message: 'form parse error', err });
         if (err.httpCode === 413) { // formidable flags an over-size upload with httpCode 413
-            return res.status(413).json({ message: 'Image is too large (5MB max).' });
+            return res.status(413).json({ message: tooLargeMessage(user) });
         }
         return res.status(500).json({ message: 'An error occurred' });
     }
