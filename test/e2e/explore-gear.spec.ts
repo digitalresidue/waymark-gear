@@ -252,3 +252,45 @@ test('spec filters follow the ticked categories: Tent in Shelter drops the tarp 
     await expect(tent).toBeVisible();
     await expect(page.locator('[data-filter-count]')).toHaveText('(1)');
 });
+
+test('brands follow the ticked categories: Pad in Sleep System lists only the brands that make pads', async ({ page, browser }, testInfo) => {
+    const owner = await (await browser.newContext()).newPage();
+    const username = `wge2eowner${testInfo.workerIndex}`;
+    const r = await owner.request.post(url('/register'), { data: { username, email: `${username}@example.com`, password: 'testtest' } });
+    if (r.status() !== 200) expect((await owner.request.post(url('/signin'), { data: { username, password: 'testtest' } })).status()).toBe(200);
+    const id = Date.now().toString(36);
+    const both = `Bp${id}`; // pads and quilts
+    const quilts = `Bq${id}`; // quilts only
+    const csv = ['sku,name,brand,category,weight,unit,price,status',
+        `${both}-1,Pad one,${both},Sleeping Pad,12,oz,150,published`,
+        `${both}-2,Pad two,${both},Sleeping Pad,14,oz,170,published`,
+        `${both}-3,Quilt one,${both},Top Quilt,20,oz,300,published`,
+        `${quilts}-1,Quilt two,${quilts},Top Quilt,22,oz,320,published`].join('\n');
+    expect((await owner.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } })).ok()).toBe(true);
+    await owner.context().close();
+
+    const brand = (b: string) => page.locator(`[data-brand-option="${b.toLowerCase()}"]`);
+    await page.goto(url('/explore/sleep-system'));
+    // The whole section: both brands, counted over all its gear.
+    await expect(brand(both)).toBeVisible();
+    await expect(brand(both).locator('[data-brand-count]')).toHaveText('3');
+    await expect(brand(quilts)).toBeVisible();
+
+    // Pads ticked: the quilt-only brand goes, and counts are pads only.
+    await page.locator('input[name="cat"][value="sleepingpad"]').check();
+    await expect(brand(quilts)).toBeHidden();
+    await expect(brand(both).locator('[data-brand-count]')).toHaveText('2');
+    // Unticked: everyone's back.
+    await page.locator('input[name="cat"][value="sleepingpad"]').uncheck();
+    await expect(brand(quilts)).toBeVisible();
+    await expect(brand(both).locator('[data-brand-count]')).toHaveText('3');
+
+    // A link with pads ticked opens that way.
+    await page.goto(url('/explore/sleep-system?cat=sleepingpad'));
+    await expect(brand(quilts)).toBeHidden();
+    await expect(brand(both)).toBeVisible();
+    // A brand already ticked stays, so it can be unticked.
+    await page.goto(url(`/explore/sleep-system?cat=sleepingpad&brand=${quilts.toLowerCase()}`));
+    await expect(brand(quilts)).toBeVisible();
+    await expect(brand(quilts).locator('input')).toBeChecked();
+});

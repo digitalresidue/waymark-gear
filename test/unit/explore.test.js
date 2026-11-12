@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { parentOf, exploreIndex, resolveSection, filterItem, facetsFor, readFilters, filtersToQuery, matchesFilters, sortItems, slugify } from '../../client/utils/explore.js';
+import { parentOf, exploreIndex, resolveSection, filterItem, facetsFor, brandCounts, brandKey, readFilters, filtersToQuery, matchesFilters, sortItems, slugify } from '../../client/utils/explore.js';
 
 const CATS = [
     { name: 'Tent', count: 3 }, { name: 'Tarps', count: 2 }, { name: 'Shelter', count: 4 }, { name: 'Top Quilt', count: 5 },
@@ -156,5 +156,40 @@ describe('mixed sections (Sleep System)', () => {
         assert.equal(specAppliesLabel('r_value', sleep), 'sleeping pads');
         assert.equal(specAppliesLabel('temp_limit', sleep), 'quilts and sleeping bags');
         assert.equal(specAppliesLabel('r_value', ['Sleeping Pad']), '');
+    });
+});
+
+describe('brandCounts', () => {
+    const items = [
+        { cat: 'sleepingpad', brand: 'Therm-a-Rest' },
+        { cat: 'sleepingpad', brand: 'NEMO' },
+        { cat: 'topquilt', brand: 'Enlightened Equipment' },
+        { cat: 'topquilt', brand: 'nemo' },
+        { cat: 'pillow', brand: '' },
+    ];
+    test('counts every brand in the section with nothing ticked', () => {
+        assert.deepEqual(brandCounts(readFilters(new URLSearchParams()), items), { thermarest: 1, nemo: 2, enlightenedequipment: 1 });
+    });
+    test('counts only the ticked categories, so brands without that gear drop out', () => {
+        assert.deepEqual(brandCounts(readFilters(new URLSearchParams('cat=sleepingpad')), items), { thermarest: 1, nemo: 1 });
+    });
+});
+
+describe('brand spellings', () => {
+    test('one key for every spelling of a maker', () => {
+        assert.equal(brandKey('Therm-a-Rest'), 'thermarest');
+        assert.equal(brandKey('THERMAREST'), 'thermarest');
+        assert.equal(brandKey('Six Moon Designs'), brandKey('SixMoon Designs'));
+        assert.equal(brandKey('Äpfel Gear'), 'äpfelgear');
+        assert.equal(brandKey(''), '');
+    });
+    test('the brand filter lists a maker once, named the way most items spell it', () => {
+        const items = ['Therm-a-Rest', 'Therm-a-Rest', 'Thermarest', 'NEMO'].map((brand, n) => ({ id: n, cat: 'sleepingpad', catName: 'Sleeping Pad', brand, specs: {}, weight: 100, price: null }));
+        assert.deepEqual(facetsFor(items).brands.map((b) => [b.value, b.label, b.count]), [['nemo', 'NEMO', 1], ['thermarest', 'Therm-a-Rest', 3]]);
+    });
+    test('an old link spelled with a dash still picks the brand, and matches every spelling', () => {
+        const f = readFilters(new URLSearchParams('brand=therm-a-rest'));
+        assert.deepEqual(f.brands, ['thermarest']);
+        assert.equal(matchesFilters({ cat: 'sleepingpad', brand: 'Thermarest', specs: {}, weight: 1, price: null }, f), true);
     });
 });
