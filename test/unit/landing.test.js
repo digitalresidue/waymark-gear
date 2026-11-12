@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import { wantsApp, LANDING_FAQ, LANDING_CLASSES } from '../../server/landing.js';
 import { usernameStem } from '../../server/usernames.js';
-import { offerOpen, offerInfo } from '../../server/signup-offer.js';
+import { offerOpen, offerInfo, coupon } from '../../server/signup-offer.js';
 
 describe('the homepage or the app at /', () => {
     const req = (cookies = {}, query = {}) => ({ cookies, query });
@@ -44,5 +44,11 @@ describe('the one-time Supporter offer', () => {
     test('closed for nobody, and for accounts made before it existed', () => {
         assert.equal(offerOpen(null), false);
         assert.equal(offerOpen({ signup_offer_until: null }), false);
+    });
+});
+
+describe('the sign-up coupon', () => {
+    test('SIGNUP50 unless the server says otherwise', () => {
+        assert.equal(coupon(), 'SIGNUP50');
     });
 });
