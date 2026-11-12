@@ -9,6 +9,7 @@ export const SUPPORTER_PERKS = [
     { id: 'links', text: 'Plain shop links everywhere: no affiliate tracking on anything you click.' },
     { id: 'badge', text: 'A Supporter badge on your profile, your published lists and your shakedown comments.' },
     { id: 'wall', text: 'Your name on the Supporters wall, if you want it there.' },
+    { id: 'early', text: 'Early access: try new features before everyone else.' },
 ];
 
 export function supporterPerks({ givesBack = '' } = {}) {

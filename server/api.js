@@ -236,17 +236,19 @@ router.get('/api/activity/discover', signedIn(async (req, res, user) => {
 router.get('/api/activity/settings', signedIn(async (req, res, user) => {
     res.set('Cache-Control', 'no-store');
     const own = await activity.settings(user);
-    res.json({ ...own, ...(isOwner(user.username) ? { feed: await activity.followFeedState() } : {}) });
+    res.json({ ...own, earlyAccess: activity.followFeedEarly(user), ...(isOwner(user.username) ? { feed: await activity.followFeedState() } : {}) });
 }));
 
 router.put('/api/activity/settings', requireJson, signedIn(async (req, res, user) => {
     res.json(await activity.saveSettings(user, req.body || {}));
 }));
 
-// Owner only: open Follow to every member, or keep it to the owner.
+// Owner only: who gets Follow: { stage: owner|supporters|everyone }
+// (server/early-access.js), or the older { open: true|false }.
 router.put('/api/owner/follow-feed', requireJson, signedIn(async (req, res, user) => {
     if (!isOwner(user.username)) return res.status(403).json({ message: 'Owner access only.' });
-    res.json(await activity.setFollowFeedOpen(Boolean(req.body && req.body.open)));
+    const body = req.body || {};
+    res.json(body.stage !== undefined ? await activity.setFollowFeedStage(String(body.stage)) : await activity.setFollowFeedOpen(Boolean(body.open)));
 }));
 
 router.get('/api/kits/:id/votes', pub(async (req, res) => {

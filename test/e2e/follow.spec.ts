@@ -51,12 +51,36 @@ test('only the owner has Follow, until the owner opens it to everyone', async ({
     await expect(m.page.getByTestId('follow-unavailable')).toBeVisible();
 
     // Opened: everyone gets it.
-    await owner.getByTestId('follow-open').click();
+    await owner.getByTestId('follow-stage-everyone').check();
     await expect(owner.getByTestId('follow-owner')).toContainText('Open to every member');
     expect((await m.page.request.get(url('/api/activity'))).status()).toBe(200);
     await m.page.goto(url('/follow'));
     await expect(m.page.getByTestId('nav-follow')).toBeVisible();
     await expect(m.page.getByTestId('follow-terms')).toBeVisible();
+
+    await owner.request.put(url('/api/owner/follow-feed'), { data: { open: false } });
+    expect((await m.page.request.get(url('/api/activity'))).status()).toBe(404);
+});
+
+test('Supporters first: early access for Supporters, before every member', async ({ browser }, testInfo) => {
+    const owner = await asOwner(browser, testInfo.workerIndex);
+    const m = await member(browser, 'fwe');
+
+    await owner.goto(url('/follow'));
+    await owner.getByTestId('follow-stage-supporters').check();
+    await expect(owner.getByTestId('follow-owner')).toContainText('Early access for Supporters');
+
+    // Not a Supporter: not yet.
+    expect((await m.page.request.get(url('/api/activity'))).status()).toBe(404);
+
+    // A Supporter: in, and told it's early.
+    await m.page.goto(url('/supporter'));
+    await m.page.getByTestId('supporter-monthly').click();
+    await expect(m.page.getByTestId('supporter-welcome')).toBeVisible({ timeout: 20000 });
+    expect((await m.page.request.get(url('/api/activity'))).status()).toBe(200);
+    await m.page.goto(url('/follow'));
+    await expect(m.page.getByTestId('nav-follow')).toBeVisible();
+    await expect(m.page.getByTestId('follow-early')).toContainText("You're trying Follow before everyone else");
 
     await owner.request.put(url('/api/owner/follow-feed'), { data: { open: false } });
     expect((await m.page.request.get(url('/api/activity'))).status()).toBe(404);
