@@ -6,9 +6,10 @@
 // - "No thanks" closes it at once; so does the day running out. Subscribing
 //   makes them a Supporter, which closes it too.
 // - Checkout applies a Stripe coupon made for this (50% off, duration
-//   "forever"): its id is stripe.signupCoupon. Without one, or without
-//   Stripe set up, there's no offer and new accounts go straight to their
-//   first pack.
+//   "forever"): its id is stripe.signupCoupon, SIGNUP50 unless
+//   STRIPE_SIGNUP_COUPON says otherwise. Set to "off", or without Stripe
+//   set up, there's no offer and new accounts go straight to their first
+//   pack.
 //
 // Half price for life means for the life of that subscription: Stripe keeps
 // a "forever" coupon on it through every renewal, and drops it with the
@@ -26,7 +27,12 @@ const router = express.Router();
 
 export const SIGNUP_OFFER_MS = 24 * 60 * 60 * 1000;
 
-const coupon = () => String(stripe().signupCoupon || '').trim();
+// "off" (or "none") turns the offer off: an empty environment variable
+// can't, since config skips those and keeps the default.
+export const coupon = () => {
+    const id = String(stripe().signupCoupon || '').trim();
+    return /^(off|none|false)$/i.test(id) ? '' : id;
+};
 
 /** Is the offer open for this account right now? */
 export function offerOpen(user, now = Date.now()) {

@@ -2,9 +2,14 @@
     <header class="wgSiteHeader" :class="{ wgSiteHeaderApp: app }">
         <a class="wgSkipLink" href="#wgMain" data-testid="skip-link" @click.prevent="skipToContent">{{ $t('header.skipToContent') }}</a>
         <div class="wgSiteHeaderInner wgPage">
-            <router-link to="/welcome" class="wgSiteHeaderLogo" :aria-label="$t('header.home')" data-testid="site-logo">
+            <!-- Signed in: the community page. Signed out: the homepage, a
+                 full page load since the server renders it. -->
+            <router-link v-if="$store.state.loggedIn" to="/welcome" class="wgSiteHeaderLogo" :aria-label="$t('header.home')" data-testid="site-logo">
                 <brandLogo />
             </router-link>
+            <a v-else href="/" class="wgSiteHeaderLogo" :aria-label="$t('header.home')" data-testid="site-logo">
+                <brandLogo />
+            </a>
             <nav id="wgSiteNav" class="wgSiteNav" :class="{ wgSiteNavOpen: menuOpen }" :aria-label="$t('header.mainNav')" @click="onNavClick">
                 <template v-for="entry in menu" :key="entry.id">
                     <div v-if="entry.items" class="wgNavGroup" :class="{ wgNavGroupOpen: dropdown === entry.id }" @mouseleave="dropdown === entry.id && hoverClose()">
