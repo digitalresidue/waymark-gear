@@ -107,6 +107,24 @@ test.describe('Site menu', () => {
         await expect(page.getByTestId('item-row').first()).toBeVisible();
     });
 
+    test('signed out, the logo goes to the homepage, from the app and from server pages', async ({ page }) => {
+        for (const path of ['/signin', '/trails/all']) {
+            await page.goto(url(path));
+            await expect(page.getByTestId('site-logo')).toHaveAttribute('href', '/');
+            await page.getByTestId('site-logo').click();
+            await expect(page).toHaveURL(url('/'));
+            await expect(page.getByTestId('landing-h1')).toBeVisible();
+        }
+    });
+
+    test('signed in, the logo on a server page goes to the community page', async ({ page }) => {
+        const u = generateTestUser('menulogo');
+        await registerUser(page, u.username, u.password, u.email);
+        await expect(page.getByTestId('item-row').first()).toBeVisible();
+        await page.goto(url('/trails/all'));
+        await expect(page.getByTestId('site-logo')).toHaveAttribute('href', '/welcome');
+    });
+
     test('"Start a list" on a server page starts one, and never replaces existing lists', async ({ page }) => {
         await page.goto(url('/?start=1'));
         await expect(page.getByTestId('item-row').first()).toBeVisible();

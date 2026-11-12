@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import { wantsApp, LANDING_FAQ, LANDING_CLASSES } from '../../server/landing.js';
 import { usernameStem } from '../../server/usernames.js';
-import { offerOpen, offerInfo } from '../../server/signup-offer.js';
+import { offerOpen, offerInfo, coupon } from '../../server/signup-offer.js';
 
 describe('the homepage or the app at /', () => {
     const req = (cookies = {}, query = {}) => ({ cookies, query });
@@ -64,5 +64,11 @@ describe('early access stages', async () => {
         assert.equal(canUseStage('everyone', member), true);
         assert.equal(seesEarly('everyone', fan), false);
         assert.equal(canUseStage('everyone', null), false);
+    });
+});
+
+describe('the sign-up coupon', () => {
+    test('SIGNUP50 unless the server says otherwise', () => {
+        assert.equal(coupon(), 'SIGNUP50');
     });
 });

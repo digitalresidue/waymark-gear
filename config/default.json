@@ -44,6 +44,16 @@
     "remoteImages": {
         "allowPrivate": false
     },
+    "uploads": {
+        "maxFileMb": 5,
+        "maxPhotos": 1000,
+        "maxStorageMb": 500,
+        "supporter": {
+            "maxFileMb": 5,
+            "maxPhotos": 1000,
+            "maxStorageMb": 500
+        }
+    },
     "supporter": {
         "givesBack": ""
     },
@@ -54,7 +64,7 @@
         "priceYearly": "",
         "monthlyLabel": "$5",
         "yearlyLabel": "$48",
-        "signupCoupon": "",
+        "signupCoupon": "SIGNUP50",
         "signupMonthlyLabel": "$2.50",
         "signupYearlyLabel": "$24",
         "apiBase": "https://api.stripe.com"
