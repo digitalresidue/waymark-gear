@@ -86,7 +86,9 @@ test('a Supporter has the badge on their published lists and their comments', as
 
     await subscribe(page);
     expect((await page.request.post(url(`/api/kits/${externalId}/comments`), { data: { body: 'Thanks for looking!' } })).status()).toBe(201);
-    await page.goto(link);
+    // A new address: the page may be served stale for up to a minute
+    // (stale-while-revalidate), and Firefox takes it up on that.
+    await page.goto(`${link}?after=subscribing`);
     await expect(page.getByTestId('share-supporter')).toBeVisible();
     await expect(page.getByTestId('comment').first().getByTestId('comment-supporter')).toBeVisible();
 });
