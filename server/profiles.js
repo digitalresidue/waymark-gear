@@ -10,6 +10,7 @@ import { Library } from '../client/dataTypes.js';
 import { loadLibrary } from './library-store.js';
 import { thumbnailUrl } from './images.js';
 import { forgetUserPages } from './page-cache.js';
+import { isAccent } from '../client/utils/profile-accents.js';
 
 export { PROFILE_LIMITS, ProfileError };
 
@@ -47,6 +48,9 @@ function rowToProfile(user) {
         hidden: Boolean(user.profile_hidden),
         notifyEmail: user.notify_email !== false,
         tags: cleanTags(user.profile_tags || {}),
+        // A Supporter extra: kept while they're a Supporter, ignored after.
+        accent: isSupporter(user) && isAccent(user.profile_accent) ? user.profile_accent : '',
+        canAccent: isSupporter(user),
     };
 }
 
@@ -77,6 +81,9 @@ export async function updateProfile(user, input = {}) {
         notify_email: input.notifyEmail !== false,
         profile_tags: JSON.stringify(cleanTags(input.tags || {})),
     };
+    // Only a Supporter sets an accent; anyone else's choice is left as it was.
+    const fresh = await knex('users').where({ user_id: user.user_id }).first('plan', 'plan_until');
+    if (isSupporter(fresh) && input.accent !== undefined) row.profile_accent = isAccent(input.accent) ? input.accent : '';
     await knex('users').where({ user_id: user.user_id }).update(row);
     forgetUserPages(user.user_id);
     return profileForEditing(user);

@@ -10,6 +10,7 @@ export const SUPPORTER_PERKS = [
     { id: 'badge', text: 'A Supporter badge on your profile, your published lists and your shakedown comments.' },
     { id: 'wall', text: 'Your name on the Supporters wall, if you want it there.' },
     { id: 'early', text: 'Early access: try new features before everyone else.' },
+    { id: 'accent', text: 'Profile extras: your profile in your own accent colour.' },
 ];
 
 export function supporterPerks({ givesBack = '' } = {}) {

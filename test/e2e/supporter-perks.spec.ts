@@ -92,3 +92,28 @@ test('a Supporter has the badge on their published lists and their comments', as
     await expect(page.getByTestId('share-supporter')).toBeVisible();
     await expect(page.getByTestId('comment').first().getByTestId('comment-supporter')).toBeVisible();
 });
+
+test('a Supporter picks a profile accent colour; others see it offered as a perk', async ({ page }) => {
+    const u = generateTestUser('accent');
+    await registerUser(page, u.username, u.password, u.email);
+    await expect(page.getByTestId('item-row').first()).toBeVisible();
+
+    // Not a Supporter: shown, but not theirs to pick, and the server ignores it.
+    await page.goto(url('/profile'), { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('accent-lake')).toBeDisabled();
+    const sneaky = await page.request.put(url('/api/profile'), { data: { accent: 'lake' } });
+    expect(sneaky.ok()).toBe(true);
+    expect((await sneaky.json()).accent).toBe('');
+
+    await subscribe(page);
+    await page.goto(url('/profile'), { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('accent-lake')).toBeEnabled();
+    await page.getByTestId('accent-lake').check();
+    await page.getByTestId('profile-save').click();
+    await expect(page.getByTestId('profile-saved')).toBeVisible();
+
+    await page.goto(url(`/@${u.username}`));
+    await expect(page.getByTestId('profile')).toHaveAttribute('data-accent', 'lake');
+    const ring = await page.locator('.wgProfileAvatar').evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(ring).toBe('rgb(47, 93, 124)');
+});

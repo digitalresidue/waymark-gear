@@ -50,6 +50,26 @@
                     <p class="wgMuted wgProfileHint">
                         Pictures are cropped to a square and banners to 3:1, from the center. JPEG, PNG or WebP, up to 5 MB.
                     </p>
+                    <fieldset class="wgProfileAccents" :disabled="!profile.canAccent" data-testid="profile-accents">
+                        <legend>
+                            Accent colour <span class="wgSupporterBadge">Supporter</span>
+                        </legend>
+                        <p v-if="!profile.canAccent" class="wgMuted wgProfileHint">
+                            A Supporter extra: your profile's banner, picture ring and tabs in your colour. <a href="/supporter">Become a Supporter</a>.
+                        </p>
+                        <div class="wgProfileSwatches">
+                            <label class="wgProfileSwatch">
+                                <input v-model="form.accent" type="radio" name="accent" value="" data-testid="accent-none">
+                                <span class="wgProfileSwatchDot wgProfileSwatchNone" aria-hidden="true" />
+                                Site colours
+                            </label>
+                            <label v-for="a in accents" :key="a.id" class="wgProfileSwatch">
+                                <input v-model="form.accent" type="radio" name="accent" :value="a.id" :data-testid="`accent-${a.id}`">
+                                <span class="wgProfileSwatchDot" :style="{ background: a.hex }" aria-hidden="true" />
+                                {{ a.label }}
+                            </label>
+                        </div>
+                    </fieldset>
                 </section>
 
                 <section class="wgCard wgProfileFields">
@@ -216,6 +236,7 @@ import { marked } from '../utils/markdown.js';
 import { SEASONS, ACTIVITIES } from '../utils/gear-meta.js';
 import { LANGUAGES } from '../utils/i18n.js';
 import { chooseLanguage, currentLanguage, chooseUnits, currentUnits, bigWeightUnit } from '../utils/i18n-app.js';
+import { PROFILE_ACCENTS } from '../utils/profile-accents.js';
 
 const NETWORKS = [
     { id: 'youtube', label: 'YouTube', placeholder: '@yourchannel or a link' },
@@ -229,6 +250,7 @@ export default {
     components: { bodyStats, siteHeader, globalAlerts },
     data() {
         return {
+            accents: PROFILE_ACCENTS,
             languages: LANGUAGES,
             profile: null,
             form: null,
@@ -292,6 +314,7 @@ export default {
                 bio: profile.bio,
                 avatarUrl: profile.avatarUrl,
                 bannerUrl: profile.bannerUrl,
+                accent: profile.accent || '',
                 links: { youtube: '', x: '', instagram: '', website: '', ...profile.links },
                 featured: [...profile.featured],
                 hidden: profile.hidden,
@@ -356,6 +379,50 @@ export default {
 </script>
 
 <style lang="scss">
+.wgProfileAccents {
+    border: 0;
+    margin: 16px 0 0;
+    padding: 0;
+
+    legend {
+        align-items: center;
+        display: flex;
+        font-weight: 700;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+
+    &:disabled .wgProfileSwatches {
+        opacity: 0.55;
+    }
+}
+
+.wgProfileSwatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+}
+
+.wgProfileSwatch {
+    align-items: center;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 14px;
+    gap: 6px;
+    min-height: 44px;
+}
+
+.wgProfileSwatchDot {
+    border-radius: 999px;
+    display: inline-block;
+    height: 20px;
+    width: 20px;
+}
+
+.wgProfileSwatchNone {
+    background: linear-gradient(135deg, #1D3B30, #3F6B52 60%, #B04E1B 160%);
+}
+
 @import "../css/_globals";
 
 .wgProfileEdit {
