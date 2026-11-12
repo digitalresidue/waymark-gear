@@ -367,7 +367,8 @@ export default {
     }
 }
 
-.wgStartClaim {
+// .lp button sets a text colour; this one is white on Ember.
+.lp .wgStartClaim {
     background: $ember;
     border: 0;
     border-radius: 12px;

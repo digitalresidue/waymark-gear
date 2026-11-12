@@ -655,9 +655,16 @@ test.describe('Gear library screen', () => {
 test.describe('Phone onboarding', () => {
   // The homepage leads with the two ways in (Google, or start without an
   // account); the forms live on /register and /signin.
-  test('the homepage puts both ways in above the fold, with no sideways scroll', async ({ page }) => {
+  test('the homepage puts sign-up above the fold, with no sideways scroll', async ({ page }) => {
     await page.goto(testRoot);
-    await expect(page).toHaveURL(/\/welcome$/);
+    const signup = page.getByTestId('landing-email-submit');
+    await expect(signup).toBeVisible();
+    expect(await signup.evaluate((el) => el.getBoundingClientRect().bottom)).toBeLessThan(PHONE.height);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(PHONE.width);
+  });
+
+  test('the community page puts both ways in above the fold, with no sideways scroll', async ({ page }) => {
+    await page.goto(`${testRoot}welcome`);
     await expect(page.getByRole('heading', { name: 'Know every ounce before you go.' })).toBeVisible();
 
     const start = page.getByTestId('hero-start');
@@ -689,7 +696,7 @@ test.describe('Phone onboarding', () => {
   });
 
   test('starting without an account goes straight into a list', async ({ page }) => {
-    await page.goto(testRoot);
+    await page.goto(`${testRoot}welcome`);
     await page.getByTestId('hero-start').tap();
 
     // Into the app itself, saving locally -- no account, no interstitial.

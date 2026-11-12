@@ -135,6 +135,8 @@ export default defineConfig({
           webhookSecret: 'whsec_test',
           priceMonthly: 'price_month',
           priceYearly: 'price_year',
+          // The one-time sign-up offer (server/signup-offer.js).
+          signupCoupon: 'coupon_signup50',
           apiBase: 'http://127.0.0.1:3998',
         },
         google: {

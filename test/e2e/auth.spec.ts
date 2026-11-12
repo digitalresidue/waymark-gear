@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 import { testRoot } from './utils';
 
-import { registerUser, fillRegisterForm, loginUser, logoutUser, generateTestUser, openPage } from './auth-utils';
+import { registerUser, fillRegisterForm, skipWelcome, loginUser, logoutUser, generateTestUser, openPage } from './auth-utils';
 
 test.describe('Cookie security', () => {
   let username: string;
@@ -202,8 +202,7 @@ test.describe('User Authentication Tests', () => {
     await openPage(page, 'register');
     const stamp = `${Date.now()}${Math.random().toString(36).slice(2, 6)}`;
     await fillRegisterForm(page, { email: `trail.name${stamp}@example.com`, password: 'testtest' });
-    await expect(page.getByTestId('first-pack')).toBeVisible();
-    await page.getByTestId('start-blank').click();
+    await skipWelcome(page);
     await expect(page.getByTestId('item-row').first()).toBeVisible();
     expect(await page.evaluate(() => window.LighterPack.$store.state.loggedIn)).toBe(`trailname${stamp}`.slice(0, 24));
   });
@@ -272,7 +271,7 @@ test.describe('User Authentication Tests', () => {
 
     const { username, password, email } = generateTestUser('local');
     await fillRegisterForm(page, { username, password, email });
-    await page.getByTestId('start-blank').click();
+    await skipWelcome(page);
 
     await expect(page.getByText('Welcome to Waymark Gear!')).toBeVisible();
     await expect(page.getByPlaceholder('Name your list', { exact: true })).toHaveValue('Local Data List');

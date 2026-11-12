@@ -60,11 +60,23 @@ export async function fillRegisterForm(page, { username, password, email }) {
     await registerForm.getByTestId('register-submit').click();
 }
 
+/**
+ * Past the welcome steps a new account lands on (/start): "No thanks" to the
+ * one-time Supporter offer, then "Start blank", into their lists.
+ */
+export async function skipWelcome(page) {
+    const skip = page.getByTestId('offer-skip');
+    const blank = page.getByTestId('start-blank');
+    await skip.or(blank).first().waitFor();
+    if (await skip.isVisible()) await skip.click();
+    await blank.click();
+}
+
 /** Sign up and go to the new account's lists (past the welcome steps). */
 export async function registerUser(page, username, password, email) {
     await openPage(page, 'register');
     await fillRegisterForm(page, { username, password, email });
-    await page.getByTestId('start-blank').click();
+    await skipWelcome(page);
 }
 
 export async function loginUser(page, username, password) {

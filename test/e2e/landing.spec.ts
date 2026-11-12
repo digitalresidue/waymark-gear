@@ -39,22 +39,71 @@ test('the homepage sends visitors to sign up, with the email they typed', async 
     await expect(page.getByTestId('register-why')).toContainText('Things your old gear list never did for you');
 });
 
-test('a new account goes through the welcome steps, then / is their lists', async ({ page }) => {
+test('a new account sees the one-time offer once, then its first pack; / is then their lists', async ({ page }) => {
     const u = generateTestUser('land');
     await openPage(page, 'register');
+    // The sign-up page promises it, since the offer is set up.
+    await expect(page.getByText("Next you'll see a welcome offer you won't get again")).toBeVisible();
     await fillRegisterForm(page, u);
     await expect(page).toHaveURL(/\/start$/);
-    // No Stripe in tests, so no offer: straight to the first pack.
-    await expect(page.getByTestId('signup-offer')).toHaveCount(0);
+
+    const offer = page.getByTestId('signup-offer');
+    await expect(offer).toBeVisible();
+    await expect(page.getByTestId('offer-price')).toHaveText('$24');
+    await page.getByTestId('offer-monthly').click();
+    await expect(page.getByTestId('offer-price')).toHaveText('$2.50');
+    await expect(page.getByTestId('offer-claim')).toHaveText(/Claim \$2\.50 a month for life/);
+
+    // No thanks: gone for good, even on coming back.
+    await page.getByTestId('offer-skip').click();
     await expect(page.getByTestId('first-pack')).toBeVisible();
     await expect(page.getByTestId('start-import')).toHaveAttribute('href', '/?import=1');
+    await page.reload();
+    await expect(page.getByTestId('first-pack')).toBeVisible();
+    await expect(offer).toHaveCount(0);
+    expect((await (await page.request.get(url('/api/signup-offer'))).json()).open).toBe(false);
+
     await page.getByTestId('start-blank').click();
     await expect(page.getByTestId('item-row').first()).toBeVisible();
-
     // Signed in, / is the app, on a fresh load too.
     await page.goto(url('/'));
     await expect(page.getByTestId('item-row').first()).toBeVisible();
     await expect(page.getByTestId('landing-h1')).toHaveCount(0);
+});
+
+test('claiming the offer checks out at half price for life (the coupon), and makes them a Supporter', async ({ page }) => {
+    const u = generateTestUser('offer');
+    await openPage(page, 'register');
+    await fillRegisterForm(page, u);
+    await expect(page.getByTestId('signup-offer')).toBeVisible();
+
+    // Note the checkout Stripe was asked for on the way through.
+    let session = '';
+    page.on('request', (r) => {
+        const m = /\/pay\/(cs_[^/?#]+)/.exec(r.url());
+        if (m) session = m[1];
+    });
+    await page.getByTestId('offer-claim').click();
+    await expect(page).toHaveURL(/\/start\?supporter=1$/);
+    await expect(page.getByTestId('start-supporter-thanks')).toBeVisible();
+    await expect(page.getByTestId('first-pack')).toBeVisible();
+
+    const made = await (await page.request.get(`http://127.0.0.1:3998/v1/checkout/sessions/${session}`, { headers: { Authorization: 'Bearer sk_test_fake' } })).json();
+    expect(made.coupon).toBe('coupon_signup50');
+    expect(made.price).toBe('price_year');
+    await expect.poll(async () => (await (await page.request.get(url('/api/plan'))).json()).supporter).toBe(true);
+    // A Supporter is never offered it again.
+    expect((await (await page.request.get(url('/api/signup-offer'))).json()).open).toBe(false);
+});
+
+test('an account that already existed is never offered it', async ({ page }) => {
+    const u = generateTestUser('old');
+    expect((await page.request.post(url('/register'), { data: u })).status()).toBe(200);
+    // Opened while signed in, the checkout refuses without an open offer.
+    const res = await page.request.post(url('/api/signup-offer/skip'), { data: {} });
+    expect(res.status()).toBe(200);
+    const checkout = await page.request.post(url('/api/signup-offer/checkout'), { data: { interval: 'month' } });
+    expect(checkout.status()).toBe(410);
 });
 
 test('lists kept in this browser without an account open at /, not the homepage', async ({ page }) => {
