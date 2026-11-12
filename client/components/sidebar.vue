@@ -4,9 +4,12 @@
             <!-- Phone: one drawer with the site links and the lists; the
                  closet has its own page. -->
             <template v-if="isMobile">
-                <router-link to="/welcome" class="wgDrawerBrand" aria-label="Waymark Gear home" data-testid="drawer-home">
+                <router-link v-if="$store.state.loggedIn" to="/welcome" class="wgDrawerBrand" aria-label="Waymark Gear home" data-testid="drawer-home">
                     <brandLogo />
                 </router-link>
+                <a v-else href="/" class="wgDrawerBrand" aria-label="Waymark Gear home" data-testid="drawer-home">
+                    <brandLogo />
+                </a>
                 <nav class="wgDrawerNav" aria-label="Site">
                     <a href="/explore">Explore gear</a>
                     <router-link to="/kits">

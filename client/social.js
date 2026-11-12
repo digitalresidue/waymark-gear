@@ -387,6 +387,9 @@ function initSiteHeader() {
             cta.querySelector('.wgShort').textContent = 'My lists';
         }
         if (viewer.signedIn) {
+            // Members' logo goes to the community page; visitors' to the homepage.
+            const logo = header.querySelector('[data-logo-home]');
+            if (logo) logo.href = '/welcome';
             header.querySelectorAll('[data-viewer-name]').forEach((el) => { el.textContent = viewer.username; });
             const initial = header.querySelector('[data-viewer-initial]');
             initial.title = viewer.username;
