@@ -12,6 +12,7 @@
                     </span>
                     <a :href="`/@${comment.author.username}`">{{ comment.author.displayName || `@${comment.author.username}` }}</a>
                     <span v-if="comment.author.isListOwner" class="wgCommentTag">Author</span>
+                    <span v-if="comment.author.supporter" class="wgSupporterBadge wgCommentSupporter" title="Supports Waymark Gear" data-testid="comment-supporter">Supporter</span>
                     <span v-if="comment.kind === 'suggestion'" class="wgCommentTag wgCommentTagSuggest" data-testid="comment-suggestion">
                         Suggestion{{ comment.itemName ? `: ${comment.itemName}` : '' }}
                     </span>

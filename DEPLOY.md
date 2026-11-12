@@ -334,6 +334,15 @@ the gear page instead.
    pack. The offer stays open for a day after sign-up unless they skip it,
    and Stripe keeps the discount on every renewal until they cancel.
 
+8. **Giving back (optional).** If Supporter money funds trail work, say so in
+   your own words in `SUPPORTER_GIVES_BACK`, for example `$1 of every
+   Supporter year goes to trail crews.` It's added to the Supporter perks on
+   the Supporter page, the sign-up offer and the homepage, and to the
+   Supporters wall. Left unset, nothing about giving back is shown.
+
+Supporters can choose to be thanked by name on `/supporters` (a checkbox on
+the Supporter page, off until they tick it).
+
 To give someone Supporter for free (a contributor, a reviewer): Owner →
 Revenue → Supporters.
 

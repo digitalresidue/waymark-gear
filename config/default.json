@@ -44,6 +44,9 @@
     "remoteImages": {
         "allowPrivate": false
     },
+    "supporter": {
+        "givesBack": ""
+    },
     "stripe": {
         "secretKey": "",
         "webhookSecret": "",

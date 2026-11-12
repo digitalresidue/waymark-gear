@@ -20,7 +20,7 @@ import express from 'express';
 import knex from './db.js';
 import { authenticateUser } from './auth.js';
 import { logWithRequest } from './log.js';
-import { billingEnabled, isSupporter, stripe, stripeCall } from './billing.js';
+import { billingEnabled, isSupporter, stripe, stripeCall, perks } from './billing.js';
 
 const router = express.Router();
 
@@ -42,6 +42,7 @@ export function offerInfo(user, now = Date.now()) {
     if (!offerOpen(user, now)) return { open: false };
     return {
         open: true,
+        perks: perks(),
         until: new Date(user.signup_offer_until).toISOString(),
         monthly: s.signupMonthlyLabel || '$2.50',
         monthlyFull: s.monthlyLabel || '$5',

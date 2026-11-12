@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html class="lp" lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Supporters — Waymark Gear</title>
+        <meta name="description" content="The hikers who keep Waymark Gear free and open source for everyone. Thank you.">
+        <link rel="canonical" href="{{deployUrl}}/supporters">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="Waymark Gear">
+        <meta property="og:title" content="Supporters">
+        <meta property="og:description" content="The hikers who keep Waymark Gear free and open source for everyone.">
+        <meta property="og:url" content="{{deployUrl}}/supporters">
+        {{{styles}}}
+        <link rel="icon" href="/favicon.png" />
+        <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script nonce="{{{cspNonce}}}">
+            (function () {
+                try {
+                    var t = localStorage.getItem('lpTheme');
+                    if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+                } catch (e) { /* storage blocked; the media query decides */ }
+            }());
+        </script>
+    </head>
+    <body class="wgProfilePage">
+        {{> siteHeader}}
+
+        <main id="wgMain" tabindex="-1" class="wgPage wgSupportersWall">
+            <p class="wgTrailKicker">Thank you</p>
+            <h1 class="wgTrailTitle" data-testid="supporters-heading">Supporters</h1>
+            <p class="wgTrailLede">These hikers keep Waymark Gear free, open source and free of ads for everyone. {{#givesBack}}{{givesBack}} {{/givesBack}}<a href="/supporter">Become a Supporter</a>.</p>
+            {{#count}}
+            <ul class="wgWallList" data-testid="supporters-wall">
+                {{#supporters}}
+                <li>
+                    <a href="/@{{username}}" class="wgWallPerson">
+                        {{#avatarUrl}}<img src="{{avatarUrl}}" alt="" class="wgWallAvatar" loading="lazy">{{/avatarUrl}}{{^avatarUrl}}<span class="wgWallAvatar wgWallInitial" aria-hidden="true">{{initial}}</span>{{/avatarUrl}}
+                        <span class="wgWallName">{{#name}}{{name}} <span class="wgMuted">@{{username}}</span>{{/name}}{{^name}}@{{username}}{{/name}}</span>
+                    </a>
+                </li>
+                {{/supporters}}
+            </ul>
+            {{/count}}
+            {{^count}}
+            <p class="wgMuted" data-testid="supporters-empty">Be the first name here. Supporters choose whether they're listed, on the <a href="/supporter">Supporter page</a>.</p>
+            {{/count}}
+            <p class="wgMuted wgWallNote">Supporters choose whether to be listed here. Change yours on the <a href="/supporter">Supporter page</a>.</p>
+        </main>
+        {{{scripts}}}
+        {{> siteFooter}}
+    </body>
+</html>

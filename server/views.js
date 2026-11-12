@@ -46,6 +46,7 @@ import { renderPage } from './site-chrome.js';
 import { localizeHtml, currentT, currentUnits } from './i18n.js';
 import { landingData, wantsApp, LANDING_CLASSES, LANDING_FAQ } from './landing.js';
 import { googleEnabled } from './google.js';
+import { isSupporter, supportersWall, givesBack, perks } from './billing.js';
 
 const router = express.Router();
 
@@ -288,6 +289,7 @@ export function landingPageModel(data, deployUrl) {
         })),
         hasShakedowns: data.shakedowns.length > 0,
         faq: LANDING_FAQ,
+        perks: perks(),
         structuredData: jsonLd([
             { '@context': 'https://schema.org', '@type': 'Organization', name: 'Waymark Gear', url: `${deployUrl}/`, logo: `${deployUrl}/images/icon-512.png` },
             { '@context': 'https://schema.org', '@type': 'WebSite', name: 'Waymark Gear', url: `${deployUrl}/` },
@@ -1080,6 +1082,19 @@ router.get('/brands', async (req, res) => {
     }
 });
 
+// The Supporters wall: those who chose to be thanked by name.
+const supportersTemplate = fs.readFileSync(path.join(import.meta.dirname, '../templates/supporters.mustache'), 'utf8');
+router.get('/supporters', async (req, res) => {
+    try {
+        const supporters = (await supportersWall()).map((s) => ({ ...s, initial: s.username.slice(0, 1) }));
+        const model = { ...shareHead(), cspNonce: NONCE_PLACEHOLDER, path: '/supporters', supporters, count: supporters.length, givesBack: givesBack() };
+        sendFresh(res, renderPage(supportersTemplate, model, {}, req.path));
+    } catch (err) {
+        logWithRequest(req, { message: 'error rendering supporters wall', err });
+        res.status(500).send('An error occurred.');
+    }
+});
+
 router.get('/trails', async (req, res) => {
     if (req.query.t) return res.redirect(301, `/trails/${encodeURIComponent(String(req.query.t))}`);
     const top = await trails.topTrails(1).catch(() => []);
@@ -1230,6 +1245,7 @@ async function renderListView(req, res) {
             cspNonce: res.locals.cspNonce,
             externalId: id,
             username: user.username,
+            supporter: isSupporter(user),
             published: Boolean(list.published),
             shakedown: Boolean(list.published && list.shakedown),
             tripTypeLabel: TRIP_TYPE_LABELS[list.tripType] || '',

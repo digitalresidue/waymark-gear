@@ -243,7 +243,10 @@
                     <div class="wgLandOfferCopy">
                         <p class="wgLandKicker">Only when you sign up</p>
                         <h2 id="wgLandOfferTitle" class="wgLandH2 wgLandH2Small">Become a Supporter at half price, for life.</h2>
-                        <p>Everything on Waymark Gear is free, and it stays that way. Supporters keep it running: no affiliate links anywhere you look, a Supporter badge on your profile, and an open-source project that doesn't need ads. New accounts get one chance to lock in 50% off for as long as they stay subscribed.</p>
+                        <p>Everything for planning your hike is free, and it stays that way. Supporters keep it running, and get a few extras. New accounts get one chance to lock in 50% off for as long as they stay subscribed.</p>
+                        <ul class="wgLandPerks" data-testid="landing-perks">
+                            {{#perks}}<li>{{text}}</li>{{/perks}}
+                        </ul>
                         <p class="wgLandMuted">You'll see the offer once, right after you make your account. Skip it and nothing changes: every feature is still yours.</p>
                     </div>
                     <div class="wgLandPrices">

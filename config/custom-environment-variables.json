@@ -58,6 +58,9 @@
         "__format": "boolean"
     },
     "googleAnalyticsId": "GA_MEASUREMENT_ID",
+    "supporter": {
+        "givesBack": "SUPPORTER_GIVES_BACK"
+    },
     "stripe": {
         "secretKey": "STRIPE_SECRET_KEY",
         "webhookSecret": "STRIPE_WEBHOOK_SECRET",
