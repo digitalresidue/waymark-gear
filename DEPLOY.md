@@ -327,11 +327,13 @@ the gear page instead.
    half price, for as long as they stay subscribed, once, right after they
    sign up. In Stripe, **Product catalog → Coupons → New**: 50% off,
    duration **Forever**, and (under Advanced) limit it to the Supporter
-   product. Put its id in `STRIPE_SIGNUP_COUPON`. Set
+   product. Give it the id `SIGNUP50`, which the app uses by default, in
+   both test mode and live mode (each mode has its own coupons). A coupon
+   with another id goes in `STRIPE_SIGNUP_COUPON`. Set
    `SUPPORTER_SIGNUP_MONTHLY_LABEL` and `SUPPORTER_SIGNUP_YEARLY_LABEL` if
-   your prices aren't $5 and $48 (they default to `$2.50` and `$24`). Without
-   a coupon there's no offer, and new accounts go straight to their first
-   pack. The offer stays open for a day after sign-up unless they skip it,
+   your prices aren't $5 and $48 (they default to `$2.50` and `$24`). To turn
+   the offer off, set `STRIPE_SIGNUP_COUPON=off`; new accounts then
+   go straight to their first pack. The offer stays open for a day after sign-up unless they skip it,
    and Stripe keeps the discount on every renewal until they cancel.
 
 To give someone Supporter for free (a contributor, a reviewer): Owner →
