@@ -205,6 +205,10 @@
     gap: 8px;
     padding: 3px 0;
 
+    &[hidden] {
+        display: none;
+    }
+
     .wgMuted {
         font-size: 12px;
         margin-left: auto;

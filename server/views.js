@@ -28,7 +28,7 @@ import { reviewsFor, latestReviews } from './reviews.js';
 import { getById as catalogItem, isUuid, search as catalogSearch, categories as catalogCategories, toApi as catalogToApi } from './catalog.js';
 import {
     exploreIndex, resolveSection, filterItem, facetsFor, readFilters, matchesFilters, sortItems, rangeLabel, formatWeightG, activeFilterCount, PARENTS, specAppliesLabel,
-    chosenTypes, specShown, specTypes, withoutHiddenSpecs,
+    chosenTypes, specShown, specTypes, withoutHiddenSpecs, brandCounts, brandKey,
 } from '../client/utils/explore.js';
 const PARENT_SLUGS = new Set(PARENTS.map((p) => p.slug));
 import { priceHistory } from './prices.js';
@@ -848,6 +848,7 @@ router.get('/explore/:slug', async (req, res) => {
         const types = chosenTypes(parsed, items);
         const filters = withoutHiddenSpecs(parsed, types);
         const shown = items.filter((i) => matchesFilters(i, filters));
+        const byBrand = brandCounts(parsed, items);
         const byId = new Map(entries.map((e) => [e.id, e]));
 
         const rangeOf = (key, label, facet, chosen, stops) => ({
@@ -912,7 +913,13 @@ router.get('/explore/:slug', async (req, res) => {
                 sorts: SORTS.map(([value, label]) => ({ value, label: t(`explore.sort.${value}`, {}, label), on: value === filters.sort })),
                 facets: {
                     cats: facets.cats.length > 1 ? facets.cats.map((c) => ({ ...c, on: on(filters.cats, c.value) })) : [],
-                    brands: facets.brands.length > 1 ? facets.brands.map((b) => ({ ...b, on: on(filters.brands, b.value) })) : [],
+                    brands: facets.brands.length > 1 ? facets.brands.map((b) => {
+                        // Only brands with gear in the ticked categories (brandCounts);
+                        // a ticked brand stays so it can be unticked.
+                        const n = byBrand[b.value] || 0;
+                        const checked = on(filters.brands, b.value);
+                        return { ...b, count: n, on: checked, hidden: !n && !checked };
+                    }) : [],
                 },
                 blocks,
                 total,
@@ -926,7 +933,7 @@ router.get('/explore/:slug', async (req, res) => {
                     return {
                         ...i,
                         brand: e.brand,
-                        brandKey: i.brand.toLowerCase(),
+                        brandKey: brandKey(i.brand),
                         sortName: `${e.brand} ${e.name}`.trim(),
                         initial: e.name.trim().charAt(0).toUpperCase(),
                         thumbUrl: thumbnailUrl(e.imageUrl || ''),

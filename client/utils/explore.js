@@ -89,6 +89,12 @@ export function resolveSection(slug, categories) {
 
 // ---- items and filters ---------------------------------------------------------
 
+/**
+ * A brand's filter key: its letters and digits, lowercased, so spellings of
+ * one maker ("Therm-a-Rest", "Thermarest", "THERMAREST") are one brand.
+ */
+export const brandKey = (name) => String(name || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
+
 /** A catalog entry as the filters see it. */
 export function filterItem(entry) {
     return {
@@ -166,7 +172,13 @@ export function facetsFor(items, { categories = [] } = {}) {
     };
 
     const cats = count(items.map((i) => [i.cat, i.catName])).sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
-    const brands = count(items.filter((i) => i.brand).map((i) => [i.brand.toLowerCase(), i.brand])).sort((a, b) => a.label.localeCompare(b.label));
+    // One entry per brand however it's spelled, named the way most items spell it.
+    const brands = count(items.filter((i) => brandKey(i.brand)).map((i) => [brandKey(i.brand), i.brand])).map((b) => {
+        const spellings = new Map();
+        for (const i of items) if (brandKey(i.brand) === b.value) spellings.set(i.brand, (spellings.get(i.brand) || 0) + 1);
+        const [label] = [...spellings].sort((x, y) => y[1] - x[1] || x[0].localeCompare(y[0]))[0];
+        return { ...b, label };
+    }).sort((a, b) => a.label.localeCompare(b.label));
 
     // Spec fields, in the order their types list them: the section's own
     // types (always offered), then any other types its items have.
@@ -243,7 +255,7 @@ export function readFilters(params) {
     }
     return {
         cats: list('cat'),
-        brands: list('brand').map((b) => b.toLowerCase()),
+        brands: [...new Set(list('brand').map(brandKey).filter(Boolean))],
         weight: { min: num('weight_min'), max: num('weight_max') },
         price: { min: num('price_min'), max: num('price_max') },
         specs,
@@ -307,6 +319,23 @@ export function chosenTypes(f, items) {
 }
 
 /**
+ * How many items each brand has in the ticked categories ({ brandKey: n }),
+ * or in the whole section with nothing ticked. A brand with none there is
+ * left out of the brand filter: Pad ticked in Sleep System lists pad makers,
+ * not every quilt maker too.
+ */
+export function brandCounts(f, items) {
+    const counts = {};
+    for (const i of items) {
+        const k = brandKey(i.brand);
+        if (!k) continue;
+        if (f.cats.length && !f.cats.includes(i.cat)) continue;
+        counts[k] = (counts[k] || 0) + 1;
+    }
+    return counts;
+}
+
+/**
  * Is a spec filter offered for the ticked categories? With Shell ticked in
  * Clothing, only a shell's specs; with Tent ticked in Shelter, none of a
  * tarp's. Nothing ticked: every filter the section has.
@@ -334,7 +363,7 @@ export function specApplies(item, key) {
  */
 export function matchesFilters(item, f) {
     if (f.cats.length && !f.cats.includes(item.cat)) return false;
-    if (f.brands.length && !f.brands.includes(item.brand.toLowerCase())) return false;
+    if (f.brands.length && !f.brands.includes(brandKey(item.brand))) return false;
     if ((f.weight.min !== undefined || f.weight.max !== undefined) && !inRange(item.weight, f.weight)) return false;
     if ((f.price.min !== undefined || f.price.max !== undefined) && !inRange(item.price, f.price)) return false;
     for (const [key, s] of Object.entries(f.specs)) {

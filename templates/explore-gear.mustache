@@ -80,7 +80,7 @@
                         {{#facets.brands.length}}
                         <fieldset class="wgFilter" data-testid="filter-brand">
                             <legend>{{#t}}explore.brand{{/t}}</legend>
-                            {{#facets.brands}}<label class="wgFilterCheck"><input type="checkbox" name="brand" value="{{value}}" {{#on}}checked{{/on}}> {{label}} <span class="wgMuted">{{count}}</span></label>{{/facets.brands}}
+                            {{#facets.brands}}<label class="wgFilterCheck" data-brand-option="{{value}}" {{#hidden}}hidden{{/hidden}}><input type="checkbox" name="brand" value="{{value}}" {{#on}}checked{{/on}}> {{label}} <span class="wgMuted" data-brand-count>{{count}}</span></label>{{/facets.brands}}
                         </fieldset>
                         {{/facets.brands.length}}
 

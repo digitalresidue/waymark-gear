@@ -4,7 +4,7 @@
 // (client/utils/explore.js) for the first load and for links.
 
 import {
-    readFilters, filtersToQuery, matchesFilters, sortItems, rangeLabel, activeFilterCount, movedFrom, RANGE_WORDS, chosenTypes, withoutHiddenSpecs,
+    readFilters, filtersToQuery, matchesFilters, sortItems, rangeLabel, activeFilterCount, movedFrom, RANGE_WORDS, chosenTypes, withoutHiddenSpecs, brandCounts,
 } from './utils/explore.js';
 import { translator } from './utils/i18n.js';
 
@@ -89,13 +89,22 @@ export function initExploreGear() {
     // Spec filters follow the ticked categories: tick Shell in Clothing and
     // only a shell's are left; untick them all and every one is back.
     const specBlocks = [...form.querySelectorAll('[data-spec-types]')];
+    const brandOptions = [...form.querySelectorAll('[data-brand-option]')];
     function showSpecFilters() {
         const params = new URLSearchParams();
         const cats = [...form.querySelectorAll('input[name="cat"]:checked')].map((c) => c.value);
         if (cats.length) params.set('cat', cats.join(','));
-        const types = chosenTypes(readFilters(params), items);
+        const f = readFilters(params);
+        const types = chosenTypes(f, items);
         for (const el of specBlocks) {
             el.hidden = types !== null && !el.dataset.specTypes.split(' ').some((t) => types.has(t));
+        }
+        // Brands follow them too: Pad ticked lists only the brands with pads.
+        const byBrand = brandCounts(f, items);
+        for (const el of brandOptions) {
+            const n = byBrand[el.dataset.brandOption] || 0;
+            el.hidden = !n && !el.querySelector('input').checked;
+            el.querySelector('[data-brand-count]').textContent = String(n);
         }
     }
 
