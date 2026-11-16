@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { parentOf, exploreIndex, resolveSection, filterItem, facetsFor, brandCounts, brandKey, readFilters, filtersToQuery, matchesFilters, sortItems, slugify } from '../../client/utils/explore.js';
+import { parentOf, exploreIndex, resolveSection, filterItem, facetsFor, brandCounts, brandKey, readFilters, filtersToQuery, matchesFilters, sortItems, slugify, inferPackType, subtypesOf } from '../../client/utils/explore.js';
 
 const CATS = [
     { name: 'Tent', count: 3 }, { name: 'Tarps', count: 2 }, { name: 'Shelter', count: 4 }, { name: 'Top Quilt', count: 5 },
@@ -191,5 +191,23 @@ describe('brand spellings', () => {
         const f = readFilters(new URLSearchParams('brand=therm-a-rest'));
         assert.deepEqual(f.brands, ['thermarest']);
         assert.equal(matchesFilters({ cat: 'sleepingpad', brand: 'Thermarest', specs: {}, weight: 1, price: null }, f), true);
+    });
+});
+
+describe('Pack sub-items: pack types', () => {
+    test('a pack with no type set takes one from its category', () => {
+        assert.equal(inferPackType('Fastpack'), 'fastpack');
+        assert.equal(inferPackType('Fast Pack'), 'fastpack');
+        assert.equal(inferPackType('Hydration Vests'), 'hydration_vest');
+        assert.equal(inferPackType('Running Vest'), 'hydration_vest');
+        assert.equal(inferPackType('Backpack'), 'pack');
+        assert.equal(filterItem({ id: 1, category: 'Fastpack', specs: {} }).specs.pack_type, 'fastpack');
+        assert.equal(filterItem({ id: 2, category: 'Pack', specs: { pack_type: 'hydration_vest' } }).specs.pack_type, 'hydration_vest');
+        assert.equal(filterItem({ id: 3, category: 'Tent', specs: {} }).specs.pack_type, undefined);
+    });
+    test('Pack lists its types with counts, Packs first, only those with gear', () => {
+        const items = ['Pack', 'Pack', 'Fastpack'].map((category, id) => filterItem({ id, category, specs: {} }));
+        assert.deepEqual(subtypesOf('pack', items), { key: 'pack_type', options: [{ value: 'pack', name: 'Packs', count: 2 }, { value: 'fastpack', name: 'Fastpacks', count: 1 }] });
+        assert.equal(subtypesOf('shelter', items), null);
     });
 });

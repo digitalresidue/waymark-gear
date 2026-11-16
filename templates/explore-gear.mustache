@@ -42,7 +42,7 @@
                     </a>
                     {{#children.length}}
                     <ul class="wgExploreChildren">
-                        {{#children}}<li><a href="/explore/{{parentSlug}}?cat={{slug}}" data-testid="explore-child">{{name}} <span class="wgMuted">{{count}}</span></a></li>{{/children}}
+                        {{#children}}<li><a href="{{href}}" data-testid="explore-child">{{name}} <span class="wgMuted">{{count}}</span></a></li>{{/children}}
                     </ul>
                     {{/children.length}}
                 </li>
@@ -65,6 +65,12 @@
             </nav>
             <h1 class="wgH2" data-testid="explore-title">{{title}}</h1>
             {{#note}}<p class="wgLede">{{note}}</p>{{/note}}
+            {{#subtypes}}
+            <nav class="wgExploreSubtypes" aria-label="{{label}}" data-subtypes="{{key}}" data-testid="explore-subtypes">
+                <a href="{{all.href}}" class="wgSubtype" data-subtype="" {{#all.on}}aria-current="true"{{/all.on}} data-testid="subtype-all">{{all.name}} <span class="wgMuted">{{all.count}}</span></a>
+                {{#options}}<a href="{{href}}" class="wgSubtype" data-subtype="{{value}}" {{#on}}aria-current="true"{{/on}} data-testid="subtype-{{value}}">{{name}} <span class="wgMuted">{{count}}</span></a>{{/options}}
+            </nav>
+            {{/subtypes}}
 
             <div class="wgExploreLayout">
                 <details class="wgFiltersBox" open data-testid="explore-filters-box">

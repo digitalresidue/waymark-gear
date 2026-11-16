@@ -28,7 +28,7 @@ import { reviewsFor, latestReviews } from './reviews.js';
 import { getById as catalogItem, isUuid, search as catalogSearch, categories as catalogCategories, toApi as catalogToApi } from './catalog.js';
 import {
     exploreIndex, resolveSection, filterItem, facetsFor, readFilters, matchesFilters, sortItems, rangeLabel, formatWeightG, activeFilterCount, PARENTS, specAppliesLabel,
-    chosenTypes, specShown, specTypes, withoutHiddenSpecs, brandCounts, brandKey,
+    chosenTypes, specShown, specTypes, withoutHiddenSpecs, brandCounts, brandKey, subtypesOf,
 } from '../client/utils/explore.js';
 const PARENT_SLUGS = new Set(PARENTS.map((p) => p.slug));
 import { priceHistory } from './prices.js';
@@ -872,15 +872,25 @@ router.get('/explore', async (req, res) => {
         return res.redirect(301, `/kits${qs ? `?${qs}` : ''}`);
     }
     try {
-        const index = exploreIndex(await catalogCategories());
+        const categories = await catalogCategories();
+        const index = exploreIndex(categories);
         const t = currentT();
+        // Pack's sub-items are its pack types (Packs, Fastpacks, Hydration
+        // vests), linked straight to that filter, not its categories.
+        const subtypeChildren = {};
+        for (const p of PARENTS.filter((x) => x.subtypes)) {
+            const names = resolveSection(p.slug, categories).categories;
+            const rows = names.length ? await knex('catalog_items').where({ status: 'published' }).whereIn('category', names).select('category', 'specs').limit(MAX_SECTION_ITEMS) : [];
+            const sub = subtypesOf(p.slug, rows.map((r) => filterItem({ category: r.category, specs: r.specs })));
+            subtypeChildren[p.slug] = sub.options.map((o) => ({ slug: o.value, name: t(`explore.subtype.${sub.key}.${o.value}`, {}, o.name), count: o.count, href: `/explore/${p.slug}?${sub.key}=${o.value}` }));
+        }
         // Parents' names and notes in the reader's language; categories keep
         // the catalog's names.
         const shape = (s) => ({
             ...s,
             ...(PARENT_SLUGS.has(s.slug) ? { name: t(`explore.parent.${s.slug}`, {}, s.name), note: t(`explore.parent.${s.slug}.note`, {}, s.note) } : {}),
             countLabel: s.count ? t('explore.items', { count: s.count }) : t('explore.comingSoon'),
-            children: s.children.map((c) => ({ ...c, parentSlug: s.slug })),
+            children: subtypeChildren[s.slug] || s.children.map((c) => ({ ...c, href: `/explore/${s.slug}?cat=${c.slug}` })),
         });
         const model = {
             ...shareHead(),
@@ -981,6 +991,17 @@ router.get('/explore/:slug', async (req, res) => {
         }
         const total = items.length;
         const active = activeFilterCount(filters);
+        // Pack's sub-items as a row of chips over the results: All, Packs,
+        // Fastpacks, Hydration vests. Each is a link (no script needed) that
+        // the page script turns into an in-place filter.
+        const sub = PARENT_SLUGS.has(slug) ? subtypesOf(slug, items) : null;
+        const chosenSub = sub && filters.specs[sub.key] ? filters.specs[sub.key].any : [];
+        const subtypes = sub && sub.options.length > 1 ? {
+            key: sub.key,
+            label: t(`explore.subtypes.${slug}`, {}, `${section.title} types`),
+            all: { name: t('explore.subtypeAll', {}, 'All'), count: total, href: `/explore/${slug}`, on: chosenSub.length === 0 },
+            options: sub.options.map((o) => ({ ...o, name: t(`explore.subtype.${sub.key}.${o.value}`, {}, o.name), href: `/explore/${slug}?${sub.key}=${o.value}`, on: chosenSub.length === 1 && chosenSub[0] === o.value })),
+        } : null;
         const model = {
             ...shareHead(),
             cspNonce: NONCE_PLACEHOLDER,
@@ -994,10 +1015,13 @@ router.get('/explore/:slug', async (req, res) => {
                 note: section.note,
                 parent: section.parent,
                 activeLabel: active ? `(${active})` : '',
+                subtypes,
                 sort: filters.sort,
                 sorts: SORTS.map(([value, label]) => ({ value, label: t(`explore.sort.${value}`, {}, label), on: value === filters.sort })),
                 facets: {
-                    cats: facets.cats.length > 1 ? facets.cats.map((c) => ({ ...c, on: on(filters.cats, c.value) })) : [],
+                    // With sub-item chips (Pack's types), categories would say the
+                    // same thing twice: the chips stand in for them.
+                    cats: facets.cats.length > 1 && !subtypes ? facets.cats.map((c) => ({ ...c, on: on(filters.cats, c.value) })) : [],
                     brands: facets.brands.length > 1 ? facets.brands.map((b) => {
                         // Only brands with gear in the ticked categories (brandCounts);
                         // a ticked brand stays so it can be unticked.

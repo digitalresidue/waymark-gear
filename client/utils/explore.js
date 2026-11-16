@@ -12,7 +12,9 @@ import { categoryKey, defaultGroupFor } from './gear-meta.js';
 import { specTypeFor, SPEC_FIELDS, SPEC_TYPES, filterKind, formatSpec, matchKey } from './gear-specs.js';
 
 export const PARENTS = [
-    { slug: 'pack', name: 'Pack', note: 'Backpacks, frameless to framed' },
+    // Pack's sub-items are its pack types (a spec), not its categories: most
+    // packs sit in one "Pack" category (subtypes, below).
+    { slug: 'pack', name: 'Pack', note: 'Packs, fastpacks and hydration vests', subtypes: 'pack_type' },
     { slug: 'shelter', name: 'Shelter', note: 'Tents, tarps, bivies, hammocks and bug nets' },
     { slug: 'sleep-system', name: 'Sleep System', note: 'Quilts, bags, pads and pillows' },
     { slug: 'clothing', name: 'Clothing', note: 'Layers, shells, pants, gloves, socks and shoes' },
@@ -95,18 +97,53 @@ export function resolveSection(slug, categories) {
  */
 export const brandKey = (name) => String(name || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
 
+// A pack's type when the catalog hasn't said: from its category ("Fastpack",
+// "Hydration Vest"), else a pack. So Pack's sub-items cover every pack.
+export function inferPackType(category) {
+    const k = categoryKey(category);
+    if (k === 'fastpack') return 'fastpack';
+    if (k === 'hydrationvest' || k === 'runningvest') return 'hydration_vest';
+    return 'pack';
+}
+
+// The sub-items in order, named as a heading over many ("Fastpacks").
+const SUBTYPE_NAMES = { pack_type: [['pack', 'Packs'], ['fastpack', 'Fastpacks'], ['hydration_vest', 'Hydration vests']] };
+
+/**
+ * A parent's sub-items when they're a spec rather than its categories
+ * (Pack: Packs, Fastpacks, Hydration vests), from its filter items:
+ * { key, options: [{ value, name, count }] }, those with gear only.
+ */
+export function subtypesOf(slug, items) {
+    const parent = PARENTS.find((p) => p.slug === slug);
+    const key = parent && parent.subtypes;
+    if (!key) return null;
+    const names = SUBTYPE_NAMES[key] || SPEC_FIELDS[key].options;
+    const counts = {};
+    for (const i of items) {
+        const v = i.specs && i.specs[key];
+        if (v !== undefined && v !== null && v !== '') counts[v] = (counts[v] || 0) + 1;
+    }
+    return {
+        key,
+        options: names.filter(([v]) => counts[v]).map(([v, name]) => ({ value: v, name, count: counts[v] })),
+    };
+}
+
 /** A catalog entry as the filters see it. */
 export function filterItem(entry) {
+    const type = (specTypeFor(entry.category) || {}).id || '';
+    const specs = entry.specs || {};
     return {
         id: entry.id,
         cat: categoryKey(entry.category),
         catName: entry.category,
         // Its gear type ('pad', 'quilt'...), for which spec filters apply to it.
-        type: (specTypeFor(entry.category) || {}).id || '',
+        type,
         brand: entry.brand || '',
         weight: Math.round((Number(entry.weightMg) || 0) / 1000 * 10) / 10, // grams
         price: entry.price === null || entry.price === undefined ? null : Number(entry.price),
-        specs: entry.specs || {},
+        specs: type === 'pack' && !specs.pack_type ? { ...specs, pack_type: inferPackType(entry.category) } : specs,
         name: entry.name,
         // Ranking score (client/utils/ratings.js) and how many rated it.
         score: ratingScore(entry.rating && entry.rating.average, entry.rating && entry.rating.count),
