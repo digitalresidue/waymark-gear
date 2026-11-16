@@ -114,7 +114,7 @@ export const SPEC_FIELDS = {
     roll_top: { label: 'Roll top', ...yesNo },
     adjustable_torso: { label: 'Adjustable torso', ...yesNo },
     hip_belt: { label: 'Hip belt', ...choice([['fixed', 'Fixed'], ['removable', 'Removable'], ['none', 'None']]), aliases: { yes: 'fixed', sewn: 'fixed', detachable: 'removable', no: 'none', webbing: 'none' } },
-    pack_type: { label: 'Pack type', ...choice([['fastpack', 'Fastpack'], ['pack', 'Pack'], ['hydration_vest', 'Hydration vest']]), aliases: { backpack: 'pack', fast: 'fastpack', vest: 'hydration_vest', runningvest: 'hydration_vest', hydrationpack: 'hydration_vest' } },
+    pack_type: { label: 'Pack type', ...choice([['pack', 'Pack'], ['fastpack', 'Fastpack'], ['hydration_vest', 'Hydration vest']]), aliases: { backpack: 'pack', fast: 'fastpack', vest: 'hydration_vest', runningvest: 'hydration_vest', hydrationpack: 'hydration_vest' } },
     // Free text: fabrics keep changing (Ultra 200, Robic 210D, ECOPAK...).
     fabric: { label: 'Fabric', kind: 'text', max: 60 },
 

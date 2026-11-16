@@ -84,7 +84,7 @@ describe('filters', () => {
         const f = facetsFor(packs, { categories: ['Packs'] });
         // Fabric is free words: offered once some pack says one.
         assert.deepEqual(f.specs.map((x) => x.key), ['volume', 'max_carry', 'gender', 'pack_type', 'frame', 'strap_type', 'hip_belt', 'roll_top', 'adjustable_torso']);
-        assert.deepEqual(f.specs.find((x) => x.key === 'pack_type').options.map((o) => o.label), ['Fastpack', 'Pack', 'Hydration vest']);
+        assert.deepEqual(f.specs.find((x) => x.key === 'pack_type').options.map((o) => o.label), ['Pack', 'Fastpack', 'Hydration vest']);
         const volume = f.specs.find((x) => x.key === 'volume');
         assert.equal(volume.kind, 'range');
         assert.ok(volume.min <= 10 && volume.max >= 90);
