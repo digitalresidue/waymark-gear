@@ -380,7 +380,7 @@ sheet without spec columns leaves specs as they are.
 | `volume` | Volume | `40 L` or `2440 cu in` (bare number: L) |
 | `max_carry` | Max carry weight | `14 oz` or `397 g` (bare number: lb) |
 | `gender` | Fit for | Men's / Women's / Unisex |
-| `pack_type` | Pack type | Fastpack / Pack / Hydration vest |
+| `pack_type` | Pack type | Pack / Fastpack / Hydration vest |
 | `frame` | Frame | Framed / Frameless |
 | `strap_type` | Shoulder straps | J-curve / S-curve / Vest / Other |
 | `hip_belt` | Hip belt | Fixed / Removable / None |

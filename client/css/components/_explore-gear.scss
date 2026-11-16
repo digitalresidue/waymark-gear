@@ -417,3 +417,39 @@
     font-size: 12px;
     font-weight: 400;
 }
+
+// Pack's sub-items over the results: All, Packs, Fastpacks, Hydration vests.
+.wgExploreSubtypes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 4px 0 20px;
+}
+
+.wgSubtype {
+    align-items: center;
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border-strong);
+    border-radius: 999px;
+    color: var(--lp-text) !important;
+    display: inline-flex;
+    font-weight: 600;
+    gap: 6px;
+    min-height: 40px;
+    padding: 0 16px;
+    text-decoration: none;
+
+    &:hover {
+        border-color: var(--lp-border-hover);
+    }
+
+    &[aria-current="true"] {
+        background: $forest;
+        border-color: $forest;
+        color: #fff !important;
+
+        .wgMuted {
+            color: $sage;
+        }
+    }
+}

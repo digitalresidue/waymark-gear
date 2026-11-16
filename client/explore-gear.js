@@ -128,6 +128,7 @@ export function initExploreGear() {
         if (filterCount) filterCount.textContent = active ? `(${active})` : '';
         const qs = filtersToQuery(f);
         history.replaceState(null, '', `/explore/${slug}${qs ? `?${qs}` : ''}`);
+        markSubtype();
     }
 
     // The two thumbs of a range can't cross.
@@ -139,6 +140,32 @@ export function initExploreGear() {
             if (Number(r.hi.value) < Number(r.lo.value)) r.lo.value = r.hi.value;
         });
     }
+    // Pack's sub-items over the results (All, Packs, Fastpacks…): picking
+    // one ticks just that box of its filter and filters in place.
+    const subtypes = document.querySelector('[data-subtypes]');
+    const subtypeBoxes = () => (subtypes ? [...form.querySelectorAll(`input[type="checkbox"][name="${subtypes.dataset.subtypes}"]`)] : []);
+    if (subtypes) {
+        subtypes.addEventListener('click', (e) => {
+            const chip = e.target.closest('[data-subtype]');
+            if (!chip || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+            const boxes = subtypeBoxes();
+            const value = chip.dataset.subtype;
+            if (value && !boxes.some((b) => b.value === value && !b.disabled)) return; // no box: let the link load
+            e.preventDefault();
+            for (const b of boxes) b.checked = b.value === value;
+            apply();
+        });
+    }
+    function markSubtype() {
+        if (!subtypes) return;
+        const on = subtypeBoxes().filter((b) => b.checked).map((b) => b.value);
+        for (const chip of subtypes.querySelectorAll('[data-subtype]')) {
+            const v = chip.dataset.subtype;
+            if ((v === '' && on.length === 0) || (on.length === 1 && on[0] === v)) chip.setAttribute('aria-current', 'true');
+            else chip.removeAttribute('aria-current');
+        }
+    }
+
     form.addEventListener('input', apply);
     form.addEventListener('change', apply);
     form.addEventListener('submit', (e) => {

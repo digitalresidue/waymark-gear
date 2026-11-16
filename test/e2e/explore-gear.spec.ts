@@ -117,9 +117,10 @@ test('packs offer pack weight, max carry, volume, straps, frame, roll top and ad
     expect((await page.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } })).ok()).toBe(true);
 
     await page.goto(url(`/explore/pack?brand=${brand.toLowerCase()}`));
-    // In this order: category, brand, then weight, price and the specs.
+    // In this order: brand, then weight, price and the specs. (No category
+    // box: Pack's type chips over the results stand in for it.)
     const labels = await page.locator('#wgGearFilters .wgFilter').evaluateAll((els) => els.map((e) => (e.querySelector('legend, .wgFilterLabel') || {}).textContent?.trim()));
-    expect(labels.slice(0, 15)).toEqual(['Category', 'Brand', 'Pack weight', 'Price', 'Volume', 'Max carry weight', 'Fit for', 'Pack type', 'Frame', 'Shoulder straps', 'Hip belt', 'Roll top', 'Adjustable torso', 'Fabric']);
+    expect(labels.slice(0, 15)).toEqual(['Brand', 'Pack weight', 'Price', 'Volume', 'Max carry weight', 'Fit for', 'Pack type', 'Frame', 'Shoulder straps', 'Hip belt', 'Roll top', 'Adjustable torso', 'Fabric']);
     // Every strap style is listed; ones nothing has yet can't be picked.
     const straps = page.getByTestId('filter-strap_type');
     await expect(straps.locator('input')).toHaveCount(4);
@@ -293,4 +294,57 @@ test('brands follow the ticked categories: Pad in Sleep System lists only the br
     await page.goto(url(`/explore/sleep-system?cat=sleepingpad&brand=${quilts.toLowerCase()}`));
     await expect(brand(quilts)).toBeVisible();
     await expect(brand(quilts).locator('input')).toBeChecked();
+});
+
+test('Pack lists its pack types as sub-items: on the Explore page and over the Pack results', async ({ page, browser }, testInfo) => {
+    const owner = await (await browser.newContext()).newPage();
+    const username = `wge2eowner${testInfo.workerIndex}`;
+    const r = await owner.request.post(url('/register'), { data: { username, email: `${username}@example.com`, password: 'testtest' } });
+    if (r.status() !== 200) expect((await owner.request.post(url('/signin'), { data: { username, password: 'testtest' } })).status()).toBe(200);
+    const b = `Pk${Date.now().toString(36)}`;
+    // A pack with no type set counts as a pack; "Fastpack" gear as a fastpack.
+    const csv = ['sku,name,brand,category,weight,unit,price,status,pack_type',
+        `${b}-1,${b} Trail pack,${b},Pack,30,oz,250,published,`,
+        `${b}-2,${b} Fast one,${b},Fastpack,14,oz,180,published,`,
+        `${b}-3,${b} Race vest,${b},Pack,8,oz,150,published,Hydration vest`].join('\n');
+    expect((await owner.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } })).ok()).toBe(true);
+    await owner.context().close();
+
+    // The Explore page: Pack's sub-items are the types, linked to that filter.
+    await page.goto(url('/explore'));
+    const packCard = page.locator('[data-testid="explore-section"][data-slug="pack"]');
+    const kids = packCard.getByTestId('explore-child');
+    await expect(kids.nth(0)).toContainText('Packs');
+    await expect(kids.nth(1)).toContainText('Fastpacks');
+    await expect(kids.nth(2)).toContainText('Hydration vests');
+    await expect(kids.nth(1)).toHaveAttribute('href', '/explore/pack?pack_type=fastpack');
+
+    // Following one opens Pack with just that type.
+    await kids.nth(1).click();
+    await expect(page).toHaveURL(/\/explore\/pack\?pack_type=fastpack$/);
+    const card = (name: string) => page.getByTestId('explore-item').filter({ hasText: name });
+    await expect(page.getByTestId('subtype-fastpack')).toHaveAttribute('aria-current', 'true');
+    await expect(card(`${b} Fast one`)).toBeVisible();
+    await expect(card(`${b} Trail pack`)).toBeHidden();
+
+    // The chips filter in place, ticking just that box in the filter column.
+    await page.getByTestId('subtype-hydration_vest').click();
+    await expect(page).toHaveURL(/pack_type=hydration_vest$/);
+    await expect(card(`${b} Race vest`)).toBeVisible();
+    await expect(card(`${b} Fast one`)).toBeHidden();
+    await expect(page.locator('input[name="pack_type"][value="hydration_vest"]')).toBeChecked();
+    await expect(page.locator('input[name="pack_type"][value="fastpack"]')).not.toBeChecked();
+
+    await page.getByTestId('subtype-all').click();
+    await expect(page).toHaveURL(/\/explore\/pack$/);
+    await expect(page.getByTestId('subtype-all')).toHaveAttribute('aria-current', 'true');
+    for (const n of ['Trail pack', 'Fast one', 'Race vest']) await expect(card(`${b} ${n}`)).toBeVisible();
+
+    // The chips stand in for the category checkboxes, which would repeat them.
+    await expect(page.locator('#wgGearFilters input[name="cat"]')).toHaveCount(0);
+
+    // Ticking two types in the filter column: no single chip is current.
+    await page.locator('input[name="pack_type"][value="pack"]').check();
+    await page.locator('input[name="pack_type"][value="fastpack"]').check();
+    await expect(page.locator('[data-subtype][aria-current="true"]')).toHaveCount(0);
 });
