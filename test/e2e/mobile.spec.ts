@@ -304,6 +304,35 @@ test.describe('Phone header', () => {
     await expect(popover).toHaveClass(/lpPopoverShown/);
   });
 
+  // The site header and the editor's tools row (Lists, Pack, Print…) were on
+  // the same layer, and the row comes later, so it painted over the account
+  // menu hanging from the header. Every link in the menu must be what a tap
+  // there lands on.
+  test('the account menu opens over the list tools, not behind them', async ({ page }) => {
+    await signUpWithList(page);
+    // Let the drawer finish sliding away after the resize back to a phone.
+    await expect(page.locator('.lpDrawerOpen')).toHaveCount(0);
+    await page.waitForTimeout(500);
+    await page.getByTestId('account-menu').tap();
+    const content = page.locator('#accountPopover .lpPopoverShown .lpContent');
+    await expect(content).toBeVisible();
+    // Fully faded in before asking what's on top.
+    await expect.poll(() => content.evaluate((el) => getComputedStyle(el.closest('.lpPopover')!.querySelector('.lpContent')!).opacity)).toBe('1');
+    // Every point of the open menu, top to bottom, is the menu.
+    const covered = await content.evaluate((menu) => {
+      const r = menu.getBoundingClientRect();
+      const misses = [];
+      for (let y = r.top + 4; y < Math.min(r.bottom, innerHeight) - 2; y += 12) {
+        for (const x of [r.left + 12, r.left + r.width / 2, r.right - 12]) {
+          const hit = document.elementFromPoint(x, y);
+          if (!hit || !menu.contains(hit)) misses.push(`${Math.round(x)},${Math.round(y)}: ${hit ? hit.textContent!.trim().slice(0, 20) : 'nothing'}`);
+        }
+      }
+      return misses;
+    });
+    expect(covered).toEqual([]);
+  });
+
   // The tap handler that opens these menus sat on a wrapper around the whole
   // popover, content included, so every tap on a control inside one was read
   // as another tap on the button that opens it. Settings was unusable: the

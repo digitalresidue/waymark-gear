@@ -77,7 +77,10 @@ $spacingLarge: 30px;
 // Dims the page behind an open header menu but stays under the app bar, so the
 // header and the menu hanging off it both read as above the overlay.
 $popoverScrim: 5;
-$mobileHeader: 10; // sticky app bar — under the drawer and its scrim
+$mobileHeader: 10; // sticky rows under the app bar (the editor's tools, Gear, Pack)
+// The site header itself, one above those rows: its account and bell menus
+// hang down over them. Still under the drawer and its scrim.
+$mobileAppBar: 11;
 $mobileScrim: 19; // dims the list behind the open drawer, over the app bar
 $sidebar: 20;
 $aboveSidebar: 30;
