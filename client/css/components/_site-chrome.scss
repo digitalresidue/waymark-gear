@@ -223,9 +223,10 @@
 @media (max-width: $mobile) {
     // In the editor too: the list's title and tools are rows of their own
     // under it (dashboard.vue). Under the drawer (20) and its scrim (19), so
-    // the open drawer covers the whole screen.
+    // the open drawer covers the whole screen. Over the sticky rows below it
+    // (the editor's tools), so its menus aren't hidden behind them.
     .wgSiteHeaderApp {
-        z-index: $mobileHeader;
+        z-index: $mobileAppBar;
     }
 
     .wgSiteHeader {
