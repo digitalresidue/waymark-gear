@@ -982,8 +982,7 @@ router.get('/explore/:slug', async (req, res) => {
                         ...forTypes,
                         options: f.options.map((o) => {
                             const checked = Boolean(filters.specs[f.key] && filters.specs[f.key].any.includes(o.value));
-                            // Nothing in the catalog has it yet: shown, not pickable.
-                            return { ...o, key: f.key, on: checked, off: !o.count && !checked };
+                            return { ...o, key: f.key, on: checked, off: false };
                         }),
                     },
                 });

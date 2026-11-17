@@ -177,11 +177,10 @@ const niceStep = (span, steps = 60) => {
 
 /**
  * The filters a section offers, with counts: categories, brands, weight and
- * price ranges, and its gear types' specs. `categories` are the section's
- * category names: their types' spec filters are always offered (every option
- * of a choice, a slider over the field's usual span), so a section's filters
- * don't wait for the catalog to fill in. Without them, only specs some items
- * have are offered.
+ * price ranges, and its gear types' specs. Only what the section's gear
+ * has: an option no gear has, or a spec none of it says, isn't offered
+ * (nothing greyed out at 0). `categories` are the section's category names,
+ * whose types' specs come first, in their types' order.
  */
 export function facetsFor(items, { categories = [] } = {}) {
     const count = (list) => {
@@ -221,20 +220,16 @@ export function facetsFor(items, { categories = [] } = {}) {
     // types (always offered), then any other types its items have.
     const sectionTypes = new Set(categories.map((c) => specTypeFor(c)).filter(Boolean));
     const keys = [];
-    const always = new Set();
     for (const type of SPEC_TYPES) {
         const own = sectionTypes.has(type);
         if (!own && !items.some((i) => specTypeFor(i.catName) === type)) continue;
-        for (const k of type.fields) {
-            if (!keys.includes(k)) keys.push(k);
-            if (own) always.add(k);
-        }
+        for (const k of type.fields) if (!keys.includes(k)) keys.push(k);
     }
     const specs = [];
     for (const key of keys) {
         const field = SPEC_FIELDS[key];
         const values = items.map((i) => i.specs[key]).filter((v) => v !== undefined && v !== null);
-        if (!values.length && !always.has(key)) continue;
+        if (!values.length) continue;
         const kind = filterKind(key);
         if (kind === 'match' && field.kind === 'text') {
             // Free words (fabric): the ones the catalog has, however they're capitalised.
@@ -245,19 +240,24 @@ export function facetsFor(items, { categories = [] } = {}) {
                 (field.kind === 'yesno' ? count(values.map((v) => [String(v), v ? 'Yes' : 'No'])) : count(values.map((v) => [String(v), optionLabel(field, v)])))
                     .map((o) => [o.value, o]),
             );
-            // Every option, in the field's own order; ones nothing has yet count 0.
+            // The options some gear has, in the field's own order.
             const all = field.kind === 'yesno' ? [['true', 'Yes'], ['false', 'No']] : field.options.map(([o, label]) => [String(o), label]);
-            const opts = all.map(([value, label]) => seen.get(value) || { value, label, count: 0 });
-            if (always.has(key) || opts.filter((o) => o.count).length > 1 || values.length < items.length) {
+            const opts = all.filter(([value]) => seen.has(value)).map(([value]) => seen.get(value));
+            // Worth a filter when it splits the gear: two options, or one that
+            // some gear has and some doesn't say.
+            if (opts.length > 1 || values.length < items.length) {
                 specs.push({ key, label: field.label, kind: 'match', options: opts });
             }
         } else if (kind === 'range') {
             if (field.numeric) {
                 // A choice in numbers (fill power): its options are the stops.
-                const stops = always.has(key) ? field.options.map(([o]) => Number(o)) : [...new Set(values)].sort((a, b) => a - b);
+                // Its standard stops between the lowest and highest the gear has.
+                const lo = Math.min(...values);
+                const hi = Math.max(...values);
+                const stops = field.options.map(([o]) => Number(o)).filter((o) => o >= lo && o <= hi);
                 if (stops.length > 1) specs.push({ key, label: field.label, kind: 'range', min: stops[0], max: stops[stops.length - 1], step: 1, stops });
             } else {
-                const r = range(values) || (always.has(key) && field.range ? span(field.range[0], field.range[1]) : null);
+                const r = range(values);
                 if (r) specs.push({ key, label: field.label, kind: 'range', ...r });
             }
         }
