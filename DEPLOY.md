@@ -527,6 +527,8 @@ sheet without spec columns leaves specs as they are.
 | `stack_height` | Stack height | number in mm, e.g. `45 mm` |
 | `waterproof` | Waterproof | yes / no |
 | `shoe_width` | Width | Narrow / Regular / Wide |
+| `upper` | Upper | Mesh / Knit / Synthetic / Leather / Suede / Dyneema |
+| `outsole` | Sole | free text, up to 40 characters (filters ignore capitals) |
 
 **Trekking poles** (category "Trekking Poles", "Trekking Pole", "Poles", "Hiking Poles", any spelling or plural)
 

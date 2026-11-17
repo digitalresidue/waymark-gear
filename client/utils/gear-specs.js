@@ -201,6 +201,14 @@ export const SPEC_FIELDS = {
     stack_height: { label: 'Stack height', ...num(0, 60, { suffix: 'mm', range: [15, 45] }) },
     waterproof: { label: 'Waterproof', ...yesNo },
     shoe_width: { label: 'Width', ...choice([['narrow', 'Narrow'], ['regular', 'Regular'], ['wide', 'Wide']]), aliases: { standard: 'regular', medium: 'regular', d: 'regular', '2e': 'wide', ee: 'wide' } },
+    // What the upper is made of, as a choice so it filters; the sole is a
+    // named rubber compound (Vibram Megagrip, Contagrip...), so free text.
+    upper: {
+        label: 'Upper',
+        ...choice([['mesh', 'Mesh'], ['knit', 'Knit'], ['synthetic', 'Synthetic'], ['leather', 'Leather'], ['suede', 'Suede'], ['dyneema', 'Dyneema']]),
+        aliases: { engineeredmesh: 'mesh', airmesh: 'mesh', engineeredknit: 'knit', fullgrainleather: 'leather', fullgrain: 'leather', nubuck: 'leather', nubuckleather: 'leather', suedeleather: 'suede', dcf: 'dyneema', dyneemacomposite: 'dyneema', synthetics: 'synthetic' },
+    },
+    outsole: { label: 'Sole', kind: 'text', max: 40, placeholder: 'e.g. Vibram Megagrip' },
 
     // Trekking poles
     pole_material: { label: 'Material', ...choice([['carbon', 'Carbon'], ['aluminum', 'Aluminum'], ['mixed', 'Carbon and aluminum']]), aliases: { carbonfiber: 'carbon', aluminium: 'aluminum' } },
@@ -297,7 +305,7 @@ export const SPEC_TYPES = [
     {
         id: 'shoe', label: 'Shoe',
         categories: ['Shoes', 'Shoe', 'Footwear', 'Trail Runners', 'Trail Runner', 'Trail Shoes', 'Hiking Shoes', 'Boots', 'Hiking Boots', 'Sandals', 'Camp Shoes'],
-        fields: ['shoe_type', 'gender', 'drop', 'stack_height', 'waterproof', 'shoe_width'],
+        fields: ['shoe_type', 'gender', 'drop', 'stack_height', 'waterproof', 'shoe_width', 'upper', 'outsole'],
     },
     {
         id: 'poles', label: 'Trekking poles', categories: ['Trekking Poles', 'Trekking Pole', 'Poles', 'Hiking Poles'],

@@ -262,6 +262,8 @@
   "spec.stack_height": "Hauteur de semelle",
   "spec.waterproof": "Imperméable",
   "spec.shoe_width": "Largeur",
+  "spec.upper": "Tige",
+  "spec.outsole": "Semelle",
   "spec.pole_material": "Matériau",
   "spec.pole_adjust": "Longueur",
   "spec.pole_lock": "Blocage",

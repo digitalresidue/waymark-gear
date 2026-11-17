@@ -348,3 +348,34 @@ test('Pack lists its pack types as sub-items: on the Explore page and over the P
     await page.locator('input[name="pack_type"][value="fastpack"]').check();
     await expect(page.locator('[data-subtype][aria-current="true"]')).toHaveCount(0);
 });
+
+test('shoes carry their upper and sole: imported, filtered on Explore, shown on the gear page', async ({ page, browser }, testInfo) => {
+    const owner = await (await browser.newContext()).newPage();
+    const username = `wge2eowner${testInfo.workerIndex}`;
+    const r = await owner.request.post(url('/register'), { data: { username, email: `${username}@example.com`, password: 'testtest' } });
+    if (r.status() !== 200) expect((await owner.request.post(url('/signin'), { data: { username, password: 'testtest' } })).status()).toBe(200);
+    const b = `Sh${Date.now().toString(36)}`;
+    const csv = ['sku,name,brand,category,weight,unit,price,status,upper,outsole',
+        `${b}-1,${b} Mesh runner,${b},Shoes,10,oz,140,published,Engineered mesh,Vibram Megagrip`,
+        `${b}-2,${b} Leather boot,${b},Shoes,24,oz,220,published,Nubuck,Contagrip`].join('\n');
+    const res = await owner.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } });
+    expect(res.ok()).toBe(true);
+    await owner.context().close();
+
+    await page.goto(url('/explore/shoes'));
+    const card = (name: string) => page.getByTestId('explore-item').filter({ hasText: name });
+    await expect(card(`${b} Mesh runner`)).toBeVisible();
+    // Upper is a choice: tick Leather, and only the leather boot stays.
+    await page.locator('input[name="upper"][value="leather"]').check();
+    await expect(card(`${b} Leather boot`)).toBeVisible();
+    await expect(card(`${b} Mesh runner`)).toBeHidden();
+    await expect(page).toHaveURL(/upper=leather/);
+
+    // The gear page lists both.
+    await card(`${b} Leather boot`).getByRole('link').first().click();
+    const specs = page.getByTestId('gear-specs');
+    await expect(specs).toContainText('Upper');
+    await expect(specs).toContainText('Leather');
+    await expect(specs).toContainText('Sole');
+    await expect(specs).toContainText('Contagrip');
+});

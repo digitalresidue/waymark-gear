@@ -64,6 +64,16 @@ describe('reading values', () => {
         assert.ok(readSpec('pitch', 'floaty').error);
     });
 
+    test('shoe upper and sole', () => {
+        assert.deepEqual(readSpec('upper', 'Engineered mesh'), { value: 'mesh' });
+        assert.deepEqual(readSpec('upper', 'Nubuck leather'), { value: 'leather' });
+        assert.deepEqual(readSpec('upper', 'DCF'), { value: 'dyneema' });
+        assert.ok(readSpec('upper', 'cardboard').error);
+        assert.deepEqual(readSpec('outsole', '  Vibram   Megagrip '), { value: 'Vibram Megagrip' });
+        assert.equal(readSpec('outsole', 'x'.repeat(80)).value.length, 40);
+        assert.deepEqual(SPEC_TYPES.find((t) => t.id === 'shoe').fields.slice(-2), ['upper', 'outsole']);
+    });
+
     test('pack type and fabric', () => {
         assert.deepEqual(readSpec('pack_type', 'Fast pack'), { value: 'fastpack' });
         assert.deepEqual(readSpec('pack_type', 'running vest'), { value: 'hydration_vest' });

@@ -262,6 +262,8 @@
   "spec.stack_height": "Zoolhoogte",
   "spec.waterproof": "Waterdicht",
   "spec.shoe_width": "Breedte",
+  "spec.upper": "Bovenwerk",
+  "spec.outsole": "Zool",
   "spec.pole_material": "Materiaal",
   "spec.pole_adjust": "Lengte",
   "spec.pole_lock": "Vergrendeling",

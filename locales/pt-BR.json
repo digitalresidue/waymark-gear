@@ -262,6 +262,8 @@
   "spec.stack_height": "Altura do solado",
   "spec.waterproof": "Impermeável",
   "spec.shoe_width": "Largura",
+  "spec.upper": "Cabedal",
+  "spec.outsole": "Sola",
   "spec.pole_material": "Material",
   "spec.pole_adjust": "Comprimento",
   "spec.pole_lock": "Trava",

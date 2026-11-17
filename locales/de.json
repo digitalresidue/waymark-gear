@@ -262,6 +262,8 @@
   "spec.stack_height": "Sohlenhöhe",
   "spec.waterproof": "Wasserdicht",
   "spec.shoe_width": "Weite",
+  "spec.upper": "Obermaterial",
+  "spec.outsole": "Sohle",
   "spec.pole_material": "Material",
   "spec.pole_adjust": "Länge",
   "spec.pole_lock": "Verschluss",
