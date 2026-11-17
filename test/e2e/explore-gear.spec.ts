@@ -13,14 +13,14 @@ async function seed(browser: Browser, workerIndex: number, brand: string) {
     const username = `wge2eowner${workerIndex}`;
     const r = await page.request.post(url('/register'), { data: { username, email: `${username}@example.com`, password: 'testtest' } });
     if (r.status() !== 200) expect((await page.request.post(url('/signin'), { data: { username, password: 'testtest' } })).status()).toBe(200);
-    const head = 'sku,name,brand,category,weight,unit,price,status,capacity,pitch,trail_weight,temp_limit,insulation,fill_power';
+    const head = 'sku,name,brand,category,weight,unit,price,status,capacity,pitch,trail_weight,temp_limit,insulation,fill_power,tarp_shape';
     const csv = [head,
-        `${brand}-1,Pole tent,${brand},Tent,20,oz,500,published,1P,Trekking pole,20 oz,,,`,
-        `${brand}-2,Free tent,${brand},Tent,56,oz,300,published,2P,Freestanding,56 oz,,,`,
-        `${brand}-3,Big tarp,${brand},Tarp,10,oz,120,published,,,,,,`,
-        `${brand}-4,Warm quilt,${brand},Top Quilt,22,oz,400,published,,,,20F,Down,850,`,
-        `${brand}-5,Cheap quilt,${brand},Top Quilt,30,oz,150,published,,,,30F,Down,650,`,
-        `${brand}-6,Heavy quilt,${brand},Top Quilt,90,oz,350,published,,,,0F,Down,800,`,
+        `${brand}-1,Pole tent,${brand},Tent,20,oz,500,published,1P,Trekking pole,20 oz,,,,`,
+        `${brand}-2,Free tent,${brand},Tent,56,oz,300,published,2P,Freestanding,56 oz,,,,`,
+        `${brand}-3,Big tarp,${brand},Tarp,10,oz,120,published,,,,,,,Flat`,
+        `${brand}-4,Warm quilt,${brand},Top Quilt,22,oz,400,published,,,,20F,Down,850,,`,
+        `${brand}-5,Cheap quilt,${brand},Top Quilt,30,oz,150,published,,,,30F,Down,650,,`,
+        `${brand}-6,Heavy quilt,${brand},Top Quilt,90,oz,350,published,,,,0F,Down,800,,`,
     ].join('\n');
     expect((await page.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } })).ok()).toBe(true);
     await page.context().close();
@@ -103,7 +103,7 @@ test('kits moved to /kits; old Explore kit links still land there', async ({ pag
     await expect(page.getByTestId('nav-kits')).toHaveAttribute('href', '/kits');
 });
 
-test('packs offer pack weight, max carry, volume, straps, frame, roll top and adjustable torso, even before specs are filled in', async ({ browser }, testInfo) => {
+test('packs offer pack weight, max carry, volume, straps, frame, roll top and adjustable torso, in that order, and only options some pack has', async ({ browser }, testInfo) => {
     const page = await (await browser.newContext()).newPage();
     const username = `wge2eowner${testInfo.workerIndex}`;
     const r = await page.request.post(url('/register'), { data: { username, email: `${username}@example.com`, password: 'testtest' } });
@@ -117,14 +117,16 @@ test('packs offer pack weight, max carry, volume, straps, frame, roll top and ad
     expect((await page.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } })).ok()).toBe(true);
 
     await page.goto(url(`/explore/pack?brand=${brand.toLowerCase()}`));
-    // In this order: brand, then weight, price and the specs. (No category
-    // box: Pack's type chips over the results stand in for it.)
+    // In this order: weight, price and the specs. (No category
+    // box: Pack's type chips over the results stand in for it.) Other tests'
+    // packs may add filters (fit, hip belt), so check the order of ours.
     const labels = await page.locator('#wgGearFilters .wgFilter').evaluateAll((els) => els.map((e) => (e.querySelector('legend, .wgFilterLabel') || {}).textContent?.trim()));
-    expect(labels.slice(0, 15)).toEqual(['Brand', 'Pack weight', 'Price', 'Volume', 'Max carry weight', 'Fit for', 'Pack type', 'Frame', 'Shoulder straps', 'Hip belt', 'Roll top', 'Adjustable torso', 'Fabric']);
-    // Every strap style is listed; ones nothing has yet can't be picked.
+    const ours = ['Pack weight', 'Price', 'Volume', 'Max carry weight', 'Pack type', 'Frame', 'Shoulder straps', 'Roll top', 'Adjustable torso', 'Fabric'];
+    expect(labels.filter((l) => ours.includes(l!))).toEqual(ours);
+    // Only strap styles some pack has: none greyed out at 0.
     const straps = page.getByTestId('filter-strap_type');
-    await expect(straps.locator('input')).toHaveCount(4);
-    await expect(straps.locator('input[value="other"]')).toBeDisabled();
+    await expect(straps.locator('input[value="j_curve"]')).toBeEnabled();
+    await expect(straps.locator('input:disabled')).toHaveCount(0);
 
     // Hydration vests sit under Pack, with a pack type of their own.
     await page.getByTestId('filter-pack_type').locator('input[value="hydration_vest"]').check();
@@ -144,8 +146,8 @@ test('packs offer pack weight, max carry, volume, straps, frame, roll top and ad
     await slide(page, 'range-volume-min', 50);
     expect(await names(page)).toEqual(['Framed 55']);
     await expect(page.getByTestId('range-volume').locator('output')).toContainText('At least 50 L');
-    await page.getByTestId('explore-clear').click();
-    await page.locator(`input[name="brand"][value="${brand.toLowerCase()}"]`).check();
+    // Back to just this brand by link: with one brand in the catalog there's no Brand box.
+    await page.goto(url(`/explore/pack?brand=${brand.toLowerCase()}`));
     await page.getByTestId('filter-roll_top').locator('input[value="true"]').check();
     expect(await names(page)).toEqual(['Frameless 40']);
     await page.context().close();
@@ -226,18 +228,16 @@ test('spec filters follow the ticked categories: Tent in Shelter drops the tarp 
     // Shelter as a whole: a tent's and a tarp's filters.
     await expect(tent).toBeVisible();
     await expect(tarp).toBeVisible();
-    await expect(page.getByTestId('range-tie_outs')).toBeVisible();
 
     // A tarp filter set, then Tent ticked: only a tent's filters, and the
     // tarp one is gone from the link.
-    await slide(page, 'range-tie_outs-min', 8);
-    expect(page.url()).toContain('tie_outs_min=8');
+    await tarp.locator('input[value="rectangular"]').check();
+    expect(page.url()).toContain('tarp_shape=rectangular');
     await page.locator('input[name="cat"][value="tent"]').check();
     await expect(tarp).toBeHidden();
-    await expect(page.getByTestId('range-tie_outs')).toBeHidden();
     await expect(tent).toBeVisible();
     await expect(page.getByTestId('filter-pitch')).toBeVisible();
-    expect(page.url()).not.toContain('tie_outs');
+    expect(page.url()).not.toContain('tarp_shape');
     expect(page.url()).toContain('cat=tent');
     expect(await names(page)).toEqual(expect.arrayContaining(['Pole tent', 'Free tent']));
     // Both ticked: both kinds' filters; none ticked: all of Shelter's.
@@ -248,7 +248,7 @@ test('spec filters follow the ticked categories: Tent in Shelter drops the tarp 
     await expect(tent).toBeVisible();
 
     // A link with Tent ticked opens that way, and drops a tarp spec it carries.
-    await page.goto(url('/explore/shelter?cat=tent&tie_outs_min=8'));
+    await page.goto(url('/explore/shelter?cat=tent&tarp_shape=rectangular'));
     await expect(tarp).toBeHidden();
     await expect(tent).toBeVisible();
     await expect(page.locator('[data-filter-count]')).toHaveText('(1)');

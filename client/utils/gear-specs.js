@@ -209,6 +209,9 @@ export const SPEC_FIELDS = {
         aliases: { engineeredmesh: 'mesh', airmesh: 'mesh', engineeredknit: 'knit', fullgrainleather: 'leather', fullgrain: 'leather', nubuck: 'leather', nubuckleather: 'leather', suedeleather: 'suede', dcf: 'dyneema', dyneemacomposite: 'dyneema', synthetics: 'synthetic' },
     },
     outsole: { label: 'Sole', kind: 'text', max: 40, placeholder: 'e.g. Vibram Megagrip' },
+    toe_bumper: { label: 'Toe bumper', ...yesNo },
+    // Hook-and-loop on the shoe: a heel tab for gaiters, or the closure.
+    velcro: { label: 'Velcro', ...yesNo },
 
     // Trekking poles
     pole_material: { label: 'Material', ...choice([['carbon', 'Carbon'], ['aluminum', 'Aluminum'], ['mixed', 'Carbon and aluminum']]), aliases: { carbonfiber: 'carbon', aluminium: 'aluminum' } },
@@ -305,7 +308,7 @@ export const SPEC_TYPES = [
     {
         id: 'shoe', label: 'Shoe',
         categories: ['Shoes', 'Shoe', 'Footwear', 'Trail Runners', 'Trail Runner', 'Trail Shoes', 'Hiking Shoes', 'Boots', 'Hiking Boots', 'Sandals', 'Camp Shoes'],
-        fields: ['shoe_type', 'gender', 'drop', 'stack_height', 'waterproof', 'shoe_width', 'upper', 'outsole'],
+        fields: ['shoe_type', 'gender', 'drop', 'stack_height', 'waterproof', 'shoe_width', 'upper', 'outsole', 'toe_bumper', 'velcro'],
     },
     {
         id: 'poles', label: 'Trekking poles', categories: ['Trekking Poles', 'Trekking Pole', 'Poles', 'Hiking Poles'],

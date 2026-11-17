@@ -264,6 +264,8 @@
   "spec.shoe_width": "Horma",
   "spec.upper": "Parte superior",
   "spec.outsole": "Suela",
+  "spec.toe_bumper": "Puntera protectora",
+  "spec.velcro": "Velcro",
   "spec.pole_material": "Material",
   "spec.pole_adjust": "Longitud",
   "spec.pole_lock": "Cierre",

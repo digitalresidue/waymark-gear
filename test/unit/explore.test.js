@@ -70,26 +70,29 @@ describe('filters', () => {
         assert.ok(f.weight.min <= 250 && f.weight.max >= 1400);
         assert.ok(f.price.min <= 449 && f.price.max >= 699);
         const pitch = f.specs.find((s) => s.key === 'pitch');
-        // Every option, in order; ones nothing has yet count 0.
-        assert.deepEqual(pitch.options.map((o) => [o.label, o.count]), [['Trekking pole', 2], ['Semi-freestanding', 0], ['Freestanding', 1]]);
+        // The options some gear has, in the field's order; none at 0.
+        assert.deepEqual(pitch.options.map((o) => [o.label, o.count]), [['Trekking pole', 2], ['Freestanding', 1]]);
         assert.equal(f.specs.find((s) => s.key === 'trail_weight').kind, 'range');
     });
 
-    test('a section offers its gear type\'s filters before any gear has those specs', () => {
+    test('a section offers only what its gear has: no options at 0, no empty specs', () => {
         const packs = [
-            { id: 'p1', name: 'Arc', brand: 'Zpacks', category: 'Packs', weightMg: 600000, price: 300, specs: {} },
-            { id: 'p2', name: 'Mariposa', brand: 'Gossamer', category: 'Packs', weightMg: 900000, price: 280, specs: {} },
+            { id: 'p1', name: 'Arc', brand: 'Zpacks', category: 'Packs', weightMg: 600000, price: 300, specs: { volume: 40, strap_type: 'j_curve', roll_top: true } },
+            { id: 'p2', name: 'Mariposa', brand: 'Gossamer', category: 'Packs', weightMg: 900000, price: 280, specs: { volume: 60, strap_type: 's_curve' } },
+            { id: 'p3', name: 'Vest', brand: 'X', category: 'Hydration Vest', weightMg: 300000, price: 160, specs: {} },
         ].map(filterItem);
-        assert.deepEqual(facetsFor(packs).specs, [], 'without the section, nothing to offer');
-        const f = facetsFor(packs, { categories: ['Packs'] });
-        // Fabric is free words: offered once some pack says one.
-        assert.deepEqual(f.specs.map((x) => x.key), ['volume', 'max_carry', 'gender', 'pack_type', 'frame', 'strap_type', 'hip_belt', 'roll_top', 'adjustable_torso']);
-        assert.deepEqual(f.specs.find((x) => x.key === 'pack_type').options.map((o) => o.label), ['Pack', 'Fastpack', 'Hydration vest']);
+        const f = facetsFor(packs, { categories: ['Packs', 'Hydration Vest'] });
+        // Pack type comes from the categories; nothing says frame, hip belt...
+        assert.deepEqual(f.specs.map((x) => x.key), ['volume', 'pack_type', 'strap_type', 'roll_top']);
+        assert.deepEqual(f.specs.find((x) => x.key === 'pack_type').options.map((o) => [o.label, o.count]), [['Pack', 2], ['Hydration vest', 1]]);
+        assert.deepEqual(f.specs.find((x) => x.key === 'strap_type').options.map((o) => [o.label, o.count]), [['J-curve', 1], ['S-curve', 1]]);
+        // One option, but some packs don't say: still worth a filter.
+        assert.deepEqual(f.specs.find((x) => x.key === 'roll_top').options.map((o) => o.label), ['Yes']);
         const volume = f.specs.find((x) => x.key === 'volume');
         assert.equal(volume.kind, 'range');
-        assert.ok(volume.min <= 10 && volume.max >= 90);
-        assert.deepEqual(f.specs.find((x) => x.key === 'strap_type').options.map((o) => [o.label, o.count]), [['J-curve', 0], ['S-curve', 0], ['Vest', 0], ['Other', 0]]);
-        assert.deepEqual(f.specs.find((x) => x.key === 'roll_top').options.map((o) => o.label), ['Yes', 'No']);
+        assert.ok(volume.min <= 40 && volume.max >= 60);
+        // Nothing to go on: nothing offered.
+        assert.deepEqual(facetsFor(packs.slice(2), { categories: ['Hydration Vest'] }).specs, []);
     });
 
     test('fabric: the fabrics the catalog has, matched without regard to case', () => {

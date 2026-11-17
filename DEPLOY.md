@@ -529,6 +529,8 @@ sheet without spec columns leaves specs as they are.
 | `shoe_width` | Width | Narrow / Regular / Wide |
 | `upper` | Upper | Mesh / Knit / Synthetic / Leather / Suede / Dyneema |
 | `outsole` | Sole | free text, up to 40 characters (filters ignore capitals) |
+| `toe_bumper` | Toe bumper | yes / no |
+| `velcro` | Velcro | yes / no |
 
 **Trekking poles** (category "Trekking Poles", "Trekking Pole", "Poles", "Hiking Poles", any spelling or plural)
 

@@ -261,6 +261,8 @@
   "spec.shoe_width": "鞋楦宽度",
   "spec.upper": "鞋面",
   "spec.outsole": "鞋底",
+  "spec.toe_bumper": "护趾",
+  "spec.velcro": "魔术贴",
   "spec.pole_material": "材质",
   "spec.pole_adjust": "长度",
   "spec.pole_lock": "锁定方式",

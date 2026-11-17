@@ -264,6 +264,8 @@
   "spec.shoe_width": "Breedte",
   "spec.upper": "Bovenwerk",
   "spec.outsole": "Zool",
+  "spec.toe_bumper": "Neusbescherming",
+  "spec.velcro": "Klittenband",
   "spec.pole_material": "Materiaal",
   "spec.pole_adjust": "Lengte",
   "spec.pole_lock": "Vergrendeling",

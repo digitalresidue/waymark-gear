@@ -270,6 +270,8 @@
   "spec.shoe_width": "Szerokość",
   "spec.upper": "Cholewka",
   "spec.outsole": "Podeszwa",
+  "spec.toe_bumper": "Ochrona palców",
+  "spec.velcro": "Rzep",
   "spec.pole_material": "Materiał",
   "spec.pole_adjust": "Długość",
   "spec.pole_lock": "Blokada",

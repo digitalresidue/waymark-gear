@@ -264,6 +264,8 @@
   "spec.shoe_width": "Largura",
   "spec.upper": "Cabedal",
   "spec.outsole": "Sola",
+  "spec.toe_bumper": "Biqueira",
+  "spec.velcro": "Velcro",
   "spec.pole_material": "Material",
   "spec.pole_adjust": "Comprimento",
   "spec.pole_lock": "Trava",
