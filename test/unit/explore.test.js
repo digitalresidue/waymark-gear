@@ -36,7 +36,7 @@ describe('the category index', () => {
         assert.equal(parentOf('Accessories'), null);
         // On Explore: pants, shorts, gloves and fanny packs under Clothing;
         // bug nets under Shelter.
-        for (const c of ['Pants', 'Shorts', 'Gloves', 'Fanny']) assert.equal(parentOf(c), 'clothing', c);
+        for (const c of ['Pants', 'Shorts', 'Gloves', 'Fanny', 'Dress', 'Dresses', 'Kilt', 'Skirts', 'Skort']) assert.equal(parentOf(c), 'clothing', c);
         assert.equal(parentOf('Bug Net'), 'shelter');
         assert.equal(parentOf('Bugnet'), 'shelter');
         // Lights & Electronics: headlamps, watches, cables, chargers and kin.
