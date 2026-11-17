@@ -93,7 +93,8 @@ export const DEFAULT_GROUPS = [
         types: ['Base Layer', 'Mid Layer', 'Outer Layer', 'Insulation', 'Insulating Layer', 'Shell',
             'Rain Gear', 'Rainwear', 'Rain Jacket', 'Rain Shell', 'Wind Shell', 'Wind Layer', 'Outerwear',
             'Socks', 'Shoes', 'Footwear', 'Hat', 'Underwear',
-            'Pants', 'Trousers', 'Shorts', 'Gloves', 'Mittens', 'Fanny', 'Fanny Pack'],
+            'Pants', 'Trousers', 'Shorts', 'Gloves', 'Mittens', 'Fanny', 'Fanny Pack',
+            'Dress', 'Dresses', 'Kilt', 'Skirt', 'Skort'],
         // Any "... Layer" too.
         also: (k) => /layer$/.test(k),
     },

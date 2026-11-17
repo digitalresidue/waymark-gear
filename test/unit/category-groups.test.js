@@ -90,8 +90,8 @@ describe('defaultGroupFor', () => {
             assert.equal(defaultGroupFor(t), CLOTHING_GROUP, t);
         }
     });
-    test('pants, shorts, gloves and fanny packs are Clothing; bug nets are Shelter', () => {
-        for (const t of ['Pants', 'Pant', 'Trousers', 'Shorts', 'Gloves', 'Glove', 'Mittens', 'Fanny', 'Fanny Pack', 'Fanny Packs']) {
+    test('pants, shorts, gloves, fanny packs, dresses, kilts and skirts are Clothing; bug nets are Shelter', () => {
+        for (const t of ['Pants', 'Pant', 'Trousers', 'Shorts', 'Gloves', 'Glove', 'Mittens', 'Fanny', 'Fanny Pack', 'Fanny Packs', 'Dress', 'Dresses', 'Kilt', 'Kilts', 'Skirt', 'Skirts', 'Skort']) {
             assert.equal(defaultGroupFor(t), CLOTHING_GROUP, t);
         }
         for (const t of ['Bug Net', 'Bug Nets', 'Bugnet', 'Bug Netting', 'Mosquito Net']) {
