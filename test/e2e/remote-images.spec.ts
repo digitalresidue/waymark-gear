@@ -2,6 +2,8 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import crypto from 'node:crypto';
+import zlib from 'node:zlib';
 import { test, expect, Browser } from '@playwright/test';
 
 import { registerUser, generateTestUser } from './auth-utils';
@@ -15,6 +17,23 @@ import { testRoot } from './utils';
 const url = (p: string) => new URL(p, testRoot).toString();
 // 1200×630, served by the app itself.
 const BIG = () => url('/images/og-image.png');
+
+// A PNG of random pixels, stored uncompressed, so it's about side² × 3 bytes.
+function noisePng(side: number) {
+    const chunk = (type: string, data: Buffer) => {
+        const len = Buffer.alloc(4); len.writeUInt32BE(data.length);
+        const crc = Buffer.alloc(4); crc.writeUInt32BE(zlib.crc32(Buffer.concat([Buffer.from(type), data])));
+        return Buffer.concat([len, Buffer.from(type), data, crc]);
+    };
+    const head = Buffer.alloc(13);
+    head.writeUInt32BE(side, 0); head.writeUInt32BE(side, 4); head[8] = 8; head[9] = 2;
+    const rows = [];
+    for (let y = 0; y < side; y++) rows.push(Buffer.from([0]), crypto.randomBytes(side * 3));
+    return Buffer.concat([
+        Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+        chunk('IHDR', head), chunk('IDAT', zlib.deflateSync(Buffer.concat(rows), { level: 0 })), chunk('IEND', Buffer.alloc(0)),
+    ]);
+}
 
 async function owner(browser: Browser, workerIndex: number) {
     const context = await browser.newContext();
@@ -134,11 +153,16 @@ test.describe('Image links are copied, not hotlinked', () => {
         const png = fs.readFileSync(path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../public/images/icon-192.png'));
         // A different picture, so its copy gets a different link.
         const other = fs.readFileSync(path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../public/images/icon-512.png'));
+        const bigPng = noisePng(1800);
         let asks = 0;
         const site = http.createServer((req, res) => {
             if (req.url!.startsWith('/waf')) {
                 res.writeHead(202, { 'x-amzn-waf-action': 'challenge', 'content-type': 'text/html' });
                 return res.end('<html>challenge</html>');
+            }
+            if (req.url!.startsWith('/big')) {
+                res.writeHead(200, { 'content-type': 'image/png' });
+                return res.end(bigPng);
             }
             if (req.url!.startsWith('/slow') && asks++ < 2) {
                 res.writeHead(202, { 'retry-after': '0' });
@@ -162,6 +186,10 @@ test.describe('Image links are copied, not hotlinked', () => {
             expect(slow.status()).toBe(201);
             expect((await slow.json()).item.imageUrl).toMatch(/^\/userimages\/.+\.webp$/);
 
+            // A big shop photo (over 9 MB) by link is copied too.
+            const bigLink = await make(`Big pack ${tag}`, `${base}/big/${tag}.png`);
+            expect(bigLink.status()).toBe(201);
+
             // Upload instead: onto an item, and from the editor's button.
             const plain = await (await make(`Upload tent ${tag}`, '')).json();
             const up = await o.page.request.post(url(`/api/admin/catalog/photo?id=${plain.item.id}`), { multipart: { image: { name: 'tent.png', mimeType: 'image/png', buffer: png } } });
@@ -172,6 +200,17 @@ test.describe('Image links are copied, not hotlinked', () => {
             expect(after.imageUrl).toContain(imageUrl);
             const notImage = await o.page.request.post(url('/api/admin/catalog/photo'), { multipart: { image: { name: 'a.txt', mimeType: 'text/plain', buffer: Buffer.from('hello') } } });
             expect(notImage.status()).toBe(400);
+
+            // Big shop photos (up to 12 MB) are fine: only the 512px copy is kept.
+            const big = noisePng(1800);
+            expect(big.length).toBeGreaterThan(9 * 1024 * 1024);
+            const bigUp = await o.page.request.post(url('/api/admin/catalog/photo'), { multipart: { image: { name: 'big.png', mimeType: 'image/png', buffer: big } } });
+            expect(bigUp.status()).toBe(200);
+            const huge = noisePng(2100);
+            expect(huge.length).toBeGreaterThan(12 * 1024 * 1024);
+            const hugeUp = await o.page.request.post(url('/api/admin/catalog/photo'), { multipart: { image: { name: 'huge.png', mimeType: 'image/png', buffer: huge } } });
+            expect(hugeUp.status()).toBe(413);
+            expect((await hugeUp.json()).message).toContain('12 MB');
 
             await o.page.goto(url('/owner/catalog'));
             await o.page.getByPlaceholder('Search name, brand, SKU').fill(`Slow tent ${tag}`);

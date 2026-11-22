@@ -10,7 +10,7 @@
 //   link-local and other non-public ranges are refused; the connection then
 //   goes to the address we checked, so DNS can't switch it afterwards;
 // - at most 3 redirects, each checked the same way;
-// - 10 s and 8 MB at most, and the bytes must really be a JPEG, PNG or WebP.
+// - 10 s and 12 MB at most, and the bytes must really be a JPEG, PNG or WebP.
 // Tests opt into private addresses with config remoteImages.allowPrivate.
 //
 // A "202 Accepted" means one of two things:
@@ -37,7 +37,8 @@ import config from 'config';
 
 import { sniffImage, storeImageFiles, userImageLocation } from './images.js';
 
-const MAX_BYTES = 8 * 1024 * 1024;
+// Big shop photos are fine: they're shrunk to 512px and the original isn't kept.
+export const MAX_BYTES = 12 * 1024 * 1024;
 const TIMEOUT_MS = 10000;
 const MAX_REDIRECTS = 3;
 export const REMOTE_MAX = 512;
@@ -137,7 +138,7 @@ function get(u, pinned) {
             }
             if (Number(res.headers['content-length']) > MAX_BYTES) {
                 res.destroy();
-                return reject(new RemoteImageError('That image is too large (8 MB max).'));
+                return reject(new RemoteImageError('That image is too large (12 MB max).'));
             }
             const chunks = [];
             let size = 0;
@@ -145,7 +146,7 @@ function get(u, pinned) {
                 size += c.length;
                 if (size > MAX_BYTES) {
                     res.destroy();
-                    reject(new RemoteImageError('That image is too large (8 MB max).'));
+                    reject(new RemoteImageError('That image is too large (12 MB max).'));
                 } else chunks.push(c);
             });
             res.on('end', () => resolve({ body: Buffer.concat(chunks) }));

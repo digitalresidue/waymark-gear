@@ -40,7 +40,7 @@ import { googleEnabled } from './google.js';
 import { logWithRequest, logger } from './log.js';
 import { importRateLimit, ImportError } from './lighterpack.js';
 import { importFromLink } from './import-links.js';
-import { absoluteImageUrl, copyRemoteImage, isLocalImage, localImagePath, localizeCatalogImages, remoteCatalogImageCount, RemoteImageError, storeCopy } from './remote-image.js';
+import { absoluteImageUrl, copyRemoteImage, isLocalImage, localImagePath, localizeCatalogImages, remoteCatalogImageCount, RemoteImageError, storeCopy, MAX_BYTES as REMOTE_MAX_BYTES } from './remote-image.js';
 import fs from 'node:fs';
 import formidable from 'formidable';
 import { sniffImage } from './images.js';
@@ -971,13 +971,13 @@ router.get('/api/admin/catalog/remote-images', admin(async (req, res) => {
 // it (a bot check, say). Stored like a copy: site content, within 512×512.
 // With ?id=, it becomes that item's photo at once; without, the editor gets
 // the link to save with the form.
-const CATALOG_PHOTO_BYTES = 8 * 1024 * 1024;
+const CATALOG_PHOTO_BYTES = REMOTE_MAX_BYTES;
 router.post('/api/admin/catalog/photo', admin(async (req, res, user) => {
     let files;
     try {
         [, files] = await formidable({ maxFileSize: CATALOG_PHOTO_BYTES, maxFiles: 1 }).parse(req);
     } catch (err) {
-        return res.status(err.httpCode === 413 ? 413 : 400).json({ message: err.httpCode === 413 ? 'That photo is too large (8 MB max).' : 'That upload didn\'t come through. Try again.' });
+        return res.status(err.httpCode === 413 ? 413 : 400).json({ message: err.httpCode === 413 ? 'That photo is too large (12 MB max).' : 'That upload didn\'t come through. Try again.' });
     }
     const file = files && (files.image || [])[0];
     if (!file) return res.status(400).json({ message: 'Choose a photo to upload.' });
