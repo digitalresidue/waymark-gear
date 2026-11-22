@@ -22,7 +22,9 @@ export async function recordPrices(ids) {
     const before = new Map(last.map((r) => [r.catalog_id, Number(r.price)]));
     const changed = items.filter((i) => before.get(i.id) !== Number(i.price));
     if (!changed.length) return [];
-    await knex('catalog_price_history').insert(changed.map((i) => ({ catalog_id: i.id, price: i.price, currency: i.currency || 'USD' })));
+    // In batches: one insert of a 25,000-row import's prices is past Postgres's 65,535 parameters.
+    const rows = changed.map((i) => ({ catalog_id: i.id, price: i.price, currency: i.currency || 'USD' }));
+    for (let i = 0; i < rows.length; i += 1000) await knex('catalog_price_history').insert(rows.slice(i, i + 1000));
     const drops = changed.filter((i) => before.has(i.id) && Number(i.price) < before.get(i.id))
         .map((i) => ({ ...i, was: before.get(i.id) }));
     if (drops.length) await alertDrops(drops).catch((err) => logger.error({ message: 'price alert failed', err: { message: err.message } }));

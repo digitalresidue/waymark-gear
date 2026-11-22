@@ -24,7 +24,8 @@ export const CSV_COLUMNS = [
     // fields for the row's type are read ("20F", "14 oz", "Freestanding").
     ...SPEC_KEYS,
 ];
-export const MAX_IMPORT_ROWS = 5000;
+export const MAX_IMPORT_ROWS = 25000;
+const INSERT_BATCH = 500;
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isUuid = (v) => typeof v === 'string' && UUID_RE.test(v);
@@ -406,7 +407,7 @@ export async function planImport(text) {
         return { error: `Could not read the CSV: ${err.message}` };
     }
     if (!records.length) return { error: 'The file has no rows.' };
-    if (records.length > MAX_IMPORT_ROWS) return { error: `Import at most ${MAX_IMPORT_ROWS} rows at a time.` };
+    if (records.length > MAX_IMPORT_ROWS) return { error: `Import at most ${MAX_IMPORT_ROWS.toLocaleString('en-US')} rows at a time.` };
     if (!('name' in records[0])) return { error: 'The header row needs at least a "name" column. Download the template to see every column.' };
 
     const existing = await knex('catalog_items').select('*');
@@ -441,11 +442,14 @@ export async function applyImport(text) {
     if (plan.error) return plan;
     const touched = [];
     await knex.transaction(async (trx) => {
+        // New gear in batches: tens of thousands of rows, one insert each, is slow.
+        const fresh = plan.rows.filter((r) => r.action === 'new').map((r) => r.value);
+        for (let i = 0; i < fresh.length; i += INSERT_BATCH) {
+            const created = await trx('catalog_items').insert(fresh.slice(i, i + INSERT_BATCH)).returning('id');
+            touched.push(...created.map((c) => c.id));
+        }
         for (const row of plan.rows) {
-            if (row.action === 'new') {
-                const [created] = await trx('catalog_items').insert(row.value).returning('id');
-                touched.push(created.id);
-            } else if (row.action === 'update') {
+            if (row.action === 'update') {
                 await trx('catalog_items').where({ id: row.id }).update({ ...row.value, updated_at: trx.fn.now() });
                 touched.push(row.id);
             }

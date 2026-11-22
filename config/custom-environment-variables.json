@@ -23,6 +23,7 @@
         "__format": "number"
     },
     "jsonBodyLimit": "JSON_BODY_LIMIT",
+    "catalogImportBodyLimit": "CATALOG_IMPORT_BODY_LIMIT",
     "rateLimit": {
         "enabled": {
             "__name": "RATE_LIMIT_ENABLED",

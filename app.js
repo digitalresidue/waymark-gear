@@ -116,6 +116,8 @@ app.use((req, _res, next) => {
 const bodyLimit = config.get('jsonBodyLimit');
 // Stripe signs the exact bytes it sends, so this one reads the raw body.
 app.post('/stripe/webhook', express.raw({ type: 'application/json', limit: '1mb' }), stripeWebhook);
+// A catalog import carries the whole CSV (up to 25,000 rows), so it gets more.
+app.use('/api/admin/catalog/import', express.json({ limit: config.get('catalogImportBodyLimit') }));
 app.use(express.json({ limit: bodyLimit }));
 app.use(express.urlencoded({ extended: true, limit: bodyLimit }));
 
