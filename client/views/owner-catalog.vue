@@ -536,8 +536,8 @@ export default {
             const file = evt.target.files && evt.target.files[0];
             evt.target.value = '';
             if (!file) return;
-            if (file.size > 5 * 1024 * 1024) {
-                this.notice = 'That file is over 5 MB. Split it into smaller imports.';
+            if (file.size > 25 * 1024 * 1024) {
+                this.notice = 'That file is over 25 MB. Split it into smaller imports.';
                 return;
             }
             this.importText = await file.text();

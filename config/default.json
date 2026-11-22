@@ -14,6 +14,7 @@
     "migrateOnStart": true,
     "sessionDays": 90,
     "jsonBodyLimit": "10mb",
+    "catalogImportBodyLimit": "40mb",
     "rateLimit": {
         "enabled": true,
         "authWindowMinutes": 15,
