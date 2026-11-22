@@ -12,6 +12,17 @@
 // - at most 3 redirects, each checked the same way;
 // - 10 s and 8 MB at most, and the bytes must really be a JPEG, PNG or WebP.
 // Tests opt into private addresses with config remoteImages.allowPrivate.
+//
+// A "202 Accepted" means one of two things:
+// - a bot check (AWS WAF's challenge, Cloudflare's, SiteGround's...): the
+//   site wants a browser that runs its script, and asking again won't help.
+//   Seen as a challenge header or a web page instead of an image. We say so
+//   and suggest uploading the photo; we don't pretend to be a browser.
+// - an image service still making the image: asked again a few times, a
+//   second or two apart (Retry-After, up to 5 s).
+
+export const MAX_202_TRIES = 3;
+const RETRY_202_MS = 1500;
 
 import dns from 'node:dns/promises';
 import fs from 'node:fs';
@@ -31,7 +42,19 @@ const TIMEOUT_MS = 10000;
 const MAX_REDIRECTS = 3;
 export const REMOTE_MAX = 512;
 
-export class RemoteImageError extends Error {}
+export class RemoteImageError extends Error {
+    constructor(message, { blocked = false } = {}) {
+        super(message);
+        // The site refused automatic downloads: upload the photo instead.
+        this.blocked = blocked;
+    }
+}
+
+// Is this 202 a bot check rather than "still working on it"?
+export function isBotCheck(headers = {}) {
+    const type = String(headers['content-type'] || '').toLowerCase();
+    return Boolean(headers['x-amzn-waf-action'] || headers['cf-mitigated'] || headers['sg-captcha'] || /text\/html/.test(type));
+}
 
 const allowPrivate = () => config.has('remoteImages.allowPrivate') && Boolean(config.get('remoteImages.allowPrivate'));
 
@@ -100,6 +123,14 @@ function get(u, pinned) {
                 res.resume();
                 return resolve({ redirect: new URL(res.headers.location, u) });
             }
+            if (res.statusCode === 202) {
+                res.resume();
+                if (isBotCheck(res.headers)) {
+                    return reject(new RemoteImageError(`${u.hostname} blocks automatic downloads with a bot check (it answered 202). Save the photo from their site and upload it instead.`, { blocked: true }));
+                }
+                const after = Number(res.headers['retry-after']);
+                return resolve({ notYet: Number.isFinite(after) && after >= 0 ? Math.min(after * 1000, 5000) : RETRY_202_MS });
+            }
             if (res.statusCode !== 200) {
                 res.resume();
                 return reject(new RemoteImageError(`The image site answered ${res.statusCode}.`));
@@ -126,13 +157,24 @@ function get(u, pinned) {
     });
 }
 
-export async function downloadImage(raw) {
+const wait = (ms) => new Promise((resolve) => { setTimeout(resolve, ms); });
+
+export async function downloadImage(raw, { retryWait = wait } = {}) {
     let u = checkUrl(raw);
+    let tries = 0;
     for (let hops = 0; hops <= MAX_REDIRECTS; hops++) {
         const pinned = await resolvePublic(u.hostname);
         const r = await get(u, pinned);
         if (r.redirect) {
             u = checkUrl(r.redirect.toString());
+            continue;
+        }
+        if (r.notYet !== undefined) {
+            // Still being made: ask again, a few times, without counting a hop.
+            tries++;
+            if (tries >= MAX_202_TRIES) throw new RemoteImageError('The image site is still preparing that image (it answered 202). Try again in a few minutes, or upload the photo.');
+            await retryWait(r.notYet);
+            hops--;
             continue;
         }
         const sniffed = sniffImage(r.body);
@@ -154,6 +196,15 @@ const SITE_OWNER = 'site-content';
  */
 export async function copyRemoteImage(url, owner) {
     const { buf, sniffed } = await downloadImage(url);
+    return storeCopy(buf, sniffed, owner);
+}
+
+/**
+ * Store image bytes the way copies are stored (fit within 512×512, webp):
+ * a downloaded image, or a photo the owner uploaded for catalog gear when
+ * its site won't let us download it.
+ */
+export async function storeCopy(buf, sniffed, owner) {
     const tmp = path.join(os.tmpdir(), `wg-remote-${process.pid}-${crypto.randomBytes(6).toString('hex')}`);
     fs.writeFileSync(tmp, buf);
     try {
@@ -230,7 +281,7 @@ export function localizeCatalogImages(knex, { log = () => {} } = {}) {
                     await knex('catalog_items').where({ id: row.id, image_url: row.image_url }).update({ image_url: imageUrl, updated_at: knex.fn.now() });
                     result.copied++;
                 } catch (err) {
-                    result.failed.push({ id: row.id, name: [row.brand, row.name].filter(Boolean).join(' '), url: row.image_url, error: err instanceof RemoteImageError ? err.message : 'Couldn\'t copy it.' });
+                    result.failed.push({ id: row.id, name: [row.brand, row.name].filter(Boolean).join(' '), url: row.image_url, error: err instanceof RemoteImageError ? err.message : 'Couldn\'t copy it.', blocked: Boolean(err.blocked) });
                     if (!(err instanceof RemoteImageError)) log(err);
                 }
             }
