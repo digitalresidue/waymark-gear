@@ -40,7 +40,10 @@ import { googleEnabled } from './google.js';
 import { logWithRequest, logger } from './log.js';
 import { importRateLimit, ImportError } from './lighterpack.js';
 import { importFromLink } from './import-links.js';
-import { absoluteImageUrl, copyRemoteImage, isLocalImage, localImagePath, localizeCatalogImages, remoteCatalogImageCount, RemoteImageError } from './remote-image.js';
+import { absoluteImageUrl, copyRemoteImage, isLocalImage, localImagePath, localizeCatalogImages, remoteCatalogImageCount, RemoteImageError, storeCopy } from './remote-image.js';
+import fs from 'node:fs';
+import formidable from 'formidable';
+import { sniffImage } from './images.js';
 import { saveBadges, fetchMissingBadges, badgesFor, domainOf } from './shops.js';
 import { uploadRefusal } from './upload-limits.js';
 
@@ -962,6 +965,39 @@ router.post('/api/admin/catalog/import/apply', requireJson, admin(async (req, re
 router.get('/api/admin/catalog/remote-images', admin(async (req, res) => {
     res.set('Cache-Control', 'no-store');
     res.json({ remaining: await remoteCatalogImageCount(knex) });
+}));
+
+// Upload a photo for catalog gear, for when its site won't let us download
+// it (a bot check, say). Stored like a copy: site content, within 512×512.
+// With ?id=, it becomes that item's photo at once; without, the editor gets
+// the link to save with the form.
+const CATALOG_PHOTO_BYTES = 8 * 1024 * 1024;
+router.post('/api/admin/catalog/photo', admin(async (req, res, user) => {
+    let files;
+    try {
+        [, files] = await formidable({ maxFileSize: CATALOG_PHOTO_BYTES, maxFiles: 1 }).parse(req);
+    } catch (err) {
+        return res.status(err.httpCode === 413 ? 413 : 400).json({ message: err.httpCode === 413 ? 'That photo is too large (8 MB max).' : 'That upload didn\'t come through. Try again.' });
+    }
+    const file = files && (files.image || [])[0];
+    if (!file) return res.status(400).json({ message: 'Choose a photo to upload.' });
+    let buf;
+    try {
+        buf = fs.readFileSync(file.filepath);
+    } finally {
+        fs.rmSync(file.filepath, { force: true });
+    }
+    const sniffed = sniffImage(buf);
+    if (!sniffed) return res.status(400).json({ message: 'That file isn\'t a JPEG, PNG or WebP image.' });
+    const { imageUrl } = await storeCopy(buf, sniffed, 'site');
+    const id = req.query.id ? String(req.query.id) : null;
+    if (id && !catalog.isUuid(id)) return res.status(404).json({ message: 'That gear is gone.' });
+    if (id) {
+        const n = await knex('catalog_items').where({ id }).update({ image_url: imageUrl, updated_at: knex.fn.now() });
+        if (!n) return res.status(404).json({ message: 'That gear is gone.' });
+        logWithRequest(req, { message: 'catalog photo uploaded', id, username: user.username });
+    }
+    res.json({ imageUrl, url: absoluteImageUrl(imageUrl) });
 }));
 
 router.post('/api/admin/catalog/remote-images/copy', admin(async (req, res) => {

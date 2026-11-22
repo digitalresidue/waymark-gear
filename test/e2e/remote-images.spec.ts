@@ -1,3 +1,7 @@
+import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+
 import { test, expect, Browser } from '@playwright/test';
 
 import { registerUser, generateTestUser } from './auth-utils';
@@ -123,5 +127,63 @@ test.describe('Image links are copied, not hotlinked', () => {
     test('the copy endpoint needs an account', async ({ request }) => {
         const r = await request.post(url('/api/images/copy'), { data: { url: BIG() } });
         expect(r.status()).toBe(401);
+    });
+
+    test('a 202 bot check is reported as such, a 202 "not ready yet" is retried, and failed photos can be uploaded', async ({ browser }, testInfo) => {
+        test.setTimeout(60000);
+        const png = fs.readFileSync(path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../public/images/icon-192.png'));
+        // A different picture, so its copy gets a different link.
+        const other = fs.readFileSync(path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../public/images/icon-512.png'));
+        let asks = 0;
+        const site = http.createServer((req, res) => {
+            if (req.url!.startsWith('/waf')) {
+                res.writeHead(202, { 'x-amzn-waf-action': 'challenge', 'content-type': 'text/html' });
+                return res.end('<html>challenge</html>');
+            }
+            if (req.url!.startsWith('/slow') && asks++ < 2) {
+                res.writeHead(202, { 'retry-after': '0' });
+                return res.end();
+            }
+            res.writeHead(200, { 'content-type': 'image/png' });
+            res.end(png);
+        });
+        await new Promise<void>((r) => site.listen(0, '127.0.0.1', () => r()));
+        const base = `http://127.0.0.1:${(site.address() as { port: number }).port}`;
+        try {
+            const o = await owner(browser, testInfo.workerIndex);
+            const tag = `rw${Date.now().toString(36)}`;
+            const make = (name: string, imageUrl: string) => o.page.request.post(url('/api/admin/catalog'), { data: { name, category: 'Shelter', weight: '20', unit: 'oz', status: 'published', imageUrl } });
+
+            const waf = await make(`Waf tent ${tag}`, `${base}/waf/${tag}.png`);
+            expect(waf.status()).toBe(400);
+            expect(JSON.stringify(await waf.json())).toContain('blocks automatic downloads with a bot check');
+
+            const slow = await make(`Slow tent ${tag}`, `${base}/slow/${tag}.png`);
+            expect(slow.status()).toBe(201);
+            expect((await slow.json()).item.imageUrl).toMatch(/^\/userimages\/.+\.webp$/);
+
+            // Upload instead: onto an item, and from the editor's button.
+            const plain = await (await make(`Upload tent ${tag}`, '')).json();
+            const up = await o.page.request.post(url(`/api/admin/catalog/photo?id=${plain.item.id}`), { multipart: { image: { name: 'tent.png', mimeType: 'image/png', buffer: png } } });
+            expect(up.status()).toBe(200);
+            const { imageUrl } = await up.json();
+            expect(imageUrl).toMatch(/^\/userimages\/.+\.webp$/);
+            const after = (await (await o.page.request.get(url(`/api/admin/catalog?q=${encodeURIComponent(`Upload tent ${tag}`)}`))).json()).items[0];
+            expect(after.imageUrl).toContain(imageUrl);
+            const notImage = await o.page.request.post(url('/api/admin/catalog/photo'), { multipart: { image: { name: 'a.txt', mimeType: 'text/plain', buffer: Buffer.from('hello') } } });
+            expect(notImage.status()).toBe(400);
+
+            await o.page.goto(url('/owner/catalog'));
+            await o.page.getByPlaceholder('Search name, brand, SKU').fill(`Slow tent ${tag}`);
+            await o.page.getByRole('button', { name: `Edit Slow tent ${tag}`, exact: true }).click();
+            const field = o.page.getByTestId('catalog-image-url');
+            const before = await field.inputValue();
+            await o.page.getByTestId('catalog-photo-upload').setInputFiles({ name: 'tent.png', mimeType: 'image/png', buffer: other });
+            await expect(field).not.toHaveValue(before);
+            await expect(field).toHaveValue(/\/userimages\/.+\.webp$/);
+            await o.context.close();
+        } finally {
+            site.close();
+        }
     });
 });

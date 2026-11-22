@@ -39,8 +39,15 @@
                         </template>
                     </p>
                     <ul v-if="copyResult && copyResult.failed.length" class="wgImportErrors">
-                        <li v-for="f in copyResult.failed" :key="f.id">
+                        <li v-for="f in copyResult.failed" :key="f.id" :data-testid="`remote-image-failed-${f.id}`">
                             <strong>{{ f.name }}</strong>: {{ f.error }}
+                            <!-- Their site won't let us download it: the owner saves it
+                                 in their own browser and uploads it here. -->
+                            <span v-if="f.uploaded" class="wgMuted" data-testid="remote-image-uploaded"> Uploaded.</span>
+                            <label v-else class="wgBtn wgBtnSmall wgUploadPhoto">
+                                {{ f.uploading ? 'Uploading…' : 'Upload photo' }}
+                                <input type="file" accept="image/jpeg,image/png,image/webp" class="wgVisuallyHidden" :disabled="f.uploading" :data-testid="`remote-image-upload-${f.id}`" @change="uploadFor(f, $event)">
+                            </label>
                         </li>
                     </ul>
                     <button v-if="remoteImages" type="button" class="wgBtn wgBtnSmall wgBtnPrimary" :disabled="copyingImages" data-testid="remote-images-copy" @click="copyRemoteImages">
@@ -290,9 +297,20 @@
                         <p v-else-if="form.category" class="wgSpan2 wgMuted wgSpecsNone" data-testid="catalog-specs-none">
                             No specs for {{ form.category }} yet. Specs come with these categories: {{ specCategories }}.
                         </p>
-                        <label class="wgField wgSpan2">Photo URL <span class="wgMuted">(copied here on save, up to 512px, so their site isn't hotlinked)</span>
-                            <input v-model="form.imageUrl" class="wgInput" type="url" placeholder="https://" data-testid="catalog-image-url">
-                        </label>
+                        <div class="wgField wgSpan2">
+                            <label for="wgCatalogImageUrl">Photo URL <span class="wgMuted">(copied here on save, up to 512px, so their site isn't hotlinked)</span></label>
+                            <div class="wgPhotoRow">
+                                <input id="wgCatalogImageUrl" v-model="form.imageUrl" class="wgInput" type="url" placeholder="https://" data-testid="catalog-image-url">
+                                <!-- When a site blocks downloads (a bot check), upload the photo. -->
+                                <label class="wgBtn wgBtnSmall wgUploadPhoto">
+                                    {{ uploadingPhoto ? 'Uploading…' : 'Upload photo' }}
+                                    <input type="file" accept="image/jpeg,image/png,image/webp" class="wgVisuallyHidden" :disabled="uploadingPhoto" data-testid="catalog-photo-upload" @change="uploadPhoto">
+                                </label>
+                            </div>
+                            <p v-if="photoError" class="wgImportError" role="alert" data-testid="catalog-photo-error">
+                                {{ photoError }}
+                            </p>
+                        </div>
                         <label class="wgField wgSpan2">Tags <span class="wgMuted">(separate with ;)</span>
                             <input v-model="form.tags" class="wgInput">
                         </label>
@@ -363,6 +381,8 @@ export default {
     components: { siteHeader, siteFooter, ownerNav, modal },
     data() {
         return {
+            uploadingPhoto: false,
+            photoError: '',
             items: [],
             total: 0,
             loaded: false,
@@ -461,6 +481,7 @@ export default {
         openEditor(item) {
             this.editing = item;
             this.formError = '';
+            this.photoError = '';
             this.form = item ? {
                 ...emptyForm(),
                 ...item,
@@ -564,11 +585,47 @@ export default {
                 this.remoteImages = 0;
             }
         },
+        // A photo file for catalog gear: stored here like a copy (512px).
+        async sendPhoto(file, id) {
+            const body = new FormData();
+            body.append('image', file);
+            const res = await fetch(`/api/admin/catalog/photo${id ? `?id=${encodeURIComponent(id)}` : ''}`, { method: 'POST', body, credentials: 'same-origin' });
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(json.message || 'That photo could not be uploaded.');
+            return json;
+        },
+        async uploadPhoto(evt) {
+            const file = evt.target.files && evt.target.files[0];
+            evt.target.value = '';
+            if (!file) return;
+            this.uploadingPhoto = true;
+            this.photoError = '';
+            try {
+                this.form.imageUrl = (await this.sendPhoto(file)).url;
+            } catch (err) {
+                this.photoError = err.message;
+            }
+            this.uploadingPhoto = false;
+        },
+        async uploadFor(failed, evt) {
+            const file = evt.target.files && evt.target.files[0];
+            evt.target.value = '';
+            if (!file) return;
+            failed.uploading = true;
+            try {
+                await this.sendPhoto(file, failed.id);
+                failed.uploaded = true;
+                this.load(true);
+            } catch (err) {
+                failed.error = err.message;
+            }
+            failed.uploading = false;
+        },
         async copyRemoteImages() {
             this.copyingImages = true;
             try {
                 const r = await api('/api/admin/catalog/remote-images/copy', { method: 'POST' });
-                this.copyResult = r;
+                this.copyResult = { ...r, failed: r.failed.map((f) => ({ ...f, uploading: false, uploaded: false })) };
                 this.remoteImages = r.remaining;
                 this.load(true);
             } catch (err) {
@@ -581,6 +638,22 @@ export default {
 </script>
 
 <style lang="scss">
+.wgPhotoRow {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+
+    .wgInput {
+        flex: 1;
+        min-width: 0;
+    }
+}
+
+.wgUploadPhoto {
+    cursor: pointer;
+    white-space: nowrap;
+}
+
 @import "../css/_globals";
 
 .wgSpecs {

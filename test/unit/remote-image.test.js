@@ -3,9 +3,17 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { isPublicAddress, downloadImage, RemoteImageError } from '../../server/remote-image.js';
+import { isPublicAddress, downloadImage, RemoteImageError, isBotCheck } from '../../server/remote-image.js';
 
 describe('Copying image links', () => {
+    test('a 202 from a bot check is told apart from "still preparing"', () => {
+        assert.equal(isBotCheck({ 'x-amzn-waf-action': 'challenge' }), true);
+        assert.equal(isBotCheck({ 'cf-mitigated': 'challenge' }), true);
+        assert.equal(isBotCheck({ 'content-type': 'text/html; charset=utf-8' }), true);
+        assert.equal(isBotCheck({ 'content-type': 'image/png' }), false);
+        assert.equal(isBotCheck({}), false);
+    });
+
     test('private, loopback and metadata addresses are not public', () => {
         for (const ip of ['127.0.0.1', '10.1.2.3', '172.16.0.1', '172.31.255.255', '192.168.1.1', '169.254.169.254', '100.64.0.1', '0.0.0.0', '224.0.0.1', '::1', '::', 'fd00::1', 'fe80::1', '::ffff:127.0.0.1', '::ffff:10.0.0.1']) {
             assert.equal(isPublicAddress(ip), false, ip);
