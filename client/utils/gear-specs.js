@@ -302,7 +302,7 @@ export const SPEC_TYPES = [
         fields: ['pot_volume', 'material', 'lid', 'measuring_marks'],
     },
     {
-        id: 'filter', label: 'Water filter', categories: ['Water Filter', 'Filter', 'Water Treatment', 'Water Purifier', 'Purifier'],
+        id: 'filter', label: 'Water filter', categories: ['Water Filter', 'Filter', 'Water Treatment', 'Water Purifier', 'Purifier', 'Water Purification', 'Water Filtration', 'Gravity Filter', 'Squeeze Filter'],
         fields: ['filter_type', 'flow_rate', 'pore_size', 'removes_viruses', 'lifespan_l'],
     },
     {
