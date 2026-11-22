@@ -107,7 +107,7 @@ describe('filters', () => {
         assert.deepEqual(packs.filter((i) => matchesFilters(i, f)).map((i) => i.id), ['f1', 'f2']);
         // Fastpacks and hydration vests sit under Pack.
         for (const c of ['Stove', 'Stoves', 'Fuel', 'Lighter', 'Pot', 'Pots', 'Utensil', 'Utensils']) assert.equal(parentOf(c), 'cook-kit', c);
-        for (const c of ['Bottle', 'Water Bottles', 'Bladder', 'Filter', 'Filters']) assert.equal(parentOf(c), 'water', c);
+        for (const c of ['Bottle', 'Water Bottles', 'Bladder', 'Filter', 'Filters', 'Water Filter', 'Water Treatment', 'Water Purifier']) assert.equal(parentOf(c), 'water', c);
         for (const c of ['Suspension', 'Ridgeline', 'Stakes', 'Tent Stakes']) assert.equal(parentOf(c), 'shelter', c);
         assert.equal(parentOf('Fastpack'), 'pack');
         assert.equal(parentOf('Hydration Vests'), 'pack');
@@ -212,5 +212,12 @@ describe('Pack sub-items: pack types', () => {
         const items = ['Pack', 'Pack', 'Fastpack'].map((category, id) => filterItem({ id, category, specs: {} }));
         assert.deepEqual(subtypesOf('pack', items), { key: 'pack_type', options: [{ value: 'pack', name: 'Packs', count: 2 }, { value: 'fastpack', name: 'Fastpacks', count: 1 }] });
         assert.equal(subtypesOf('shelter', items), null);
+    });
+});
+
+describe('Explore: every name a water filter goes by sits under Water', () => {
+    test('each filter spec type category has Water as its parent', async () => {
+        const { SPEC_TYPES } = await import('../../client/utils/gear-specs.js');
+        for (const c of SPEC_TYPES.find((t) => t.id === 'filter').categories) assert.equal(parentOf(c), 'water', c);
     });
 });

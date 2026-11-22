@@ -507,7 +507,7 @@ sheet without spec columns leaves specs as they are.
 | `lid` | Lid | yes / no |
 | `measuring_marks` | Measuring marks | yes / no |
 
-**Water filter** (category "Water Filter", "Filter", "Water Treatment", "Water Purifier", "Purifier", any spelling or plural)
+**Water filter** (category "Water Filter", "Filter", "Water Treatment", "Water Purifier", "Purifier", "Water Purification", "Water Filtration", "Gravity Filter", "Squeeze Filter", any spelling or plural)
 
 | Column | Field | Value |
 |---|---|---|

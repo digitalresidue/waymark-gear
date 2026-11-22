@@ -122,7 +122,7 @@ describe('defaultGroupFor', () => {
         }
     });
     test('bottles, bladders and filters go under Water', () => {
-        for (const t of ['Bottle', 'Bottles', 'Water Bottle', 'Bladder', 'Bladders', 'Hydration Bladder', 'Filter', 'Filters', 'Water Filter']) {
+        for (const t of ['Bottle', 'Bottles', 'Water Bottle', 'Bladder', 'Bladders', 'Hydration Bladder', 'Filter', 'Filters', 'Water Filter', 'Water Filters', 'Water Treatment', 'Water Purifier', 'Purifiers', 'Gravity Filter', 'Squeeze Filters']) {
             assert.equal(defaultGroupFor(t), WATER_GROUP, t);
         }
     });

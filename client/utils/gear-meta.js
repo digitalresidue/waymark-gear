@@ -114,7 +114,9 @@ export const DEFAULT_GROUPS = [
     },
     {
         name: 'Water',
-        types: ['Bottle', 'Water Bottle', 'Bladder', 'Hydration Bladder', 'Reservoir', 'Filter', 'Water Filter'],
+        types: ['Bottle', 'Water Bottle', 'Bladder', 'Hydration Bladder', 'Reservoir', 'Filter', 'Water Filter',
+            // Every name a filter goes by (the filter spec type's categories).
+            'Water Treatment', 'Water Purifier', 'Purifier', 'Water Purification', 'Water Filtration', 'Gravity Filter', 'Squeeze Filter'],
     },
     {
         name: 'Lights & Electronics',
