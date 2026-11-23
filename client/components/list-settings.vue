@@ -215,6 +215,7 @@ export default {
     font-size: 12px;
     line-height: 1.4;
     margin: 4px 0 0;
-    max-width: 240px;
+    // Menus don't wrap (popover.vue); this one wraps to the menu's width.
+    white-space: normal;
 }
 </style>

@@ -11,6 +11,18 @@ import { createCategory, addItem } from './test-helpers';
 const url = (p: string) => new URL(p, testRoot).toString();
 
 // What the server has saved (signing in again returns the library).
+// A hint wraps inside its menu instead of running past the edge.
+async function fitsInMenu(page: Page, hint: string) {
+    const box = await page.locator(hint).evaluate((el) => {
+        const menu = el.closest('.lpContent')!.getBoundingClientRect();
+        const r = el.getBoundingClientRect();
+        return { left: r.left - menu.left, right: menu.right - r.right, width: el.scrollWidth - el.clientWidth };
+    });
+    expect(box.left, hint).toBeGreaterThanOrEqual(0);
+    expect(box.right, hint).toBeGreaterThanOrEqual(0);
+    expect(box.width, hint).toBeLessThanOrEqual(0);
+}
+
 async function savedLibrary(page: Page) {
     const r = await page.request.post(url('/signin'), { data: {} });
     return JSON.parse((await r.json()).library);
@@ -36,9 +48,12 @@ test('a template starts new lists and trips\' lists in one click, with the same 
     await page.getByTestId('rail-lists').click();
     await page.getByTestId('new-list').hover();
     await expect(page.getByTestId('new-list-templates')).toContainText('Use as a template');
+    await fitsInMenu(page, '.wgTemplateHint');
     await page.mouse.move(900, 700);
 
     await page.locator('.wgRail #settings .lpTarget').first().click();
+    await expect(page.locator('.wgTemplateSettingHint')).toBeVisible();
+    await fitsInMenu(page, '.wgTemplateSettingHint');
     await page.getByTestId('list-template-toggle').click();
     await page.keyboard.press('Escape');
     await expect(page.locator('#lists, #pinnedLists').getByTestId('list-template-tag')).toHaveCount(1);

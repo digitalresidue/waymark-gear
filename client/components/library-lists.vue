@@ -464,12 +464,17 @@ export default {
         text-transform: uppercase;
     }
 
+    // Menus don't wrap (popover.vue), so the hint would run off the edge.
+    // It wraps instead, to the menu's width (set by the links) rather than
+    // its own: width 0 keeps it out of the menu's sizing.
     .wgTemplateHint {
         color: var(--lp-text-secondary);
         display: block;
         font-size: 12px;
         line-height: 1.4;
-        max-width: 240px;
+        min-width: 100%;
+        white-space: normal;
+        width: 0;
     }
 }
 
