@@ -373,14 +373,14 @@ are shown in both; a bare number means the unit in brackets. Fill power and
 RDS are kept only for down. A spec column left empty clears that spec; a
 sheet without spec columns leaves specs as they are.
 
-**Pack** (category "Pack", "Backpack", "Rucksack", "Fastpack", "Fast Pack", "Hydration Vest", "Running Vest", any spelling or plural)
+**Pack** (category "Pack", "Backpack", "Rucksack", "Fastpack", "Fast Pack", "Hydration Vest", "Running Vest", "Daypack", "Day Pack", any spelling or plural)
 
 | Column | Field | Value |
 |---|---|---|
 | `volume` | Volume | `40 L` or `2440 cu in` (bare number: L) |
 | `max_carry` | Max carry weight | `14 oz` or `397 g` (bare number: lb) |
 | `gender` | Fit for | Men's / Women's / Unisex |
-| `pack_type` | Pack type | Pack / Fastpack / Hydration vest |
+| `pack_type` | Pack type | Pack / Fastpack / Hydration vest / Daypack |
 | `frame` | Frame | Framed / Frameless |
 | `strap_type` | Shoulder straps | J-curve / S-curve / Vest / Other |
 | `hip_belt` | Hip belt | Fixed / Removable / None |

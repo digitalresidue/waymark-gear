@@ -114,7 +114,7 @@ export const SPEC_FIELDS = {
     roll_top: { label: 'Roll top', ...yesNo },
     adjustable_torso: { label: 'Adjustable torso', ...yesNo },
     hip_belt: { label: 'Hip belt', ...choice([['fixed', 'Fixed'], ['removable', 'Removable'], ['none', 'None']]), aliases: { yes: 'fixed', sewn: 'fixed', detachable: 'removable', no: 'none', webbing: 'none' } },
-    pack_type: { label: 'Pack type', ...choice([['pack', 'Pack'], ['fastpack', 'Fastpack'], ['hydration_vest', 'Hydration vest']]), aliases: { backpack: 'pack', fast: 'fastpack', vest: 'hydration_vest', runningvest: 'hydration_vest', hydrationpack: 'hydration_vest' } },
+    pack_type: { label: 'Pack type', ...choice([['pack', 'Pack'], ['fastpack', 'Fastpack'], ['hydration_vest', 'Hydration vest'], ['daypack', 'Daypack']]), aliases: { backpack: 'pack', fast: 'fastpack', day: 'daypack', daybag: 'daypack', summitpack: 'daypack', vest: 'hydration_vest', runningvest: 'hydration_vest', hydrationpack: 'hydration_vest' } },
     // Free text: fabrics keep changing (Ultra 200, Robic 210D, ECOPAK...).
     fabric: { label: 'Fabric', kind: 'text', max: 60 },
 
@@ -253,7 +253,7 @@ export const SPEC_FIELDS = {
 /** Gear types with specs: which categories they cover and their fields, in order. */
 export const SPEC_TYPES = [
     {
-        id: 'pack', label: 'Pack', categories: ['Pack', 'Backpack', 'Rucksack', 'Fastpack', 'Fast Pack', 'Hydration Vest', 'Running Vest'],
+        id: 'pack', label: 'Pack', categories: ['Pack', 'Backpack', 'Rucksack', 'Fastpack', 'Fast Pack', 'Hydration Vest', 'Running Vest', 'Daypack', 'Day Pack'],
         fields: ['volume', 'max_carry', 'gender', 'pack_type', 'frame', 'strap_type', 'hip_belt', 'roll_top', 'adjustable_torso', 'fabric'],
     },
     {

@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { parentOf, exploreIndex, resolveSection, filterItem, facetsFor, brandCounts, brandKey, readFilters, filtersToQuery, matchesFilters, sortItems, slugify, inferPackType, subtypesOf } from '../../client/utils/explore.js';
+import { parentOf, exploreIndex, resolveSection, filterItem, facetsFor, brandCounts, brandKey, readFilters, filtersToQuery, matchesFilters, sortItems, slugify, inferPackType, subtypesOf, isDaypack } from '../../client/utils/explore.js';
 
 const CATS = [
     { name: 'Tent', count: 3 }, { name: 'Tarps', count: 2 }, { name: 'Shelter', count: 4 }, { name: 'Top Quilt', count: 5 },
@@ -13,19 +13,19 @@ const CATS = [
 describe('the category index', () => {
     test('parents, in order, then everything else A–Z', () => {
         const index = exploreIndex(CATS);
-        assert.deepEqual(index.map((s) => s.name), ['Pack', 'Shelter', 'Sleep System', 'Clothing', 'Cook Kit', 'Water', 'Lights & Electronics', 'Accessories']);
+        assert.deepEqual(index.map((s) => s.name), ['Pack', 'Daypack', 'Shelter', 'Sleep System', 'Clothing', 'Cook Kit', 'Water', 'Lights & Electronics', 'Accessories']);
         // The catalog's own "Lights and Electronics" category sits under the group.
-        assert.deepEqual(index[6].children.map((c) => c.name), ['Lights and Electronics']);
-        const shelter = index[1];
+        assert.deepEqual(index[7].children.map((c) => c.name), ['Lights and Electronics']);
+        const shelter = index[2];
         assert.equal(shelter.count, 10);
         // "Tent" and "Tents" are one.
         assert.deepEqual(shelter.children.map((c) => [c.name, c.count]), [['Shelter', 4], ['Tent', 4], ['Tarps', 2]]);
         // A category named like a parent sits under it: "Cooking" (and "cooking") in Cook Kit.
         assert.equal(index.find((x) => x.name === 'Cook Kit').count, 8);
-        assert.deepEqual(index[2].children.map((c) => c.name), ['Top Quilt', 'Sleeping Pad', 'Sleep']);
+        assert.deepEqual(index[3].children.map((c) => c.name), ['Top Quilt', 'Sleeping Pad', 'Sleep']);
         assert.equal(index[0].children[0].name, 'Backpack');
         // The parents stay even while empty.
-        assert.equal(exploreIndex([]).length, 7);
+        assert.equal(exploreIndex([]).length, 8);
     });
 
     test('parents and categories resolve from a slug', () => {
@@ -219,5 +219,30 @@ describe('Explore: every name a water filter goes by sits under Water', () => {
     test('each filter spec type category has Water as its parent', async () => {
         const { SPEC_TYPES } = await import('../../client/utils/gear-specs.js');
         for (const c of SPEC_TYPES.find((t) => t.id === 'filter').categories) assert.equal(parentOf(c), 'water', c);
+    });
+});
+
+describe('Explore: daypacks are their own section, not one of Pack\'s', () => {
+    test('"Daypack" categories sit under Daypack, right after Pack', () => {
+        for (const c of ['Daypack', 'Daypacks', 'Day Pack', 'day-pack']) assert.equal(parentOf(c), 'daypack', c);
+        assert.equal(parentOf('Backpack'), 'pack');
+        const index = exploreIndex([{ name: 'Backpack', count: 3 }, { name: 'Daypack', count: 2 }, { name: 'Day Packs', count: 1 }]);
+        assert.deepEqual(index.slice(0, 2).map((s) => [s.slug, s.count]), [['pack', 3], ['daypack', 3]]);
+        assert.deepEqual(index[1].children.map((c) => [c.name, c.count]), [['Daypack', 3]]);
+    });
+
+    test('a pack is a daypack by its category or its pack type', () => {
+        assert.equal(inferPackType('Day Pack'), 'daypack');
+        assert.equal(isDaypack(filterItem({ category: 'Daypack', specs: {} })), true);
+        assert.equal(isDaypack(filterItem({ category: 'Pack', specs: { pack_type: 'daypack' } })), true);
+        assert.equal(isDaypack(filterItem({ category: 'Pack', specs: {} })), false);
+        assert.equal(isDaypack(filterItem({ category: 'Fastpack', specs: {} })), false);
+        // Not a pack at all, whatever its specs say.
+        assert.equal(isDaypack(filterItem({ category: 'Tent', specs: { pack_type: 'daypack' } })), false);
+    });
+
+    test('Pack\'s sub-items leave daypacks out', () => {
+        const items = [filterItem({ category: 'Pack', specs: {} }), filterItem({ category: 'Fastpack', specs: {} }), filterItem({ category: 'Pack', specs: { pack_type: 'daypack' } })];
+        assert.deepEqual(subtypesOf('pack', items).options.map((o) => o.value), ['pack', 'fastpack']);
     });
 });

@@ -131,6 +131,8 @@
   "explore.emptyCategory": "Pas encore d'équipement dans cette catégorie.",
   "explore.parent.pack": "Sac",
   "explore.parent.pack.note": "Sacs à dos, sans ou avec armature",
+  "explore.parent.daypack": "Sac de journée",
+  "explore.parent.daypack.note": "Petits sacs pour les randonnées à la journée et les sommets",
   "explore.subtypeAll": "Tout",
   "explore.parent.shelter": "Abri",
   "explore.parent.shelter.note": "Tentes, tarps, bivouacs, hamacs et moustiquaires",
