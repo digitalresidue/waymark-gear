@@ -86,3 +86,52 @@ test('the editor\'s Catalog panel reaches every category too', async ({ page, br
     await chips.getByTestId('catalog-panel-section-shelter').click();
     await expect.poll(async () => (await names()).sort()).toEqual([`Bug Net ${b}`, `Hammock ${b}`, `Tent ${b}`]);
 });
+
+test('Pack opens its pack types in both pickers, as on Explore: Packs, Fastpacks, Hydration vests, Daypacks', async ({ page, browser }, testInfo) => {
+    const owner = await (await browser.newContext()).newPage();
+    const username = `wge2eowner${testInfo.workerIndex}`;
+    const r = await owner.request.post(url('/register'), { data: { username, email: `${username}@example.com`, password: 'testtest' } });
+    if (r.status() !== 200) expect((await owner.request.post(url('/signin'), { data: { username, password: 'testtest' } })).status()).toBe(200);
+    const b = `Pt${Date.now().toString(36)}${testInfo.workerIndex}`;
+    // No pack type: the category says (a Fastpack, a Daypack), else a pack.
+    const csv = ['sku,name,brand,category,weight,unit,price,status,pack_type',
+        `${b}-1,Thru ${b},${b},Pack,30,oz,250,published,`,
+        `${b}-2,Fast ${b},${b},Fastpack,14,oz,180,published,`,
+        `${b}-3,Vest ${b},${b},Pack,8,oz,150,published,Hydration vest`,
+        `${b}-4,Summit ${b},${b},Daypack,12,oz,90,published,`,
+        `${b}-5,Tripper ${b},${b},Pack,16,oz,120,published,Daypack`].join('\n');
+    expect((await owner.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } })).ok()).toBe(true);
+    await owner.context().close();
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const u = generateTestUser('pktype');
+    await registerUser(page, u.username, u.password, u.email);
+    await expect(page.getByTestId('item-row').first()).toBeVisible();
+
+    // Add from catalog.
+    await page.getByTestId('add-from-catalog').first().click();
+    const picker = page.getByTestId('catalog-picker');
+    const names = () => picker.getByTestId('catalog-result').locator('.wgPickerName').allTextContents();
+    await picker.getByTestId('catalog-picker-search').fill(b);
+    await picker.getByTestId('picker-sections').getByTestId('picker-section-pack').click();
+    const children = picker.getByTestId('picker-children');
+    await expect(children.getByRole('button')).toHaveText([/^\s*All Pack/, /^Packs/, /^Fastpacks/, /^Hydration vests/, /^Daypacks/]);
+    await expect.poll(async () => (await names()).length).toBe(5);
+    await children.getByTestId('picker-child-pack_type:daypack').click();
+    await expect.poll(async () => (await names()).sort()).toEqual([`Summit ${b}`, `Tripper ${b}`]);
+    await expect(picker.getByTestId('picker-section-pack')).toHaveAttribute('aria-pressed', 'true');
+    await children.getByTestId('picker-child-pack_type:pack').click();
+    await expect.poll(names).toEqual([`Thru ${b}`]);
+    await children.getByTestId('picker-child-pack_type:fastpack').click();
+    await expect.poll(names).toEqual([`Fast ${b}`]);
+    await page.keyboard.press('Escape');
+
+    // The editor's Catalog panel.
+    await page.getByTestId('rail-catalog').click();
+    const panel = page.getByTestId('panel-catalog');
+    const panelNames = () => panel.getByTestId('catalog-panel-result').locator('.wgCatalogName span:first-child').allTextContents();
+    await panel.getByTestId('catalog-panel-search').fill(b);
+    await panel.getByTestId('catalog-panel-chips').getByTestId('catalog-panel-section-pack').click();
+    await panel.getByTestId('catalog-panel-children').getByTestId('catalog-panel-child-pack_type:hydration_vest').click();
+    await expect.poll(panelNames).toEqual([`Vest ${b}`]);
+});
