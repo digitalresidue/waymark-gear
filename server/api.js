@@ -35,6 +35,7 @@ import { KINDS as NOTIFY_KINDS, preferences as notifyPreferences, cleanPreferenc
 import { mailEnabled } from './mail.js';
 import knex from './db.js';
 import { youTubeId, TRIP_TYPES } from '../client/utils/gear-meta.js';
+import { SPEC_FIELDS } from '../client/utils/gear-specs.js';
 import { profileForEditing, updateProfile, ProfileError } from './profiles.js';
 import { googleEnabled } from './google.js';
 import { logWithRequest, logger } from './log.js';
@@ -596,6 +597,8 @@ router.get('/api/config', (req, res) => {
     res.json({ googleEnabled: googleEnabled(), weightClasses: kits.WEIGHT_CLASSES.map(({ id, label, range }) => ({ id, label, range })) });
 });
 
+const PACK_TYPES = SPEC_FIELDS.pack_type.options.map(([v]) => v);
+
 router.get('/api/catalog', pub(async (req, res) => {
     const ids = req.query.ids ? String(req.query.ids).split(',').slice(0, 200) : undefined;
     const result = await catalog.search({
@@ -610,6 +613,8 @@ router.get('/api/catalog', pub(async (req, res) => {
         specs: catalog.specFilters(req.query),
         // A search puts the gear members rate best first; ?sort=name keeps A-Z.
         sort: req.query.sort === 'name' ? '' : (req.query.q || req.query.sort === 'rating' ? 'rating' : ''),
+        // ?pack_type=fastpack with Pack's ?categories=: one of Pack's sub-items.
+        packType: PACK_TYPES.includes(String(req.query.pack_type)) ? String(req.query.pack_type) : '',
     });
     res.set('Cache-Control', 'public, max-age=60');
     res.json({ ...result, items: result.items.map(catalog.publicEntry) });
@@ -638,7 +643,9 @@ router.post('/api/catalog/:id/rating', requireJson, commentLimit, signedIn(async
 
 router.get('/api/catalog/categories', pub(async (req, res) => {
     res.set('Cache-Control', 'public, max-age=60');
-    res.json({ categories: await catalog.categories() });
+    const categories = await catalog.categories();
+    // Pack's sub-items (Packs, Fastpacks...), for the pickers' second row.
+    res.json({ categories, subtypes: await catalog.subtypes(categories) });
 }));
 
 router.get('/api/explore/featured', pub(async (req, res) => {

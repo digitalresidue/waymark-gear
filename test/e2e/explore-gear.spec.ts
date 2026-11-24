@@ -35,11 +35,11 @@ async function slide(page: Page, testid: string, value: number) {
 }
 const names = async (page: Page) => page.getByTestId('explore-item').filter({ visible: true }).locator('.wgGearCardName').allTextContents();
 
-test('the index: Pack, Daypack, Shelter, Sleep System, Clothing, Cook Kit and Water first, then the rest A–Z', async ({ page, browser }, testInfo) => {
+test('the index: Pack, Shelter, Sleep System, Clothing, Cook Kit and Water first, then the rest A–Z', async ({ page, browser }, testInfo) => {
     await seed(browser, testInfo.workerIndex, `Ex${Date.now().toString(36)}`);
     await page.goto(url('/explore'));
     const sections = page.getByTestId('explore-section');
-    expect((await sections.evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.slug))).slice(0, 8)).toEqual(['pack', 'daypack', 'shelter', 'sleep-system', 'clothing', 'cook-kit', 'water', 'lights-electronics']);
+    expect((await sections.evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.slug))).slice(0, 7)).toEqual(['pack', 'shelter', 'sleep-system', 'clothing', 'cook-kit', 'water', 'lights-electronics']);
     const others = await page.getByTestId('explore-others').locator('a > span:first-child').allTextContents();
     expect(others).toEqual([...others].sort((a, b) => a.localeCompare(b)));
     // A child category opens its parent with that category ticked.
@@ -380,7 +380,7 @@ test('shoes carry their upper and sole: imported, filtered on Explore, shown on 
     await expect(specs).toContainText('Contagrip');
 });
 
-test('daypacks have their own section: by their category or their pack type, and not in Pack', async ({ page, browser }, testInfo) => {
+test('daypacks are one of Pack\'s sub-items, by their category or their pack type, apart from Packs', async ({ page, browser }, testInfo) => {
     const owner = await (await browser.newContext()).newPage();
     const username = `wge2eowner${testInfo.workerIndex}`;
     const r = await owner.request.post(url('/register'), { data: { username, email: `${username}@example.com`, password: 'testtest' } });
@@ -393,27 +393,24 @@ test('daypacks have their own section: by their category or their pack type, and
     expect((await owner.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } })).ok()).toBe(true);
     await owner.context().close();
 
-    // On the Explore page, Daypack sits right after Pack, not as one of its types.
+    // On the Explore page: Daypacks is Pack's last sub-item.
     await page.goto(url('/explore'));
-    const slugs = await page.getByTestId('explore-section').evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.slug));
-    expect(slugs.slice(0, 2)).toEqual(['pack', 'daypack']);
-    await expect(page.locator('[data-testid="explore-section"][data-slug="pack"]').getByTestId('explore-child').filter({ hasText: /daypack/i })).toHaveCount(0);
+    const kids = page.locator('[data-testid="explore-section"][data-slug="pack"]').getByTestId('explore-child');
+    await expect(kids.last()).toContainText('Daypacks');
+    await expect(kids.last()).toHaveAttribute('href', '/explore/pack?pack_type=daypack');
+    await expect(page.locator('[data-slug="daypack"]')).toHaveCount(0);
 
     const card = (name: string) => page.getByTestId('explore-item').filter({ hasText: name });
-    await openExplore(page, url(`/explore/daypack?brand=${b.toLowerCase()}`));
-    await expect(page.getByTestId('explore-title')).toHaveText('Daypack');
+    await openExplore(page, url(`/explore/pack?brand=${b.toLowerCase()}`));
+    await page.getByTestId('subtype-daypack').click();
+    await expect(page).toHaveURL(/pack_type=daypack/);
     await expect(card(`${b} Summit bag`)).toBeVisible();
     await expect(card(`${b} Day tripper`)).toBeVisible();
-    await expect(card(`${b} Thru pack`)).toHaveCount(0);
-    // Pack filters, but not ones every daypack shares.
-    await expect(page.getByTestId('filter-pack_type')).toHaveCount(0);
-    await expect(page.locator('#wgGearFilters input[name="cat"]')).toHaveCount(0);
-
-    await openExplore(page, url(`/explore/pack?brand=${b.toLowerCase()}`));
+    await expect(card(`${b} Thru pack`)).toBeHidden();
+    await page.getByTestId('subtype-pack').click();
     await expect(card(`${b} Thru pack`)).toBeVisible();
-    await expect(card(`${b} Summit bag`)).toHaveCount(0);
-    await expect(card(`${b} Day tripper`)).toHaveCount(0);
-    await expect(page.getByTestId('subtype-daypack')).toHaveCount(0);
+    await expect(card(`${b} Summit bag`)).toBeHidden();
+    await expect(card(`${b} Day tripper`)).toBeHidden();
 });
 
 test('each filter folds: closed until opened, open while set, its heading says what is chosen', async ({ page, browser }, testInfo) => {
