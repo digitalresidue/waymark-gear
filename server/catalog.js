@@ -13,6 +13,7 @@ import weightUtils from '../client/utils/weight.js';
 import { parseShops, shopsToApi, publicShops, SHOP_CSV_COLUMNS, MAX_SHOPS } from './shops.js';
 import { absoluteImageUrl, localImagePath } from './remote-image.js';
 import { readSpec, readSpecs, specInput, specTypeFor, filterKind, matchKey, SPEC_FIELDS, SPEC_KEYS } from '../client/utils/gear-specs.js';
+import { PARENTS, resolveSection, subtypesOf, filterItem, categoriesOfPackType } from '../client/utils/explore.js';
 
 export const UNITS = ['g', 'kg', 'oz', 'lb'];
 export const CSV_COLUMNS = [
@@ -227,7 +228,10 @@ export function specFilters(query = {}) {
 // sort: 'rating' puts gear members rate highly first (then unrated, then
 // poorly rated: client/utils/ratings.js); anything else is by category and
 // name, as the owner's catalog table wants.
-export async function search({ q = '', category = '', categories = null, status = 'published', limit = 50, offset = 0, ids, specs = [], sort = '' } = {}) {
+// packType: one of Pack's sub-items (Fastpacks), counted as Explore does:
+// gear whose pack type says so, or that doesn't say and whose category
+// does (a "Fastpack"; anything else is a pack). Needs the pack categories.
+export async function search({ q = '', category = '', categories = null, status = 'published', limit = 50, offset = 0, ids, specs = [], sort = '', packType = '' } = {}) {
     const query = knex('catalog_items');
     for (const f of specs) {
         if (!SPEC_KEYS.includes(f.key)) continue;
@@ -240,6 +244,13 @@ export async function search({ q = '', category = '', categories = null, status 
     if (category) query.where({ category });
     // A group of categories (a parent such as Sleep System).
     if (Array.isArray(categories) && categories.length) query.whereIn('category', categories.slice(0, 100).map(String));
+    if (packType && Array.isArray(categories)) {
+        const inferred = categoriesOfPackType(categories.slice(0, 100).map(String), packType);
+        query.where((w) => {
+            w.whereRaw("specs->>'pack_type' = ?", [packType]);
+            if (inferred.length) w.orWhere((x) => x.whereRaw("coalesce(specs->>'pack_type', '') = ''").whereIn('category', inferred));
+        });
+    }
     if (ids) query.whereIn('id', ids.filter(isUuid));
     const term = String(q).trim();
     if (term) {
@@ -263,6 +274,21 @@ export async function categories({ includeDrafts = false } = {}) {
         .whereNot({ category: '' }).groupBy('category').orderByRaw('lower(category)');
     if (!includeDrafts) query.where({ status: 'published' });
     return (await query).map((r) => ({ name: r.category, count: Number(r.count) }));
+}
+
+/**
+ * The sub-items of parents that have them (Pack: Packs, Fastpacks, Hydration
+ * vests, Daypacks), with counts: { pack: { key, options: [{ value, name,
+ * count }] } }. From categories() (the published ones).
+ */
+export async function subtypes(cats, { limit = 3000 } = {}) {
+    const out = {};
+    for (const p of PARENTS.filter((x) => x.subtypes)) {
+        const names = resolveSection(p.slug, cats).categories;
+        const rows = names.length ? await knex('catalog_items').where({ status: 'published' }).whereIn('category', names).select('category', 'specs').limit(limit) : [];
+        out[p.slug] = subtypesOf(p.slug, rows.map((r) => filterItem({ category: r.category, specs: r.specs })));
+    }
+    return out;
 }
 
 export async function getById(id) {

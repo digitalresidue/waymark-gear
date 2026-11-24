@@ -217,7 +217,7 @@ export default {
             this.$nextTick(() => this.$refs.search && this.$refs.search.focus());
             if (!this.loaded) this.load(true);
             if (!this.catalogCategories.length) {
-                api('/api/catalog/categories').then((r) => { this.catalogCategories = r.categories; }).catch(() => {});
+                api('/api/catalog/categories').then((r) => this.takeCategories(r)).catch(() => {});
             }
         },
         close() {
@@ -249,9 +249,8 @@ export default {
             // Gear members rate best first, browsing or searching.
             const params = new URLSearchParams({ limit: String(PAGE), offset: String(reset ? 0 : this.results.length), sort: 'rating' });
             if (this.query.trim()) params.set('q', this.query.trim());
-            // A parent or a category: every catalog name it covers ("Tent" and "Tents").
-            const names = this.sectionParam();
-            if (names) params.set('categories', names);
+            // A parent, a category or a sub-item (utils/catalog-sections.js).
+            for (const [k, v] of Object.entries(this.sectionQuery())) params.set(k, v);
             try {
                 const r = await api(`/api/catalog?${params}`);
                 this.results = reset ? r.items : this.results.concat(r.items);

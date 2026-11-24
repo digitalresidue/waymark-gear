@@ -25,10 +25,10 @@ import { cachedPage, storePage, sendCachedPage, NONCE_PLACEHOLDER } from './page
 import { optionalUser } from './auth.js';
 import { viewTrip, tripsOnProfile } from './trips.js';
 import { reviewsFor, latestReviews } from './reviews.js';
-import { getById as catalogItem, isUuid, search as catalogSearch, categories as catalogCategories, toApi as catalogToApi } from './catalog.js';
+import { getById as catalogItem, isUuid, search as catalogSearch, categories as catalogCategories, subtypes as catalogSubtypes, toApi as catalogToApi } from './catalog.js';
 import {
     exploreIndex, resolveSection, filterItem, facetsFor, readFilters, matchesFilters, sortItems, rangeLabel, formatWeightG, activeFilterCount, PARENTS, specAppliesLabel,
-    chosenTypes, specShown, specTypes, withoutHiddenSpecs, brandCounts, brandKey, subtypesOf, isDaypack, parentOf,
+    chosenTypes, specShown, specTypes, withoutHiddenSpecs, brandCounts, brandKey, subtypesOf,
 } from '../client/utils/explore.js';
 const PARENT_SLUGS = new Set(PARENTS.map((p) => p.slug));
 import { priceHistory } from './prices.js';
@@ -876,20 +876,11 @@ router.get('/explore', async (req, res) => {
         const index = exploreIndex(categories);
         const t = currentT();
         // Pack's sub-items are its pack types (Packs, Fastpacks, Hydration
-        // vests), linked straight to that filter, not its categories.
+        // vests, Daypacks), linked straight to that filter, not its categories.
         const subtypeChildren = {};
-        for (const p of PARENTS.filter((x) => x.subtypes)) {
-            const names = resolveSection(p.slug, categories).categories;
-            const rows = names.length ? await knex('catalog_items').where({ status: 'published' }).whereIn('category', names).select('category', 'specs').limit(MAX_SECTION_ITEMS) : [];
-            const packItems = rows.map((r) => filterItem({ category: r.category, specs: r.specs }));
-            // Packs whose pack type is Daypack count under Daypack, not Pack.
-            const day = packItems.filter(isDaypack).length;
-            if (day) {
-                index.find((s) => s.slug === p.slug).count -= day;
-                index.find((s) => s.slug === 'daypack').count += day;
-            }
-            const sub = subtypesOf(p.slug, packItems.filter((i) => !isDaypack(i)));
-            subtypeChildren[p.slug] = sub.options.map((o) => ({ slug: o.value, name: t(`explore.subtype.${sub.key}.${o.value}`, {}, o.name), count: o.count, href: `/explore/${p.slug}?${sub.key}=${o.value}` }));
+        for (const [slug, sub] of Object.entries(await catalogSubtypes(categories, { limit: MAX_SECTION_ITEMS }))) {
+            const p = { slug };
+            subtypeChildren[slug] = sub.options.map((o) => ({ slug: o.value, name: t(`explore.subtype.${sub.key}.${o.value}`, {}, o.name), count: o.count, href: `/explore/${p.slug}?${sub.key}=${o.value}` }));
         }
         // Parents' names and notes in the reader's language; categories keep
         // the catalog's names.
@@ -936,20 +927,14 @@ router.get('/explore/:slug', async (req, res) => {
             ? { ...found, title: t(`explore.parent.${found.slug}`, {}, found.title), note: t(`explore.parent.${found.slug}.note`, {}, found.note) }
             : { ...found, parent: parentName(found.parent) };
         const rangeWords = { any: t('explore.any'), upTo: t('explore.upTo'), atLeast: t('explore.atLeast') };
-        // Daypack also has the packs whose pack type is Daypack, from Pack's
-        // categories; Pack leaves them out.
-        const sectionCats = slug === 'daypack' ? [...section.categories, ...resolveSection('pack', categories).categories] : section.categories;
-        const rows = sectionCats.length
-            ? await knex('catalog_items').where({ status: 'published' }).whereIn('category', sectionCats).limit(MAX_SECTION_ITEMS)
+        const rows = section.categories.length
+            ? await knex('catalog_items').where({ status: 'published' }).whereIn('category', section.categories).limit(MAX_SECTION_ITEMS)
             : [];
-        let entries = rows.map(catalogToApi);
-        if (slug === 'daypack') entries = entries.filter((e) => parentOf(e.category) === 'daypack' || isDaypack(filterItem(e)));
-        if (slug === 'pack') entries = entries.filter((e) => !isDaypack(filterItem(e)));
+        const entries = rows.map(catalogToApi);
         const items = entries.map(filterItem);
         // The section's own gear types offer their filters even before
         // the catalog has those specs filled in.
-        const facetCats = slug === 'daypack' ? [...new Set([...section.categories, ...entries.map((e) => e.category), 'Daypack'])] : section.categories;
-        const facets = facetsFor(items, { categories: facetCats });
+        const facets = facetsFor(items, { categories: section.categories });
         // Spec filters follow the ticked categories: Shell in Clothing
         // offers a shell's, Tent in Shelter a tent's (chosenTypes).
         const parsed = readFilters(req.query);
@@ -976,13 +961,11 @@ router.get('/explore/:slug', async (req, res) => {
         // The filter column, in order: category, brand, weight, price, then
         // the section's specs in their type's order (a pack's max carry,
         // volume, pack type, straps...).
-        const packs = facetCats.length > 0 && facetCats.every((c) => (specTypeFor(c) || {}).id === 'pack');
+        const packs = section.categories.length > 0 && section.categories.every((c) => (specTypeFor(c) || {}).id === 'pack');
         const blocks = [];
         if (facets.weight) blocks.push({ range: rangeOf('weight', t(packs ? 'explore.packWeight' : 'explore.weight'), facets.weight, filters.weight) });
         if (facets.price) blocks.push({ range: rangeOf('price', t('explore.price'), facets.price, filters.price) });
         for (const f of facets.specs) {
-            // Every daypack's pack type is Daypack.
-            if (slug === 'daypack' && f.key === 'pack_type') continue;
             // In a mixed section (Sleep System), say which gear a spec is about.
             const appliesTo = specAppliesLabel(f.key, section.categories, t);
             const label = t(`spec.${f.key}`, {}, f.label);
@@ -1035,8 +1018,7 @@ router.get('/explore/:slug', async (req, res) => {
                 facets: {
                     // With sub-item chips (Pack's types), categories would say the
                     // same thing twice: the chips stand in for them.
-                    // Daypack's would only be Pack and Daypack: its gear came from both.
-                    cats: facets.cats.length > 1 && !subtypes && slug !== 'daypack' ? facets.cats.map((c) => ({ ...c, on: on(filters.cats, c.value) })) : [],
+                    cats: facets.cats.length > 1 && !subtypes ? facets.cats.map((c) => ({ ...c, on: on(filters.cats, c.value) })) : [],
                     brands: facets.brands.length > 1 ? facets.brands.map((b) => {
                         // Only brands with gear in the ticked categories (brandCounts);
                         // a ticked brand stays so it can be unticked.
