@@ -130,6 +130,8 @@
   "explore.emptyCategory": "このカテゴリーにはまだギアがありません。",
   "explore.parent.pack": "ザック",
   "explore.parent.pack.note": "フレームレスからフレーム付きまで",
+  "explore.parent.daypack": "デイパック",
+  "explore.parent.daypack.note": "日帰りハイクや山頂アタック向けの小型ザック",
   "explore.subtypeAll": "すべて",
   "explore.parent.shelter": "シェルター",
   "explore.parent.shelter.note": "テント、タープ、ビビィ、ハンモック、虫よけネット",

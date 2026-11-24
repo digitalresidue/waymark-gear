@@ -130,6 +130,8 @@
   "explore.emptyCategory": "이 카테고리에는 아직 장비가 없어요.",
   "explore.parent.pack": "배낭",
   "explore.parent.pack.note": "프레임 없는 배낭부터 프레임 배낭까지",
+  "explore.parent.daypack": "데이팩",
+  "explore.parent.daypack.note": "당일 산행과 정상 공략용 소형 배낭",
   "explore.subtypeAll": "전체",
   "explore.parent.shelter": "쉘터",
   "explore.parent.shelter.note": "텐트, 타프, 비비, 해먹, 모기장",

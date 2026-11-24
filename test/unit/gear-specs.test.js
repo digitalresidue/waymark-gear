@@ -26,6 +26,7 @@ describe('gear spec types', () => {
 describe('reading values', () => {
     test('temperatures in F or C, stored in C', () => {
         assert.deepEqual(readSpec('temp_comfort', '20F'), { value: -6.7 });
+        for (const v of ['Daypack', 'day pack', 'Day', 'Summit pack']) assert.deepEqual(readSpec('pack_type', v), { value: 'daypack' }, v);
         assert.deepEqual(readSpec('temp_comfort', '20'), { value: -6.7 }, 'a bare number is °F');
         assert.deepEqual(readSpec('temp_comfort', '-7 C'), { value: -7 });
         assert.deepEqual(readSpec('temp_comfort', '20°F'), { value: -6.7 });

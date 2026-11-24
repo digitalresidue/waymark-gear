@@ -15,6 +15,10 @@ export const PARENTS = [
     // Pack's sub-items are its pack types (a spec), not its categories: most
     // packs sit in one "Pack" category (subtypes, below).
     { slug: 'pack', name: 'Pack', note: 'Packs, fastpacks and hydration vests', subtypes: 'pack_type' },
+    // Daypacks are too small for a long trip, so they're their own section,
+    // not one of Pack's: a "Daypack" category, or any pack whose pack type is
+    // Daypack (isDaypack).
+    { slug: 'daypack', name: 'Daypack', note: 'Smaller packs for day hikes and summit pushes' },
     { slug: 'shelter', name: 'Shelter', note: 'Tents, tarps, bivies, hammocks and bug nets' },
     { slug: 'sleep-system', name: 'Sleep System', note: 'Quilts, bags, pads and pillows' },
     { slug: 'clothing', name: 'Clothing', note: 'Layers, shells, pants, gloves, socks and shoes' },
@@ -26,10 +30,14 @@ const PARENT_BY_GROUP = { Shelter: 'shelter', 'Sleep System': 'sleep-system', Cl
 
 export const slugify = (name) => String(name || '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
+// Categories that are daypacks ("Daypack", "Day Pack").
+const DAYPACK_KEYS = new Set(['daypack']);
+
 /** The parent a catalog category sits under ('shelter'...), or null. */
 export function parentOf(category) {
     const k = categoryKey(category);
     if (!k) return null;
+    if (DAYPACK_KEYS.has(k)) return 'daypack';
     const type = specTypeFor(category);
     if ((type && type.id === 'pack') || k === 'pack') return 'pack';
     const group = defaultGroupFor(category);
@@ -101,12 +109,20 @@ export const brandKey = (name) => String(name || '').toLowerCase().replace(/[^\p
 // "Hydration Vest"), else a pack. So Pack's sub-items cover every pack.
 export function inferPackType(category) {
     const k = categoryKey(category);
+    if (DAYPACK_KEYS.has(k)) return 'daypack';
     if (k === 'fastpack') return 'fastpack';
     if (k === 'hydrationvest' || k === 'runningvest') return 'hydration_vest';
     return 'pack';
 }
 
+/**
+ * Is this filter item (filterItem) a daypack? Its category says so, or its
+ * pack type does: those are in Daypack on Explore, not Pack.
+ */
+export const isDaypack = (item) => item.type === 'pack' && Boolean(item.specs) && item.specs.pack_type === 'daypack';
+
 // The sub-items in order, named as a heading over many ("Fastpacks").
+// Not daypacks: they have their own section.
 const SUBTYPE_NAMES = { pack_type: [['pack', 'Packs'], ['fastpack', 'Fastpacks'], ['hydration_vest', 'Hydration vests']] };
 
 /**

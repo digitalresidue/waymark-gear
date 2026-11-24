@@ -131,6 +131,8 @@
   "explore.emptyCategory": "Ainda não há equipamentos nesta categoria.",
   "explore.parent.pack": "Mochila",
   "explore.parent.pack.note": "Mochilas, sem ou com armação",
+  "explore.parent.daypack": "Mochila de ataque",
+  "explore.parent.daypack.note": "Mochilas menores para trilhas de um dia e ataques ao cume",
   "explore.subtypeAll": "Tudo",
   "explore.parent.shelter": "Abrigo",
   "explore.parent.shelter.note": "Barracas, tarps, bivaques, redes e mosquiteiros",

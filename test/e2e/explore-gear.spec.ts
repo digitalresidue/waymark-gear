@@ -35,11 +35,11 @@ async function slide(page: Page, testid: string, value: number) {
 }
 const names = async (page: Page) => page.getByTestId('explore-item').filter({ visible: true }).locator('.wgGearCardName').allTextContents();
 
-test('the index: Pack, Shelter, Sleep System, Clothing, Cook Kit and Water first, then the rest A–Z', async ({ page, browser }, testInfo) => {
+test('the index: Pack, Daypack, Shelter, Sleep System, Clothing, Cook Kit and Water first, then the rest A–Z', async ({ page, browser }, testInfo) => {
     await seed(browser, testInfo.workerIndex, `Ex${Date.now().toString(36)}`);
     await page.goto(url('/explore'));
     const sections = page.getByTestId('explore-section');
-    expect((await sections.evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.slug))).slice(0, 7)).toEqual(['pack', 'shelter', 'sleep-system', 'clothing', 'cook-kit', 'water', 'lights-electronics']);
+    expect((await sections.evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.slug))).slice(0, 8)).toEqual(['pack', 'daypack', 'shelter', 'sleep-system', 'clothing', 'cook-kit', 'water', 'lights-electronics']);
     const others = await page.getByTestId('explore-others').locator('a > span:first-child').allTextContents();
     expect(others).toEqual([...others].sort((a, b) => a.localeCompare(b)));
     // A child category opens its parent with that category ticked.
@@ -378,4 +378,40 @@ test('shoes carry their upper and sole: imported, filtered on Explore, shown on 
     await expect(specs).toContainText('Leather');
     await expect(specs).toContainText('Sole');
     await expect(specs).toContainText('Contagrip');
+});
+
+test('daypacks have their own section: by their category or their pack type, and not in Pack', async ({ page, browser }, testInfo) => {
+    const owner = await (await browser.newContext()).newPage();
+    const username = `wge2eowner${testInfo.workerIndex}`;
+    const r = await owner.request.post(url('/register'), { data: { username, email: `${username}@example.com`, password: 'testtest' } });
+    if (r.status() !== 200) expect((await owner.request.post(url('/signin'), { data: { username, password: 'testtest' } })).status()).toBe(200);
+    const b = `Dp${Date.now().toString(36)}`;
+    const csv = ['sku,name,brand,category,weight,unit,price,status,pack_type',
+        `${b}-1,${b} Thru pack,${b},Pack,30,oz,250,published,`,
+        `${b}-2,${b} Summit bag,${b},Daypack,12,oz,90,published,`,
+        `${b}-3,${b} Day tripper,${b},Pack,16,oz,120,published,Daypack`].join('\n');
+    expect((await owner.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } })).ok()).toBe(true);
+    await owner.context().close();
+
+    // On the Explore page, Daypack sits right after Pack, not as one of its types.
+    await page.goto(url('/explore'));
+    const slugs = await page.getByTestId('explore-section').evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.slug));
+    expect(slugs.slice(0, 2)).toEqual(['pack', 'daypack']);
+    await expect(page.locator('[data-testid="explore-section"][data-slug="pack"]').getByTestId('explore-child').filter({ hasText: /daypack/i })).toHaveCount(0);
+
+    const card = (name: string) => page.getByTestId('explore-item').filter({ hasText: name });
+    await page.goto(url(`/explore/daypack?brand=${b.toLowerCase()}`));
+    await expect(page.getByTestId('explore-title')).toHaveText('Daypack');
+    await expect(card(`${b} Summit bag`)).toBeVisible();
+    await expect(card(`${b} Day tripper`)).toBeVisible();
+    await expect(card(`${b} Thru pack`)).toHaveCount(0);
+    // Pack filters, but not ones every daypack shares.
+    await expect(page.getByTestId('filter-pack_type')).toHaveCount(0);
+    await expect(page.locator('#wgGearFilters input[name="cat"]')).toHaveCount(0);
+
+    await page.goto(url(`/explore/pack?brand=${b.toLowerCase()}`));
+    await expect(card(`${b} Thru pack`)).toBeVisible();
+    await expect(card(`${b} Summit bag`)).toHaveCount(0);
+    await expect(card(`${b} Day tripper`)).toHaveCount(0);
+    await expect(page.getByTestId('subtype-daypack')).toHaveCount(0);
 });

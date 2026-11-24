@@ -131,6 +131,8 @@
   "explore.emptyCategory": "Todavía no hay equipo en esta categoría.",
   "explore.parent.pack": "Mochila",
   "explore.parent.pack.note": "Mochilas, sin armazón o con armazón",
+  "explore.parent.daypack": "Mochila de día",
+  "explore.parent.daypack.note": "Mochilas pequeñas para excursiones de un día y ataques a cumbre",
   "explore.subtypeAll": "Todo",
   "explore.parent.shelter": "Refugio",
   "explore.parent.shelter.note": "Tiendas, tarps, vivacs, hamacas y mosquiteras",
