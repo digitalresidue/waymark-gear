@@ -966,6 +966,8 @@ router.get('/explore/:slug', async (req, res) => {
             max: facet.max,
             step: stops ? (stops.every((n) => n % 50 === 0) ? 50 : 1) : facet.step,
             stops: stops ? stops.join(',') : '',
+            // Folded unless it's set.
+            open: chosen.min !== undefined || chosen.max !== undefined,
             lo: chosen.min ?? facet.min,
             hi: chosen.max ?? facet.max,
             text: rangeLabel(key, chosen.min, chosen.max, facet, rangeWords, currentUnits()),
@@ -995,6 +997,7 @@ router.get('/explore/:slug', async (req, res) => {
                         label,
                         appliesTo,
                         ...forTypes,
+                        open: Boolean(filters.specs[f.key] && filters.specs[f.key].any && filters.specs[f.key].any.length),
                         options: f.options.map((o) => {
                             const checked = Boolean(filters.specs[f.key] && filters.specs[f.key].any.includes(o.value));
                             return { ...o, key: f.key, on: checked, off: false };
@@ -1044,6 +1047,8 @@ router.get('/explore/:slug', async (req, res) => {
                         const checked = on(filters.brands, b.value);
                         return { ...b, count: n, on: checked, hidden: !n && !checked };
                     }) : [],
+                    catsOpen: filters.cats.length > 0,
+                    brandsOpen: filters.brands.length > 0,
                 },
                 blocks,
                 total,

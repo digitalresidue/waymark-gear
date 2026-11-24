@@ -32,7 +32,7 @@ test('the footer picker switches the language and remembers it, on server pages 
     await page.goto(url('/explore/sleep-system'));
     await page.getByTestId('language-picker').selectOption('de');
     await expect(page.locator('html')).toHaveAttribute('lang', 'de');
-    await expect(page.getByTestId('explore-filters-box').locator('summary')).toContainText('Filter');
+    await expect(page.getByTestId('explore-filters-box').locator('> summary')).toContainText('Filter');
     await expect(page.locator('#wgGearFilters legend').first()).toHaveText('Kategorie');
     // German plurals in the count, after filtering in the page.
     await expect(page.getByTestId('explore-count')).toContainText('Artikel');

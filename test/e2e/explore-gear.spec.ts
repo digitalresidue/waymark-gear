@@ -1,6 +1,6 @@
 import { test, expect, Browser, Page } from '@playwright/test';
 
-import { testRoot } from './utils';
+import { testRoot, openExplore } from './utils';
 
 // Explore gear: /explore lists every category under Pack, Shelter, Sleep
 // System and Clothing first; /explore/<category> filters its gear by
@@ -54,7 +54,7 @@ test('filter a category in place: brand, category, spec checkboxes and sliders; 
     const brand = `Ex${Date.now().toString(36)}`;
     await seed(browser, testInfo.workerIndex, brand);
     await page.setViewportSize({ width: 1366, height: 1000 });
-    await page.goto(url('/explore/shelter'));
+    await openExplore(page, url('/explore/shelter'));
     await page.locator(`input[name="brand"][value="${brand.toLowerCase()}"]`).check();
     expect((await names(page)).sort()).toEqual(['Big tarp', 'Free tent', 'Pole tent']);
     // Sorted lightest first.
@@ -68,7 +68,7 @@ test('filter a category in place: brand, category, spec checkboxes and sliders; 
     await expect(page.locator('input[name="cat"]:checked')).toHaveCount(0);
 
     // Sleep System: over 750 fill and under 5 lb.
-    await page.goto(url(`/explore/sleep-system?brand=${brand.toLowerCase()}`));
+    await openExplore(page, url(`/explore/sleep-system?brand=${brand.toLowerCase()}`));
     expect((await names(page)).sort()).toEqual(['Cheap quilt', 'Heavy quilt', 'Warm quilt']);
     await slide(page, 'range-fill_power-min', 750);
     expect((await names(page)).sort()).toEqual(['Heavy quilt', 'Warm quilt']);
@@ -116,7 +116,7 @@ test('packs offer pack weight, max carry, volume, straps, frame, roll top and ad
         `${brand}-4,Trail vest 12,${brand},Hydration Vest,9,oz,160,published,12 L,,Vest,Frameless,no,no,Hydration vest,ultra 200`].join('\n');
     expect((await page.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } })).ok()).toBe(true);
 
-    await page.goto(url(`/explore/pack?brand=${brand.toLowerCase()}`));
+    await openExplore(page, url(`/explore/pack?brand=${brand.toLowerCase()}`));
     // In this order: weight, price and the specs. (No category
     // box: Pack's type chips over the results stand in for it.) Other tests'
     // packs may add filters (fit, hip belt), so check the order of ours.
@@ -147,7 +147,7 @@ test('packs offer pack weight, max carry, volume, straps, frame, roll top and ad
     expect(await names(page)).toEqual(['Framed 55']);
     await expect(page.getByTestId('range-volume').locator('output')).toContainText('At least 50 L');
     // Back to just this brand by link: with one brand in the catalog there's no Brand box.
-    await page.goto(url(`/explore/pack?brand=${brand.toLowerCase()}`));
+    await openExplore(page, url(`/explore/pack?brand=${brand.toLowerCase()}`));
     await page.getByTestId('filter-roll_top').locator('input[value="true"]').check();
     expect(await names(page)).toEqual(['Frameless 40']);
     await page.context().close();
@@ -155,7 +155,7 @@ test('packs offer pack weight, max carry, volume, straps, frame, roll top and ad
 
 test('a long filter column scrolls on its own, without scrolling the page', async ({ browser }) => {
     const page = await (await browser.newContext({ viewport: { width: 1280, height: 600 } })).newPage();
-    await page.goto(url('/explore/pack'));
+    await openExplore(page, url('/explore/pack'));
     const box = page.getByTestId('explore-filters-box');
     const m = await box.evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight, overflow: getComputedStyle(el).overflowY }));
     expect(m.overflow).toBe('auto');
@@ -195,7 +195,7 @@ test('Sleep System: filters keep every kind of gear they should; spec filters on
     expect((await owner.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } })).ok()).toBe(true);
     await owner.context().close();
 
-    await page.goto(url('/explore/sleep-system'));
+    await openExplore(page, url('/explore/sleep-system'));
     // Brand sits right under Category.
     const order = await page.locator('#wgGearFilters .wgFilter').evaluateAll((els) => els.slice(0, 2).map((e) => e.querySelector('legend')?.firstChild?.textContent?.trim()));
     expect(order).toEqual(['Category', 'Brand']);
@@ -222,7 +222,7 @@ test('Sleep System: filters keep every kind of gear they should; spec filters on
 test('spec filters follow the ticked categories: Tent in Shelter drops the tarp filters; none ticked, all are back', async ({ page, browser }, testInfo) => {
     const b = `Sf${Date.now().toString(36)}`;
     await seed(browser, testInfo.workerIndex, b);
-    await page.goto(url('/explore/shelter'));
+    await openExplore(page, url('/explore/shelter'));
     const tent = page.getByTestId('filter-capacity');
     const tarp = page.getByTestId('filter-tarp_shape');
     // Shelter as a whole: a tent's and a tarp's filters.
@@ -248,7 +248,7 @@ test('spec filters follow the ticked categories: Tent in Shelter drops the tarp 
     await expect(tent).toBeVisible();
 
     // A link with Tent ticked opens that way, and drops a tarp spec it carries.
-    await page.goto(url('/explore/shelter?cat=tent&tarp_shape=rectangular'));
+    await openExplore(page, url('/explore/shelter?cat=tent&tarp_shape=rectangular'));
     await expect(tarp).toBeHidden();
     await expect(tent).toBeVisible();
     await expect(page.locator('[data-filter-count]')).toHaveText('(1)');
@@ -271,7 +271,7 @@ test('brands follow the ticked categories: Pad in Sleep System lists only the br
     await owner.context().close();
 
     const brand = (b: string) => page.locator(`[data-brand-option="${b.toLowerCase()}"]`);
-    await page.goto(url('/explore/sleep-system'));
+    await openExplore(page, url('/explore/sleep-system'));
     // The whole section: both brands, counted over all its gear.
     await expect(brand(both)).toBeVisible();
     await expect(brand(both).locator('[data-brand-count]')).toHaveText('3');
@@ -287,11 +287,11 @@ test('brands follow the ticked categories: Pad in Sleep System lists only the br
     await expect(brand(both).locator('[data-brand-count]')).toHaveText('3');
 
     // A link with pads ticked opens that way.
-    await page.goto(url('/explore/sleep-system?cat=sleepingpad'));
+    await openExplore(page, url('/explore/sleep-system?cat=sleepingpad'));
     await expect(brand(quilts)).toBeHidden();
     await expect(brand(both)).toBeVisible();
     // A brand already ticked stays, so it can be unticked.
-    await page.goto(url(`/explore/sleep-system?cat=sleepingpad&brand=${quilts.toLowerCase()}`));
+    await openExplore(page, url(`/explore/sleep-system?cat=sleepingpad&brand=${quilts.toLowerCase()}`));
     await expect(brand(quilts)).toBeVisible();
     await expect(brand(quilts).locator('input')).toBeChecked();
 });
@@ -362,7 +362,7 @@ test('shoes carry their upper and sole: imported, filtered on Explore, shown on 
     expect(res.ok()).toBe(true);
     await owner.context().close();
 
-    await page.goto(url('/explore/shoes'));
+    await openExplore(page, url('/explore/shoes'));
     const card = (name: string) => page.getByTestId('explore-item').filter({ hasText: name });
     await expect(card(`${b} Mesh runner`)).toBeVisible();
     // Upper is a choice: tick Leather, and only the leather boot stays.
@@ -400,7 +400,7 @@ test('daypacks have their own section: by their category or their pack type, and
     await expect(page.locator('[data-testid="explore-section"][data-slug="pack"]').getByTestId('explore-child').filter({ hasText: /daypack/i })).toHaveCount(0);
 
     const card = (name: string) => page.getByTestId('explore-item').filter({ hasText: name });
-    await page.goto(url(`/explore/daypack?brand=${b.toLowerCase()}`));
+    await openExplore(page, url(`/explore/daypack?brand=${b.toLowerCase()}`));
     await expect(page.getByTestId('explore-title')).toHaveText('Daypack');
     await expect(card(`${b} Summit bag`)).toBeVisible();
     await expect(card(`${b} Day tripper`)).toBeVisible();
@@ -409,9 +409,36 @@ test('daypacks have their own section: by their category or their pack type, and
     await expect(page.getByTestId('filter-pack_type')).toHaveCount(0);
     await expect(page.locator('#wgGearFilters input[name="cat"]')).toHaveCount(0);
 
-    await page.goto(url(`/explore/pack?brand=${b.toLowerCase()}`));
+    await openExplore(page, url(`/explore/pack?brand=${b.toLowerCase()}`));
     await expect(card(`${b} Thru pack`)).toBeVisible();
     await expect(card(`${b} Summit bag`)).toHaveCount(0);
     await expect(card(`${b} Day tripper`)).toHaveCount(0);
     await expect(page.getByTestId('subtype-daypack')).toHaveCount(0);
+});
+
+test('each filter folds: closed until opened, open while set, its heading says what is chosen', async ({ page, browser }, testInfo) => {
+    const brand = `Fd${Date.now().toString(36)}`;
+    await seed(browser, testInfo.workerIndex, brand);
+    await page.goto(url('/explore/shelter'));
+    const brandBox = page.getByTestId('filter-brand');
+    const weight = page.getByTestId('range-weight');
+    // Closed: the boxes and sliders are out of the way.
+    await expect(brandBox).not.toHaveAttribute('open');
+    await expect(brandBox.locator(`input[value="${brand.toLowerCase()}"]`)).toBeHidden();
+    await expect(weight.getByTestId('range-weight-min')).toBeHidden();
+    await expect(weight.locator('summary output')).toHaveText('Any');
+
+    // Opened by its heading; ticking a brand says how many are ticked.
+    await brandBox.locator('summary').click();
+    await brandBox.locator(`input[value="${brand.toLowerCase()}"]`).check();
+    await expect(brandBox.locator('[data-picked]')).toHaveText('1');
+    await brandBox.locator('summary').click();
+    await expect(brandBox).not.toHaveAttribute('open');
+    await expect(brandBox.locator('[data-picked]')).toHaveText('1');
+
+    // A link with that filter set opens with it open; the rest stay closed.
+    await page.goto(page.url());
+    await expect(page.getByTestId('filter-brand')).toHaveAttribute('open', '');
+    await expect(page.getByTestId('filter-brand').locator('[data-picked]')).toHaveText('1');
+    await expect(page.getByTestId('range-weight')).not.toHaveAttribute('open');
 });
