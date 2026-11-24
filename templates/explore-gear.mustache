@@ -76,35 +76,47 @@
                 <details class="wgFiltersBox" open data-testid="explore-filters-box">
                     <summary class="wgFiltersToggle">{{#t}}explore.filters{{/t}} <span data-filter-count>{{activeLabel}}</span></summary>
                     <form id="wgGearFilters" class="wgFilters" method="get" action="/explore/{{slug}}" data-slug="{{slug}}" data-testid="explore-filters">
+                        {{! Each filter folds, so the column stays short: closed until
+                            opened, or while it has a choice made. Its heading says
+                            what's chosen (a slider's range, how many are ticked). }}
                         {{#facets.cats.length}}
-                        <fieldset class="wgFilter">
-                            <legend>{{#t}}explore.category{{/t}}</legend>
-                            {{#facets.cats}}<label class="wgFilterCheck"><input type="checkbox" name="cat" value="{{value}}" {{#on}}checked{{/on}}> {{label}} <span class="wgMuted">{{count}}</span></label>{{/facets.cats}}
-                        </fieldset>
+                        <details class="wgFilter" data-filter-fold data-testid="filter-cat" {{#facets.catsOpen}}open{{/facets.catsOpen}}>
+                            <summary class="wgFilterSummary"><span class="wgFilterLabel">{{#t}}explore.category{{/t}}</span><span class="wgFilterPicked" data-picked></span></summary>
+                            <fieldset class="wgFilterBody">
+                                <legend class="wgFilterHidden">{{#t}}explore.category{{/t}}</legend>
+                                {{#facets.cats}}<label class="wgFilterCheck"><input type="checkbox" name="cat" value="{{value}}" {{#on}}checked{{/on}}> {{label}} <span class="wgMuted">{{count}}</span></label>{{/facets.cats}}
+                            </fieldset>
+                        </details>
                         {{/facets.cats.length}}
 
                         {{#facets.brands.length}}
-                        <fieldset class="wgFilter" data-testid="filter-brand">
-                            <legend>{{#t}}explore.brand{{/t}}</legend>
-                            {{#facets.brands}}<label class="wgFilterCheck" data-brand-option="{{value}}" {{#hidden}}hidden{{/hidden}}><input type="checkbox" name="brand" value="{{value}}" {{#on}}checked{{/on}}> {{label}} <span class="wgMuted" data-brand-count>{{count}}</span></label>{{/facets.brands}}
-                        </fieldset>
+                        <details class="wgFilter" data-filter-fold data-testid="filter-brand" {{#facets.brandsOpen}}open{{/facets.brandsOpen}}>
+                            <summary class="wgFilterSummary"><span class="wgFilterLabel">{{#t}}explore.brand{{/t}}</span><span class="wgFilterPicked" data-picked></span></summary>
+                            <fieldset class="wgFilterBody">
+                                <legend class="wgFilterHidden">{{#t}}explore.brand{{/t}}</legend>
+                                {{#facets.brands}}<label class="wgFilterCheck" data-brand-option="{{value}}" {{#hidden}}hidden{{/hidden}}><input type="checkbox" name="brand" value="{{value}}" {{#on}}checked{{/on}}> {{label}} <span class="wgMuted" data-brand-count>{{count}}</span></label>{{/facets.brands}}
+                            </fieldset>
+                        </details>
                         {{/facets.brands.length}}
 
                         {{#blocks}}
                         {{#range}}
-                        <div class="wgFilter wgRange" data-range="{{key}}" data-spec-types="{{types}}" {{#hidden}}hidden{{/hidden}} data-min="{{min}}" data-max="{{max}}" data-step="{{step}}" {{#stops}}data-stops="{{stops}}"{{/stops}} data-testid="range-{{key}}">
-                            <div class="wgRangeHead"><span class="wgFilterLabel">{{label}}{{#appliesTo}}<span class="wgFilterFor"> · {{appliesTo}}</span>{{/appliesTo}}</span><output data-out>{{text}}</output></div>
+                        <details class="wgFilter wgRange" data-filter-fold data-range="{{key}}" data-spec-types="{{types}}" {{#hidden}}hidden{{/hidden}} {{#open}}open{{/open}} data-min="{{min}}" data-max="{{max}}" data-step="{{step}}" {{#stops}}data-stops="{{stops}}"{{/stops}} data-testid="range-{{key}}">
+                            <summary class="wgFilterSummary wgRangeHead"><span class="wgFilterLabel">{{label}}{{#appliesTo}}<span class="wgFilterFor"> · {{appliesTo}}</span>{{/appliesTo}}</span><output data-out>{{text}}</output></summary>
                             <div class="wgRangeTrack">
                                 <input type="range" class="wgRangeLo" name="{{key}}_min" min="{{min}}" max="{{max}}" step="{{step}}" value="{{lo}}" aria-label="{{ariaMin}}" data-testid="range-{{key}}-min">
                                 <input type="range" class="wgRangeHi" name="{{key}}_max" min="{{min}}" max="{{max}}" step="{{step}}" value="{{hi}}" aria-label="{{ariaMax}}" data-testid="range-{{key}}-max">
                             </div>
-                        </div>
+                        </details>
                         {{/range}}
                         {{#match}}
-                        <fieldset class="wgFilter" data-testid="filter-{{key}}" data-spec-types="{{types}}" {{#hidden}}hidden{{/hidden}}>
-                            <legend>{{label}}{{#appliesTo}}<span class="wgFilterFor"> · {{appliesTo}}</span>{{/appliesTo}}</legend>
-                            {{#options}}<label class="wgFilterCheck{{#off}} wgFilterOff{{/off}}"><input type="checkbox" name="{{key}}" value="{{value}}" {{#on}}checked{{/on}} {{#off}}disabled{{/off}}> {{label}} <span class="wgMuted">{{count}}</span></label>{{/options}}
-                        </fieldset>
+                        <details class="wgFilter" data-filter-fold data-testid="filter-{{key}}" data-spec-types="{{types}}" {{#hidden}}hidden{{/hidden}} {{#open}}open{{/open}}>
+                            <summary class="wgFilterSummary"><span class="wgFilterLabel">{{label}}{{#appliesTo}}<span class="wgFilterFor"> · {{appliesTo}}</span>{{/appliesTo}}</span><span class="wgFilterPicked" data-picked></span></summary>
+                            <fieldset class="wgFilterBody">
+                                <legend class="wgFilterHidden">{{label}}</legend>
+                                {{#options}}<label class="wgFilterCheck{{#off}} wgFilterOff{{/off}}"><input type="checkbox" name="{{key}}" value="{{value}}" {{#on}}checked{{/on}} {{#off}}disabled{{/off}}> {{label}} <span class="wgMuted">{{count}}</span></label>{{/options}}
+                            </fieldset>
+                        </details>
                         {{/match}}
                         {{/blocks}}
 

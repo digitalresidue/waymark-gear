@@ -1,6 +1,6 @@
 import { test, expect, Browser } from '@playwright/test';
 
-import { testRoot } from './utils';
+import { testRoot, openExplore } from './utils';
 
 // Gear specs: a tent's pitch and size, a quilt's ratings... from the import
 // sheet or the owner's editor, shown on gear pages, filterable in the API.
@@ -158,7 +158,7 @@ test('hammocks: from the sheet, on the gear page, and their own filters in Shelt
     await expect(specs.locator('[data-spec="bug_net"] dd')).toHaveText('Yes');
 
     // Explore → Shelter: hammock filters.
-    await page.goto(url('/explore/shelter'));
+    await openExplore(page, url('/explore/shelter'));
     await expect(page.getByTestId('filter-hammock_shape')).toBeVisible();
     await expect(page.getByTestId('filter-bug_net')).toBeVisible();
     await page.locator('input[name="cat"][value="hammock"]').check();
@@ -188,7 +188,7 @@ test('tarps: length in feet and inches, shape, material and the yes/no features'
     await expect(specs.locator('[data-spec="doors"] dd')).toHaveText('Yes');
 
     // Explore → Shelter: tarps with doors.
-    await page.goto(url('/explore/shelter'));
+    await openExplore(page, url('/explore/shelter'));
     await page.locator('input[name="cat"][value="tarp"]').check();
     await page.getByTestId('filter-doors').locator('input[value="true"]').check();
     await expect(page.getByTestId('explore-item').filter({ visible: true }).filter({ hasText: tag })).toHaveText([new RegExp(`Winter tarp ${tag}`)]);

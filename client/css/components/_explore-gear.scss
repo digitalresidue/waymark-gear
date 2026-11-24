@@ -173,7 +173,7 @@
 .wgFilters {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 10px;
 }
 
 .wgFilter {
@@ -186,15 +186,77 @@
         display: none;
     }
 
-    legend,
     .wgFilterLabel {
         font-size: 13px;
         font-weight: 700;
         letter-spacing: 0.04em;
-        margin-bottom: 6px;
         padding: 0;
         text-transform: uppercase;
     }
+}
+
+// Each filter folds (explore-gear.mustache): its heading opens and closes it,
+// with what's chosen on the right and a chevron that turns when open.
+.wgFilterSummary {
+    align-items: baseline;
+    border-bottom: 1px solid var(--lp-border);
+    cursor: pointer;
+    display: flex;
+    gap: 8px;
+    list-style: none;
+    padding: 4px 0 8px;
+
+    &::-webkit-details-marker {
+        display: none;
+    }
+
+    &::after {
+        border-bottom: 2px solid currentcolor;
+        border-right: 2px solid currentcolor;
+        color: var(--lp-text-secondary);
+        content: "";
+        flex: none;
+        height: 7px;
+        transform: translateY(-2px) rotate(45deg);
+        transition: transform 0.15s;
+        width: 7px;
+    }
+
+    [open] > & {
+        margin-bottom: 8px;
+
+        &::after {
+            transform: translateY(2px) rotate(-135deg);
+        }
+    }
+
+    &:hover .wgFilterLabel {
+        color: var(--lp-accent-green-deep);
+    }
+}
+
+.wgFilterPicked {
+    color: var(--lp-accent-green-deep);
+    font-size: 13px;
+    font-weight: 600;
+    // Pushes the chevron right even while empty.
+    margin-left: auto;
+}
+
+.wgFilterBody {
+    border: 0;
+    margin: 0;
+    min-width: 0;
+    padding: 0;
+}
+
+.wgFilterHidden {
+    clip: rect(0 0 0 0);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
 }
 
 .wgFilterCheck {
@@ -222,12 +284,8 @@
 }
 
 .wgRangeHead {
-    align-items: baseline;
-    display: flex;
-    gap: 8px;
-    justify-content: space-between;
-
     output {
+        margin-left: auto;
         color: var(--lp-accent-green-deep);
         font-size: 13px;
         font-weight: 600;

@@ -126,10 +126,21 @@ export function initExploreGear() {
         if (empty) empty.hidden = shown > 0;
         const active = activeFilterCount(f);
         if (filterCount) filterCount.textContent = active ? `(${active})` : '';
+        showPicked();
         const qs = filtersToQuery(f);
         history.replaceState(null, '', `/explore/${slug}${qs ? `?${qs}` : ''}`);
         markSubtype();
     }
+
+    // A folded checkbox filter's heading says how many are ticked.
+    const folds = [...form.querySelectorAll('[data-filter-fold]')].map((el) => ({ el, picked: el.querySelector('[data-picked]') })).filter((f) => f.picked);
+    function showPicked() {
+        for (const f of folds) {
+            const n = f.el.querySelectorAll('input[type="checkbox"]:checked').length;
+            f.picked.textContent = n ? String(n) : '';
+        }
+    }
+    showPicked();
 
     // The two thumbs of a range can't cross.
     for (const r of ranges) {
