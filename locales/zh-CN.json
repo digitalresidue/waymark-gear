@@ -144,6 +144,11 @@
   "explore.parent.lights-electronics": "照明与电子设备",
   "explore.parent.lights-electronics.note": "头灯、手表、充电器和数据线",
   "gear.noRatings": "还没有评分。",
+  "gear.weighedBy": {
+    "other": "{count} 位徒步者称重"
+  },
+  "gear.brandSays": "品牌标称 {weight}",
+  "gear.weighedNote": "至少 10 位成员的称重结果一致时，显示他们自己装备重量的中位数。",
   "gear.ratingFrom": {
     "other": "/ 5，来自 {count} 个评分"
   },

@@ -23,6 +23,7 @@ import headTags, { injectHeadTags, loadHeadTags } from './server/head-tags.js';
 import { scheduleImageCleanup } from './server/image-gc.js';
 import { scheduleSitemap } from './server/sitemap.js';
 import { schedulePackUpdatePrune } from './server/activity.js';
+import { scheduleCommunityWeights } from './server/community-weights.js';
 import { backfillBoardChecks } from './server/kits.js';
 import { loadLibrary } from './server/library-store.js';
 import googleAuth from './server/google.js';
@@ -202,6 +203,9 @@ backfillBoardChecks(loadLibrary, logger)
 
 // Once a day (and just after start): rebuild sitemap.xml.
 scheduleSitemap(knex, logger);
+
+// Once a day (and just after start): catalog gear's community weights.
+scheduleCommunityWeights(logger);
 
 // Docker and most process managers send SIGTERM and wait a few seconds before
 // killing. Stop accepting connections, let in-flight saves finish, close the

@@ -47,6 +47,17 @@ Everything you enter into Waymark Gear, including list names, item names, descri
 weights, prices, quantities, links, and the images you upload, is stored in our
 database and associated with your account. We attempt to strip all EXIF metadata from uploaded images.
 
+### Community weights
+
+When you set your own weight for gear you added from the Waymark catalog, it
+counts toward that catalog item's **community weight**: once at least ten
+members' weights agree, the catalog shows the middle of them on the gear
+page, in Explore and in Compare. Only that one combined number and how many
+members it's from are shown; nobody can see whose weights they were or what
+any one member's gear weighs. Gear on your wishlist doesn't count. Deleting
+the gear, or your account, takes your weight out within a day. Your own gear
+always keeps your weight: the community weight never changes it.
+
 ### Body stats (optional)
 
 If you add body stats in **Your profile** (weight, height, year born, sex and

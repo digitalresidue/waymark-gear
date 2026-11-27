@@ -145,6 +145,12 @@
   "explore.parent.lights-electronics": "Lights & Electronics",
   "explore.parent.lights-electronics.note": "Headlamps, watches, chargers and cables",
   "gear.noRatings": "No ratings yet.",
+  "gear.weighedBy": {
+    "one": "Weighed by {count} hiker",
+    "other": "Weighed by {count} hikers"
+  },
+  "gear.brandSays": "Brand says {weight}",
+  "gear.weighedNote": "The middle of what members’ own gear weighs, once at least 10 of them agree.",
   "gear.ratingFrom": {
     "one": "/ 5 from {count} rating",
     "other": "/ 5 from {count} ratings"

@@ -49,6 +49,26 @@
                 Found by the names of your gear and categories. Hover a ✓ to see what counted.
             </p>
 
+            <!-- Catalog gear whose weight here is far from the catalog's best
+                 weight (members' own, else the brand's): a typo or a unit slip
+                 to fix, or gear that really is different. Nothing changes it. -->
+            <template v-if="weightChecks.length">
+                <h3 class="wgInsightH">
+                    Weights to double-check
+                </h3>
+                <ul class="wgInsightRows wgWeightChecks" data-testid="insights-weights">
+                    <li v-for="w in weightChecks" :key="w.itemId" :data-testid="`weight-check-${w.itemId}`">
+                        <span class="wgInsightName">{{ w.name }}</span>
+                        <!-- One line, so the spaces stay (Vue drops them between tags on new lines). -->
+                        <span>Yours <strong>{{ fmt(w.yoursMg) }}</strong> · <a :href="`/g/${w.catalogId}`" target="_blank" rel="noopener">{{ w.weighedBy ? `weighed by ${w.weighedBy} hikers` : 'the brand says' }}</a> <strong>{{ fmt(w.catalogMg) }}</strong> <span class="wgMuted">({{ w.share > 0 ? '+' : '' }}{{ w.share }}%)</span></span>
+                        <span v-if="w.slip" class="wgWeightSlip" data-testid="weight-slip">Looks like {{ unitName(w.slip.meant) }} typed as {{ unitName(w.slip.typed) }}.</span>
+                    </li>
+                </ul>
+                <p class="wgMuted wgTripFine wgInsightNote">
+                    Your gear may really weigh that (used, trimmed, a different size). Only you change your weights.
+                </p>
+            </template>
+
             <!-- The big three first: where swaps change a pack the most. Same
                  kind only (no tents for a hammock), at least 20% lighter, like
                  for like (utils/big-three.js, server/insights.js). -->
@@ -130,7 +150,7 @@
                     </li>
                 </ul>
             </template>
-            <p v-if="loaded && !bigThree.slots.length && !alternatives.length && !favorites.length" class="wgMuted wgTripFine">
+            <p v-if="loaded && !bigThree.slots.length && !alternatives.length && !favorites.length && !weightChecks.length" class="wgMuted wgTripFine">
                 No lighter options in the catalog for this list yet. Gear picked from the catalog gets the best matches.
             </p>
         </div>
@@ -150,7 +170,7 @@ export default {
         list: { type: Object, required: true },
     },
     data() {
-        return { open: false, loaded: false, bigThree: { slots: [], totalMg: 0, bestSavingsMg: 0 }, alternatives: [], favorites: [], timer: null };
+        return { open: false, loaded: false, bigThree: { slots: [], totalMg: 0, bestSavingsMg: 0 }, alternatives: [], favorites: [], weightChecks: [], timer: null };
     },
     computed: {
         library() {
@@ -202,6 +222,9 @@ export default {
         fmt(mg) {
             return formatWeightMg(mg, this.unit);
         },
+        unitName(u) {
+            return { g: 'grams', kg: 'kilograms', oz: 'ounces', lb: 'pounds' }[u] || u;
+        },
         toggle() {
             this.open = !this.open;
             if (this.open) this.fetch();
@@ -213,6 +236,7 @@ export default {
                 this.bigThree = res.bigThree || { slots: [], totalMg: 0, bestSavingsMg: 0 };
                 this.alternatives = res.alternatives;
                 this.favorites = res.favorites;
+                this.weightChecks = res.weightChecks || [];
             } catch {
                 // Offline or catalog unavailable: the essentials check still works.
             } finally {
@@ -388,6 +412,18 @@ export default {
         color: var(--lp-text-secondary);
         cursor: default;
         text-decoration: none;
+    }
+}
+
+// Weights to double-check: the item, yours against the catalog's.
+.wgWeightChecks {
+    .wgInsightName {
+        font-weight: 650;
+    }
+
+    .wgWeightSlip {
+        color: #8A1C14;
+        font-size: 13px;
     }
 }
 

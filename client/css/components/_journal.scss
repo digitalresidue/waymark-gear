@@ -235,6 +235,27 @@
     margin: 4px 0;
 }
 
+// The weight members' own gear agrees on (views.js weighedModel).
+.wgWeighed {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 13px;
+    gap: 4px 10px;
+    margin: 0 0 6px;
+}
+
+.wgWeighedBadge {
+    align-items: center;
+    background: color-mix(in srgb, var(--lp-accent-green) 16%, transparent);
+    border-radius: 999px;
+    color: var(--lp-accent-green-deep);
+    display: inline-flex;
+    font-weight: 650;
+    gap: 4px;
+    padding: 2px 9px 2px 7px;
+}
+
 .wgGearHeroLinks {
     display: flex;
     flex-wrap: wrap;
@@ -473,6 +494,21 @@
 
 .wgCompareBest {
     font-weight: 700;
+}
+
+// Under a weight: who weighed it (views.js weighedModel).
+.wgCompareWeighed {
+    color: var(--lp-accent-green-deep);
+    display: block;
+    font-family: $font-body;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 2px;
+
+    &.wgMuted {
+        color: var(--lp-text-secondary);
+        font-weight: 400;
+    }
 }
 
 .wgCompareTag {

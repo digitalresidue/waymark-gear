@@ -146,7 +146,7 @@ export async function checkList(user, listId) {
     const rows = listRows(library, list);
     const trip = list.trip || {};
     const essentials = checkEssentials(rows, { tripType: list.tripType, tempLowC: trip.tempLowC, tempHighC: trip.tempHighC, dismissed: list.notNeeded });
-    const { bigThree, alternatives, favorites } = await listInsights(rows);
+    const { bigThree, alternatives, favorites, weightChecks } = await listInsights(rows);
     const unit = library.totalUnit;
     const estimate = list.trip ? tripEstimates(list.trip, (list.totalBaseWeight || 0) + (list.totalConsumableWeight || 0)) : null;
     return {
@@ -177,6 +177,17 @@ export async function checkList(user, listId) {
             options: a.options.map((o) => ({ catalogId: o.id, name: `${o.brand} ${o.name}`.trim(), weight: weight(o.weightMg, unit), saves: weight(o.savesMg, unit), usedInPublicLists: `${o.share}%` })),
         })),
         popularWithOthers: favorites.map((f) => ({ catalogId: f.id, name: `${f.brand} ${f.name}`.trim(), category: f.category, weight: weight(f.weightMg, unit), usedInPublicLists: `${f.share}%` })),
+        // Catalog gear whose weight here is far from the catalog's: worth a
+        // second look (a typo, a unit slip), never changed for the owner.
+        weightsToCheck: (weightChecks || []).map((w) => ({
+            item: w.name,
+            catalogId: w.catalogId,
+            yours: weight(w.yoursMg, unit),
+            catalog: weight(w.catalogMg, unit),
+            catalogWeighedByMembers: w.weighedBy,
+            differencePercent: w.share,
+            ...(w.slip ? { looksLike: `${w.slip.typed} typed for ${w.slip.meant}` } : {}),
+        })),
         calories: estimate ? { kcalPerDay: estimate.kcalPerDay, macrosGrams: estimate.macros, waterLitersPerDay: estimate.waterLitersPerDay, trip: estimate.totals } : null,
     };
 }

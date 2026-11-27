@@ -147,6 +147,14 @@
   "explore.parent.lights-electronics": "Oświetlenie i elektronika",
   "explore.parent.lights-electronics.note": "Czołówki, zegarki, ładowarki i kable",
   "gear.noRatings": "Jeszcze bez ocen.",
+  "gear.weighedBy": {
+    "one": "Zważone przez {count} turystę",
+    "few": "Zważone przez {count} turystów",
+    "many": "Zważone przez {count} turystów",
+    "other": "Zważone przez {count} turysty"
+  },
+  "gear.brandSays": "Producent podaje {weight}",
+  "gear.weighedNote": "Mediana wagi sprzętu członków, gdy co najmniej 10 z nich jest zgodnych.",
   "gear.ratingFrom": {
     "one": "/ 5 z {count} oceny",
     "few": "/ 5 z {count} ocen",

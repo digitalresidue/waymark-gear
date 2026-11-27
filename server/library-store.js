@@ -24,6 +24,7 @@ import { TRIP_TYPES, youTubeId, CONDITIONS } from '../client/utils/gear-meta.js'
 import { ESSENTIALS } from '../client/utils/insights.js';
 import { normalizeTrailTag } from '../client/utils/trails.js';
 import { ensureTrails, resolveTrail, trailIndex } from './trails-index.js';
+import { refreshSoon } from './community-weights.js';
 
 const UNITS = ['g', 'kg', 'oz', 'lb'];
 const LIMITS = { items: 20000, categories: 5000, lists: 1000, itemsPerCategory: 2000, categoriesPerList: 500 };
@@ -79,6 +80,8 @@ function itemRow(userId, item) {
         url: str(item.url, 2000),
         catalog_id: catalogId,
         catalog_sync: catalogId ? bool(item.catalogSync) : false,
+        // The owner set this catalog gear's weight (server/community-weights.js).
+        weight_own: catalogId ? bool(item.weightOwn) : false,
         retired: bool(item.retired),
         closet_category: str(item.closetCategory, 60),
         photos: JSON.stringify(ownPhotos(item.photos)),
@@ -324,6 +327,7 @@ export async function loadLibrary(userId, db = knex) {
             if (i.catalog_id) {
                 out.catalogId = i.catalog_id;
                 out.catalogSync = i.catalog_sync;
+                if (i.weight_own) out.weightOwn = true;
             }
             if (i.retired) out.retired = true;
             if (i.closet_category) out.closetCategory = i.closet_category;
@@ -371,10 +375,18 @@ export function normalizeLibrary(input) {
 
 // Replace everything a user has with `serialized`. Runs in the caller's
 // transaction when given one.
+// Catalog gear whose community weight a save may change (server/community-weights.js).
+const catalogIdsOf = (trx, userId, ids) => {
+    const q = trx('gear_items').where({ user_id: userId }).whereNotNull('catalog_id');
+    return (ids ? q.whereIn('id', ids) : q).distinct('catalog_id').pluck('catalog_id');
+};
+
 export async function replaceLibrary(userId, serialized, db = knex) {
     await ensureTrails();
     const lib = normalizeLibrary(serialized);
+    const touched = new Set();
     const run = async (trx) => {
+        for (const id of await catalogIdsOf(trx, userId)) touched.add(id);
         await trx('pack_lists').where({ user_id: userId }).del(); // cascades categories and their items
         await trx('gear_items').where({ user_id: userId }).del();
 
@@ -382,6 +394,7 @@ export async function replaceLibrary(userId, serialized, db = knex) {
             .onConflict('user_id').merge();
 
         const itemRows = lib.items.map((i) => itemRow(userId, i));
+        for (const r of itemRows) if (r.catalog_id) touched.add(r.catalog_id);
         for (let i = 0; i < itemRows.length; i += 500) await trx('gear_items').insert(itemRows.slice(i, i + 500));
         const knownItems = new Set(itemRows.map((r) => r.id));
 
@@ -404,7 +417,9 @@ export async function replaceLibrary(userId, serialized, db = knex) {
         for (let i = 0; i < catRows.length; i += 500) await trx('pack_list_categories').insert(catRows.slice(i, i + 500));
         for (let i = 0; i < ciRows.length; i += 1000) await trx('pack_list_items').insert(ciRows.slice(i, i + 1000));
     };
-    return db.isTransaction ? run(db) : db.transaction(run);
+    const out = await (db.isTransaction ? run(db) : db.transaction(run));
+    refreshSoon([...touched]);
+    return out;
 }
 
 // ---- applying changes ----------------------------------------------------------
@@ -428,6 +443,7 @@ export async function applyChanges(userId, changes, db = knex) {
         throw new LibraryError('Too many changes in one save.');
     }
 
+    const touched = new Set();
     const run = async (trx) => {
         if (!(await trx('library_settings').where({ user_id: userId }).first('user_id'))) {
             await trx('library_settings').insert(settingsRow(userId, {}));
@@ -444,8 +460,13 @@ export async function applyChanges(userId, changes, db = knex) {
         }
 
         // Items next, so categories can reference new ones.
+        if (items.upsert.length) {
+            // What each changed item was linked to before, too (a re-link).
+            for (const id of await catalogIdsOf(trx, userId, items.upsert.map((i) => i.id).filter(isId))) touched.add(id);
+        }
         for (const item of items.upsert) {
             const row = itemRow(userId, item);
+            if (row.catalog_id) touched.add(row.catalog_id);
             await trx('gear_items').insert(row).onConflict(['user_id', 'id']).merge();
         }
 
@@ -487,7 +508,10 @@ export async function applyChanges(userId, changes, db = knex) {
         }
 
         if (categories.delete.length) await trx('pack_list_categories').where({ user_id: userId }).whereIn('id', categories.delete).del();
-        if (items.delete.length) await trx('gear_items').where({ user_id: userId }).whereIn('id', items.delete).del();
+        if (items.delete.length) {
+            for (const id of await catalogIdsOf(trx, userId, items.delete)) touched.add(id);
+            await trx('gear_items').where({ user_id: userId }).whereIn('id', items.delete).del();
+        }
         if (lists.delete.length) await trx('pack_lists').where({ user_id: userId }).whereIn('id', lists.delete).del();
 
         if (changes.settings && typeof changes.settings === 'object') {
@@ -512,7 +536,9 @@ export async function applyChanges(userId, changes, db = knex) {
         const [{ count }] = await trx('gear_items').where({ user_id: userId }).count({ count: '*' });
         if (Number(count) > LIMITS.items) throw new LibraryError('This library is larger than Waymark Gear allows.');
     };
-    return db.isTransaction ? run(db) : db.transaction(run);
+    const out = await (db.isTransaction ? run(db) : db.transaction(run));
+    refreshSoon([...touched]);
+    return out;
 }
 
 // Counts for operator tools and moderation.

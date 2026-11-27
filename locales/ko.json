@@ -144,6 +144,11 @@
   "explore.parent.lights-electronics": "조명 및 전자기기",
   "explore.parent.lights-electronics.note": "헤드램프, 시계, 충전기, 케이블",
   "gear.noRatings": "아직 평점이 없어요.",
+  "gear.weighedBy": {
+    "other": "하이커 {count}명이 계량"
+  },
+  "gear.brandSays": "제조사 표기 {weight}",
+  "gear.weighedNote": "최소 10명의 측정값이 일치하면, 회원들이 직접 잰 무게의 중앙값을 보여 줍니다.",
   "gear.ratingFrom": {
     "other": "/ 5 (평점 {count}개)"
   },
