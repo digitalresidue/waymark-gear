@@ -215,6 +215,11 @@
   "spec.bag_shape": "形状",
   "spec.rds": "RDS 认证",
   "spec.gender": "版型",
+  "spec.size": "尺码",
+  "spec.torso_size": "背长尺码",
+  "spec.hipbelt_size": "腰带尺码",
+  "spec.bag_length": "长度",
+  "spec.shoe_size": "尺码（美码）",
   "spec.bag_width": "宽度",
   "spec.hooded": "带帽",
   "spec.zipper": "拉链",
@@ -301,6 +306,7 @@
   "spec.types.poles": "登山杖",
   "spec.types.tarp": "天幕",
   "spec.types.hammock": "吊床",
+  "spec.types.clothing": "服装",
   "gear.shops": {
     "other": "{count} 家店"
   },

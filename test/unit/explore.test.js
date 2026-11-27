@@ -241,3 +241,9 @@ describe('Explore: daypacks are one of Pack\'s sub-items, apart from Packs', () 
         assert.deepEqual(subtypesOf('pack', items).options.map((o) => [o.name, o.count]), [['Packs', 1], ['Fastpacks', 1], ['Hydration vests', 1], ['Daypacks', 2]]);
     });
 });
+
+describe('Explore: clothes by any name the clothing specs know sit under Clothing', () => {
+    test('puffies, rain pants, sun hoodies and socks', () => {
+        for (const c of ['Puffy', 'Down Jacket', 'Rain Pants', 'Wind Shirt', 'Sun Hoody', 'Socks', 'Leggings', 'Beanie']) assert.equal(parentOf(c), 'clothing', c);
+    });
+});

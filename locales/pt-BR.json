@@ -218,6 +218,11 @@
   "spec.bag_shape": "Formato",
   "spec.rds": "Certificado RDS",
   "spec.gender": "Modelagem",
+  "spec.size": "Tamanho",
+  "spec.torso_size": "Tamanho do tronco",
+  "spec.hipbelt_size": "Tamanho da barrigueira",
+  "spec.bag_length": "Comprimento",
+  "spec.shoe_size": "Tamanho (EUA)",
   "spec.bag_width": "Largura",
   "spec.hooded": "Com capuz",
   "spec.zipper": "Zíper",
@@ -304,6 +309,7 @@
   "spec.types.poles": "bastões de trekking",
   "spec.types.tarp": "tarps",
   "spec.types.hammock": "redes de dormir",
+  "spec.types.clothing": "roupas",
   "gear.shops": {
     "one": "{count} loja",
     "other": "{count} lojas"

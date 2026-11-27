@@ -29,12 +29,17 @@ export const slugify = (name) => String(name || '').toLowerCase().replace(/&/g, 
 // Categories that are daypacks ("Daypack", "Day Pack").
 const DAYPACK_KEYS = new Set(['daypack']);
 
+// Spec types whose gear is clothes.
+const CLOTHING_TYPES = new Set(['clothing', 'outer', 'shell']);
+
 /** The parent a catalog category sits under ('shelter'...), or null. */
 export function parentOf(category) {
     const k = categoryKey(category);
     if (!k) return null;
     const type = specTypeFor(category);
     if ((type && type.id === 'pack') || k === 'pack') return 'pack';
+    // Clothes by any name the clothing specs know ("Puffy", "Rain Pants").
+    if (type && CLOTHING_TYPES.has(type.id)) return 'clothing';
     const group = defaultGroupFor(category);
     if (PARENT_BY_GROUP[group]) return PARENT_BY_GROUP[group];
     // A category named like the parent itself ("Shelter", "Sleep").

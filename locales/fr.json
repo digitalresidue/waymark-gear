@@ -218,6 +218,11 @@
   "spec.bag_shape": "Forme",
   "spec.rds": "Certifié RDS",
   "spec.gender": "Coupe",
+  "spec.size": "Taille",
+  "spec.torso_size": "Taille de dos",
+  "spec.hipbelt_size": "Taille de ceinture",
+  "spec.bag_length": "Longueur",
+  "spec.shoe_size": "Pointure (US)",
   "spec.bag_width": "Largeur",
   "spec.hooded": "Avec capuche",
   "spec.zipper": "Fermeture éclair",
@@ -304,6 +309,7 @@
   "spec.types.poles": "bâtons de randonnée",
   "spec.types.tarp": "tarps",
   "spec.types.hammock": "hamacs",
+  "spec.types.clothing": "vêtements",
   "gear.shops": {
     "one": "{count} boutique",
     "other": "{count} boutiques"

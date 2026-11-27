@@ -218,6 +218,11 @@
   "spec.bag_shape": "Forma",
   "spec.rds": "Certificato RDS",
   "spec.gender": "Vestibilità",
+  "spec.size": "Taglia",
+  "spec.torso_size": "Taglia schienale",
+  "spec.hipbelt_size": "Taglia cintura",
+  "spec.bag_length": "Lunghezza",
+  "spec.shoe_size": "Taglia (US)",
   "spec.bag_width": "Larghezza",
   "spec.hooded": "Con cappuccio",
   "spec.zipper": "Cerniera",
@@ -304,6 +309,7 @@
   "spec.types.poles": "bastoncini da trekking",
   "spec.types.tarp": "tarp",
   "spec.types.hammock": "amache",
+  "spec.types.clothing": "abbigliamento",
   "gear.shops": {
     "one": "{count} negozio",
     "other": "{count} negozi"

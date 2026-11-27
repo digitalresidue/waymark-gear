@@ -218,6 +218,11 @@
   "spec.bag_shape": "Form",
   "spec.rds": "RDS-zertifiziert",
   "spec.gender": "Schnitt",
+  "spec.size": "Größe",
+  "spec.torso_size": "Rückenlänge",
+  "spec.hipbelt_size": "Hüftgurtgröße",
+  "spec.bag_length": "Länge",
+  "spec.shoe_size": "Größe (US)",
   "spec.bag_width": "Breite",
   "spec.hooded": "Mit Kapuze",
   "spec.zipper": "Reißverschluss",
@@ -304,6 +309,7 @@
   "spec.types.poles": "Trekkingstöcke",
   "spec.types.tarp": "Tarps",
   "spec.types.hammock": "Hängematten",
+  "spec.types.clothing": "Kleidung",
   "gear.shops": {
     "one": "{count} Shop",
     "other": "{count} Shops"

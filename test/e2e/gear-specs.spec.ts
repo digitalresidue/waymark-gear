@@ -194,3 +194,41 @@ test('tarps: length in feet and inches, shape, material and the yes/no features'
     await expect(page.getByTestId('explore-item').filter({ visible: true }).filter({ hasText: tag })).toHaveText([new RegExp(`Winter tarp ${tag}`)]);
     await ownerPage.context().close();
 });
+
+test('fit and sizes: every type says who it fits; packs their torso and hip belt, clothes their size', async ({ browser, page }, testInfo) => {
+    const ownerPage = await owner(browser, testInfo.workerIndex);
+    const tag = `fs${Date.now().toString(36)}`;
+    const csv = [
+        'sku,name,brand,category,weight,unit,status,gender,size,torso_size,hipbelt_size,shoe_size,bag_length',
+        `${tag}-1,Wool sock ${tag},${tag},Socks,2,oz,published,Women's,Medium,,,,`,
+        `${tag}-2,Thick sock ${tag},${tag},Socks,3,oz,published,Unisex,XL,,,,`,
+        `${tag}-3,Trail pack ${tag},${tag},Backpack,30,oz,published,Men's,,Large,M,,`,
+        `${tag}-4,Light stove ${tag},${tag},Stove,3,oz,published,Unisex,,,,,`,
+        `${tag}-5,Runner ${tag},${tag},Trail Runners,20,oz,published,Women's,,,,8.5,`,
+        `${tag}-6,Long quilt ${tag},${tag},Top Quilt,20,oz,published,Unisex,,,,,Long`,
+    ].join('\n');
+    const plan = await (await ownerPage.request.post(url('/api/admin/catalog/import/preview'), { data: { csv } })).json();
+    expect(plan.summary).toMatchObject({ new: 6, error: 0 });
+    expect((await ownerPage.request.post(url('/api/admin/catalog/import/apply'), { data: { csv } })).ok()).toBe(true);
+    const find = async (name: string) => (await (await ownerPage.request.get(url(`/api/admin/catalog?q=${encodeURIComponent(name)}`))).json()).items[0];
+    expect((await find(`Wool sock ${tag}`)).specs).toMatchObject({ gender: 'womens', size: 'm' });
+    const pack = await find(`Trail pack ${tag}`);
+    expect(pack.specs).toMatchObject({ gender: 'mens', torso_size: 'l', hipbelt_size: 'm' });
+    expect((await find(`Light stove ${tag}`)).specs).toMatchObject({ gender: 'unisex' });
+    expect((await find(`Long quilt ${tag}`)).specs).toMatchObject({ bag_length: 'long' });
+
+    await page.goto(url(`/g/${pack.id}`));
+    const specs = page.getByTestId('gear-specs');
+    await expect(specs.locator('[data-spec="gender"] dd')).toHaveText("Men's");
+    await expect(specs.locator('[data-spec="torso_size"] dd')).toHaveText('L');
+    await expect(specs.locator('[data-spec="hipbelt_size"] dd')).toHaveText('M');
+
+    // Explore → Clothing: the socks filter by fit and size.
+    await openExplore(page, url(`/explore/clothing?brand=${tag}`));
+    await page.getByTestId('filter-size').locator('input[value="xl"]').check();
+    await expect(page.getByTestId('explore-item').filter({ visible: true })).toHaveText([new RegExp(`Thick sock ${tag}`)]);
+    await page.getByTestId('filter-size').locator('input[value="xl"]').uncheck();
+    await page.getByTestId('filter-gender').locator('input[value="womens"]').check();
+    await expect(page.getByTestId('explore-item').filter({ visible: true })).toHaveText([new RegExp(`Wool sock ${tag}`)]);
+    await ownerPage.context().close();
+});

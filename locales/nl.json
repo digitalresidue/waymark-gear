@@ -218,6 +218,11 @@
   "spec.bag_shape": "Vorm",
   "spec.rds": "RDS-gecertificeerd",
   "spec.gender": "Pasvorm",
+  "spec.size": "Maat",
+  "spec.torso_size": "Rugmaat",
+  "spec.hipbelt_size": "Heupbandmaat",
+  "spec.bag_length": "Lengte",
+  "spec.shoe_size": "Maat (US)",
   "spec.bag_width": "Breedte",
   "spec.hooded": "Met capuchon",
   "spec.zipper": "Rits",
@@ -304,6 +309,7 @@
   "spec.types.poles": "wandelstokken",
   "spec.types.tarp": "tarps",
   "spec.types.hammock": "hangmatten",
+  "spec.types.clothing": "kleding",
   "gear.shops": {
     "one": "{count} winkel",
     "other": "{count} winkels"

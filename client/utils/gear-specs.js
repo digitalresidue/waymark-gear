@@ -90,6 +90,12 @@ const num = (min, max, extra = {}) => ({ kind: 'number', min, max, ...extra });
 const IP_RATINGS = ['IPX4', 'IPX5', 'IPX6', 'IPX7', 'IPX8', 'IP54', 'IP65', 'IP66', 'IP67', 'IP68'];
 const choice = (options) => ({ kind: 'choice', options });
 const FILL_POWERS = [450, 550, 650, 750, 800, 850, 900, 950, 1000];
+const LETTER_SIZES = [['xxs', 'XXS'], ['xs', 'XS'], ['s', 'S'], ['m', 'M'], ['l', 'L'], ['xl', 'XL'], ['xxl', 'XXL'], ['3xl', '3XL'], ['one_size', 'One size']];
+const SIZE_ALIASES = {
+    small: 's', sm: 's', medium: 'm', med: 'm', md: 'm', large: 'l', lg: 'l',
+    xsmall: 'xs', extrasmall: 'xs', xxsmall: 'xxs', xlarge: 'xl', extralarge: 'xl',
+    xxlarge: 'xxl', '2xl': 'xxl', xxxl: '3xl', xxxlarge: '3xl', onesize: 'one_size', os: 'one_size', osfa: 'one_size', universal: 'one_size',
+};
 
 /**
  * Every spec field. kind: temp | weight | length | volume | dims | number |
@@ -141,7 +147,14 @@ export const SPEC_FIELDS = {
     quilt_shape: { label: 'Shape', ...choice([['tapered', 'Tapered'], ['rectangular', 'Rectangular'], ['other', 'Other']]) },
     bag_shape: { label: 'Shape', ...choice([['mummy', 'Mummy'], ['tapered', 'Tapered'], ['rectangular', 'Rectangular'], ['other', 'Other']]) },
     rds: { label: 'RDS certified', ...choice([['yes', 'Yes'], ['no', 'No'], ['unknown', 'Unknown']]), aliases: { y: 'yes', n: 'no', true: 'yes', false: 'no', unkown: 'unknown' }, onlyWhen: { insulation: 'down' } },
-    gender: { label: 'Fit for', ...choice([['mens', "Men's"], ['womens', "Women's"], ['unisex', 'Unisex']]), aliases: { men: 'mens', male: 'mens', m: 'mens', women: 'womens', female: 'womens', w: 'womens' } },
+    gender: { label: 'Fit for', ...choice([['mens', "Men's"], ['womens', "Women's"], ['unisex', 'Unisex']]), aliases: { men: 'mens', male: 'mens', m: 'mens', women: 'womens', female: 'womens', w: 'womens', ladies: 'womens', both: 'unisex', any: 'unisex' } },
+    // Sizes: with brand, name and fit, what tells one size of a product from
+    // another (each size is its own catalog item, with its own weight).
+    size: { label: 'Size', ...choice(LETTER_SIZES), aliases: SIZE_ALIASES },
+    torso_size: { label: 'Torso size', ...choice(LETTER_SIZES.filter(([v]) => !['xxs', '3xl'].includes(v))), aliases: SIZE_ALIASES },
+    hipbelt_size: { label: 'Hip belt size', ...choice(LETTER_SIZES.filter(([v]) => !['xxs', '3xl'].includes(v))), aliases: SIZE_ALIASES },
+    bag_length: { label: 'Length', ...choice([['short', 'Short'], ['regular', 'Regular'], ['long', 'Long'], ['extra_long', 'Extra long']]), aliases: { reg: 'regular', r: 'regular', standard: 'regular', l: 'long', lg: 'long', xl: 'extra_long', xlong: 'extra_long', s: 'short', petite: 'short' } },
+    shoe_size: { label: 'Size (US)', ...num(1, 20, { range: [5, 14], placeholder: 'e.g. 10.5' }) },
     bag_width: { label: 'Width', ...choice([['slim', 'Slim'], ['regular', 'Regular'], ['wide', 'Wide']]) },
     hooded: { label: 'Hooded', ...yesNo },
     zipper: { label: 'Zipper', ...choice([['full', 'Full'], ['quarter', 'Quarter'], ['none', 'None']]), aliases: { half: 'quarter', pullover: 'none' } },
@@ -254,73 +267,82 @@ export const SPEC_FIELDS = {
 export const SPEC_TYPES = [
     {
         id: 'pack', label: 'Pack', categories: ['Pack', 'Backpack', 'Rucksack', 'Fastpack', 'Fast Pack', 'Hydration Vest', 'Running Vest', 'Daypack', 'Day Pack'],
-        fields: ['volume', 'max_carry', 'gender', 'pack_type', 'frame', 'strap_type', 'hip_belt', 'roll_top', 'adjustable_torso', 'fabric'],
+        fields: ['volume', 'max_carry', 'gender', 'torso_size', 'hipbelt_size', 'pack_type', 'frame', 'strap_type', 'hip_belt', 'roll_top', 'adjustable_torso', 'fabric'],
     },
     {
         id: 'tent', label: 'Tent', categories: ['Tent'],
-        fields: ['capacity', 'pitch', 'trail_weight', 'min_weight', 'double_wall', 'vestibules', 'floor_width', 'floor_length', 'peak_height', 'packed_size'],
+        fields: ['capacity', 'pitch', 'trail_weight', 'min_weight', 'double_wall', 'vestibules', 'floor_width', 'floor_length', 'peak_height', 'packed_size', 'gender'],
     },
     {
         id: 'quilt', label: 'Quilt', categories: ['Quilt', 'Top Quilt', 'Backpacking Quilt', 'Underquilt'],
-        fields: ['temp_comfort', 'temp_limit', 'insulation', 'fill_power', 'rds', 'footbox', 'draft_collar', 'quilt_shape'],
+        fields: ['temp_comfort', 'temp_limit', 'insulation', 'fill_power', 'rds', 'footbox', 'draft_collar', 'quilt_shape', 'gender', 'bag_length'],
     },
     {
         id: 'pad', label: 'Sleeping pad', categories: ['Sleeping Pad', 'Sleep Pad'],
-        fields: ['r_value', 'pad_type', 'thickness', 'pad_width', 'pad_length', 'packed_size'],
+        fields: ['r_value', 'pad_type', 'thickness', 'pad_width', 'pad_length', 'packed_size', 'gender'],
     },
     {
         id: 'bag', label: 'Sleeping bag', categories: ['Sleeping Bag'],
-        fields: ['temp_comfort', 'temp_limit', 'insulation', 'fill_power', 'rds', 'gender', 'bag_width', 'bag_shape'],
+        fields: ['temp_comfort', 'temp_limit', 'insulation', 'fill_power', 'rds', 'gender', 'bag_length', 'bag_width', 'bag_shape'],
+    },
+    {
+        // The rest of the clothes: fit, size and fabric tell one from another.
+        id: 'clothing', label: 'Clothing',
+        categories: ['Clothing', 'Base Layer', 'Baselayer', 'Base Layers', 'Shirt', 'Sun Shirt', 'Hiking Shirt', 'T-Shirt', 'Hoody', 'Sun Hoody',
+            'Outerwear', 'Pants', 'Trousers', 'Shorts', 'Leggings', 'Tights', 'Socks', 'Underwear', 'Bra', 'Sports Bra',
+            'Hat', 'Cap', 'Beanie', 'Buff', 'Neck Gaiter', 'Gloves', 'Mittens', 'Liner Gloves', 'Gaiters',
+            'Dress', 'Dresses', 'Kilt', 'Skirt', 'Skort'],
+        fields: ['gender', 'size', 'fabric'],
     },
     {
         id: 'outer', label: 'Outer layer',
         categories: ['Outer Layer', 'Insulation', 'Insulated Jacket', 'Puffy', 'Puffy Jacket', 'Puffer', 'Down Jacket', 'Down Hoody',
             'Synthetic Jacket', 'Insulated Hoody', 'Insulating Layer', 'Insulated Layer', 'Mid Layer', 'Fleece', 'Vest', 'Down Vest',
             'Insulated Pants', 'Down Pants'],
-        fields: ['insulation', 'fill_power', 'fill_weight', 'gender', 'hooded', 'zipper', 'baffles', 'rds', 'fabric'],
+        fields: ['insulation', 'fill_power', 'fill_weight', 'gender', 'size', 'hooded', 'zipper', 'baffles', 'rds', 'fabric'],
     },
     {
         id: 'shell', label: 'Rain or wind shell',
         categories: ['Shell', 'Rain Gear', 'Rainwear', 'Rain Jacket', 'Rain Shell', 'Rain Pants', 'Hardshell', 'Softshell',
             'Wind Shell', 'Wind Layer', 'Wind Jacket', 'Wind Shirt', 'Windbreaker', 'Poncho'],
-        fields: ['waterproof_mm', 'breathability', 'membrane', 'gender', 'hooded', 'pit_zips', 'fabric'],
+        fields: ['waterproof_mm', 'breathability', 'membrane', 'gender', 'size', 'hooded', 'pit_zips', 'fabric'],
     },
     {
         id: 'light', label: 'Headlamp or light', categories: ['Headlamp', 'Head Lamp', 'Flashlight', 'Torch', 'Lantern', 'Light', 'Lights'],
-        fields: ['lumens', 'runtime', 'beam_distance', 'battery', 'charge_port', 'red_light', 'ip_rating'],
+        fields: ['lumens', 'runtime', 'beam_distance', 'battery', 'charge_port', 'red_light', 'ip_rating', 'gender'],
     },
     {
         id: 'power', label: 'Power bank', categories: ['Power Bank', 'Battery Bank', 'Battery Pack', 'Portable Charger'],
-        fields: ['capacity_mah', 'output_w', 'usb_c_ports', 'usb_a_ports', 'passthrough', 'ip_rating'],
+        fields: ['capacity_mah', 'output_w', 'usb_c_ports', 'usb_a_ports', 'passthrough', 'ip_rating', 'gender'],
     },
     {
         id: 'stove', label: 'Stove', categories: ['Stove', 'Cook System', 'Cooking System', 'Stove System', 'Canister Stove', 'Alcohol Stove'],
-        fields: ['fuel', 'boil_time', 'piezo', 'integrated_pot'],
+        fields: ['fuel', 'boil_time', 'piezo', 'integrated_pot', 'gender'],
     },
     {
         id: 'cookware', label: 'Pot', categories: ['Pot', 'Cook Pot', 'Cookware', 'Cookset', 'Cook Set', 'Mug', 'Cup', 'Kettle', 'Pan'],
-        fields: ['pot_volume', 'material', 'lid', 'measuring_marks'],
+        fields: ['pot_volume', 'material', 'lid', 'measuring_marks', 'gender'],
     },
     {
         id: 'filter', label: 'Water filter', categories: ['Water Filter', 'Filter', 'Water Treatment', 'Water Purifier', 'Purifier', 'Water Purification', 'Water Filtration', 'Gravity Filter', 'Squeeze Filter'],
-        fields: ['filter_type', 'flow_rate', 'pore_size', 'removes_viruses', 'lifespan_l'],
+        fields: ['filter_type', 'flow_rate', 'pore_size', 'removes_viruses', 'lifespan_l', 'gender'],
     },
     {
         id: 'shoe', label: 'Shoe',
         categories: ['Shoes', 'Shoe', 'Footwear', 'Trail Runners', 'Trail Runner', 'Trail Shoes', 'Hiking Shoes', 'Boots', 'Hiking Boots', 'Sandals', 'Camp Shoes'],
-        fields: ['shoe_type', 'gender', 'drop', 'stack_height', 'waterproof', 'shoe_width', 'upper', 'outsole', 'toe_bumper', 'velcro'],
+        fields: ['shoe_type', 'gender', 'shoe_size', 'drop', 'stack_height', 'waterproof', 'shoe_width', 'upper', 'outsole', 'toe_bumper', 'velcro'],
     },
     {
         id: 'poles', label: 'Trekking poles', categories: ['Trekking Poles', 'Trekking Pole', 'Poles', 'Hiking Poles'],
-        fields: ['pole_material', 'pole_adjust', 'pole_lock', 'collapsed_length', 'max_length'],
+        fields: ['pole_material', 'pole_adjust', 'pole_lock', 'collapsed_length', 'max_length', 'gender'],
     },
     {
         id: 'tarp', label: 'Tarp', categories: ['Tarp', 'Hammock Tarp'],
-        fields: ['tarp_length', 'tarp_shape', 'wide', 'tarp_material', 'side_pullouts', 'bonded', 'seam_sealed', 'doors', 'tie_outs', 'tarp_size', 'fabric'],
+        fields: ['tarp_length', 'tarp_shape', 'wide', 'tarp_material', 'side_pullouts', 'bonded', 'seam_sealed', 'doors', 'tie_outs', 'tarp_size', 'fabric', 'gender'],
     },
     {
         id: 'hammock', label: 'Hammock', categories: ['Hammock', 'Camping Hammock', 'Backpacking Hammock', 'Bridge Hammock', 'Gathered End Hammock'],
-        fields: ['hammock_length', 'hammock_width', 'hammock_shape', 'lay_direction', 'bug_net', 'ridgeline', 'hammock_layers', 'wide', 'fabric'],
+        fields: ['hammock_length', 'hammock_width', 'hammock_shape', 'lay_direction', 'bug_net', 'ridgeline', 'hammock_layers', 'wide', 'fabric', 'gender'],
     },
 ];
 
