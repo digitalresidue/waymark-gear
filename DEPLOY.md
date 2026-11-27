@@ -380,6 +380,8 @@ sheet without spec columns leaves specs as they are.
 | `volume` | Volume | `40 L` or `2440 cu in` (bare number: L) |
 | `max_carry` | Max carry weight | `14 oz` or `397 g` (bare number: lb) |
 | `gender` | Fit for | Men's / Women's / Unisex |
+| `torso_size` | Torso size | XS / S / M / L / XL / XXL / One size |
+| `hipbelt_size` | Hip belt size | XS / S / M / L / XL / XXL / One size |
 | `pack_type` | Pack type | Pack / Fastpack / Hydration vest / Daypack |
 | `frame` | Frame | Framed / Frameless |
 | `strap_type` | Shoulder straps | J-curve / S-curve / Vest / Other |
@@ -402,6 +404,7 @@ sheet without spec columns leaves specs as they are.
 | `floor_length` | Floor length | `72 in` or `183 cm` (bare number: in) |
 | `peak_height` | Peak height | `72 in` or `183 cm` (bare number: in) |
 | `packed_size` | Packed size | sizes, e.g. `18 x 5 x 5 in` (bare: in) |
+| `gender` | Fit for | Men's / Women's / Unisex |
 
 **Quilt** (category "Quilt", "Top Quilt", "Backpacking Quilt", "Underquilt", any spelling or plural)
 
@@ -415,6 +418,8 @@ sheet without spec columns leaves specs as they are.
 | `footbox` | Footbox | Sewn / Zippered / Drawcord |
 | `draft_collar` | Draft collar | yes / no |
 | `quilt_shape` | Shape | Tapered / Rectangular / Other |
+| `gender` | Fit for | Men's / Women's / Unisex |
+| `bag_length` | Length | Short / Regular / Long / Extra long |
 
 **Sleeping pad** (category "Sleeping Pad", "Sleep Pad", any spelling or plural)
 
@@ -426,6 +431,7 @@ sheet without spec columns leaves specs as they are.
 | `pad_width` | Width | `72 in` or `183 cm` (bare number: in) |
 | `pad_length` | Length | `72 in` or `183 cm` (bare number: in) |
 | `packed_size` | Packed size | sizes, e.g. `18 x 5 x 5 in` (bare: in) |
+| `gender` | Fit for | Men's / Women's / Unisex |
 
 **Sleeping bag** (category "Sleeping Bag", any spelling or plural)
 
@@ -437,8 +443,17 @@ sheet without spec columns leaves specs as they are.
 | `fill_power` | Fill power | 450 fill / 550 fill / 650 fill / 750 fill / 800 fill / 850 fill / 900 fill / 950 fill / 1000 fill |
 | `rds` | RDS certified | Yes / No / Unknown |
 | `gender` | Fit for | Men's / Women's / Unisex |
+| `bag_length` | Length | Short / Regular / Long / Extra long |
 | `bag_width` | Width | Slim / Regular / Wide |
 | `bag_shape` | Shape | Mummy / Tapered / Rectangular / Other |
+
+**Clothing** (category "Clothing", "Base Layer", "Baselayer", "Base Layers", "Shirt", "Sun Shirt", "Hiking Shirt", "T-Shirt", "Hoody", "Sun Hoody", "Outerwear", "Pants", "Trousers", "Shorts", "Leggings", "Tights", "Socks", "Underwear", "Bra", "Sports Bra", "Hat", "Cap", "Beanie", "Buff", "Neck Gaiter", "Gloves", "Mittens", "Liner Gloves", "Gaiters", "Dress", "Dresses", "Kilt", "Skirt", "Skort", any spelling or plural)
+
+| Column | Field | Value |
+|---|---|---|
+| `gender` | Fit for | Men's / Women's / Unisex |
+| `size` | Size | XXS / XS / S / M / L / XL / XXL / 3XL / One size |
+| `fabric` | Fabric | free text, up to 60 characters (filters ignore capitals) |
 
 **Outer layer** (category "Outer Layer", "Insulation", "Insulated Jacket", "Puffy", "Puffy Jacket", "Puffer", "Down Jacket", "Down Hoody", "Synthetic Jacket", "Insulated Hoody", "Insulating Layer", "Insulated Layer", "Mid Layer", "Fleece", "Vest", "Down Vest", "Insulated Pants", "Down Pants", any spelling or plural)
 
@@ -448,6 +463,7 @@ sheet without spec columns leaves specs as they are.
 | `fill_power` | Fill power | 450 fill / 550 fill / 650 fill / 750 fill / 800 fill / 850 fill / 900 fill / 950 fill / 1000 fill |
 | `fill_weight` | Fill weight | `14 oz` or `397 g` (bare number: oz) |
 | `gender` | Fit for | Men's / Women's / Unisex |
+| `size` | Size | XXS / XS / S / M / L / XL / XXL / 3XL / One size |
 | `hooded` | Hooded | yes / no |
 | `zipper` | Zipper | Full / Quarter / None |
 | `baffles` | Baffles | Sewn-through / Box / Other |
@@ -462,6 +478,7 @@ sheet without spec columns leaves specs as they are.
 | `breathability` | Breathability | whole number in g/m²/24h, e.g. `40,000 g/m²/24h` |
 | `membrane` | Membrane | free text, up to 40 characters (filters ignore capitals) |
 | `gender` | Fit for | Men's / Women's / Unisex |
+| `size` | Size | XXS / XS / S / M / L / XL / XXL / 3XL / One size |
 | `hooded` | Hooded | yes / no |
 | `pit_zips` | Pit zips | yes / no |
 | `fabric` | Fabric | free text, up to 60 characters (filters ignore capitals) |
@@ -477,6 +494,7 @@ sheet without spec columns leaves specs as they are.
 | `charge_port` | Charging | USB-C / Micro-USB / Magnetic / None |
 | `red_light` | Red light | yes / no |
 | `ip_rating` | Water resistance | IPX4 / IPX5 / IPX6 / IPX7 / IPX8 / IP54 / IP65 / IP66 / IP67 / IP68 |
+| `gender` | Fit for | Men's / Women's / Unisex |
 
 **Power bank** (category "Power Bank", "Battery Bank", "Battery Pack", "Portable Charger", any spelling or plural)
 
@@ -488,6 +506,7 @@ sheet without spec columns leaves specs as they are.
 | `usb_a_ports` | USB-A ports | whole number |
 | `passthrough` | Pass-through charging | yes / no |
 | `ip_rating` | Water resistance | IPX4 / IPX5 / IPX6 / IPX7 / IPX8 / IP54 / IP65 / IP66 / IP67 / IP68 |
+| `gender` | Fit for | Men's / Women's / Unisex |
 
 **Stove** (category "Stove", "Cook System", "Cooking System", "Stove System", "Canister Stove", "Alcohol Stove", any spelling or plural)
 
@@ -497,6 +516,7 @@ sheet without spec columns leaves specs as they are.
 | `boil_time` | Boil time (1 L) | number in min, e.g. `10 min` |
 | `piezo` | Push-button igniter | yes / no |
 | `integrated_pot` | Pot included | yes / no |
+| `gender` | Fit for | Men's / Women's / Unisex |
 
 **Pot** (category "Pot", "Cook Pot", "Cookware", "Cookset", "Cook Set", "Mug", "Cup", "Kettle", "Pan", any spelling or plural)
 
@@ -506,6 +526,7 @@ sheet without spec columns leaves specs as they are.
 | `material` | Material | Titanium / Aluminum / Stainless steel / Silicone / Other |
 | `lid` | Lid | yes / no |
 | `measuring_marks` | Measuring marks | yes / no |
+| `gender` | Fit for | Men's / Women's / Unisex |
 
 **Water filter** (category "Water Filter", "Filter", "Water Treatment", "Water Purifier", "Purifier", "Water Purification", "Water Filtration", "Gravity Filter", "Squeeze Filter", any spelling or plural)
 
@@ -516,6 +537,7 @@ sheet without spec columns leaves specs as they are.
 | `pore_size` | Pore size | number in µm, e.g. `0.5 µm` |
 | `removes_viruses` | Removes viruses | yes / no |
 | `lifespan_l` | Lifespan | whole number in L, e.g. `400,000 L` |
+| `gender` | Fit for | Men's / Women's / Unisex |
 
 **Shoe** (category "Shoes", "Shoe", "Footwear", "Trail Runners", "Trail Runner", "Trail Shoes", "Hiking Shoes", "Boots", "Hiking Boots", "Sandals", "Camp Shoes", any spelling or plural)
 
@@ -523,6 +545,7 @@ sheet without spec columns leaves specs as they are.
 |---|---|---|
 | `shoe_type` | Type | Trail runner / Hiking shoe / Boot / Sandal / Camp shoe |
 | `gender` | Fit for | Men's / Women's / Unisex |
+| `shoe_size` | Size (US) | number, e.g. 10.5 |
 | `drop` | Drop | number in mm, e.g. `12 mm` |
 | `stack_height` | Stack height | number in mm, e.g. `45 mm` |
 | `waterproof` | Waterproof | yes / no |
@@ -541,6 +564,7 @@ sheet without spec columns leaves specs as they are.
 | `pole_lock` | Lock | Lever / Twist / Push-button / None |
 | `collapsed_length` | Collapsed length | `72 in` or `183 cm` (bare number: in) |
 | `max_length` | Longest length | `72 in` or `183 cm` (bare number: in) |
+| `gender` | Fit for | Men's / Women's / Unisex |
 
 **Tarp** (category "Tarp", "Hammock Tarp", any spelling or plural)
 
@@ -557,6 +581,7 @@ sheet without spec columns leaves specs as they are.
 | `tie_outs` | Tie-outs | whole number |
 | `tarp_size` | Size | sizes, e.g. `8.5 x 10 ft` (bare: ft) |
 | `fabric` | Fabric | free text, up to 60 characters (filters ignore capitals) |
+| `gender` | Fit for | Men's / Women's / Unisex |
 
 **Hammock** (category "Hammock", "Camping Hammock", "Backpacking Hammock", "Bridge Hammock", "Gathered End Hammock", any spelling or plural)
 
@@ -571,6 +596,7 @@ sheet without spec columns leaves specs as they are.
 | `hammock_layers` | Layers | Single layer / Double layer |
 | `wide` | Wide | yes / no |
 | `fabric` | Fabric | free text, up to 60 characters (filters ignore capitals) |
+| `gender` | Fit for | Men's / Women's / Unisex |
 
 ## Trails
 

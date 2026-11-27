@@ -218,6 +218,11 @@
   "spec.bag_shape": "Forma",
   "spec.rds": "Certificado RDS",
   "spec.gender": "Corte",
+  "spec.size": "Talla",
+  "spec.torso_size": "Talla de torso",
+  "spec.hipbelt_size": "Talla del cinturón",
+  "spec.bag_length": "Largo",
+  "spec.shoe_size": "Talla (EE. UU.)",
   "spec.bag_width": "Ancho",
   "spec.hooded": "Con capucha",
   "spec.zipper": "Cremallera",
@@ -304,6 +309,7 @@
   "spec.types.poles": "bastones de trekking",
   "spec.types.tarp": "tarps",
   "spec.types.hammock": "hamacas",
+  "spec.types.clothing": "ropa",
   "gear.shops": {
     "one": "{count} tienda",
     "other": "{count} tiendas"

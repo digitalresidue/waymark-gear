@@ -215,6 +215,11 @@
   "spec.bag_shape": "形状",
   "spec.rds": "RDS認証",
   "spec.gender": "サイズ展開",
+  "spec.size": "サイズ",
+  "spec.torso_size": "背面長サイズ",
+  "spec.hipbelt_size": "ヒップベルトサイズ",
+  "spec.bag_length": "長さ",
+  "spec.shoe_size": "サイズ（US）",
   "spec.bag_width": "幅",
   "spec.hooded": "フード付き",
   "spec.zipper": "ジッパー",
@@ -301,6 +306,7 @@
   "spec.types.poles": "トレッキングポール",
   "spec.types.tarp": "タープ",
   "spec.types.hammock": "ハンモック",
+  "spec.types.clothing": "ウェア",
   "gear.shops": {
     "other": "{count}店舗"
   },

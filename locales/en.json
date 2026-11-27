@@ -218,6 +218,11 @@
   "spec.bag_shape": "Shape",
   "spec.rds": "RDS certified",
   "spec.gender": "Fit for",
+  "spec.size": "Size",
+  "spec.torso_size": "Torso size",
+  "spec.hipbelt_size": "Hip belt size",
+  "spec.bag_length": "Length",
+  "spec.shoe_size": "Size (US)",
   "spec.bag_width": "Width",
   "spec.hooded": "Hooded",
   "spec.zipper": "Zipper",
@@ -304,6 +309,7 @@
   "spec.types.poles": "trekking poles",
   "spec.types.tarp": "tarps",
   "spec.types.hammock": "hammocks",
+  "spec.types.clothing": "clothing",
   "gear.shops": {
     "one": "{count} shop",
     "other": "{count} shops"

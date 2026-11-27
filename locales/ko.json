@@ -215,6 +215,11 @@
   "spec.bag_shape": "형태",
   "spec.rds": "RDS 인증",
   "spec.gender": "핏",
+  "spec.size": "사이즈",
+  "spec.torso_size": "등판 사이즈",
+  "spec.hipbelt_size": "힙벨트 사이즈",
+  "spec.bag_length": "길이",
+  "spec.shoe_size": "사이즈 (US)",
   "spec.bag_width": "폭",
   "spec.hooded": "후드 있음",
   "spec.zipper": "지퍼",
@@ -301,6 +306,7 @@
   "spec.types.poles": "트레킹 폴",
   "spec.types.tarp": "타프",
   "spec.types.hammock": "해먹",
+  "spec.types.clothing": "의류",
   "gear.shops": {
     "other": "판매처 {count}곳"
   },

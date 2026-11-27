@@ -264,3 +264,37 @@ describe('sleeping pads: small R-values and thin pads', () => {
         assert.equal(formatSpec('pad_length', 182.9, 'imperial'), '72 in');
     });
 });
+
+describe('Fit and sizes: what tells one size of a product from another', () => {
+    test('every gear type can say who it fits: men, women or unisex', async () => {
+        const { SPEC_TYPES } = await import('../../client/utils/gear-specs.js');
+        for (const t of SPEC_TYPES) assert.ok(t.fields.includes('gender'), t.id);
+        for (const [v, want] of [['Female', 'womens'], ["Men's", 'mens'], ['Unisex', 'unisex'], ['Both', 'unisex']]) assert.deepEqual(readSpec('gender', v), { value: want }, v);
+    });
+
+    test('letter sizes, torso and hip belt sizes, bag lengths and US shoe sizes', () => {
+        for (const [v, want] of [['S', 's'], ['Medium', 'm'], ['XL', 'xl'], ['2XL', 'xxl'], ['XXXL', '3xl'], ['One size', 'one_size'], ['OSFA', 'one_size']]) {
+            assert.deepEqual(readSpec('size', v), { value: want }, v);
+        }
+        assert.deepEqual(readSpec('torso_size', 'Large'), { value: 'l' });
+        assert.deepEqual(readSpec('hipbelt_size', 'S'), { value: 's' });
+        assert.ok(readSpec('torso_size', '3XL').error, 'no 3XL torsos');
+        for (const [v, want] of [['Regular', 'regular'], ['Reg', 'regular'], ['Long', 'long'], ['XL', 'extra_long'], ['Short', 'short']]) assert.deepEqual(readSpec('bag_length', v), { value: want }, v);
+        assert.deepEqual(readSpec('shoe_size', '10.5'), { value: 10.5 });
+        assert.ok(readSpec('shoe_size', 'huge').error);
+    });
+
+    test('the size fields sit on the gear they describe', async () => {
+        const { SPEC_TYPES } = await import('../../client/utils/gear-specs.js');
+        const fields = (id) => SPEC_TYPES.find((t) => t.id === id).fields;
+        assert.ok(['torso_size', 'hipbelt_size'].every((f) => fields('pack').includes(f)));
+        assert.ok(fields('quilt').includes('bag_length') && fields('bag').includes('bag_length'));
+        assert.ok(fields('shoe').includes('shoe_size'));
+        for (const id of ['clothing', 'outer', 'shell']) assert.ok(fields(id).includes('size'), id);
+    });
+
+    test('everyday clothes have a type: fit, size and fabric', () => {
+        for (const c of ['Base Layer', 'Socks', 'Pants', 'Gloves', 'Hat', 'Dress', 'Dresses', 'Skirt', 'Kilt', 'Sun Hoody']) assert.equal((specTypeFor(c) || {}).id, 'clothing', c);
+        assert.equal(specTypeFor('Puffy').id, 'outer');
+    });
+});
