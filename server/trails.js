@@ -176,7 +176,7 @@ async function mostCarried(ids, packs) {
     if (!packs) return [];
     const categories = [...new Set(CARRIED.map((c) => c.category))];
     const rows = await knex.with('uses', (qb) => qb.select(knex.raw('distinct external_id, unnest(catalog_ids) as catalog_id')).from('public_kits').whereIn('trail_id', ids))
-        .select('c.id', 'c.name', 'c.brand', 'c.description', 'c.category', 'c.weight_mg', 'c.unit')
+        .select('c.id', 'c.name', 'c.brand', 'c.description', 'c.category', knex.raw('coalesce(c.community_weight_mg, c.weight_mg) as weight_mg'), 'c.unit')
         .count({ n: '*' })
         .from('uses').join('catalog_items as c', 'c.id', 'uses.catalog_id')
         .whereIn('c.category', categories).where('c.status', 'published')

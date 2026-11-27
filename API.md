@@ -28,6 +28,16 @@ the text in the owner's unit for showing.
 | DELETE | `/api/v1/lists/:id/items/:gearId` | Take gear out of a list (it stays in your closet) |
 | GET | `/api/v1/catalog?q=&category=&limit=` | Search the gear catalog |
 
+Catalog gear's `weightMg` is the best weight we know: the **community
+weight** (the middle of what at least ten members' own gear weighs, when
+they agree) or else the brand's. `brandWeightMg` is always the brand's, and
+`community` is `{ "weightMg", "count" }` when there's a community weight,
+else `null`. Gear added from the catalog starts at `weightMg`; after that
+its weight is yours, and nothing in the catalog changes it. The list check
+(`/lists/:id/check`) has `weightsToCheck`: list gear whose weight is far
+(15% and 20 g) from the catalog's, with `looksLike` when it seems typed in
+the wrong unit.
+
 Errors: `401` no or bad token, `403` a read-only token tried to change
 something, `404` not found, `400` with `{ "error", "message" }` for bad input.
 

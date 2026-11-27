@@ -688,6 +688,9 @@ router.get('/g/:id', async (req, res) => {
                 ...item,
                 initial: item.name.trim().charAt(0).toUpperCase(),
                 weight: `${weightUtils.MgToDisplayWeight(item.weightMg, item.unit)} ${item.unit}`,
+                // Members' own weight, when ten or more agree: say so, and what
+                // the brand says when that's different.
+                weighed: weighedModel(item),
                 price: item.price ? `${item.currency === 'USD' || !item.currency ? '$' : `${item.currency} `}${item.price}` : '',
                 url: /^https:\/\//.test(item.url) ? item.url : '',
                 buy: buyModel(item, badges, { from: 'gear', testid: 'gear-buy', btnClass: 'wgBtnGhost' }),
@@ -737,6 +740,23 @@ function priceModel(history) {
     };
 }
 
+/**
+ * A catalog item's community weight, for the gear page and Compare: who
+ * weighed it, and the brand's weight when it's different (1% or more).
+ * Null while the weight shown is the brand's.
+ */
+function weighedModel(item) {
+    const c = item.community;
+    if (!c || !c.weightMg) return null;
+    const t = currentT();
+    const brandDiffers = item.brandWeightMg > 0 && Math.abs(item.brandWeightMg - c.weightMg) / c.weightMg >= 0.01;
+    return {
+        label: t('gear.weighedBy', { count: c.count }),
+        note: t('gear.weighedNote'),
+        brand: brandDiffers ? t('gear.brandSays', { weight: `${weightUtils.MgToDisplayWeight(item.brandWeightMg, item.unit)} ${item.unit}` }) : '',
+    };
+}
+
 // Side-by-side comparison of up to four catalog items: /compare?ids=a,b,c
 router.get('/compare', async (req, res) => {
     try {
@@ -777,6 +797,7 @@ router.get('/compare', async (req, res) => {
                     ...i,
                     initial: i.name.trim().charAt(0).toUpperCase(),
                     weight: `${weightUtils.MgToDisplayWeight(i.weightMg, i.unit)} ${i.unit}`,
+                    weighed: weighedModel(i),
                     lightest: items.length > 1 && i.weightMg === minWeight,
                     price: i.price ? moneyLabel(i.price, i.currency) : '',
                     cheapest: minPrice !== null && i.price === minPrice,

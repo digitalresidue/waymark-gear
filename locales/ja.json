@@ -144,6 +144,11 @@
   "explore.parent.lights-electronics": "ライトと電子機器",
   "explore.parent.lights-electronics.note": "ヘッドランプ、腕時計、充電器、ケーブル",
   "gear.noRatings": "まだ評価はありません。",
+  "gear.weighedBy": {
+    "other": "{count}人のハイカーが計量"
+  },
+  "gear.brandSays": "メーカー公称 {weight}",
+  "gear.weighedNote": "少なくとも10人の計量値が一致したときの、メンバー自身の装備の重さの中央値です。",
   "gear.ratingFrom": {
     "other": "/ 5（{count}件の評価）"
   },

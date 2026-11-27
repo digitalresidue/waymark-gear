@@ -145,6 +145,12 @@
   "explore.parent.lights-electronics": "Luces y electrónica",
   "explore.parent.lights-electronics.note": "Frontales, relojes, cargadores y cables",
   "gear.noRatings": "Aún sin valoraciones.",
+  "gear.weighedBy": {
+    "one": "Pesado por {count} senderista",
+    "other": "Pesado por {count} senderistas"
+  },
+  "gear.brandSays": "La marca dice {weight}",
+  "gear.weighedNote": "El valor central de lo que pesa el equipo de los miembros, cuando al menos 10 coinciden.",
   "gear.ratingFrom": {
     "one": "/ 5 de {count} valoración",
     "other": "/ 5 de {count} valoraciones"

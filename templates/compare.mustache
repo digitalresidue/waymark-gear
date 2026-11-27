@@ -51,7 +51,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><th scope="row">Weight</th>{{#items}}<td class="wgMono{{#lightest}} wgCompareBest{{/lightest}}" data-testid="compare-weight">{{weight}}{{#lightest}} <span class="wgCompareTag">lightest</span>{{/lightest}}</td>{{/items}}</tr>
+                        <tr><th scope="row">Weight</th>{{#items}}<td class="wgMono{{#lightest}} wgCompareBest{{/lightest}}" data-testid="compare-weight">{{weight}}{{#lightest}} <span class="wgCompareTag">lightest</span>{{/lightest}}{{#weighed}}<span class="wgCompareWeighed" title="{{note}}" data-testid="compare-weighed">✓ {{label}}</span>{{#brand}}<span class="wgCompareWeighed wgMuted">{{brand}}</span>{{/brand}}{{/weighed}}</td>{{/items}}</tr>
                         <tr><th scope="row">Price</th>{{#items}}<td class="{{#cheapest}}wgCompareBest{{/cheapest}}">{{price}}{{^price}}—{{/price}}{{#cheapest}} <span class="wgCompareTag">cheapest</span>{{/cheapest}}</td>{{/items}}</tr>
                         <tr><th scope="row">Lowest seen</th>{{#items}}<td>{{lowest}}{{^lowest}}—{{/lowest}}</td>{{/items}}</tr>
                         <tr><th scope="row">Rating</th>{{#items}}<td>{{#average}}<span class="wgStars" aria-hidden="true">{{stars}}</span> {{average}} ({{reviewCount}}){{/average}}{{^average}}—{{/average}}</td>{{/items}}</tr>

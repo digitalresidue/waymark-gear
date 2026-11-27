@@ -37,16 +37,21 @@ const Item = function ({ id, unit }) {
     this.imageUrl = '';
     this.url = '';
     // Set when the item was picked from the site's gear catalog. While
-    // catalogSync is true the server refreshes name, weight, price, link and
-    // photo from the catalog each time the library loads, so a corrected
-    // catalog entry reaches every list. Editing any of those turns sync off.
+    // catalogSync is true the server refreshes name, price, link and photo
+    // from the catalog each time the library loads, so a corrected catalog
+    // entry reaches every list. Editing any of those turns sync off.
+    // Weight is never synced: once gear is yours, only you change its weight.
     this.catalogId = '';
     this.catalogSync = false;
+    // The owner has set this catalog gear's weight themselves (not the
+    // catalog's): it counts toward the catalog's community weight
+    // (server/community-weights.js).
+    this.weightOwn = false;
 
     return this;
 };
 
-const CATALOG_SYNCED_FIELDS = ['name', 'weight', 'price', 'url', 'imageUrl'];
+const CATALOG_SYNCED_FIELDS = ['name', 'price', 'url', 'imageUrl'];
 
 // save() methods enumerate their fields explicitly: anything unknown is
 // dropped at the next save, so junk from older formats can't accumulate.
@@ -66,6 +71,7 @@ Item.prototype.save = function () {
     if (this.catalogId) {
         out.catalogId = this.catalogId;
         out.catalogSync = !!this.catalogSync;
+        if (this.weightOwn) out.weightOwn = true;
     }
     // Retired gear is hidden from the closet but stays in lists that use it.
     if (this.retired) out.retired = true;
@@ -576,6 +582,10 @@ Library.prototype.updateItem = function (item) {
         && CATALOG_SYNCED_FIELDS.some((f) => f in item && item[f] !== oldItem[f])) {
         // The user has made this item their own; stop overwriting it.
         item = { ...item, catalogSync: false };
+    }
+    if (oldItem.catalogId && 'weight' in item && item.weight !== oldItem.weight) {
+        // Their own weight for catalog gear: what the community weight is from.
+        item = { ...item, weightOwn: true };
     }
     assignIn(oldItem, item);
     return oldItem;

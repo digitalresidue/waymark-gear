@@ -145,6 +145,12 @@
   "explore.parent.lights-electronics": "Iluminação e eletrônicos",
   "explore.parent.lights-electronics.note": "Lanternas de cabeça, relógios, carregadores e cabos",
   "gear.noRatings": "Ainda sem avaliações.",
+  "gear.weighedBy": {
+    "one": "Pesado por {count} trilheiro",
+    "other": "Pesado por {count} trilheiros"
+  },
+  "gear.brandSays": "A marca diz {weight}",
+  "gear.weighedNote": "O valor central do que pesa o equipamento dos membros, quando pelo menos 10 concordam.",
   "gear.ratingFrom": {
     "one": "/ 5 de {count} avaliação",
     "other": "/ 5 de {count} avaliações"

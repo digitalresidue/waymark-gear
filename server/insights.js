@@ -10,8 +10,13 @@ import { gearKind } from '../client/utils/insights.js';
 import { bigThreeKind, likeForLike, worthSwapping, sameCategory, KINDS, SLOTS } from '../client/utils/big-three.js';
 import { fitsLike } from '../client/utils/fit.js';
 import { likeForLikeSpecs } from '../client/utils/gear-specs.js';
+import { weightGap } from '../client/utils/community-weight.js';
 
 const MAX_ROWS = 200;
+
+// The best weight we know for catalog gear: the community's, else the brand's
+// (server/community-weights.js).
+const BEST_WEIGHT = 'coalesce(catalog_items.community_weight_mg, catalog_items.weight_mg)';
 
 function cleanRows(rows) {
     return (Array.isArray(rows) ? rows : []).slice(0, MAX_ROWS).map((r) => ({
@@ -37,8 +42,9 @@ export async function listInsights(input) {
     // Which catalog category each row belongs to: the linked item's, or a
     // catalog category with the same name as the row's list category.
     const linked = ownedIds.size
-        ? await knex('catalog_items').whereIn('id', [...ownedIds]).select('id', 'category', 'specs', 'brand')
+        ? await knex('catalog_items').whereIn('id', [...ownedIds]).select('id', 'category', 'specs', 'brand', 'name', 'weight_mg', 'community_weight_mg', 'community_count')
         : [];
+    const weightChecks = checkWeights(rows, linked);
     const linkedCategory = new Map(linked.map((r) => [r.id, r.category]));
     const linkedSpecs = new Map(linked.map((r) => [r.id, r.specs || {}]));
     const linkedBrand = new Map(linked.map((r) => [r.id, r.brand || '']));
@@ -48,15 +54,15 @@ export async function listInsights(input) {
     const categoryOf = (r) => (r.catalogId && linkedCategory.get(r.catalogId)) || byLower.get(r.category.toLowerCase()) || null;
 
     const categories = [...new Set(rows.map(categoryOf).filter(Boolean))];
-    if (!categories.length) return { bigThree, alternatives: [], favorites: [] };
+    if (!categories.length) return { bigThree, alternatives: [], favorites: [], weightChecks };
 
     const pool = await knex('catalog_items')
         .leftJoin(knex.select('catalog_id').count({ uses: '*' }).from(usage()).groupBy('catalog_id').as('c'), 'c.catalog_id', 'catalog_items.id')
         .where('catalog_items.status', 'published')
         .whereIn('catalog_items.category', categories)
-        .where('catalog_items.weight_mg', '>', 0)
+        .whereRaw(`${BEST_WEIGHT} > 0`)
         .select('catalog_items.id', 'catalog_items.name', 'catalog_items.brand', 'catalog_items.category', 'catalog_items.description',
-            'catalog_items.weight_mg', 'catalog_items.price', 'catalog_items.url', 'catalog_items.specs', knex.raw('coalesce(c.uses, 0)::int as uses'));
+            knex.raw(`${BEST_WEIGHT} as weight_mg`), 'catalog_items.price', 'catalog_items.url', 'catalog_items.specs', knex.raw('coalesce(c.uses, 0)::int as uses'));
     const byCategory = new Map();
     for (const p of pool) {
         if (!byCategory.has(p.category)) byCategory.set(p.category, []);
@@ -121,7 +127,42 @@ export async function listInsights(input) {
         if (top) favorites.push(present(top));
     }
     favorites.sort((a, b) => b.uses - a.uses);
-    return { bigThree, alternatives: alternatives.slice(0, 8), favorites: favorites.slice(0, 6) };
+    return { bigThree, alternatives: alternatives.slice(0, 8), favorites: favorites.slice(0, 6), weightChecks };
+}
+
+// ---- weights to double-check -------------------------------------------------------
+
+/**
+ * The list's catalog gear whose weight is far from the catalog's best weight
+ * (client/utils/community-weight.js: 15% and 20 g), biggest gap first: a
+ * typo, a unit slip, or gear that really is different (used, modified).
+ * Only a nudge: nothing changes the owner's weight.
+ */
+function checkWeights(rows, linked) {
+    const byId = new Map(linked.map((r) => [r.id, r]));
+    const seen = new Set();
+    const out = [];
+    for (const r of rows) {
+        const c = r.catalogId && byId.get(r.catalogId);
+        if (!c || seen.has(r.itemId)) continue;
+        const catalogMg = c.community_weight_mg || c.weight_mg;
+        const gap = weightGap(r.weightMg, catalogMg);
+        if (!gap) continue;
+        seen.add(r.itemId);
+        out.push({
+            itemId: r.itemId,
+            name: r.name,
+            catalogId: c.id,
+            yoursMg: r.weightMg,
+            catalogMg,
+            // How many members' own gear the catalog's weight is from (0: the brand's).
+            weighedBy: c.community_weight_mg ? Number(c.community_count) || 0 : 0,
+            diffMg: gap.diffMg,
+            share: Math.round(gap.share * 100),
+            slip: gap.slip,
+        });
+    }
+    return out.sort((a, b) => Math.abs(b.diffMg) - Math.abs(a.diffMg)).slice(0, 10);
 }
 
 // ---- the big three -------------------------------------------------------------------
@@ -152,10 +193,10 @@ async function bigThreeSwaps(rows, { linkedCategory, linkedSpecs, linkedBrand, o
     const candidates = (await knex('catalog_items')
         .leftJoin(knex.select('catalog_id').count({ uses: '*' }).from(usage()).groupBy('catalog_id').as('c'), 'c.catalog_id', 'catalog_items.id')
         .where('catalog_items.status', 'published')
-        .where('catalog_items.weight_mg', '>', 0)
-        .where('catalog_items.weight_mg', '<', heaviest)
+        .whereRaw(`${BEST_WEIGHT} > 0`)
+        .whereRaw(`${BEST_WEIGHT} < ?`, [heaviest])
         .select('catalog_items.id', 'catalog_items.name', 'catalog_items.brand', 'catalog_items.category', 'catalog_items.description',
-            'catalog_items.weight_mg', 'catalog_items.price', 'catalog_items.specs', knex.raw('coalesce(c.uses, 0)::int as uses')))
+            knex.raw(`${BEST_WEIGHT} as weight_mg`), 'catalog_items.price', 'catalog_items.specs', knex.raw('coalesce(c.uses, 0)::int as uses')))
         // Strict: the catalog category says what it is, never its name or
         // brand ("Hammock Gear Ground Cloth" isn't a hammock).
         .map((p) => ({ ...p, kind: bigThreeKind({ name: p.name, description: p.description, brand: p.brand, catalogCategory: p.category, specs: p.specs, strict: true }) }))

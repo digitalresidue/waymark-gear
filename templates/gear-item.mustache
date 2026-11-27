@@ -37,7 +37,13 @@
                 <div>
                     <p class="wgJournalKicker">{{brand}}{{#category}} · {{category}}{{/category}}</p>
                     <h1 data-testid="gear-name">{{name}}</h1>
-                    <p class="wgGearHeroWeight"><span class="wgMono">{{weight}}</span>{{#price}} · {{price}}{{/price}}</p>
+                    <p class="wgGearHeroWeight"><span class="wgMono" data-testid="gear-weight">{{weight}}</span>{{#price}} · {{price}}{{/price}}</p>
+                    {{#weighed}}
+                    <p class="wgWeighed" data-testid="gear-weighed">
+                        <span class="wgWeighedBadge" title="{{note}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="m5 12 5 5 9-10" /></svg>{{label}}</span>
+                        {{#brand}}<span class="wgMuted" data-testid="gear-brand-weight">{{brand}}</span>{{/brand}}
+                    </p>
+                    {{/weighed}}
                     <div class="wgGearRating" data-testid="gear-rating" data-rate="{{id}}" data-mine="{{myRating}}">
                         <p class="wgRatingSummary" data-rating-summary aria-live="polite">
                             {{#average}}<span class="wgStars" aria-hidden="true">{{stars}}</span> <strong>{{average}}</strong> {{countLabel}}{{/average}}

@@ -145,6 +145,12 @@
   "explore.parent.lights-electronics": "Licht & Elektronik",
   "explore.parent.lights-electronics.note": "Stirnlampen, Uhren, Ladegeräte und Kabel",
   "gear.noRatings": "Noch keine Bewertungen.",
+  "gear.weighedBy": {
+    "one": "Von {count} Wanderer gewogen",
+    "other": "Von {count} Wanderern gewogen"
+  },
+  "gear.brandSays": "Hersteller: {weight}",
+  "gear.weighedNote": "Der Mittelwert dessen, was die eigene Ausrüstung der Mitglieder wiegt, sobald mindestens 10 übereinstimmen.",
   "gear.ratingFrom": {
     "one": "/ 5 aus {count} Bewertung",
     "other": "/ 5 aus {count} Bewertungen"

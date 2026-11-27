@@ -391,7 +391,8 @@ export async function commonGear({ category = '', limit = 10 } = {}) {
     if (!kitCount) return { kitCount, items: [] };
 
     const query = knex.with('uses', (qb) => qb.select(knex.raw('unnest(catalog_ids) as catalog_id')).from('public_kits'))
-        .select('c.id', 'c.name', 'c.brand', 'c.category', 'c.weight_mg', 'c.unit')
+        // The best weight we know: the community's, else the brand's.
+        .select('c.id', 'c.name', 'c.brand', 'c.category', knex.raw('coalesce(c.community_weight_mg, c.weight_mg) as weight_mg'), 'c.unit')
         .count({ kits: '*' })
         .from('uses')
         .join('catalog_items as c', 'c.id', 'uses.catalog_id')

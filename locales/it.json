@@ -145,6 +145,12 @@
   "explore.parent.lights-electronics": "Luci ed elettronica",
   "explore.parent.lights-electronics.note": "Frontali, orologi, caricatori e cavi",
   "gear.noRatings": "Ancora nessuna valutazione.",
+  "gear.weighedBy": {
+    "one": "Pesato da {count} escursionista",
+    "other": "Pesato da {count} escursionisti"
+  },
+  "gear.brandSays": "Il marchio dichiara {weight}",
+  "gear.weighedNote": "Il valore centrale di quanto pesa l’attrezzatura dei membri, quando almeno 10 concordano.",
   "gear.ratingFrom": {
     "one": "/ 5 da {count} valutazione",
     "other": "/ 5 da {count} valutazioni"

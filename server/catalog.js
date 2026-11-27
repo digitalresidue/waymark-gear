@@ -2,8 +2,9 @@
 //
 // Users pick catalog entries in the list editor instead of typing gear in.
 // A picked item remembers its catalogId; while its catalogSync flag is on,
-// applyCatalog() refreshes it from the catalog whenever the library is
-// loaded, so a corrected weight reaches every list that uses the item.
+// applyCatalog() refreshes its name, price, link and photo from the catalog
+// whenever the library is loaded. Never its weight: that's the owner's once
+// the gear is theirs (the catalog's weight is where new gear starts).
 
 import { parse } from 'csv-parse/sync';
 import { stringify } from 'csv-stringify/sync';
@@ -12,6 +13,7 @@ import knex from './db.js';
 import weightUtils from '../client/utils/weight.js';
 import { parseShops, shopsToApi, publicShops, SHOP_CSV_COLUMNS, MAX_SHOPS } from './shops.js';
 import { absoluteImageUrl, localImagePath } from './remote-image.js';
+import { MIN_PEOPLE } from '../client/utils/community-weight.js';
 import { readSpec, readSpecs, specInput, specTypeFor, filterKind, matchKey, SPEC_FIELDS, SPEC_KEYS } from '../client/utils/gear-specs.js';
 import { PARENTS, resolveSection, subtypesOf, filterItem, categoriesOfPackType } from '../client/utils/explore.js';
 
@@ -34,6 +36,19 @@ export const isUuid = (v) => typeof v === 'string' && UUID_RE.test(v);
 // ---- shapes ----------------------------------------------------------------
 
 // Database row -> what the API and client see.
+// The community weight, when there is one, and how many members it's from;
+// for the owner also how many weighed in and why there isn't one yet.
+function communityOf(row) {
+    const total = Number(row.community_total) || 0;
+    if (!row.community_weight_mg && !total) return null;
+    return {
+        weightMg: row.community_weight_mg || null,
+        count: Number(row.community_count) || 0,
+        total,
+        status: row.community_weight_mg ? 'ready' : total >= MIN_PEOPLE ? 'disagree' : 'waiting',
+    };
+}
+
 export function toApi(row) {
     return {
         id: row.id,
@@ -42,7 +57,12 @@ export function toApi(row) {
         brand: row.brand,
         category: row.category,
         description: row.description,
-        weightMg: row.weight_mg,
+        // The best weight we know: what ten or more members' own gear weighs
+        // when they agree (server/community-weights.js), else the brand's.
+        weightMg: row.community_weight_mg || row.weight_mg,
+        // The brand's (or shop's) weight, as entered: the owner edits this.
+        brandWeightMg: row.weight_mg,
+        community: communityOf(row),
         unit: row.unit,
         weight: weightUtils.MgToWeight(row.weight_mg, row.unit),
         price: row.price === null ? null : Number(row.price),
@@ -69,7 +89,9 @@ export function toApi(row) {
 // which only the /go redirect uses.
 export function publicEntry(entry) {
     const { affiliateUrl, ...rest } = entry; // eslint-disable-line no-unused-vars
-    return { ...rest, shops: publicShops(rest.shops) };
+    // Only a community weight members agree on; not the count before it.
+    const community = rest.community && rest.community.weightMg ? { weightMg: rest.community.weightMg, count: rest.community.count } : null;
+    return { ...rest, community, shops: publicShops(rest.shops) };
 }
 
 const truthy = (v) => /^(1|true|yes|y|x)$/i.test(String(v ?? '').trim());
@@ -323,8 +345,9 @@ export async function remove(id) {
 // ---- library integration --------------------------------------------------
 
 // Refresh catalog-linked items in a serialized library (the JSON stored in
-// users.library) from the current catalog. Mutates and returns it. Items the
-// user has edited have catalogSync false and are left alone.
+// users.library) from the current catalog: name, price, link, photo, never
+// weight. Mutates and returns it. Items the user has edited have catalogSync
+// false and are left alone.
 export async function applyCatalog(library) {
     const items = (library && Array.isArray(library.items)) ? library.items : [];
     const linked = items.filter((i) => i.catalogId && i.catalogSync && isUuid(i.catalogId));
@@ -336,7 +359,6 @@ export async function applyCatalog(library) {
         const row = byId.get(item.catalogId);
         if (!row) continue; // entry deleted: keep the user's copy as it was
         item.name = row.name;
-        item.weight = row.weight_mg;
         if (row.price !== null) item.price = Number(row.price);
         item.url = row.url;
         if (row.image_url) item.imageUrl = row.image_url;

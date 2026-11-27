@@ -10,7 +10,7 @@
                             Gear catalog
                         </h1>
                         <p class="wgLede">
-                            What people pick from when they add gear. Items they add stay linked, so a corrected weight here updates every list using it.
+                            What people pick from when they add gear. Items they add stay linked, so a corrected name, price or link here updates every list using it. Weights are theirs once added: new gear starts from the best weight we know (members' own once 10 agree, else yours).
                         </p>
                     </div>
                     <div class="wgOwnerActions">
@@ -160,6 +160,7 @@
                                 <td>{{ item.category }}</td>
                                 <td class="wgNum wgMono">
                                     {{ item.weight }} {{ item.unit }}
+                                    <span v-if="item.community" class="wgCellSub wgCommunity" :class="`wgCommunity-${item.community.status}`" :data-testid="`community-${item.id}`">{{ communityLine(item) }}</span>
                                 </td>
                                 <td class="wgNum wgMono">
                                     {{ item.price === null ? '—' : formatPrice(item) }}
@@ -218,7 +219,7 @@
                             </datalist>
                         </label>
                         <div class="wgFieldRow">
-                            <label class="wgField">Weight
+                            <label class="wgField">Brand weight
                                 <input v-model="form.weight" class="wgInput" inputmode="decimal" required data-testid="field-weight">
                             </label>
                             <label class="wgField">Unit
@@ -227,6 +228,12 @@
                                 </select>
                             </label>
                         </div>
+                        <p v-if="editing && editing.community" class="wgMuted wgFieldHint" data-testid="editor-community">
+                            {{ communityLine(editing) }}.
+                            <template v-if="editing.community.status === 'ready'">
+                                Shown on the gear page, Explore and Compare, and what new gear starts from; the brand weight stays here.
+                            </template>
+                        </p>
                         <div class="wgFieldRow">
                             <label class="wgField">Price
                                 <input v-model="form.price" class="wgInput" inputmode="decimal" placeholder="—">
@@ -354,7 +361,8 @@ import siteHeader from '../components/site-header.vue';
 import siteFooter from '../components/site-footer.vue';
 import ownerNav from '../components/owner-nav.vue';
 import modal from '../components/modal.vue';
-import { api } from '../utils/format.js';
+import { api, formatWeightMg } from '../utils/format.js';
+import { MIN_PEOPLE } from '../utils/community-weight.js';
 import { specTypeFor, specInput, SPEC_FIELDS, SPEC_TYPES } from '../utils/gear-specs.js';
 
 // What a measurement box suggests, by kind.
@@ -449,6 +457,14 @@ export default {
         }
     },
     methods: {
+        // Members' own weights for this item (server/community-weights.js).
+        communityLine(item) {
+            const c = item.community;
+            if (!c) return '';
+            if (c.status === 'ready') return `Members: ${formatWeightMg(c.weightMg, item.unit)}, ${c.count} of ${c.total} agree`;
+            if (c.status === 'disagree') return `${c.total} members weighed it but don't agree: two sizes in one item?`;
+            return `${c.total} of ${MIN_PEOPLE} members weighed it so far`;
+        },
         formatPrice(item) {
             const symbol = item.currency === 'USD' ? '$' : `${item.currency} `;
             return `${symbol}${item.price.toFixed(2)}`;
@@ -895,6 +911,27 @@ export default {
 .wgCellTitle {
     font-size: 15px;
     font-weight: 600;
+}
+
+// Members' weights under the brand's (communityLine).
+.wgCommunity {
+    display: block;
+    font-family: inherit;
+    font-size: 12px;
+    white-space: normal;
+}
+
+.wgCommunity-ready {
+    color: var(--lp-accent-green-deep);
+}
+
+.wgCommunity-disagree {
+    color: #8A1C14;
+}
+
+.wgFieldHint {
+    font-size: 13px;
+    margin: -4px 0 8px;
 }
 
 .wgCellSub {

@@ -145,6 +145,12 @@
   "explore.parent.lights-electronics": "Verlichting & elektronica",
   "explore.parent.lights-electronics.note": "Hoofdlampen, horloges, opladers en kabels",
   "gear.noRatings": "Nog geen beoordelingen.",
+  "gear.weighedBy": {
+    "one": "Gewogen door {count} wandelaar",
+    "other": "Gewogen door {count} wandelaars"
+  },
+  "gear.brandSays": "Merk zegt {weight}",
+  "gear.weighedNote": "Het middelste gewicht van de eigen uitrusting van leden, zodra minstens 10 het eens zijn.",
   "gear.ratingFrom": {
     "one": "/ 5 uit {count} beoordeling",
     "other": "/ 5 uit {count} beoordelingen"
